@@ -1,4 +1,4 @@
-import { TFile, TAbstractFile } from "obsidian";
+import { TFile, TAbstractFile, Notice } from "obsidian";
 
 import { timestampToDate, hashContent, stringToDate, dump } from "./helps";
 import FastSync from "../main";
@@ -100,8 +100,10 @@ export const FileRename = async function (file: TAbstractFile, oldfile: string, 
   调用动作操作方法  Invoke action operation method
  */
 
+// 强制文件同步
 export const OverrideRemoteAllFiles = async function (plugin: FastSync) {
   if (plugin.websocket.isSyncAllFilesInProgress) {
+    new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
     return
   }
 
@@ -128,11 +130,22 @@ export const OverrideRemoteAllFiles = async function (plugin: FastSync) {
 
 export const SyncAllFiles = async function (plugin: FastSync) {
   if (plugin.websocket.isSyncAllFilesInProgress) {
+    new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
     return
   }
+  //发送同步请求
   await NoteSync(plugin)
+  //等待接收结束信号
+  while (plugin.websocket.isSyncAllFilesInProgress) {
+    dump("Waiting For ReceiveNoteSyncEnd.")
+    if (!plugin.websocket.isRegister) {
+      dump("plugin.websocket.isUnRegister, return.")
+      return
+    }
+    dump("Loop, Waiting...")
+    await sleep(2000) // 每隔一秒重试一次
+  }
 
-  plugin.websocket.isSyncAllFilesInProgress = true
   const files = await plugin.app.vault.getMarkdownFiles()
   for (const file of files) {
     const content: string = await plugin.app.vault.cachedRead(file)
@@ -145,22 +158,27 @@ export const SyncAllFiles = async function (plugin: FastSync) {
       content: content,
       contentHash: hashContent(content),
     }
+
+    dump(`NoteSync NoteModify Send`, data.path, data.contentHash, data.mtime, data.pathHash)
     await plugin.websocket.MsgSend("NoteModify", data, "json", true)
   }
   plugin.websocket.isSyncAllFilesInProgress = false
   plugin.settings.lastSyncTime = 0
   await plugin.saveData(plugin.settings)
-  //console.log("SyncAllFiles")
+  console.log("SyncAllFiles")
   await NoteSync(plugin)
 }
 
 export const NoteSync = async function (plugin: FastSync) {
-  while (this.isSyncAllFilesInProgress == true) {
-    if (!this.isRegister) {
-      return
-    }
-    dump("NoteSync, Waiting...")
-    await sleep(2000) // 每隔一秒重试一次
+  while (plugin.websocket.isSyncAllFilesInProgress) {
+    new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
+    return
+    // if (!plugin.websocket.isRegister) {
+    //   return
+    // }
+    // new Notice("上次的完整笔记同步任务尚未完成, 请耐心等待或者检查服务端是否正常服务")
+    // dump("SyncAllFiles, Waiting...")
+    // await sleep(2000) // 每隔一秒重试一次
   }
 
   const data = {
@@ -168,6 +186,7 @@ export const NoteSync = async function (plugin: FastSync) {
     lastTime: Number(plugin.settings.lastSyncTime),
   }
   plugin.websocket.MsgSend("NoteSync", data, "json")
+  dump("NoteSync", data)
   plugin.websocket.isSyncAllFilesInProgress = true
 }
 

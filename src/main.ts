@@ -1,6 +1,6 @@
 import { Plugin } from "obsidian";
 
-import { NoteModify, NoteDelete, FileRename, FileContentModify, OverrideRemoteAllFiles, NoteSync, SyncAllFiles } from "./lib/fs";
+import { NoteModify, NoteDelete, FileRename, FileContentModify, OverrideRemoteAllFiles, SyncAllFiles } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { WebSocketClient } from "./lib/websocket";
 import { AddRibbonIcon } from "./lib/menu";
@@ -30,6 +30,7 @@ export default class FastSync extends Plugin {
   ribbonIcon: HTMLElement
   ribbonIconInterval: any
   ribbonIconStatus: boolean = false
+
 
   async onload() {
     this.SyncSkipFiles = {}

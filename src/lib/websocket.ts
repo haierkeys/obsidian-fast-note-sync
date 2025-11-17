@@ -15,9 +15,10 @@ export class WebSocketClient {
   public checkConnection: any
   public checkReConnectTimeout: any
   public timeConnect = 0
+  public count = 0
+  //同步全部文件时设置
   public isSyncAllFilesInProgress: boolean = false
-
-  private isRegister: boolean = false
+  public isRegister: boolean = false
   constructor(plugin: FastSync) {
     this.plugin = plugin
     this.wsApi = plugin.settings.wsApi
@@ -30,7 +31,8 @@ export class WebSocketClient {
   public register() {
     if ((!this.ws || this.ws.readyState !== WebSocket.OPEN ) && isWsUrl(this.plugin.settings.wsApi)) {
       this.isRegister = true
-      this.ws = new WebSocket(this.plugin.settings.wsApi + "/api/user/sync?lang=" + moment.locale())
+      this.ws = new WebSocket(this.plugin.settings.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
+      this.count ++
       this.ws.onerror = (error) => {}
       this.ws.onopen = (e: Event): void => {
         this.timeConnect = 0
@@ -112,6 +114,7 @@ export class WebSocketClient {
     }
   }
   public StartHandle() {
+    this.isStartInProgress = true
     SyncAllFiles(this.plugin)
   }
 
