@@ -30,7 +30,7 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync)
     content: content,
     contentHash: contentHash,
   }
-  await plugin.websocket.MsgSend("NoteModify", data)
+  plugin.websocket.MsgSend("NoteModify", data)
   plugin.syncSkipFiles[file.path] = data.contentHash
 
   dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
@@ -46,7 +46,7 @@ export const NoteDelete = async function (file: TAbstractFile, plugin: FastSync)
     delete plugin.syncSkipDelFiles[file.path]
     return
   }
-  await NoteDeleteByPath(file.path, plugin)
+  NoteDeleteByPath(file.path, plugin)
   dump(`Note delete send`, file.path)
 }
 
@@ -55,13 +55,13 @@ export const NoteRename = async function (file: TAbstractFile, oldfile: string, 
   if (!(file instanceof TFile)) {
     return
   }
-  await NoteDeleteByPath(oldfile, plugin)
+  NoteDeleteByPath(oldfile, plugin)
   await NoteModify(file, plugin)
   dump(`Note rename send`, file, oldfile)
 }
 
 
-export const NoteContentModify = async function (file: TAbstractFile, content: string, plugin: FastSync) {
+export const NoteContentModify = function (file: TAbstractFile, content: string, plugin: FastSync) {
   if (!file.path.endsWith(".md")) return
 
   if (!(file instanceof TFile)) {
@@ -83,21 +83,21 @@ export const NoteContentModify = async function (file: TAbstractFile, content: s
     content: content,
     contentHash: hashContent(content),
   }
-  await plugin.websocket.MsgSend("NoteContentModify", data)
+  plugin.websocket.MsgSend("NoteContentModify", data)
   plugin.syncSkipFiles[file.path] = data.contentHash
 
   dump(`Note content modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
 }
 
 
-export const NoteDeleteByPath = async function (path: string, plugin: FastSync) {
+export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
   if (!path.endsWith(".md")) return
   const data = {
     vault: plugin.settings.vault,
     path: path,
     pathHash: hashContent(path),
   }
-  await plugin.websocket.MsgSend("NoteDelete", data)
+  plugin.websocket.MsgSend("NoteDelete", data)
 }
 
 
@@ -126,7 +126,7 @@ export async function overrideRemoteAllFilesImpl(plugin: FastSync): Promise<void
   }
   plugin.settings.lastSyncTime = 0
   await plugin.saveData(plugin.settings)
-  await NoteSync(plugin, localNotes)
+  NoteSync(plugin, localNotes)
 }
 
 // 同步包装：供 addCommand 使用，返回 void（命令回调类型安全）
@@ -141,7 +141,7 @@ export async function syncAllFilesImpl(plugin: FastSync): Promise<void> {
     return
   }
   // 发送同步请求
-  await NoteSync(plugin)
+  NoteSync(plugin)
   // 等待接收结束信号
   while (plugin.websocket.isSyncAllFilesInProgress) {
     // 这些 dump 是调试输出，若会展示给用户请改为 sentence case 的用户提示或移除
@@ -166,7 +166,7 @@ export async function syncAllFilesImpl(plugin: FastSync): Promise<void> {
   }
   plugin.settings.lastSyncTime = 0
   await plugin.saveData(plugin.settings)
-  await NoteSync(plugin, localNotes)
+  NoteSync(plugin, localNotes)
 }
 
 // 同步包装：供 addCommand 使用，返回 void（命令回调类型安全）
@@ -181,7 +181,7 @@ interface NoteSyncCheck {
   mtime: number
 }
 
-export const NoteSync = async function (plugin: FastSync, notes: NoteSyncCheck[] = []) {
+export const NoteSync = function (plugin: FastSync, notes: NoteSyncCheck[] = []) {
   while (plugin.websocket.isSyncAllFilesInProgress) {
     new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
     return
@@ -192,7 +192,7 @@ export const NoteSync = async function (plugin: FastSync, notes: NoteSyncCheck[]
     lastTime: Number(plugin.settings.lastSyncTime),
     notes: notes
   }
-  await plugin.websocket.MsgSend("NoteSync", data)
+  plugin.websocket.MsgSend("NoteSync", data)
   dump("Notesync", data)
   plugin.websocket.isSyncAllFilesInProgress = true
 }
@@ -281,7 +281,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveData, plugin: Fas
   plugin.settings.lastSyncTime = data.lastTime
   await plugin.saveData(plugin.settings)
   plugin.websocket.isSyncAllFilesInProgress = false
-  await plugin.websocket.FlushQueue()
+  plugin.websocket.FlushQueue()
 }
 
 type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void

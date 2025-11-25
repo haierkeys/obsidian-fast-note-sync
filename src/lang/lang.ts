@@ -81,20 +81,69 @@ const locale = localeMap[moment.locale()];
 //     return new Function(...names, `return \`${str}\`;`)(...vals);
 // }
 
-function interpolate(str: string, params: Record<string, unknown>): string {
-    return str.replace(/\$\{([^}]+)\}/g, (_, key) => {
-        // trim key 以支持 ${ key } 的写法
+type InterpolateOptions = {
+    // 当值为对象/数组时是否使用 JSON.stringify，否则使用 String(val)
+    serializeObjects?: boolean;
+    // 当对象序列化失败时返回的占位符
+    fallbackForObject?: string;
+    // 未找到键时是否保留原占位符（true）或返回空字符串（false）
+    preserveUnmatched?: boolean;
+    // 当值是函数时是否调用函数（并使用其返回值），否则使用 String(val)
+    callFunction?: boolean;
+};
+
+function interpolate(
+    str: string,
+    params: Record<string, unknown>,
+    opts: InterpolateOptions = {}
+): string {
+    const {
+        serializeObjects = true,
+        fallbackForObject = "[Object]",
+        preserveUnmatched = false,
+        callFunction = false,
+    } = opts;
+
+    return str.replace(/\$\{([^}]+)\}/g, (match, key) => {
         const k = key.trim();
-        // 如果参数不存在，这里返回空字符串或保留原占位符，视需要而定
-        if (Object.prototype.hasOwnProperty.call(params, k)) {
-            const val = params[k];
-            // 将 null/undefined 转为空字符串，其他类型转为字符串
-            return val == null ? "" : String(val);
+        if (!Object.prototype.hasOwnProperty.call(params, k)) {
+            return preserveUnmatched ? match : "";
         }
-        // 如果未找到键，保留占位符（或返回空字符串/抛错）
-        return "";
+
+        const val = params[k];
+        if (val == null) return "";
+
+        const t = typeof val;
+        if (t === "object") {
+            if (!serializeObjects) return String(val);
+            try {
+                return JSON.stringify(val);
+            } catch {
+                return fallbackForObject;
+            }
+        }
+
+        if (t === "function") {
+            if (callFunction) {
+                try {
+                    // @ts-ignore allow calling unknown function
+                    const res = (val as Function)();
+                    return res == null ? "" : String(res);
+                } catch {
+                    return "";
+                }
+            }
+            return String(val);
+        }
+
+        if (t === "symbol") {
+            return String(val);
+        }
+
+        return String(val);
     });
 }
+
 
 export function $(str: keyof typeof en, params?: Record<string, unknown>): string {
 

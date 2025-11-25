@@ -53,15 +53,15 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
       const vault = "vault" in parsedData
 
       if (hasApi && hasApiToken && vault) {
-        clipboardReadTipSave(parsedData.api, parsedData.apiToken, parsedData.vault, $("接口配置信息已经粘贴到设置中!"))
+        void clipboardReadTipSave(parsedData.api, parsedData.apiToken, parsedData.vault, $("接口配置信息已经粘贴到设置中!"))
         return
       }
     }
-    clipboardReadTipTipSave($("未检测到配置信息!"))
+    void clipboardReadTipTipSave($("未检测到配置信息!"))
     return
   } catch (err) {
     dump(err)
-    clipboardReadTipTipSave($("未检测到配置信息!"))
+    void clipboardReadTipTipSave($("未检测到配置信息!"))
     return
   }
 }

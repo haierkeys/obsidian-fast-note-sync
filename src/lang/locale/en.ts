@@ -33,4 +33,6 @@ export default <lang>{
   "复制 Debug 信息": "Copy debug information",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copy debug information to the clipboard, may contain sensitive information!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "By using the shortcut key to open the console, you can see the logs of this plugin and other plugins.",
+  "console_mac": "Cmd (⌘) + Option (⌥) + I",
+  "console_windows": "Ctrl (⌃) + Shift (⇧) + I",
 }

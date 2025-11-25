@@ -179,9 +179,9 @@ export class SettingTab extends PluginSettingTab {
       const keys = debugDiv.createDiv()
       keys.addClass("custom-shortcuts")
       if (Platform.isMacOS === true) {
-        keys.createEl("kbd", { text: "Cmd (⌘) + Option (⌥) + I" })
+        keys.createEl("kbd", { text: $("console_mac") })
       } else {
-        keys.createEl("kbd", { text: "Ctrl + Shift + I" })
+        keys.createEl("kbd", { text: $("console_windows") })
       }
     }
   }
