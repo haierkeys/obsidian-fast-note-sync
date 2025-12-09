@@ -1,12 +1,17 @@
 name: Build plugin
 
+# 触发条件配置
 on:
   push:
-    tags:
-      - "*"
+    # 针对 master 分支的普通提交也触发
+    branches:
+      - "master"
+# 权限配置：允许脚本写入仓库内容（用于发布 Release）
+permissions:
+  contents: write
 
 env:
-  PLUGIN_NAME: fast-note-sync
+  NAME: ${{ github.event.repository.name }}
 
 jobs:
   build:
@@ -14,6 +19,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 获取所有历史记录，为了确保能获取到 git tags
+          fetch-depth: 0 # Required to fetch tags
+
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
@@ -24,63 +33,82 @@ jobs:
           node-version-file: ".node-version"
           cache: "pnpm"
 
+      # 核心逻辑：检查版本号变更
+      - name: Check Version
+        id: check_version
+        run: |
+          # 如果是 master 分支触发
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            echo "Triggered by master branch. Checking for version bump..."
+
+            # 获取上一个 commit 的版本号
+            LAST_VERSION=$(git show HEAD~1:manifest.json | jq -r .version)
+
+            # 从 manifest.json 中读取当前版本号
+            CURRENT_VERSION=$(jq -r .version manifest.json)
+
+            echo "Last Version: $LAST_VERSION"
+            echo "Current Version: $CURRENT_VERSION"
+
+            # 对比版本号
+            if [ "$LAST_VERSION" = "$CURRENT_VERSION" ]; then
+               echo "Version has not changed. Skipping."
+               # 输出变量 should_release = false，后续步骤会通过 if 判断跳过
+               echo "should_release=false" >> $GITHUB_OUTPUT
+            else
+               # check if current > last
+               # 使用 sort -V 进行版本号大小比较
+               # 取较大值
+               HIGHER_VERSION=$(echo -e "$LAST_VERSION\n$CURRENT_VERSION" | sort -V | tail -n 1)
+               if [ "$HIGHER_VERSION" = "$CURRENT_VERSION" ]; then
+                   echo "New version detected!"
+                   # 确认需要发布
+                   echo "should_release=true" >> $GITHUB_OUTPUT
+                   # 设置发布的 tag 名称为当前版本号
+                   echo "release_tag=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+                   # Create tag locally so we can push it later (or just use Release API to tag)
+                   # Since we use create-release action using 'tag_name', it often expects the tag to exist or it creates it.
+                   # Let's rely on create-release to create the tag if we pass a tag name that doesn't exist?
+                   # Actually actions/create-release usually creates a release object which creates the git tag.
+               else
+                   echo "Current version $CURRENT_VERSION is lower than $LAST_VERSION. Skipping."
+                   echo "should_release=false" >> $GITHUB_OUTPUT
+               fi
+            fi
+          else
+            # 如果是 tag 触发 (手动打 tag 推送)
+            echo "Triggered by tag ${{ github.ref }}. Proceeding with release."
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "release_tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build
         id: build
+        # 只有在 check_version 步骤输出 should_release 为 true 时才执行
+        if: steps.check_version.outputs.should_release == 'true'
         run: |
           pnpm install
           pnpm run build
-          mkdir ${{ env.PLUGIN_NAME }}
-          cp main.js manifest.json styles.css ${{ env.PLUGIN_NAME }}
-          zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
+          mkdir ${{ env.NAME }}
+          cp main.js manifest.json styles.css ${{ env.NAME }}
+          zip -r ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip ${{ env.NAME }}
           ls
-          echo "::set-output name=tag_name::$(git tag --sort version:refname | tail -n 1)"
+          # 设置输出变量 tag_name
+          echo "tag_name=${{ steps.check_version.outputs.release_tag }}" >> $GITHUB_OUTPUT
+
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.check_version.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ steps.check_version.outputs.release_tag }}
+          name: ${{ steps.check_version.outputs.release_tag }}
           draft: false
           prerelease: false
-      - name: Upload zip file
-        id: upload-zip
-        uses: actions/upload-release-asset@v1
+          files: |
+            ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
+            main.js
+            manifest.json
+            styles.css
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ env.PLUGIN_NAME }}.zip
-          asset_name: ${{ env.PLUGIN_NAME }}-${{ steps.build.outputs.tag_name }}.zip
-          asset_content_type: application/zip
-      - name: Upload main.js
-        id: upload-main
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./main.js
-          asset_name: main.js
-          asset_content_type: text/javascript
-      - name: Upload manifest.json
-        id: upload-manifest
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./manifest.json
-          asset_name: manifest.json
-          asset_content_type: application/json
-      - name: Upload styles.css
-        id: upload-css
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./styles.css
-          asset_name: styles.css
-          asset_content_type: application/json

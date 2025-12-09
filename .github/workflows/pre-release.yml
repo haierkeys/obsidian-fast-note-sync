@@ -1,0 +1,112 @@
+name: Pre-release Build
+
+# 触发条件配置
+on:
+  push:
+
+    branches-ignore:
+      - "master" # 明确忽略 master，由 release.yml 处理
+
+# 权限配置
+permissions:
+  contents: write # 需要写入权限以创建 Release
+
+env:
+  NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 获取所有历史记录，为了确保能获取到 git tags 和其他分支
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+          cache: "pnpm"
+
+      # 核心逻辑：检查版本号变更 (Branch vs Master)
+      - name: Check Version
+        id: check_version
+        run: |
+            echo "Current Ref: ${{ github.ref }}"
+            BRANCH_NAME=${{ github.ref_name }}
+            echo "Triggered by branch: $BRANCH_NAME. Checking against master..."
+
+            # 确保 fetch 了 origin/master
+            git fetch origin master
+
+            # 读取当前分支的 version
+            CURRENT_VERSION=$(jq -r .version manifest.json)
+
+            # 读取 master 分支的 version
+            # 使用 git show origin/master:manifest.json 提取内容并用 jq 解析
+            MASTER_VERSION=$(git show origin/master:manifest.json | jq -r .version)
+
+            echo "Branch Logic -> Master Version: $MASTER_VERSION, Current Version: $CURRENT_VERSION"
+
+            if [ "$MASTER_VERSION" = "$CURRENT_VERSION" ]; then
+               echo "Version equals to master. Skipping."
+               echo "should_release=false" >> $GITHUB_OUTPUT
+            else
+               # 比较是否大于 master
+               HIGHER_VERSION=$(echo -e "$MASTER_VERSION\n$CURRENT_VERSION" | sort -V | tail -n 1)
+               if [ "$HIGHER_VERSION" = "$CURRENT_VERSION" ]; then
+                   echo "New version detected on branch!"
+                   echo "should_release=true" >> $GITHUB_OUTPUT
+                   echo "release_tag=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+               else
+                   echo "Current version $CURRENT_VERSION is not greater than master ($MASTER_VERSION). Skipping."
+                   echo "should_release=false" >> $GITHUB_OUTPUT
+               fi
+            fi
+
+      - name: Build
+        id: build
+        if: steps.check_version.outputs.should_release == 'true'
+        run: |
+          pnpm install
+          pnpm run build
+          mkdir ${{ env.NAME }}
+          cp main.js manifest.json styles.css ${{ env.NAME }}
+          zip -r ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip ${{ env.NAME }}
+          ls
+          echo "tag_name=${{ steps.check_version.outputs.release_tag }}" >> $GITHUB_OUTPUT
+
+      # 使用 actions/upload-artifact 上传构建产物，而不是创建 Release Tag
+      # 这样可以在 Action 页面下载 zip，而不会污染 git tags
+      - name: Upload Artifact
+        if: steps.check_version.outputs.should_release == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}-${{ steps.check_version.outputs.release_tag }}
+          path: |
+            ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
+            main.js
+            manifest.json
+            styles.css
+
+      - name: Create Pre-release
+        if: steps.check_version.outputs.should_release == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "${{ steps.check_version.outputs.release_tag }}-alpha"
+          name: "${{ steps.check_version.outputs.release_tag }}-alpha"
+          draft: false
+          prerelease: true
+          files: |
+            ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
+            main.js
+            manifest.json
+            styles.css
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
