@@ -32,6 +32,8 @@ const en: Partial<LangMap> = {
   "Buy me a coffee at ko-fi.com": "Buy me a coffee at ko-fi.com",
   "复制 Debug 信息": "Copy debug information",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copy debug information to the clipboard, may contain sensitive information!",
+  "开启日志": "Enable debug log",
+  "开启后将在控制台打印日志": "Enable to print logs in the console",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "By using the shortcut key to open the console, you can see the logs of this plugin and other plugins.",
   "console_mac": "Cmd (⌘) + option (⌥) + i",
   "console_windows": "Ctrl (⌃) + shift (⇧) + i",

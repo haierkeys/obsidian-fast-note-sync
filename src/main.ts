@@ -3,6 +3,7 @@ import { Plugin, setIcon } from "obsidian";
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { WebSocketClient } from "./lib/websocket";
+import { setLogEnabled } from "./lib/helps";
 import { $ } from "./lang/lang";
 
 
@@ -59,6 +60,7 @@ export default class FastSync extends Plugin {
       this.websocket.register((status) => this.updateRibbonIcon(status))
       this.isWatchEnabled = true
       this.ignoredFiles = new Set()
+      setLogEnabled(this.settings.logEnabled)
     } else {
       this.websocket.unRegister()
       this.isWatchEnabled = false
@@ -138,6 +140,7 @@ export default class FastSync extends Plugin {
       this.websocket.unRegister()
       this.isWatchEnabled = false
     }
+    setLogEnabled(this.settings.logEnabled)
     await this.saveData(this.settings)
   }
 }

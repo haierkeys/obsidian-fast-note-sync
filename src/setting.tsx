@@ -10,6 +10,8 @@ import FastSync from "./main";
 export interface PluginSettings {
   //是否自动上传
   syncEnabled: boolean
+  // 是否开启日志
+  logEnabled: boolean
   //API地址
   api: string
   wsApi: string
@@ -33,6 +35,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
   // 是否自动上传
   syncEnabled: true,
+  logEnabled: false,
   // API 网关地址
   api: "",
   wsApi: "",
@@ -151,11 +154,22 @@ export class SettingTab extends PluginSettingTab {
       .createEl("img", {
         attr: { src: KofiImage, height: "36", border: "0", alt: "Buy me a coffee at ko-fi.com", class: "ko-fi-logo" },
       })
-
+    new Setting(set)
+      .setName($("开启日志"))
+      .setDesc($("开启后将在控制台打印日志"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
+          this.plugin.settings.logEnabled = value
+          await this.plugin.saveSettings()
+        })
+      )
     const debugDiv = set.createDiv()
     debugDiv.addClass("fast-note-sync-settings-debug")
 
     const debugButton = debugDiv.createEl("button")
+
+
+
     debugButton.setText($("复制 Debug 信息"))
     debugButton.onclick = async () => {
       await window.navigator.clipboard.writeText(
