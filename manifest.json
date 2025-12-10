@@ -1,7 +1,7 @@
 {
   "id": "fast-note-sync",
   "name": "Fast Note Sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.6.5",
   "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
   "author": "HaierKeys",
