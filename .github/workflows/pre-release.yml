@@ -3,7 +3,6 @@ name: Pre-release Build
 # 触发条件配置
 on:
   push:
-
     branches-ignore:
       - "master" # 明确忽略 master，由 release.yml 处理
 
@@ -100,6 +99,7 @@ jobs:
           name: "${{ steps.check_version.outputs.release_tag }}-alpha"
           draft: false
           prerelease: true
+          target_commitish: ${{ github.sha }} # 明确指定在当前分支的 commit 上创建 tag
           files: |
             ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
             main.js
