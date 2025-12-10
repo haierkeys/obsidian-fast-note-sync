@@ -276,7 +276,7 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     fileLastTime = Number(plugin.settings.lastFileSyncTime)
     noteLastTime = Number(plugin.settings.lastNoteSyncTime)
   }
-  SyncRequestSend(plugin, noteLastTime, fileLastTime, [], [])
+  SyncRequestSend(plugin, noteLastTime, fileLastTime, notes, files)
 }
 
 
@@ -464,6 +464,8 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     }
     downloadUrl = baseUrl + downloadUrl
   }
+
+  dump("Download URL:", downloadUrl)
 
   // Use fetch to download
   try {

@@ -38,7 +38,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   wsApi: "",
   // API 令牌
   apiToken: "",
-  lastSyncTime: 0,
+  lastNoteSyncTime: 0,
+  lastFileSyncTime: 0,
   vault: "defaultVault",
   // 剪贴板读取提示
   clipboardReadTip: "",

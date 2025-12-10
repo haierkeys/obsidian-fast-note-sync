@@ -74,7 +74,7 @@ export const showErrorDialog = function (message: string): void {
  * @param message - 要打印的消息，可以是多个参数
  */
 export const dump = function (...message: unknown[]): void {
-  console.log(...message)
+  // console.log(...message)
 }
 
 
