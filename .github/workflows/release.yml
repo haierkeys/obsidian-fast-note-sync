@@ -20,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.ref }} # 明确 checkout 触发 workflow 的分支
           # 获取所有历史记录，为了确保能获取到 git tags
           fetch-depth: 0 # Required to fetch tags
 

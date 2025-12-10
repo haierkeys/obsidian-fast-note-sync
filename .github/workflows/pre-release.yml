@@ -20,6 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.ref }} # 明确 checkout 触发 workflow 的分支
           # 获取所有历史记录，为了确保能获取到 git tags
           fetch-depth: 0 # Required to fetch tags
 
@@ -34,7 +35,12 @@ jobs:
       - name: Check Version
         id: check_version
         run: |
+            echo "=== Debug: Git Status ==="
             echo "Current Ref: ${{ github.ref }}"
+            echo "Current SHA: ${{ github.sha }}"
+            git branch -v
+            git log -1 --oneline
+            echo "========================="
             BRANCH_NAME=${{ github.ref_name }}
             echo "Triggered by branch: $BRANCH_NAME. Checking against master..."
 
@@ -70,6 +76,13 @@ jobs:
         id: build
         if: steps.check_version.outputs.should_release == 'true'
         run: |
+          echo "=== Debug: Build Environment ==="
+          git branch -v
+          git log -1 --oneline
+          echo "manifest.json version:"
+          jq -r .version manifest.json
+          echo "================================"
+
           pnpm install
           pnpm run build
           mkdir ${{ env.NAME }}
