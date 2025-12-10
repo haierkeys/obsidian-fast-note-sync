@@ -1,35 +1,29 @@
 import { Plugin, setIcon } from "obsidian";
 
-import { NoteModify, NoteDelete, NoteRename, StartupFullNotesForceOverSync, StartupFullNotesSync } from "./lib/fs";
+import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { WebSocketClient } from "./lib/websocket";
 import { $ } from "./lang/lang";
 
-
-interface SyncSkipFiles {
-  [key: string]: string
-}
-interface EditorChangeTimeout {
-  [key: string]: unknown
-}
 
 export default class FastSync extends Plugin {
   settingTab: SettingTab
   wsSettingChange: boolean
   settings: PluginSettings
   websocket: WebSocketClient
-  syncSkipFiles: SyncSkipFiles = {}
-  syncSkipDelFiles: SyncSkipFiles = {}
-  syncSkipModifyFiles: SyncSkipFiles = {}
   clipboardReadTip: string = ""
-
-  editorChangeTimeout: EditorChangeTimeout = {}
 
   ribbonIcon: HTMLElement
   ribbonIconStatus: boolean = false
 
   isWatchEnabled: boolean = false
   ignoredFiles: Set<string> = new Set()
+
+  syncTypeCompleteCount: number = 0
+
+  getWatchEnabled(): boolean {
+    return this.isWatchEnabled
+  }
 
   enableWatch() {
     this.isWatchEnabled = true
@@ -49,7 +43,6 @@ export default class FastSync extends Plugin {
 
 
   async onload() {
-    this.syncSkipFiles = {}
 
     await this.loadSettings()
     this.settingTab = new SettingTab(this.app, this)
@@ -59,43 +52,56 @@ export default class FastSync extends Plugin {
 
     // Create Ribbon Icon once
     this.ribbonIcon = this.addRibbonIcon("loader-circle", "Fast Sync: " + $("同步全部笔记"), () => {
-      StartupFullNotesSync(this)
+      StartupSync(this)
     })
 
-    this.websocket.isSyncAllFilesInProgress = false
     if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
       this.websocket.register((status) => this.updateRibbonIcon(status))
+      this.isWatchEnabled = true
       this.ignoredFiles = new Set()
-      //2333
     } else {
       this.websocket.unRegister()
+      this.isWatchEnabled = false
       this.ignoredFiles = new Set()
     }
-
-    // 注册文件事件
-    this.registerEvent(this.app.vault.on("create", (file) => NoteModify(file, this, true)))
-    this.registerEvent(this.app.vault.on("modify", (file) => NoteModify(file, this, true)))
-    this.registerEvent(this.app.vault.on("delete", (file) => NoteDelete(file, this, true)))
-    this.registerEvent(this.app.vault.on("rename", (file, oldfile) => NoteRename(file, oldfile, this, true)))
+    //
+    this.registerEvent(this.app.vault.on("create", (file) => {
+      NoteModify(file, this, true)
+      FileModify(file, this, true)
+    }))
+    this.registerEvent(this.app.vault.on("modify", (file) => {
+      NoteModify(file, this, true)
+      FileModify(file, this, true)
+    }))
+    this.registerEvent(this.app.vault.on("delete", (file) => {
+      NoteDelete(file, this, true)
+      FileDelete(file, this, true)
+    }))
+    this.registerEvent(this.app.vault.on("rename", (file, oldfile) => {
+      NoteRename(file, oldfile, this, true)
+      FileRename(file, oldfile, this, true)
+    }))
 
     // 注册命令
     this.addCommand({
-      id: "init-all-files",
-      name: $("同步全部笔记(覆盖远端)"),
-      callback: () => StartupFullNotesForceOverSync(this),
+      id: "start-sync",
+      name: $("同步全部笔记"),
+      callback: () => StartupSync(this),
     })
 
     this.addCommand({
-      id: "sync-all-files",
-      name: $("同步全部笔记"),
-      callback: () => StartupFullNotesSync(this),
+      id: "start-full-sync",
+      name: $("同步全部笔记(完整比对)"),
+      callback: () => StartupFullSync(this),
     })
+
   }
 
   onunload() {
     // 取消注册文件事件
-    this.websocket.isSyncAllFilesInProgress = false
     this.websocket.unRegister()
+    this.ignoredFiles = new Set()
+    this.isWatchEnabled = false
   }
 
   updateRibbonIcon(status: boolean) {
@@ -113,8 +119,10 @@ export default class FastSync extends Plugin {
   }
 
   async saveSettings() {
-    this.websocket.isSyncAllFilesInProgress = false
     if (this.settings.api && this.settings.apiToken) {
+      this.settings.api = this.settings.api
+        .replace(/\/+$/, '') // 去除尾部斜杠
+
       this.settings.wsApi = this.settings.api
         .replace(/^http/, "ws")
         .replace(/\/+$/, '') // 去除尾部斜杠
@@ -124,11 +132,11 @@ export default class FastSync extends Plugin {
       if (this.wsSettingChange) {
         this.websocket.unRegister()
         this.websocket.register((status) => this.updateRibbonIcon(status))
-        this.wsSettingChange = false
       }
-
+      this.isWatchEnabled = true
     } else {
       this.websocket.unRegister()
+      this.isWatchEnabled = false
     }
     await this.saveData(this.settings)
   }

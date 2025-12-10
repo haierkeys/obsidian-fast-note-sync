@@ -1,6 +1,6 @@
 import { Notice, moment } from "obsidian";
 
-import { syncReceiveMethodHandlers, StartupFullNotesSync } from "./fs";
+import { syncReceiveMethodHandlers, StartupSync, StartupFullSync } from "./fs";
 import { dump, isWsUrl } from "./helps";
 import FastSync from "../main";
 
@@ -21,9 +21,8 @@ export class WebSocketClient {
   public timeConnect = 0
   public count = 0
   //同步全部文件时设置
-  public isSyncAllFilesInProgress: boolean = false
+
   public isRegister: boolean = false
-  private messageQueue: { action: string; data: object | string }[] = []
   private onStatusChange?: (status: boolean) => void
 
   constructor(plugin: FastSync) {
@@ -89,7 +88,6 @@ export class WebSocketClient {
           } else {
             this.isAuth = true
             dump("Service authorization success")
-            this.FlushQueue()
             this.StartHandle()
           }
         }
@@ -134,7 +132,8 @@ export class WebSocketClient {
     }
   }
   public StartHandle() {
-    StartupFullNotesSync(this.plugin)
+    dump("Service start handle")
+    StartupFullSync(this.plugin)
   }
 
   public OnlineStatusCheck() {
@@ -148,10 +147,9 @@ export class WebSocketClient {
     }, CONNECTION_CHECK_INTERVAL)
   }
 
-  public MsgSend(action: string, data: object | string, isSync: boolean = false) {
-    if (!this.isAuth || (this.isSyncAllFilesInProgress && !isSync)) {
+  public MsgSend(action: string, data: object | string) {
+    if (!this.isAuth) {
       dump(`Service not ready or sync in progress, queuing message: ${action}`)
-      this.messageQueue.push({ action, data })
       return
     }
     this.Send(action, data)
@@ -160,7 +158,6 @@ export class WebSocketClient {
   public Send(action: string, data: object | string) {
     if (this.ws.readyState !== WebSocket.OPEN) {
       dump(`Service not connected, queuing message: ${action}`)
-      this.messageQueue.push({ action, data })
       return
     }
 
@@ -172,16 +169,12 @@ export class WebSocketClient {
     }
   }
 
-  public FlushQueue() {
-    if (this.messageQueue.length === 0) return
-
-    dump(`Flushing ${this.messageQueue.length} queued messages`)
-    while (this.messageQueue.length > 0) {
-      const msg = this.messageQueue.shift()
-      dump(`Flushing message: `, msg)
-      if (msg) {
-        this.Send(msg.action, msg.data)
-      }
+  public SendBinary(data: ArrayBuffer | Uint8Array) {
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      dump(`Service not connected, discarding binary message`)
+      return
     }
+    this.ws.send(data)
   }
+
 }

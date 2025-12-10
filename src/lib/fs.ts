@@ -1,16 +1,15 @@
-import { TFile, TAbstractFile, Notice } from "obsidian";
+import { TFile, TAbstractFile, Notice, Setting, requestUrl } from "obsidian";
 
-import { hashContent, dump } from "./helps";
+import { hashContent, hashArrayBuffer, dump, isHttpUrl } from "./helps";
 import FastSync from "../main";
 
 
-/**
- 消息推送操作方法 Message Push Operation Method
- */
+/* -------------------------------- Note 推送相关 ------------------------------------------------ */
 
+// NoteModify 消息推送
 export const NoteModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
-  if (!plugin.isWatchEnabled && eventEnter) {
+  if (!plugin.getWatchEnabled() && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -42,9 +41,11 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync,
 }
 
 
+// NoteDelete 消息推送
+
 export const NoteDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
-  if (!plugin.isWatchEnabled && eventEnter) {
+  if (!plugin.getWatchEnabled() && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -64,7 +65,7 @@ export const NoteDelete = function (file: TAbstractFile, plugin: FastSync, event
 
 export const NoteRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
-  if (!plugin.isWatchEnabled && eventEnter) {
+  if (!plugin.getWatchEnabled() && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -110,110 +111,190 @@ export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
 }
 
 
+/* -------------------------------- File 推送相关 ------------------------------------------------ */
+
+export const FileModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+  if (file.path.endsWith(".md")) return
+  if (!plugin.getWatchEnabled() && eventEnter) {
+    return
+  }
+  if (plugin.ignoredFiles.has(file.path) && eventEnter) {
+    return
+  }
+  if (!(file instanceof TFile)) {
+    return
+  }
+
+  plugin.addIgnoredFile(file.path)
+
+  const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+  const contentHash = hashArrayBuffer(content)
+
+  const data = {
+    vault: plugin.settings.vault,
+    path: file.path,
+    pathHash: hashContent(file.path),
+    contentHash: contentHash,
+    mtime: file.stat.mtime,
+    ctime: file.stat.ctime,
+    size: file.stat.size
+  }
+  plugin.websocket.MsgSend("FileUploadCheck", data)
+  dump(`File modify check sent`, data.path, data.contentHash)
+  plugin.removeIgnoredFile(file.path)
+}
+
+export const FileDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+  if (file.path.endsWith(".md")) return
+  if (!plugin.getWatchEnabled() && eventEnter) {
+    return
+  }
+  if (plugin.ignoredFiles.has(file.path) && eventEnter) {
+    return
+  }
+  if (!(file instanceof TFile)) {
+    return
+  }
+
+  plugin.addIgnoredFile(file.path)
+
+  FileDeleteByPath(file.path, plugin)
+  dump(`File delete send`, file.path)
+
+  plugin.removeIgnoredFile(file.path)
+}
+
+export const FileRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
+  if (file.path.endsWith(".md")) return
+  if (!plugin.getWatchEnabled() && eventEnter) {
+    return
+  }
+  if (plugin.ignoredFiles.has(file.path) && eventEnter) {
+    return
+  }
+  if (!(file instanceof TFile)) {
+    return
+  }
+
+  plugin.addIgnoredFile(file.path)
+
+  await FileModify(file, plugin, false)
+  dump(`File rename modify send`, file.path)
+
+  FileDeleteByPath(oldfile, plugin)
+  dump(`File rename delete send`, oldfile)
+
+  plugin.removeIgnoredFile(file.path)
+}
+
+export const FileDeleteByPath = function (path: string, plugin: FastSync) {
+  if (path.endsWith(".md")) return
+  const data = {
+    vault: plugin.settings.vault,
+    path: path,
+    pathHash: hashContent(path),
+  }
+  plugin.websocket.MsgSend("FileDelete", data)
+}
+
+
+
+
+
 /**
-  调用动作操作方法  Invoke action operation method
+  本地文件快照数据
  */
 
-// 异步实现：保留原始逻辑，返回 Promise<void>
-export async function overrideRemoteAllFilesImpl(plugin: FastSync): Promise<void> {
-  if (plugin.websocket.isSyncAllFilesInProgress) {
-    // Notice 文本使用 sentence case
-    new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
-    return
-  }
-
-  const localNotes: NoteSyncCheck[] = []
-  const files = plugin.app.vault.getMarkdownFiles()
-  for (const file of files) {
-    const content: string = await plugin.app.vault.cachedRead(file)
-    localNotes.push({
-      path: file.path,
-      pathHash: hashContent(file.path),
-      contentHash: hashContent(content),
-      mtime: file.stat.mtime,
-    })
-  }
-  plugin.settings.lastSyncTime = 0
-  await plugin.saveData(plugin.settings)
-  NoteSync(plugin, localNotes)
-}
-
-// 同步包装：供 addCommand 使用，返回 void（命令回调类型安全）
-export const StartupFullNotesForceOverSync = (plugin: FastSync): void => {
-  void overrideRemoteAllFilesImpl(plugin)
-}
-
-// 异步实现：保留原始逻辑，返回 Promise<void>
-export async function syncAllFilesImpl(plugin: FastSync): Promise<void> {
-  if (plugin.websocket.isSyncAllFilesInProgress) {
-    new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
-    return
-  }
-
-  // 发送同步请求
-  NoteSync(plugin)
-  // 等待接收结束信号
-  while (plugin.websocket.isSyncAllFilesInProgress) {
-    // 这些 dump 是调试输出，若会展示给用户请改为 sentence case 的用户提示或移除
-    dump("Waiting for receive notesync end.")
-    if (!plugin.websocket.isRegister) {
-      dump("Plugin websocket is not register, return.")
-      return
-    }
-    dump("Loop, waiting...")
-    await sleep(2000) // 每隔两秒重试一次
-  }
-  const localNotes: NoteSyncCheck[] = []
-  const files = plugin.app.vault.getMarkdownFiles()
-  for (const file of files) {
-    const content: string = await plugin.app.vault.cachedRead(file)
-    localNotes.push({
-      path: file.path,
-      pathHash: hashContent(file.path),
-      contentHash: hashContent(content),
-      mtime: file.stat.mtime,
-    })
-  }
-  plugin.settings.lastSyncTime = 0
-  await plugin.saveData(plugin.settings)
-  NoteSync(plugin, localNotes)
-}
-
-// 同步包装：供 addCommand 使用，返回 void（命令回调类型安全）
-export const StartupFullNotesSync = (plugin: FastSync): void => {
-  void syncAllFilesImpl(plugin)
-}
-
-interface NoteSyncCheck {
+interface SnapFile {
   path: string
   pathHash: string
   contentHash: string
   mtime: number
 }
 
-export const NoteSync = function (plugin: FastSync, notes: NoteSyncCheck[] = []) {
-  while (plugin.websocket.isSyncAllFilesInProgress) {
-    new Notice("上一次的全部笔记同步尚未完成，请耐心等待或检查服务端状态")
+export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = []) {
+
+  const noteSyncData = {
+    vault: plugin.settings.vault,
+    lastTime: noteLastTime,
+    notes: notes,
+  }
+  plugin.websocket.MsgSend("NoteSync", noteSyncData)
+  dump("Notesync", noteSyncData)
+
+  const fileSyncData = {
+    vault: plugin.settings.vault,
+    lastTime: fileLastTime,
+    files: files
+  }
+  plugin.websocket.MsgSend("FileSync", fileSyncData)
+  dump("FileSync", fileSyncData)
+
+}
+
+export const StartSync = async function (plugin: FastSync, isLoadLastTime: boolean = false) {
+  while (!plugin.getWatchEnabled()) {
+    new Notice("上一次的全部同步尚未完成，请耐心等待或检查服务端状态")
     return
   }
 
+  plugin.syncTypeCompleteCount = 0
   plugin.disableWatch()
 
-  const data = {
-    vault: plugin.settings.vault,
-    lastTime: Number(plugin.settings.lastSyncTime),
-    notes: notes
+  const notes: SnapFile[] = [], files: SnapFile[] = [];
+  const list = plugin.app.vault.getFiles()
+  for (const file of list) {
+
+    if (file.extension === "md") {
+      // 同步笔记
+      if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) {
+        continue
+      }
+      const content: string = await plugin.app.vault.cachedRead(file)
+      notes.push({
+        path: file.path,
+        pathHash: hashContent(file.path),
+        contentHash: hashContent(content),
+        mtime: file.stat.mtime,
+      })
+    } else {
+      // 同步文件
+      if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) {
+        continue
+      }
+      const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+      files.push({
+        path: file.path,
+        pathHash: hashContent(file.path),
+        contentHash: hashArrayBuffer(content),
+        mtime: file.stat.mtime,
+      })
+    }
   }
-  plugin.websocket.MsgSend("NoteSync", data)
-  dump("Notesync", data)
-  plugin.websocket.isSyncAllFilesInProgress = true
+  let fileLastTime = 0, noteLastTime = 0
+  if (isLoadLastTime) {
+    fileLastTime = Number(plugin.settings.lastFileSyncTime)
+    noteLastTime = Number(plugin.settings.lastNoteSyncTime)
+  }
+  SyncRequestSend(plugin, noteLastTime, fileLastTime, [], [])
 }
 
-/**
-  消息接收操作方法  Message receiving methods
- */
 
-interface ReceiveData {
+// 同步
+export const StartupSync = (plugin: FastSync): void => {
+  void StartSync(plugin, true)
+}
+
+// 忽略上一次同步时间，强制同步
+export const StartupFullSync = (plugin: FastSync): void => {
+  void StartSync(plugin)
+}
+//
+
+/* -------------------------------- 消息接收操作方法  Message receiving methods ------------------------------------------------ */
+
+
+interface ReceiveMessage {
   vault: string
   path: string
   pathHash: string
@@ -224,15 +305,42 @@ interface ReceiveData {
   mtime: number
   lastTime: number
 }
+interface ReceiveFileSyncUpdateMessage {
+  path: string
+  vault: string
+  pathHash: string
+  contentHash: string
+  savePath: string
+  size: number
+  mtime: number
+  ctime: number
+  lastTime: number
+}
 
-interface ReceiveCheckData {
+interface FileUploadMessage {
+  path: string
+  ctime: number
+  mtime: number
+  sessionId: string
+  chunkSize: number
+}
+
+
+interface ReceiveMtimeMessage {
   path: string
   ctime: number
   mtime: number
 }
 
+interface ReceivePathMessage {
+  path: string
+}
+
+
+
+
 // ReceiveNoteModify 接收文件修改
-export const ReceiveNoteSyncModify = async function (data: ReceiveData, plugin: FastSync) {
+export const ReceiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive note modify:`, data.action, data.path, data.contentHash, data.mtime, data.pathHash)
 
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -247,12 +355,14 @@ export const ReceiveNoteSyncModify = async function (data: ReceiveData, plugin: 
     }
     await plugin.app.vault.create(data.path, data.content, { ctime: data.ctime, mtime: data.mtime })
   }
+  plugin.settings.lastNoteSyncTime = data.lastTime
+  await plugin.saveData(plugin.settings)
   plugin.removeIgnoredFile(data.path)
 }
 
 // ReceiveNoteSyncNeed 接收处理需要上传需求
-export const ReceiveNoteSyncNeedPush = async function (data: ReceiveCheckData, plugin: FastSync) {
-  dump(`Receive note need push:`, data.path, data.mtime)
+export const ReceiveNoteSyncNeedPush = async function (data: ReceivePathMessage, plugin: FastSync) {
+  dump(`Receive note need push:`, data.path)
   const file = plugin.app.vault.getFileByPath(data.path)
   if (file) {
     await NoteModify(file, plugin, false)
@@ -260,7 +370,7 @@ export const ReceiveNoteSyncNeedPush = async function (data: ReceiveCheckData, p
 }
 
 // ReceiveNoteSyncNeedMtime 接收需求修改mtime
-export const ReceiveNoteSyncMtime = async function (data: ReceiveCheckData, plugin: FastSync) {
+export const ReceiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   dump(`Receive note sync mtime:`, data.path, data.mtime)
 
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -273,7 +383,7 @@ export const ReceiveNoteSyncMtime = async function (data: ReceiveCheckData, plug
 }
 
 // 接收文件删除任务
-export const ReceiveNoteSyncDelete = async function (data: ReceiveData, plugin: FastSync) {
+export const ReceiveNoteSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive note delete:`, data.action, data.path, data.mtime, data.pathHash)
   const file = plugin.app.vault.getFileByPath(data.path)
   if (file instanceof TFile) {
@@ -283,22 +393,172 @@ export const ReceiveNoteSyncDelete = async function (data: ReceiveData, plugin: 
   }
 }
 
-//接收同步结束消息
-export const ReceiveNoteSyncEnd = async function (data: ReceiveData, plugin: FastSync) {
-  dump(`Receive note end:`, data.vault, data, data.lastTime)
-  plugin.settings.lastSyncTime = data.lastTime
-  await plugin.saveData(plugin.settings)
-  plugin.websocket.isSyncAllFilesInProgress = false
-  plugin.websocket.FlushQueue()
-  plugin.enableWatch()
+
+// ReceiveFileNeedUpload 接收处理文件上传需求
+export const ReceiveFileNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
+  dump(`Receive file need upload:`, data.path)
+  const file = plugin.app.vault.getFileByPath(data.path)
+  if (!file) {
+    dump(`File not found for upload: ${data.path}`)
+    return
+  }
+  FileModify(file, plugin, false)
+}
+// ReceiveFileNeedUpload 接收处理文件上传需求
+export const ReceiveFileUpload = async function (data: FileUploadMessage, plugin: FastSync) {
+  dump(`Receive file need upload:`, data.path, data.sessionId)
+  const file = plugin.app.vault.getFileByPath(data.path)
+  if (!file) {
+    dump(`File not found for upload: ${data.path}`)
+    return
+  }
+
+  const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+  const chunkSize = data.chunkSize || 1024 * 1024 // Default 1MB
+  const totalChunks = Math.ceil(content.byteLength / chunkSize)
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * chunkSize
+    const end = Math.min(start + chunkSize, content.byteLength)
+    const chunk = content.slice(start, end)
+
+    // Construct Binary Frame: [SessionID (36)] [ChunkIndex (4)] [Content]
+    // SessionID is string, needs to be bytes?
+    // Doc says: [SessionID (36 bytes)] [ChunkIndex (4 bytes BigEndian)] [Content (N bytes)]
+    // Usually SessionID is UUID string (36 chars). ASCII bytes checking.
+
+    const sessionIdBytes = new TextEncoder().encode(data.sessionId)
+    // Check if sessionIdBytes is 36 bytes. UUID string is 36 bytes.
+    if (sessionIdBytes.length !== 36) {
+      dump("Session ID length error", sessionIdBytes.length)
+      // Handle error? Just proceed or error out.
+    }
+
+    const chunkIndexBytes = new Uint8Array(4)
+    const view = new DataView(chunkIndexBytes.buffer)
+    view.setUint32(0, i, false) // BigEndian
+
+    const frame = new Uint8Array(36 + 4 + chunk.byteLength)
+    frame.set(sessionIdBytes, 0)
+    frame.set(chunkIndexBytes, 36)
+    frame.set(new Uint8Array(chunk), 40)
+
+    plugin.websocket.SendBinary(frame)
+  }
+
+  plugin.websocket.MsgSend("FileUploadComplete", { sessionId: data.sessionId })
 }
 
-type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void
+// ReceiveFileSyncUpdate 接收更新（下载）
+export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
+  dump(`Receive file sync update (download):`, data.path, data.savePath)
 
+  let downloadUrl = data.savePath
+  if (!isHttpUrl(downloadUrl)) {
+    // Construct URL from settings.api which might be ws://...
+    // Need http://...
+    let baseUrl = plugin.settings.api.replace(/\/+$/, '')
+    // Ensure slash
+    if (!downloadUrl.startsWith("/")) {
+      baseUrl += "/"
+    }
+    downloadUrl = baseUrl + downloadUrl
+  }
+
+  // Use fetch to download
+  try {
+    const response = await requestUrl(downloadUrl)
+    const arrayBuffer = response.arrayBuffer
+
+    plugin.addIgnoredFile(data.path)
+    const file = plugin.app.vault.getFileByPath(data.path)
+    if (file) {
+      await plugin.app.vault.modifyBinary(file, arrayBuffer, { ctime: data.ctime, mtime: data.mtime })
+    } else {
+      const folder = data.path.split("/").slice(0, -1).join("/")
+      if (folder != "") {
+        const dirExists = plugin.app.vault.getFolderByPath(folder)
+        if (dirExists == null) await plugin.app.vault.createFolder(folder)
+      }
+      await plugin.app.vault.createBinary(data.path, arrayBuffer, { ctime: data.ctime, mtime: data.mtime })
+    }
+    plugin.removeIgnoredFile(data.path)
+  } catch (e) {
+    dump("Download error", e)
+    new Notice(`File download failed: ${data.path}`)
+  }
+  plugin.settings.lastFileSyncTime = data.lastTime
+  await plugin.saveData(plugin.settings)
+}
+
+// ReceiveFileSyncDelete 接收文件删除
+export const ReceiveFileSyncDelete = async function (data: ReceivePathMessage, plugin: FastSync) {
+  dump(`Receive file delete:`, data.path)
+  const file = plugin.app.vault.getFileByPath(data.path)
+  if (file instanceof TFile) {
+    plugin.addIgnoredFile(data.path)
+    await plugin.app.vault.delete(file)
+    plugin.removeIgnoredFile(data.path)
+  }
+}
+
+// ReceiveFileSyncMtime 接收 mtime 更新
+export const ReceiveFileSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
+  dump(`Receive file sync mtime:`, data.path, data.mtime)
+  const file = plugin.app.vault.getFileByPath(data.path)
+  if (file) {
+    // modifyBinary to same content just for mtime?
+    // process is: read, write same content, update mtime.
+    const content = await plugin.app.vault.readBinary(file)
+    plugin.addIgnoredFile(data.path)
+    await plugin.app.vault.modifyBinary(file, content, { ctime: data.ctime, mtime: data.mtime })
+    plugin.removeIgnoredFile(data.path)
+  }
+}
+
+// ReceiveFileSyncEnd 接收结束
+export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
+  dump(`Receive file sync end:`, data.vault, data.lastTime)
+  plugin.settings.lastFileSyncTime = data.lastTime
+  await plugin.saveData(plugin.settings)
+
+  plugin.syncTypeCompleteCount++
+
+  if (plugin.syncTypeCompleteCount === 2) {
+    plugin.enableWatch()
+    plugin.syncTypeCompleteCount = 0
+  }
+}
+
+
+
+
+//接收同步结束消息
+export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
+  dump(`Receive note end:`, data.vault, data, data.lastTime)
+  plugin.settings.lastNoteSyncTime = data.lastTime
+  await plugin.saveData(plugin.settings)
+  plugin.syncTypeCompleteCount++
+
+  if (plugin.syncTypeCompleteCount === 2) {
+    plugin.enableWatch()
+    plugin.syncTypeCompleteCount = 0
+  }
+
+}
+
+
+type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void
 export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map([
   ["NoteSyncModify", ReceiveNoteSyncModify],
   ["NoteSyncNeedPush", ReceiveNoteSyncNeedPush],
   ["NoteSyncMtime", ReceiveNoteSyncMtime],
   ["NoteSyncDelete", ReceiveNoteSyncDelete],
   ["NoteSyncEnd", ReceiveNoteSyncEnd],
+  ["FileNeedUpload", ReceiveFileNeedUpload],
+  ["FileUpload", ReceiveFileUpload],
+  ["FileSyncUpdate", ReceiveFileSyncUpdate],
+  ["FileSyncDelete", ReceiveFileSyncDelete],
+  ["FileSyncMtime", ReceiveFileSyncMtime],
+  ["FileSyncEnd", ReceiveFileSyncEnd],
 ])

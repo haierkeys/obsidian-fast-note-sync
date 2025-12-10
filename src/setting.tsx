@@ -16,7 +16,8 @@ export interface PluginSettings {
   //API Token
   apiToken: string
   vault: string
-  lastSyncTime: number
+  lastNoteSyncTime: number
+  lastFileSyncTime: number
   //  [propName: string]: any;
   clipboardReadTip: string
 }

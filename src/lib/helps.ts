@@ -43,6 +43,23 @@ export const hashContent = function (content: string): string {
 }
 
 /**
+ * hashArrayBuffer
+ * 使用简单的哈希函数生成 ArrayBuffer 的哈希值
+ * @param buffer - 要哈希的 ArrayBuffer
+ * @returns 内容的哈希值
+ */
+export const hashArrayBuffer = function (buffer: ArrayBuffer): string {
+  let hash = 0
+  const view = new Uint8Array(buffer)
+  for (let i = 0; i < view.length; i++) {
+    const byte = view[i]
+    hash = (hash << 5) - hash + byte
+    hash &= hash
+  }
+  return String(hash)
+}
+
+/**
  * showErrorDialog
  * 显示一个错误对话框，内容为传入的消息
  * @param message - 要显示的错误消息
@@ -57,7 +74,7 @@ export const showErrorDialog = function (message: string): void {
  * @param message - 要打印的消息，可以是多个参数
  */
 export const dump = function (...message: unknown[]): void {
-  //console.log(...message)
+  console.log(...message)
 }
 
 
