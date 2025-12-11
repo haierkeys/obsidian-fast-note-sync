@@ -445,8 +445,6 @@ export const ReceiveFileUpload = async function (data: FileUploadMessage, plugin
 
     plugin.websocket.SendBinary(frame)
   }
-
-  plugin.websocket.MsgSend("FileUploadComplete", { sessionId: data.sessionId })
 }
 
 // ReceiveFileSyncUpdate 接收更新（下载）
