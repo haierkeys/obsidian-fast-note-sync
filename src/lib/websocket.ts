@@ -37,6 +37,11 @@ export class WebSocketClient {
   }
 
   public register(onStatusChange?: (status: boolean) => void) {
+
+    this.wsApi = this.plugin.settings.api
+      .replace(/^http/, "ws")
+      .replace(/\/+$/, '') // 去除尾部斜杠
+
     if (onStatusChange) this.onStatusChange = onStatusChange
 
     if ((!this.ws || this.ws.readyState !== WebSocket.OPEN) && isWsUrl(this.wsApi)) {

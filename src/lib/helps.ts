@@ -68,13 +68,22 @@ export const showErrorDialog = function (message: string): void {
   new Notice(message)
 }
 
+// 默认开启日志
+let isLogEnabled = false;
+
+export const setLogEnabled = (enabled: boolean) => {
+  isLogEnabled = enabled;
+};
+
 /**
  * dump
  * 将传入的消息打印到控制台
  * @param message - 要打印的消息，可以是多个参数
  */
 export const dump = function (...message: unknown[]): void {
-  // console.log(...message)
+  if (isLogEnabled) {
+    console.log(...message)
+  }
 }
 
 

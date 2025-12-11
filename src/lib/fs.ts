@@ -341,7 +341,7 @@ interface ReceivePathMessage {
 
 // ReceiveNoteModify 接收文件修改
 export const ReceiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
-  dump(`Receive note modify:`, data.action, data.path, data.contentHash, data.mtime, data.pathHash)
+  dump(`Receive note modify:`, data.path, data.contentHash, data.mtime, data.pathHash)
 
   const file = plugin.app.vault.getFileByPath(data.path)
   plugin.addIgnoredFile(data.path)
