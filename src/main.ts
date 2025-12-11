@@ -3,7 +3,7 @@ import { Plugin, setIcon } from "obsidian";
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { WebSocketClient } from "./lib/websocket";
-import { setLogEnabled } from "./lib/helps";
+import { dump, setLogEnabled } from "./lib/helps";
 import { $ } from "./lang/lang";
 
 
@@ -121,6 +121,7 @@ export default class FastSync extends Plugin {
   }
 
   async saveSettings() {
+
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api
         .replace(/\/+$/, '') // 去除尾部斜杠
@@ -129,18 +130,19 @@ export default class FastSync extends Plugin {
         .replace(/^http/, "ws")
         .replace(/\/+$/, '') // 去除尾部斜杠
     }
-    this.websocket.unRegister()
-    if (this.settings.syncEnabled) {
-      if (this.wsSettingChange) {
-        this.websocket.unRegister()
-        this.websocket.register((status) => this.updateRibbonIcon(status))
-      }
+    dump("settings", this.settings)
+
+    if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
+      this.websocket.register((status) => this.updateRibbonIcon(status))
       this.isWatchEnabled = true
+      this.ignoredFiles = new Set()
+      setLogEnabled(this.settings.logEnabled)
     } else {
       this.websocket.unRegister()
       this.isWatchEnabled = false
+      this.ignoredFiles = new Set()
     }
-    setLogEnabled(this.settings.logEnabled)
+
     await this.saveData(this.settings)
   }
 }
