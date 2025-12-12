@@ -84,6 +84,8 @@ export class WebSocketClient {
 
           HandleFileDownloadChunk(event.data, this.plugin)
 
+          return
+
           // try {
           //   const buffer = event.data instanceof Blob ? await event.data.arrayBuffer() : event.data
           //   // 此处动态 import 或直接引用 fs 中导出的函数

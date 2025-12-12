@@ -493,7 +493,7 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     pathHash: data.pathHash
   }
   plugin.websocket.MsgSend("FileChunkDownload", requestData)
-  dump(`File chunk download request sent:`, data.path)
+  dump(`File chunk download request sent:`, requestData)
 }
 
 // ReceiveFileSyncDelete 接收文件删除
