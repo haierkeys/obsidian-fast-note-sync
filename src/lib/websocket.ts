@@ -9,7 +9,6 @@ import FastSync from "../main";
 const RECONNECT_BASE_DELAY = 3000 // 重连基础延迟 (毫秒)
 const CONNECTION_CHECK_INTERVAL = 3000 // 连接检查间隔 (毫秒)
 
-
 export class WebSocketClient {
   private ws: WebSocket
   private wsApi: string
@@ -27,9 +26,7 @@ export class WebSocketClient {
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
-    this.wsApi = plugin.settings.wsApi
-      .replace(/^http/, "ws")
-      .replace(/\/+$/, '') // 去除尾部斜杠
+    this.wsApi = plugin.settings.wsApi.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
   }
 
   public isConnected(): boolean {
@@ -37,10 +34,7 @@ export class WebSocketClient {
   }
 
   public register(onStatusChange?: (status: boolean) => void) {
-
-    this.wsApi = this.plugin.settings.api
-      .replace(/^http/, "ws")
-      .replace(/\/+$/, '') // 去除尾部斜杠
+    this.wsApi = this.plugin.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
 
     if (onStatusChange) this.onStatusChange = onStatusChange
 
@@ -71,7 +65,7 @@ export class WebSocketClient {
         } else if (e.reason == "ClientClose") {
           new Notice("Remote Service Connection Closed: " + e.reason)
         }
-        if (this.isRegister && (e.reason != "AuthorizationFaild" && e.reason != "ClientClose")) {
+        if (this.isRegister && e.reason != "AuthorizationFaild" && e.reason != "ClientClose") {
           this.checkReConnect()
         }
         dump("Service close")
@@ -80,23 +74,8 @@ export class WebSocketClient {
         // 处理二进制消息(文件分片下载)
 
         if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
-
-
           HandleFileDownloadChunk(event.data, this.plugin)
-
-          return
-
-          // try {
-          //   const buffer = event.data instanceof Blob ? await event.data.arrayBuffer() : event.data
-          //   // 此处动态 import 或直接引用 fs 中导出的函数
-          //   // 假设 fs 文件导出了 HandleIncomingBinaryFrame
-          //   // 由于在你的项目 fs.ts 已与 websocket.ts 同级，可以直接导入：import { HandleIncomingBinaryFrame } from "./fs";
-          //   // 但为减少改动，这里调用 plugin.websocketFileChunkHandler（你可以在 FastSync 初始化时注入）
-          //   // 为实现简单，这里直接调用全局导出（需要你在 fs.ts 导出 HandleIncomingBinaryFrame）
-          //   HandleFileDownloadChunk(buffer, this.plugin)
-          // } catch (e) {
-          //   dump("Error handling binary message", e)
-          // }
+          return // 重要:处理完二进制消息后立即返回,不再执行后续的文本消息处理
         }
 
         // 处理文本消息
@@ -145,7 +124,8 @@ export class WebSocketClient {
   //ddd
   public checkReConnect() {
     window.clearTimeout(this.checkReConnectTimeout)
-    if (this.timeConnect > 15) { // Max attempts hardcoded or use constant
+    if (this.timeConnect > 15) {
+      // Max attempts hardcoded or use constant
       return
     }
     if (this.ws && this.ws.readyState === WebSocket.CLOSED) {
@@ -204,5 +184,4 @@ export class WebSocketClient {
     }
     this.ws.send(data)
   }
-
 }

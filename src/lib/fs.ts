@@ -36,10 +36,7 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync,
   plugin.websocket.MsgSend("NoteModify", data)
   dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
   plugin.removeIgnoredFile(file.path)
-
-
 }
-
 
 // NoteDelete 消息推送
 
@@ -99,7 +96,6 @@ export const NoteRename = async function (file: TAbstractFile, oldfile: string, 
   plugin.removeIgnoredFile(file.path)
 }
 
-
 export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
   if (!path.endsWith(".md")) return
   const data = {
@@ -109,7 +105,6 @@ export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
   }
   plugin.websocket.MsgSend("NoteDelete", data)
 }
-
 
 /* -------------------------------- File 推送相关 ------------------------------------------------ */
 
@@ -137,7 +132,7 @@ export const FileModify = async function (file: TAbstractFile, plugin: FastSync,
     contentHash: contentHash,
     mtime: file.stat.mtime,
     ctime: file.stat.ctime,
-    size: file.stat.size
+    size: file.stat.size,
   }
   plugin.websocket.MsgSend("FileUploadCheck", data)
   dump(`File modify check sent`, data.path, data.contentHash)
@@ -197,10 +192,6 @@ export const FileDeleteByPath = function (path: string, plugin: FastSync) {
   plugin.websocket.MsgSend("FileDelete", data)
 }
 
-
-
-
-
 /**
   本地文件快照数据
  */
@@ -213,7 +204,6 @@ interface SnapFile {
 }
 
 export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = []) {
-
   const noteSyncData = {
     vault: plugin.settings.vault,
     lastTime: noteLastTime,
@@ -225,11 +215,10 @@ export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number,
   const fileSyncData = {
     vault: plugin.settings.vault,
     lastTime: fileLastTime,
-    files: files
+    files: files,
   }
   plugin.websocket.MsgSend("FileSync", fileSyncData)
   dump("FileSync", fileSyncData)
-
 }
 
 export const StartSync = async function (plugin: FastSync, isLoadLastTime: boolean = false) {
@@ -241,10 +230,10 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
   plugin.syncTypeCompleteCount = 0
   plugin.disableWatch()
 
-  const notes: SnapFile[] = [], files: SnapFile[] = [];
+  const notes: SnapFile[] = [],
+    files: SnapFile[] = []
   const list = plugin.app.vault.getFiles()
   for (const file of list) {
-
     if (file.extension === "md") {
       // 同步笔记
       if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) {
@@ -271,14 +260,14 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
       })
     }
   }
-  let fileLastTime = 0, noteLastTime = 0
+  let fileLastTime = 0,
+    noteLastTime = 0
   if (isLoadLastTime) {
     fileLastTime = Number(plugin.settings.lastFileSyncTime)
     noteLastTime = Number(plugin.settings.lastNoteSyncTime)
   }
   SyncRequestSend(plugin, noteLastTime, fileLastTime, notes, files)
 }
-
 
 // 同步
 export const StartupSync = (plugin: FastSync): void => {
@@ -292,7 +281,6 @@ export const StartupFullSync = (plugin: FastSync): void => {
 //
 
 /* -------------------------------- 消息接收操作方法  Message receiving methods ------------------------------------------------ */
-
 
 interface ReceiveMessage {
   vault: string
@@ -346,8 +334,6 @@ interface FileDownloadSession {
   chunks: Map<number, ArrayBuffer>
 }
 
-
-
 interface ReceiveMtimeMessage {
   path: string
   ctime: number
@@ -357,9 +343,6 @@ interface ReceiveMtimeMessage {
 interface ReceivePathMessage {
   path: string
 }
-
-
-
 
 // ReceiveNoteModify 接收文件修改
 export const ReceiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
@@ -414,7 +397,6 @@ export const ReceiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
     plugin.removeIgnoredFile(data.path)
   }
 }
-
 
 // ReceiveFileNeedUpload 接收处理文件上传需求
 export const ReceiveFileNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
@@ -482,7 +464,7 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     sessionId: "", // 将在 FileSyncChunkDownload 中设置
     totalChunks: 0,
     size: data.size,
-    chunks: new Map<number, ArrayBuffer>()
+    chunks: new Map<number, ArrayBuffer>(),
   }
   plugin.fileDownloadSessions.set(tempKey, tempSession)
 
@@ -490,7 +472,7 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   const requestData = {
     vault: plugin.settings.vault,
     path: data.path,
-    pathHash: data.pathHash
+    pathHash: data.pathHash,
   }
   plugin.websocket.MsgSend("FileChunkDownload", requestData)
   dump(`File chunk download request sent:`, requestData)
@@ -539,7 +521,7 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
       sessionId: data.sessionId,
       totalChunks: data.totalChunks,
       size: data.size,
-      chunks: new Map<number, ArrayBuffer>()
+      chunks: new Map<number, ArrayBuffer>(),
     }
     plugin.fileDownloadSessions.set(data.sessionId, session)
     plugin.fileDownloadSessions.delete(tempKey) // 删除临时会话
@@ -554,7 +536,7 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
       sessionId: data.sessionId,
       totalChunks: data.totalChunks,
       size: data.size,
-      chunks: new Map<number, ArrayBuffer>()
+      chunks: new Map<number, ArrayBuffer>(),
     }
     plugin.fileDownloadSessions.set(data.sessionId, session)
     dump(`Download session created directly: ${data.sessionId}`)
@@ -565,7 +547,6 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
 
 // HandleFileDownloadChunk 处理二进制分片
 export const HandleFileDownloadChunk = async function (buf: ArrayBuffer | Blob, plugin: FastSync) {
-
   const binaryData = buf instanceof Blob ? await buf.arrayBuffer() : buf
 
   // 解析二进制帧: [SessionID (36)] [ChunkIndex (4)] [ChunkData]
@@ -671,7 +652,6 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
   }
 }
 
-
 // ReceiveFileSyncEnd 接收结束
 export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive file sync end:`, data.vault, data.lastTime)
@@ -686,9 +666,6 @@ export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: 
   }
 }
 
-
-
-
 //接收同步结束消息
 export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive note end:`, data.vault, data, data.lastTime)
@@ -700,9 +677,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
     plugin.enableWatch()
     plugin.syncTypeCompleteCount = 0
   }
-
 }
-
 
 type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void
 export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map([
