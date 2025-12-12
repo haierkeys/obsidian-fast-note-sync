@@ -325,6 +325,28 @@ interface FileUploadMessage {
   chunkSize: number
 }
 
+interface FileSyncChunkDownloadMessage {
+  path: string
+  ctime: number
+  mtime: number
+  sessionId: string
+  chunkSize: number
+  totalChunks: number
+  size: number
+}
+
+interface FileDownloadSession {
+  path: string
+  ctime: number
+  mtime: number
+  lastTime: number
+  sessionId: string
+  totalChunks: number
+  size: number
+  chunks: Map<number, ArrayBuffer>
+}
+
+
 
 interface ReceiveMtimeMessage {
   path: string
@@ -442,53 +464,36 @@ export const ReceiveFileUpload = async function (data: FileUploadMessage, plugin
     frame.set(sessionIdBytes, 0)
     frame.set(chunkIndexBytes, 36)
     frame.set(new Uint8Array(chunk), 40)
-
     plugin.websocket.SendBinary(frame)
   }
 }
 
-// ReceiveFileSyncUpdate 接收更新（下载）
+// ReceiveFileSyncUpdate 接收更新(下载) - 使用 WebSocket 分片下载
 export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
-  dump(`Receive file sync update (download):`, data.path, data.savePath)
+  dump(`Receive file sync update (download):`, data.path)
 
-  let downloadUrl = data.savePath
-  if (!isHttpUrl(downloadUrl)) {
-    // Construct URL from settings.api which might be ws://...
-    // Need http://...
-    let baseUrl = plugin.settings.api.replace(/\/+$/, '')
-    // Ensure slash
-    if (!downloadUrl.startsWith("/")) {
-      baseUrl += "/"
-    }
-    downloadUrl = baseUrl + downloadUrl
+  // 使用临时 key (path) 存储文件元数据,等待 FileSyncChunkDownload 响应
+  const tempKey = `temp_${data.path}`
+  const tempSession = {
+    path: data.path,
+    ctime: data.ctime,
+    mtime: data.mtime,
+    lastTime: data.lastTime,
+    sessionId: "", // 将在 FileSyncChunkDownload 中设置
+    totalChunks: 0,
+    size: data.size,
+    chunks: new Map<number, ArrayBuffer>()
   }
+  plugin.fileDownloadSessions.set(tempKey, tempSession)
 
-  dump("Download URL:", downloadUrl)
-
-  // Use fetch to download
-  try {
-    const response = await requestUrl(downloadUrl)
-    const arrayBuffer = response.arrayBuffer
-
-    plugin.addIgnoredFile(data.path)
-    const file = plugin.app.vault.getFileByPath(data.path)
-    if (file) {
-      await plugin.app.vault.modifyBinary(file, arrayBuffer, { ctime: data.ctime, mtime: data.mtime })
-    } else {
-      const folder = data.path.split("/").slice(0, -1).join("/")
-      if (folder != "") {
-        const dirExists = plugin.app.vault.getFolderByPath(folder)
-        if (dirExists == null) await plugin.app.vault.createFolder(folder)
-      }
-      await plugin.app.vault.createBinary(data.path, arrayBuffer, { ctime: data.ctime, mtime: data.mtime })
-    }
-    plugin.removeIgnoredFile(data.path)
-  } catch (e) {
-    dump("Download error", e)
-    new Notice(`File download failed: ${data.path}`)
+  // 发送 FileChunkDownload 请求
+  const requestData = {
+    vault: plugin.settings.vault,
+    path: data.path,
+    pathHash: data.pathHash
   }
-  plugin.settings.lastFileSyncTime = data.lastTime
-  await plugin.saveData(plugin.settings)
+  plugin.websocket.MsgSend("FileChunkDownload", requestData)
+  dump(`File chunk download request sent:`, data.path)
 }
 
 // ReceiveFileSyncDelete 接收文件删除
@@ -515,6 +520,157 @@ export const ReceiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
     plugin.removeIgnoredFile(data.path)
   }
 }
+
+// ReceiveFileSyncChunkDownload 接收分片下载响应
+export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkDownloadMessage, plugin: FastSync) {
+  dump(`Receive file chunk download:`, data.path, data.sessionId, `totalChunks: ${data.totalChunks}`)
+
+  // 查找临时会话
+  const tempKey = `temp_${data.path}`
+  const tempSession = plugin.fileDownloadSessions.get(tempKey)
+
+  if (tempSession) {
+    // 从临时会话迁移到正式会话
+    const session: FileDownloadSession = {
+      path: data.path,
+      ctime: data.ctime,
+      mtime: data.mtime,
+      lastTime: tempSession.lastTime, // 使用 FileSyncUpdate 中的 lastTime
+      sessionId: data.sessionId,
+      totalChunks: data.totalChunks,
+      size: data.size,
+      chunks: new Map<number, ArrayBuffer>()
+    }
+    plugin.fileDownloadSessions.set(data.sessionId, session)
+    plugin.fileDownloadSessions.delete(tempKey) // 删除临时会话
+    dump(`Download session migrated from temp to ${data.sessionId}`)
+  } else {
+    // 如果没有临时会话,直接创建新会话
+    const session: FileDownloadSession = {
+      path: data.path,
+      ctime: data.ctime,
+      mtime: data.mtime,
+      lastTime: 0,
+      sessionId: data.sessionId,
+      totalChunks: data.totalChunks,
+      size: data.size,
+      chunks: new Map<number, ArrayBuffer>()
+    }
+    plugin.fileDownloadSessions.set(data.sessionId, session)
+    dump(`Download session created directly: ${data.sessionId}`)
+  }
+
+  dump(`Download session initialized:`, data.path, `expecting ${data.totalChunks} chunks`)
+}
+
+// HandleFileDownloadChunk 处理二进制分片
+export const HandleFileDownloadChunk = async function (buf: ArrayBuffer | Blob, plugin: FastSync) {
+
+  const binaryData = buf instanceof Blob ? await buf.arrayBuffer() : buf
+
+  // 解析二进制帧: [SessionID (36)] [ChunkIndex (4)] [ChunkData]
+  if (binaryData.byteLength < 40) {
+    dump("Binary frame too short:", binaryData.byteLength)
+    return
+  }
+
+  const sessionIdBytes = new Uint8Array(binaryData, 0, 36)
+  const sessionId = new TextDecoder().decode(sessionIdBytes)
+
+  const chunkIndexBytes = new Uint8Array(binaryData, 36, 4)
+  const view = new DataView(chunkIndexBytes.buffer, chunkIndexBytes.byteOffset, 4)
+  const chunkIndex = view.getUint32(0, false) // BigEndian
+
+  const chunkData = binaryData.slice(40)
+
+  dump(`Received chunk ${chunkIndex} for session ${sessionId}, size: ${chunkData.byteLength}`)
+
+  // 查找会话
+  const session = plugin.fileDownloadSessions.get(sessionId)
+  if (!session) {
+    dump(`Session not found: ${sessionId}`)
+    return
+  }
+
+  // 存储分片
+  session.chunks.set(chunkIndex, chunkData)
+
+  // 检查是否接收完所有分片
+  if (session.chunks.size === session.totalChunks) {
+    dump(`All chunks received for ${session.path}, completing download`)
+    await CompleteFileDownload(session, plugin)
+  } else {
+    dump(`Progress: ${session.chunks.size}/${session.totalChunks} chunks for ${session.path}`)
+  }
+}
+
+// CompleteFileDownload 重组并保存文件
+async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSync) {
+  try {
+    // 按 chunkIndex 顺序合并分片
+    const chunks: ArrayBuffer[] = []
+    for (let i = 0; i < session.totalChunks; i++) {
+      const chunk = session.chunks.get(i)
+      if (!chunk) {
+        dump(`Missing chunk ${i} for ${session.path}`)
+        new Notice(`File download incomplete: ${session.path}`)
+        plugin.fileDownloadSessions.delete(session.sessionId)
+        return
+      }
+      chunks.push(chunk)
+    }
+
+    // 合并所有分片
+    const totalSize = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0)
+    const completeFile = new Uint8Array(totalSize)
+    let offset = 0
+    for (const chunk of chunks) {
+      completeFile.set(new Uint8Array(chunk), offset)
+      offset += chunk.byteLength
+    }
+
+    // 验证文件大小
+    if (completeFile.byteLength !== session.size) {
+      dump(`File size mismatch: expected ${session.size}, got ${completeFile.byteLength}`)
+      new Notice(`File download size mismatch: ${session.path}`)
+      plugin.fileDownloadSessions.delete(session.sessionId)
+      return
+    }
+
+    dump(`File assembled: ${session.path}, size: ${completeFile.byteLength}`)
+
+    // 保存文件到 Vault
+    plugin.addIgnoredFile(session.path)
+    const file = plugin.app.vault.getFileByPath(session.path)
+    if (file) {
+      await plugin.app.vault.modifyBinary(file, completeFile.buffer, { ctime: session.ctime, mtime: session.mtime })
+    } else {
+      const folder = session.path.split("/").slice(0, -1).join("/")
+      if (folder != "") {
+        const dirExists = plugin.app.vault.getFolderByPath(folder)
+        if (dirExists == null) await plugin.app.vault.createFolder(folder)
+      }
+      await plugin.app.vault.createBinary(session.path, completeFile.buffer, { ctime: session.ctime, mtime: session.mtime })
+    }
+    plugin.removeIgnoredFile(session.path)
+
+    // 更新同步时间
+    if (session.lastTime > 0) {
+      plugin.settings.lastFileSyncTime = session.lastTime
+      await plugin.saveData(plugin.settings)
+    }
+
+    dump(`File download completed: ${session.path}`)
+
+    // 清理会话
+    plugin.fileDownloadSessions.delete(session.sessionId)
+  } catch (e) {
+    dump("File download error:", e)
+    new Notice(`File download failed: ${session.path}`)
+    plugin.fileDownloadSessions.delete(session.sessionId)
+  }
+}
+
 
 // ReceiveFileSyncEnd 接收结束
 export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
@@ -558,6 +714,7 @@ export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map
   ["FileNeedUpload", ReceiveFileNeedUpload],
   ["FileUpload", ReceiveFileUpload],
   ["FileSyncUpdate", ReceiveFileSyncUpdate],
+  ["FileSyncChunkDownload", ReceiveFileSyncChunkDownload],
   ["FileSyncDelete", ReceiveFileSyncDelete],
   ["FileSyncMtime", ReceiveFileSyncMtime],
   ["FileSyncEnd", ReceiveFileSyncEnd],

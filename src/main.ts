@@ -22,6 +22,9 @@ export default class FastSync extends Plugin {
 
   syncTypeCompleteCount: number = 0
 
+  // 文件下载会话管理
+  fileDownloadSessions: Map<string, any> = new Map()
+
   getWatchEnabled(): boolean {
     return this.isWatchEnabled
   }
@@ -104,6 +107,7 @@ export default class FastSync extends Plugin {
     this.websocket.unRegister()
     this.ignoredFiles = new Set()
     this.isWatchEnabled = false
+    this.fileDownloadSessions.clear()
   }
 
   updateRibbonIcon(status: boolean) {

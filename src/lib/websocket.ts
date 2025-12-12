@@ -1,6 +1,6 @@
 import { Notice, moment } from "obsidian";
 
-import { syncReceiveMethodHandlers, StartupSync, StartupFullSync } from "./fs";
+import { syncReceiveMethodHandlers, HandleFileDownloadChunk, StartupSync, StartupFullSync } from "./fs";
 import { dump, isWsUrl } from "./helps";
 import FastSync from "../main";
 
@@ -77,6 +77,27 @@ export class WebSocketClient {
         dump("Service close")
       }
       this.ws.onmessage = (event) => {
+        // 处理二进制消息(文件分片下载)
+
+        if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
+
+
+          HandleFileDownloadChunk(event.data, this.plugin)
+
+          // try {
+          //   const buffer = event.data instanceof Blob ? await event.data.arrayBuffer() : event.data
+          //   // 此处动态 import 或直接引用 fs 中导出的函数
+          //   // 假设 fs 文件导出了 HandleIncomingBinaryFrame
+          //   // 由于在你的项目 fs.ts 已与 websocket.ts 同级，可以直接导入：import { HandleIncomingBinaryFrame } from "./fs";
+          //   // 但为减少改动，这里调用 plugin.websocketFileChunkHandler（你可以在 FastSync 初始化时注入）
+          //   // 为实现简单，这里直接调用全局导出（需要你在 fs.ts 导出 HandleIncomingBinaryFrame）
+          //   HandleFileDownloadChunk(buffer, this.plugin)
+          // } catch (e) {
+          //   dump("Error handling binary message", e)
+          // }
+        }
+
+        // 处理文本消息
         // 使用字符串的 indexOf 找到第一个分隔符的位置
         let msgData: string = event.data
         let msgAction: string = ""
