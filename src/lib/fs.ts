@@ -7,6 +7,8 @@ import FastSync from "../main";
 
 /* -------------------------------- Note 推送相关 ------------------------------------------------ */
 
+export const BINARY_PREFIX_FILE_SYNC = "00"
+
 // NoteModify 消息推送
 export const NoteModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
@@ -453,7 +455,7 @@ export const ReceiveFileUpload = async function (data: FileUploadMessage, plugin
     frame.set(sessionIdBytes, 0)
     frame.set(chunkIndexBytes, 36)
     frame.set(new Uint8Array(chunk), 40)
-    plugin.websocket.SendBinary(frame)
+    plugin.websocket.SendBinary(frame, BINARY_PREFIX_FILE_SYNC)
   }
 }
 

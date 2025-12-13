@@ -1,6 +1,6 @@
 import { Notice, moment } from "obsidian";
 
-import { syncReceiveMethodHandlers, HandleFileDownloadChunk, StartupSync, StartupFullSync } from "./fs";
+import { syncReceiveMethodHandlers, HandleFileDownloadChunk, StartupSync, StartupFullSync, BINARY_PREFIX_FILE_SYNC } from "./fs";
 import { dump, isWsUrl } from "./helps";
 import FastSync from "../main";
 
@@ -21,12 +21,27 @@ export class WebSocketClient {
   public count = 0
   //同步全部文件时设置
 
+
   public isRegister: boolean = false
   private onStatusChange?: (status: boolean) => void
+
+  // Binary message handlers registry
+  private binaryHandlers = new Map<string, (data: ArrayBuffer | Blob, plugin: FastSync) => void>();
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
     this.wsApi = plugin.settings.wsApi.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
+
+    // Register default file sync handler
+    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, HandleFileDownloadChunk);
+  }
+
+  public registerBinaryHandler(prefix: string, handler: (data: ArrayBuffer | Blob, plugin: FastSync) => void) {
+    if (prefix.length !== 2) {
+      console.error("Binary handler prefix must be exactly 2 characters");
+      return;
+    }
+    this.binaryHandlers.set(prefix, handler);
   }
 
   public isConnected(): boolean {
@@ -74,8 +89,39 @@ export class WebSocketClient {
         // 处理二进制消息(文件分片下载)
 
         if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
-          HandleFileDownloadChunk(event.data, this.plugin)
-          return // 重要:处理完二进制消息后立即返回,不再执行后续的文本消息处理
+          // Dynamic Binary Message Dispatch
+          let binaryData: ArrayBuffer | Blob = event.data;
+          let prefix = "";
+
+          // Extract prefix (first 2 bytes)
+          if (binaryData instanceof Blob) {
+            if (binaryData.size < 2) return;
+          }
+
+          (async () => {
+            let buf: ArrayBuffer;
+            if (event.data instanceof Blob) {
+              buf = await event.data.arrayBuffer();
+            } else {
+              buf = event.data;
+            }
+
+            if (buf.byteLength < 2) return;
+
+            const prefixBytes = new Uint8Array(buf.slice(0, 2));
+            const prefixStr = new TextDecoder().decode(prefixBytes);
+
+            const handler = this.binaryHandlers.get(prefixStr);
+            if (handler) {
+              // Pass the rest of the data
+              const rest = buf.slice(2);
+              handler(rest, this.plugin);
+            } else {
+              dump("No handler for binary prefix:", prefixStr);
+            }
+          })();
+
+          return
         }
 
         // 处理文本消息
@@ -177,11 +223,33 @@ export class WebSocketClient {
     }
   }
 
-  public SendBinary(data: ArrayBuffer | Uint8Array) {
+  public SendBinary(data: ArrayBuffer | Uint8Array, prefix: string) {
     if (this.ws.readyState !== WebSocket.OPEN) {
       dump(`Service not connected, discarding binary message`)
       return
     }
-    this.ws.send(data)
+
+    if (!prefix || prefix.length !== 2) {
+      dump("SendBinary error: prefix must be exactly 2 characters of string");
+      return;
+    }
+
+    // 增加二进制消息管理层: 增加前两位字符
+    const prefixBytes = new TextEncoder().encode(prefix);
+    let dataToSend: Uint8Array;
+
+    if (data instanceof Uint8Array) {
+      dataToSend = new Uint8Array(prefixBytes.length + data.length);
+      dataToSend.set(prefixBytes);
+      dataToSend.set(data, prefixBytes.length);
+    } else {
+      // ArrayBuffer
+      const dataView = new Uint8Array(data);
+      dataToSend = new Uint8Array(prefixBytes.length + dataView.length);
+      dataToSend.set(prefixBytes);
+      dataToSend.set(dataView, prefixBytes.length);
+    }
+
+    this.ws.send(dataToSend)
   }
 }
