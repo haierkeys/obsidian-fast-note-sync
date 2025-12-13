@@ -54,10 +54,14 @@ export default class FastSync extends Plugin {
     this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
 
+
     // Create Ribbon Icon once
-    this.ribbonIcon = this.addRibbonIcon("loader-circle", "Fast Sync: " + $("同步全部笔记"), () => {
+    this.ribbonIcon = this.addRibbonIcon("rotate-cw", "Fast Note Sync:" + $("同步全部笔记"), () => {
       StartupSync(this)
     })
+
+    setIcon(this.ribbonIcon, "loader-circle")
+
 
     if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
       this.websocket.register((status) => this.updateRibbonIcon(status))
@@ -111,12 +115,14 @@ export default class FastSync extends Plugin {
   }
 
   updateRibbonIcon(status: boolean) {
+    this.ribbonIconStatus = status
+    if (!this.ribbonIcon) return
     if (status) {
       setIcon(this.ribbonIcon, "rotate-cw")
-      this.ribbonIcon.setAttribute("aria-label", "Fast Sync: " + $("同步全部笔记") + " (Connected)")
+      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已连接") + ")")
     } else {
       setIcon(this.ribbonIcon, "loader-circle")
-      this.ribbonIcon.setAttribute("aria-label", "Fast Sync: " + $("同步全部笔记") + " (Disconnected)")
+      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已断开") + ")")
     }
   }
 

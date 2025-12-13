@@ -37,6 +37,8 @@ const en: Partial<LangMap> = {
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "By using the shortcut key to open the console, you can see the logs of this plugin and other plugins.",
   "console_mac": "Cmd (⌘) + option (⌥) + i",
   "console_windows": "Ctrl (⌃) + shift (⇧) + i",
+  "服务已连接": "Service connected",
+  "服务已断开": "Service disconnected",
 }
 
 export default en;

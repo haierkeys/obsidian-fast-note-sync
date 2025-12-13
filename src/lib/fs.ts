@@ -1,6 +1,7 @@
 import { TFile, TAbstractFile, Notice, Setting, requestUrl } from "obsidian";
 
 import { hashContent, hashArrayBuffer, dump, isHttpUrl } from "./helps";
+import { $ } from "../lang/lang";
 import FastSync from "../main";
 
 
@@ -222,6 +223,10 @@ export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number,
 }
 
 export const StartSync = async function (plugin: FastSync, isLoadLastTime: boolean = false) {
+  if (!plugin.ribbonIconStatus) {
+    new Notice($("服务已断开"))
+    return
+  }
   while (!plugin.getWatchEnabled()) {
     new Notice("上一次的全部同步尚未完成，请耐心等待或检查服务端状态")
     return
