@@ -235,6 +235,8 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
   plugin.syncTypeCompleteCount = 0
   plugin.disableWatch()
 
+  new Notice($("开始同步"))
+
   const notes: SnapFile[] = [],
     files: SnapFile[] = []
   const list = plugin.app.vault.getFiles()
@@ -668,6 +670,7 @@ export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: 
   if (plugin.syncTypeCompleteCount === 2) {
     plugin.enableWatch()
     plugin.syncTypeCompleteCount = 0
+    new Notice($("同步完成"))
   }
 }
 
@@ -681,6 +684,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
   if (plugin.syncTypeCompleteCount === 2) {
     plugin.enableWatch()
     plugin.syncTypeCompleteCount = 0
+    new Notice($("同步完成"))
   }
 }
 

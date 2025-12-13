@@ -39,6 +39,8 @@ const en: Partial<LangMap> = {
   "console_windows": "Ctrl (⌃) + shift (⇧) + i",
   "服务已连接": "Service connected",
   "服务已断开": "Service disconnected",
+  "开始同步": "Start sync",
+  "同步完成": "Sync completed",
 }
 
 export default en;

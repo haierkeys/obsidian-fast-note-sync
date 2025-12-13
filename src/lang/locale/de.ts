@@ -33,6 +33,8 @@ const de: Partial<LangMap> = {
   "复制 Debug 信息": "Debug-Informationen kopieren",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopieren von Debug-Informationen in die Zwischenablage kann sensible Informationen enthalten!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Öffnen Sie die Konsole mit einer Tastenkombination, um die Protokolle dieses Plugins und anderer Plugins anzuzeigen.",
+  "开始同步": "Synchronisierung starten",
+  "同步完成": "Synchronisierung abgeschlossen",
 }
 
 export default de;

@@ -33,6 +33,8 @@ const es: Partial<LangMap> = {
   "复制 Debug 信息": "Copiar información de depuración",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copiar la información de depuración al portapapeles, ¡podría contener información sensible!",
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Usando atajos de teclado para abrir la consola, puedes ver los registros de este complemento y otros complementos.",
+  "开始同步": "Iniciar sincronización",
+  "同步完成": "Sincronización completada",
 }
 
 export default es;
