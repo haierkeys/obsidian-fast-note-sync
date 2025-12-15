@@ -103,6 +103,7 @@ jobs:
           name: ${{ steps.check_version.outputs.release_tag }}
           draft: false
           prerelease: false
+          generate_release_notes: true
           files: |
             ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
             main.js
