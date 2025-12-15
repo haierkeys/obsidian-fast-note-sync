@@ -1,4 +1,4 @@
-name: Pre-release Build
+﻿name: Pre-release Build
 
 # 触发条件配置
 on:
@@ -74,14 +74,14 @@ jobs:
 
       - name: Build
         id: build
+        # 只有在 check_version 步骤输出 should_release 为 true 时才执行
         if: steps.check_version.outputs.should_release == 'true'
         run: |
-          echo "=== Debug: Build Environment ==="
-          git branch -v
-          git log -1 --oneline
-          echo "manifest.json version:"
-          jq -r .version manifest.json
-          echo "================================"
+          # 获取提交文本信息
+          msg=$(git log -1 --pretty=%B)
+          echo "commit_msg<<EOF" >> $GITHUB_OUTPUT
+          echo "$msg" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
           pnpm install
           pnpm run build
@@ -89,31 +89,21 @@ jobs:
           cp main.js manifest.json styles.css ${{ env.NAME }}
           zip -r ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip ${{ env.NAME }}
           ls
+          # 设置输出变量 tag_name
           echo "tag_name=${{ steps.check_version.outputs.release_tag }}" >> $GITHUB_OUTPUT
 
-      # 使用 actions/upload-artifact 上传构建产物，而不是创建 Release Tag
-      # 这样可以在 Action 页面下载 zip，而不会污染 git tags
-      - name: Upload Artifact
+      - name: Create Release
         if: steps.check_version.outputs.should_release == 'true'
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
         with:
-          name: ${{ env.NAME }}-${{ steps.check_version.outputs.release_tag }}
-          path: |
-            ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
-            main.js
-            manifest.json
-            styles.css
-
-      - name: Create Pre-release
-        if: steps.check_version.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: "${{ steps.check_version.outputs.release_tag }}-alpha"
-          name: "${{ steps.check_version.outputs.release_tag }}-alpha"
+          tag_name: ${{ steps.check_version.outputs.release_tag }}-alpha
+          name: ${{ steps.check_version.outputs.release_tag }}-alpha
           draft: false
           prerelease: true
           generate_release_notes: true
+          body: ${{ steps.build.outputs.commit_msg }}
           target_commitish: ${{ github.sha }} # 明确指定在当前分支的 commit 上创建 tag
+          overwrite_files: true
           files: |
             ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
             main.js
@@ -121,3 +111,5 @@ jobs:
             styles.css
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
