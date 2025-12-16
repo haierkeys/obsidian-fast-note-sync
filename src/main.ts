@@ -1,9 +1,9 @@
-import { Plugin, setIcon } from "obsidian";
+import { Plugin, setIcon, Menu } from "obsidian";
 
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
+import { dump, setLogEnabled, RibbonMenu } from "./lib/helps";
 import { WebSocketClient } from "./lib/websocket";
-import { dump, setLogEnabled } from "./lib/helps";
 import { $ } from "./lang/lang";
 
 
@@ -45,6 +45,17 @@ export default class FastSync extends Plugin {
     this.ignoredFiles.delete(path)
   }
 
+  updateRibbonIcon(status: boolean) {
+    this.ribbonIconStatus = status
+    if (!this.ribbonIcon) return
+    if (status) {
+      setIcon(this.ribbonIcon, "wifi")
+      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已连接") + ")")
+    } else {
+      setIcon(this.ribbonIcon, "wifi-off")
+      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已断开") + ")")
+    }
+  }
 
   async onload() {
 
@@ -56,11 +67,13 @@ export default class FastSync extends Plugin {
 
 
     // Create Ribbon Icon once
-    this.ribbonIcon = this.addRibbonIcon("rotate-cw", "Fast Note Sync:" + $("同步全部笔记"), () => {
-      StartupSync(this)
+    this.ribbonIcon = this.addRibbonIcon("wifi", "Fast Note Sync:" + $("同步全部笔记"), (event: MouseEvent) => {
+      const menu = new Menu()
+      RibbonMenu(menu, this)
+      menu.showAtMouseEvent(event)
+      // StartupSync(this)
     })
-
-    setIcon(this.ribbonIcon, "loader-circle")
+    setIcon(this.ribbonIcon, "wifi-off")
 
 
     if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
@@ -114,17 +127,7 @@ export default class FastSync extends Plugin {
     this.fileDownloadSessions.clear()
   }
 
-  updateRibbonIcon(status: boolean) {
-    this.ribbonIconStatus = status
-    if (!this.ribbonIcon) return
-    if (status) {
-      setIcon(this.ribbonIcon, "rotate-cw")
-      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已连接") + ")")
-    } else {
-      setIcon(this.ribbonIcon, "loader-circle")
-      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已断开") + ")")
-    }
-  }
+
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())

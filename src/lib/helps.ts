@@ -1,4 +1,8 @@
-import { Notice, moment } from "obsidian";
+import { Notice, moment, Menu, MenuItem } from "obsidian";
+
+import { StartupSync, StartupFullSync } from "./fs";
+import { $ } from "../lang/lang";
+import FastSync from "../main";
 
 
 /**
@@ -95,4 +99,29 @@ export function isHttpUrl(url: string): boolean {
 
 export function isWsUrl(url: string): boolean {
   return /^wss?:\/\/.+/i.test(url);
+}
+
+
+export function RibbonMenu(menu: Menu, plugin: FastSync) {
+
+
+  menu.addSeparator()
+
+  menu.addItem((item: MenuItem) => {
+    item
+      .setIcon("rotate-cw")
+      .setTitle($("同步全部笔记"))
+      .onClick(async () => {
+        StartupSync(plugin)
+      })
+  })
+  menu.addItem((item: MenuItem) => {
+    item
+      .setIcon("upload-cloud")
+      .setTitle($("同步全部笔记(完整比对)"))
+      .onClick(async () => {
+        StartupFullSync(plugin)
+      })
+  })
+
 }
