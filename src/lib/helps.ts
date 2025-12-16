@@ -109,7 +109,7 @@ export function RibbonMenu(menu: Menu, plugin: FastSync) {
 
   menu.addItem((item: MenuItem) => {
     item
-      .setIcon("rotate-cw")
+      .setIcon("cloud")
       .setTitle($("同步全部笔记"))
       .onClick(async () => {
         StartupSync(plugin)
@@ -117,7 +117,7 @@ export function RibbonMenu(menu: Menu, plugin: FastSync) {
   })
   menu.addItem((item: MenuItem) => {
     item
-      .setIcon("upload-cloud")
+      .setIcon("cloudy")
       .setTitle($("同步全部笔记(完整比对)"))
       .onClick(async () => {
         StartupFullSync(plugin)

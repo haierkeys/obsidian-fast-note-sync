@@ -1,4 +1,4 @@
-import { TFile, TAbstractFile, Notice, Setting, requestUrl } from "obsidian";
+﻿import { TFile, TAbstractFile, TFolder, Notice, Setting, requestUrl } from "obsidian";
 
 import { hashContent, hashArrayBuffer, dump, isHttpUrl } from "./helps";
 import { $ } from "../lang/lang";
@@ -283,8 +283,46 @@ export const StartupSync = (plugin: FastSync): void => {
   void StartSync(plugin, true)
 }
 
-// 忽略上一次同步时间，强制同步
-export const StartupFullSync = (plugin: FastSync): void => {
+// 清理空文件夹
+const cleanEmptyFolders = async (plugin: FastSync) => {
+  const clean = async (folder: TFolder): Promise<boolean> => {
+    let isEmpty = true
+    for (const child of [...folder.children]) {
+      if (child instanceof TFolder) {
+        const isChildEmpty = await clean(child)
+        if (!isChildEmpty) {
+          isEmpty = false
+        }
+      } else {
+        isEmpty = false
+      }
+    }
+
+    if (isEmpty && folder.path !== "/") {
+      try {
+        await plugin.app.vault.delete(folder)
+        dump(`Deleted empty folder: ${folder.path}`)
+        return true
+      } catch (e) {
+        dump(`Failed to delete empty folder: ${folder.path}`, e)
+      }
+    }
+    return isEmpty
+  }
+
+  const root = plugin.app.vault.getRoot()
+  for (const child of root.children) {
+    if (child instanceof TFolder) {
+      await clean(child)
+    }
+  }
+}
+
+//
+export const StartupFullSync = async (plugin: FastSync) => {
+  dump("Starting clean empty folders...")
+  await cleanEmptyFolders(plugin)
+  dump("Clean empty folders done.")
   void StartSync(plugin)
 }
 //
@@ -705,3 +743,4 @@ export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map
   ["FileSyncMtime", ReceiveFileSyncMtime],
   ["FileSyncEnd", ReceiveFileSyncEnd],
 ])
+
