@@ -4,13 +4,27 @@
 <h1 align="center">Fast Note Sync For Obsidian</h1>
 
 <p align="center">
-<img src="https://img.shields.io/github/release/haierkeys/obsidian-fast-note-sync" alt="version">
-<img src="https://img.shields.io/github/license/haierkeys/obsidian-fast-note-sync.svg" alt="license" >
+    <a href="https://github.com/haierkeys/obsidian-fast-note-sync/releases"><img src="https://img.shields.io/github/release/haierkeys/obsidian-fast-note-sync?style=flat-square" alt="release"></a>
+    <a href="https://github.com/haierkeys/obsidian-fast-note-sync/releases"><img src="https://img.shields.io/github/v/tag/haierkeys/obsidian-fast-note-sync?label=release-alpha&style=flat-square" alt="alpha-release"></a>
+    <a href="https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/LICENSE"><img src="https://img.shields.io/github/license/haierkeys/obsidian-fast-note-sync?style=flat-square" alt="license"></a>
+    <img src="https://img.shields.io/badge/Language-TypeScript-00ADD8?style=flat-square" alt="TypeScript">
 </p>
 
-可私有化部署，专注为 **Obsidian** 用户提供无打扰、丝般顺滑、多端实时同步的笔记同步插件， 支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。
 
-![Image](https://github.com/user-attachments/assets/8e61d99e-6f76-49b1-a03e-c952ad9e21b0)
+
+<p align="center">
+  <strong>快速、稳定、高效、任意部署的 Obsidian 笔记 同步&备份 插件</strong>
+  <br>
+  <em>可私有化部署，专注为 Obsidian 用户提供无打扰、丝般顺滑、多端实时同步的笔记同步&备份插件， 支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。</em>
+</p>
+
+<p align="center">
+  需配合独立服务端使用：<a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+</p>
+
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/8e61d99e-6f76-49b1-a03e-c952ad9e21b0" alt="fast-note-sync-service-preview" width="800" />
+</div>
 
 
 ## ✨ 插件功能
