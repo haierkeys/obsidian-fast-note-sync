@@ -17,7 +17,7 @@ const ms: Partial<LangMap> = {
   "私有服务搭建": "Perkhidmatan persendirian ditubuhkan",
   "速度好, 自由配置, 无隐私风险": "Kelajuan baik, kebolehsuaian bebas, tiada risiko privasi",
   "粘贴的远端配置": "Konfigurasi jauh yang ditampal",
-  "启用同步": "Aktifkan penyegerakan",
+  "启用自动同步": "Aktifkan penyegerakan",
   "关闭后您的笔记将不做任何同步": "Selepas ditutup, nota anda tidak akan disegerakkan.",
   "远端服务地址": "Alamat Perkhidmatan Jauh",
   "选择一个 Fast note sync service 服务地址": "Pilih alamat perkhidmatan Fast note sync service",

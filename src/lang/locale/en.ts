@@ -17,7 +17,8 @@ const en: Partial<LangMap> = {
   "私有服务搭建": "Private service setup",
   "速度好, 自由配置, 无隐私风险": "Fast speed, customizable, no privacy risks",
   "粘贴的远端配置": "Pasted remote configuration",
-  "启用同步": "Enable synchronization",
+  "启用自动同步": "Enable auto synchronization",
+  "启动自动同步": "Enable auto synchronization",
   "关闭后您的笔记将不做任何同步": "After closing, your notes will not be synced.",
   "远端服务地址": "Remote service address",
   "选择一个 Fast note sync service 服务地址": "Choose an fast note sync service address",
@@ -41,6 +42,8 @@ const en: Partial<LangMap> = {
   "服务已断开": "Service disconnected",
   "开始同步": "Start sync",
   "同步完成": "Sync completed",
+  "关闭自动同步": "Disable auto synchronization",
+  "服务端版本": "Server Version",
 }
 
 export default en;

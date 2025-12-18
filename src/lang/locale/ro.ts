@@ -17,7 +17,7 @@ const ro: Partial<LangMap> = {
   "私有服务搭建": "Construirea serviciului privat",
   "速度好, 自由配置, 无隐私风险": "Viteză bună, configurare liberă, fără riscuri de confidențialitate",
   "粘贴的远端配置": "Configurație lipită de la distanță",
-  "启用同步": "Activare sincronizare",
+  "启用自动同步": "Activare sincronizare",
   "关闭后您的笔记将不做任何同步": "După închidere, notițele dumneavoastră nu vor fi sincronizate.",
   "远端服务地址": "Adresa serviciului la distanță",
   "选择一个 Fast note sync service 服务地址": "Alegeți o adresă de serviciu Fast note sync service",

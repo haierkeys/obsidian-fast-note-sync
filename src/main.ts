@@ -1,4 +1,4 @@
-import { Plugin, setIcon, Menu } from "obsidian";
+import { Plugin, setIcon, Menu, requestUrl } from "obsidian";
 
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
@@ -203,8 +203,8 @@ export default class FastSync extends Plugin {
       this.websocket.unRegister()
       this.isWatchEnabled = false
       this.ignoredFiles = new Set()
+      this.settings.apiVersion = ""
     }
-
     await this.saveData(this.settings)
   }
 }

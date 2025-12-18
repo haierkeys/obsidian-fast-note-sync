@@ -17,7 +17,7 @@ const hu: Partial<LangMap> = {
   "私有服务搭建": "Magánszolgáltatás kiépítése",
   "速度好, 自由配置, 无隐私风险": "Gyors, szabadon konfigurálható, nincs adatvédelmi kockázat",
   "粘贴的远端配置": "Távoli konfiguráció beillesztése",
-  "启用同步": "Szinkronizálás engedélyezése",
+  "启用自动同步": "Szinkronizálás engedélyezése",
   "关闭后您的笔记将不做任何同步": "A bezárás után a jegyzetei nem lesznek szinkronizálva.",
   "远端服务地址": "A távoli szolgáltatás címe",
   "选择一个 Fast note sync service 服务地址": "Válasszon egy Fast note sync service szolgáltatáscímet",

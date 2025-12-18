@@ -17,7 +17,7 @@ const tr: Partial<LangMap> = {
   "私有服务搭建": "Özel hizmet kurulumu",
   "速度好, 自由配置, 无隐私风险": "Hız iyi, özgür yapılandırma, gizlilik riski yok",
   "粘贴的远端配置": "Yapıştırılan uzak uç yapılandırması",
-  "启用同步": "Senkronizasyonu Etkinleştir",
+  "启用自动同步": "Senkronizasyonu Etkinleştir",
   "关闭后您的笔记将不做任何同步": "Kapandıktan sonra notlarınız senkronize edilmeyecek.",
   "远端服务地址": "Uzak sunucu adresi",
   "选择一个 Fast note sync service 服务地址": "Bir Fast note sync service hizmet adresi seçin",

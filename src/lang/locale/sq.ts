@@ -17,7 +17,7 @@ const sq: Partial<LangMap> = {
   "私有服务搭建": "Shërbime private të ndërtimit",
   "速度好, 自由配置, 无隐私风险": "Shpejtësia është e mirë, konfigurimi i lirë, pa rrezik për privatësinë",
   "粘贴的远端配置": "Konfigurimi i largët i ngjitur",
-  "启用同步": "Aktivizo sinkronizimin",
+  "启用自动同步": "Aktivizo sinkronizimin",
   "关闭后您的笔记将不做任何同步": "Pas mbylljes, shënimet tuaja nuk do të sinkronizohen.",
   "远端服务地址": "Adresa e shërbimit të largët",
   "选择一个 Fast note sync service 服务地址": "Zgjidhni një adresë shërbimi Fast note sync service",

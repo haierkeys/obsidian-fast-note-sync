@@ -17,7 +17,7 @@ const nl: Partial<LangMap> = {
   "私有服务搭建": "Opzetten van privéservices",
   "速度好, 自由配置, 无隐私风险": "Snelheid goed, vrije configuratie, geen privacyrisico's",
   "粘贴的远端配置": "Gekopieerde externe configuratie",
-  "启用同步": "Synchronisatie inschakelen",
+  "启用自动同步": "Synchronisatie inschakelen",
   "关闭后您的笔记将不做任何同步": "Nadat u deze hebt gesloten, worden uw notities niet meer gesynchroniseerd.",
   "远端服务地址": "Externe serviceadres",
   "选择一个 Fast note sync service 服务地址": "Kies een Fast note sync service serveradres",

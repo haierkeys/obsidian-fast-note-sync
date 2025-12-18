@@ -105,6 +105,29 @@ export function isWsUrl(url: string): boolean {
 export function RibbonMenu(menu: Menu, plugin: FastSync) {
 
 
+  if (plugin.settings.syncEnabled) {
+    menu.addItem((item: MenuItem) => {
+      item
+        .setIcon("pause")
+        .setTitle($("关闭自动同步"))
+        .onClick(async () => {
+          plugin.settings.syncEnabled = false
+          await plugin.saveSettings()
+          new Notice($("关闭后您的笔记将不做任何同步"))
+        })
+    })
+  } else {
+    menu.addItem((item: MenuItem) => {
+      item
+        .setIcon("play")
+        .setTitle($("启动自动同步"))
+        .onClick(async () => {
+          plugin.settings.syncEnabled = true
+          await plugin.saveSettings()
+          new Notice($("启动自动同步"))
+        })
+    })
+  }
   menu.addSeparator()
 
   menu.addItem((item: MenuItem) => {
@@ -115,13 +138,22 @@ export function RibbonMenu(menu: Menu, plugin: FastSync) {
         StartupSync(plugin)
       })
   })
+  menu.addSeparator()
   menu.addItem((item: MenuItem) => {
     item
       .setIcon("cloudy")
       .setTitle($("同步全部笔记(完整比对)"))
       .onClick(async () => {
-        StartupFullSync(plugin)
       })
   })
+
+  if (plugin.settings.apiVersion) {
+    menu.addSeparator()
+    menu.addItem((item: MenuItem) => {
+      item
+        .setTitle($("服务端版本") + ": v" + plugin.settings.apiVersion)
+        .setDisabled(true)
+    })
+  }
 
 }

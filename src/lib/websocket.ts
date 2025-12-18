@@ -140,6 +140,8 @@ export class WebSocketClient {
             return
           } else {
             this.isAuth = true
+            this.plugin.settings.apiVersion = data.data.version
+            this.plugin.saveSettings()
             dump("Service authorization success")
             this.StartHandle()
           }

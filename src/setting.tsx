@@ -22,6 +22,7 @@ export interface PluginSettings {
   lastFileSyncTime: number
   //  [propName: string]: any;
   clipboardReadTip: string
+  apiVersion: string
 }
 
 /**
@@ -46,6 +47,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   vault: "defaultVault",
   // 剪贴板读取提示
   clipboardReadTip: "",
+  apiVersion: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -73,7 +75,7 @@ export class SettingTab extends PluginSettingTab {
     // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
 
     new Setting(set)
-      .setName($("启用同步"))
+      .setName($("启用自动同步"))
       .setDesc($("关闭后您的笔记将不做任何同步"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {

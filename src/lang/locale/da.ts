@@ -17,7 +17,7 @@ const da: Partial<LangMap> = {
   "私有服务搭建": "Privat tjenesteopsætning",
   "速度好, 自由配置, 无隐私风险": "Hurtig hastighed, fri konfiguration, ingen privatlivsrisiko",
   "粘贴的远端配置": "Indsæt fjernkonfiguration",
-  "启用同步": "Aktiver synkronisering",
+  "启用自动同步": "Aktiver synkronisering",
   "关闭后您的笔记将不做任何同步": "Når det er lukket, vil dine noter ikke blive synkroniseret",
   "远端服务地址": "Fjernbetjeningsadresse",
   "选择一个 Fast note sync service 服务地址": "Vælg en Fast note sync service adresse",
