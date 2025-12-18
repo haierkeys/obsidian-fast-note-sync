@@ -3,6 +3,7 @@ import { Plugin, setIcon, Menu } from "obsidian";
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { dump, setLogEnabled, RibbonMenu } from "./lib/helps";
+import { ConfigWatcher } from "./lib/config_watcher";
 import { WebSocketClient } from "./lib/websocket";
 import { $ } from "./lang/lang";
 
@@ -13,6 +14,7 @@ export default class FastSync extends Plugin {
   settings: PluginSettings
   websocket: WebSocketClient
   clipboardReadTip: string = ""
+  configWatcher: ConfigWatcher
 
   ribbonIcon: HTMLElement
   ribbonIconStatus: boolean = false
@@ -58,13 +60,11 @@ export default class FastSync extends Plugin {
   }
 
   async onload() {
-
     await this.loadSettings()
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
     this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
-
 
     // Create Ribbon Icon once
     this.ribbonIcon = this.addRibbonIcon("wifi", "Fast Note Sync:" + $("同步全部笔记"), (event: MouseEvent) => {
@@ -74,7 +74,6 @@ export default class FastSync extends Plugin {
       // StartupSync(this)
     })
     setIcon(this.ribbonIcon, "wifi-off")
-
 
     if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
       this.websocket.register((status) => this.updateRibbonIcon(status))
@@ -87,22 +86,30 @@ export default class FastSync extends Plugin {
       this.ignoredFiles = new Set()
     }
     //
-    this.registerEvent(this.app.vault.on("create", (file) => {
-      NoteModify(file, this, true)
-      FileModify(file, this, true)
-    }))
-    this.registerEvent(this.app.vault.on("modify", (file) => {
-      NoteModify(file, this, true)
-      FileModify(file, this, true)
-    }))
-    this.registerEvent(this.app.vault.on("delete", (file) => {
-      NoteDelete(file, this, true)
-      FileDelete(file, this, true)
-    }))
-    this.registerEvent(this.app.vault.on("rename", (file, oldfile) => {
-      NoteRename(file, oldfile, this, true)
-      FileRename(file, oldfile, this, true)
-    }))
+    this.registerEvent(
+      this.app.vault.on("create", (file) => {
+        NoteModify(file, this, true)
+        FileModify(file, this, true)
+      })
+    )
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        NoteModify(file, this, true)
+        FileModify(file, this, true)
+      })
+    )
+    this.registerEvent(
+      this.app.vault.on("delete", (file) => {
+        NoteDelete(file, this, true)
+        FileDelete(file, this, true)
+      })
+    )
+    this.registerEvent(
+      this.app.vault.on("rename", (file, oldfile) => {
+        NoteRename(file, oldfile, this, true)
+        FileRename(file, oldfile, this, true)
+      })
+    )
 
     // 注册命令
     this.addCommand({
@@ -117,9 +124,12 @@ export default class FastSync extends Plugin {
       callback: () => StartupFullSync(this),
     })
 
+    //this.configWatcher = new ConfigWatcher(this)
+    //this.configWatcher.start()
   }
 
   onunload() {
+    //this.configWatcher.stop()
     // 取消注册文件事件
     this.websocket.unRegister()
     this.ignoredFiles = new Set()
@@ -127,21 +137,15 @@ export default class FastSync extends Plugin {
     this.fileDownloadSessions.clear()
   }
 
-
-
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
   }
 
   async saveSettings() {
-
     if (this.settings.api && this.settings.apiToken) {
-      this.settings.api = this.settings.api
-        .replace(/\/+$/, '') // 去除尾部斜杠
+      this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
 
-      this.settings.wsApi = this.settings.api
-        .replace(/^http/, "ws")
-        .replace(/\/+$/, '') // 去除尾部斜杠
+      this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
     }
     dump("settings", this.settings)
 

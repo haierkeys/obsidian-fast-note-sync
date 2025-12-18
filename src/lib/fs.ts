@@ -1,6 +1,6 @@
-﻿import { TFile, TAbstractFile, TFolder, Notice, Setting, requestUrl } from "obsidian";
+﻿import { TFile, TAbstractFile, TFolder, Notice } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, isHttpUrl } from "./helps";
+import { hashContent, hashArrayBuffer, dump } from "./helps";
 import { $ } from "../lang/lang";
 import FastSync from "../main";
 
@@ -10,6 +10,13 @@ import FastSync from "../main";
 export const BINARY_PREFIX_FILE_SYNC = "00"
 
 // NoteModify 消息推送
+/**
+ * 笔记修改事件处理
+ * 当本地笔记发生修改时，计算哈希并向服务端推送 NoteModify 消息
+ * @param file - 发生变化的文件对象
+ * @param plugin - 插件实例
+ * @param eventEnter - 是否由事件触发（用于忽略检查）
+ */
 export const NoteModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) {
@@ -42,7 +49,10 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync,
 }
 
 // NoteDelete 消息推送
-
+/**
+ * 笔记删除事件处理
+ * 当本地笔记被删除时，向服务端推送 NoteDelete 消息
+ */
 export const NoteDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) {
@@ -63,6 +73,10 @@ export const NoteDelete = function (file: TAbstractFile, plugin: FastSync, event
   plugin.removeIgnoredFile(file.path)
 }
 
+/**
+ * 笔记重命名事件处理
+ * 视为旧文件删除和新文件修改两个操作
+ */
 export const NoteRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) {
@@ -99,6 +113,9 @@ export const NoteRename = async function (file: TAbstractFile, oldfile: string, 
   plugin.removeIgnoredFile(file.path)
 }
 
+/**
+ * 根据路径发送笔记删除消息
+ */
 export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
   if (!path.endsWith(".md")) return
   const data = {
@@ -111,6 +128,10 @@ export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
 
 /* -------------------------------- File 推送相关 ------------------------------------------------ */
 
+/**
+ * 文件（非笔记）修改事件处理
+ * 计算文件哈希并发送 FileUploadCheck 消息，等待服务端确认是否需要上传
+ */
 export const FileModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) {
@@ -142,6 +163,9 @@ export const FileModify = async function (file: TAbstractFile, plugin: FastSync,
   plugin.removeIgnoredFile(file.path)
 }
 
+/**
+ * 文件删除事件处理
+ */
 export const FileDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) {
@@ -162,6 +186,9 @@ export const FileDelete = function (file: TAbstractFile, plugin: FastSync, event
   plugin.removeIgnoredFile(file.path)
 }
 
+/**
+ * 文件重命名事件处理
+ */
 export const FileRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
   if (file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) {
@@ -185,6 +212,9 @@ export const FileRename = async function (file: TAbstractFile, oldfile: string, 
   plugin.removeIgnoredFile(file.path)
 }
 
+/**
+ * 根据路径发送文件删除消息
+ */
 export const FileDeleteByPath = function (path: string, plugin: FastSync) {
   if (path.endsWith(".md")) return
   const data = {
@@ -206,6 +236,10 @@ interface SnapFile {
   mtime: number
 }
 
+/**
+ * 发送同步请求
+ * 将本地文件快照（Notes 和 Files）发送给服务端进行差异比对
+ */
 export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = []) {
   const noteSyncData = {
     vault: plugin.settings.vault,
@@ -224,6 +258,12 @@ export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number,
   dump("FileSync", fileSyncData)
 }
 
+/**
+ * 开始同步流程
+ * 收集本地文件信息，并调用 SyncRequestSend 发送同步请求
+ * @param plugin 插件实例
+ * @param isLoadLastTime 是否加载上次同步时间（增量同步）
+ */
 export const StartSync = async function (plugin: FastSync, isLoadLastTime: boolean = false) {
   if (!plugin.ribbonIconStatus) {
     new Notice($("服务已断开"))
@@ -278,12 +318,16 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
   SyncRequestSend(plugin, noteLastTime, fileLastTime, notes, files)
 }
 
-// 同步
+/**
+ * 启动时同步（增量同步）
+ */
 export const StartupSync = (plugin: FastSync): void => {
   void StartSync(plugin, true)
 }
 
-// 清理空文件夹
+/**
+ * 递归清理空文件夹
+ */
 const cleanEmptyFolders = async (plugin: FastSync) => {
   const clean = async (folder: TFolder): Promise<boolean> => {
     let isEmpty = true
@@ -318,7 +362,10 @@ const cleanEmptyFolders = async (plugin: FastSync) => {
   }
 }
 
-//
+/**
+ * 启动全量同步
+ * 先清理空文件夹，然后进行全量同步
+ */
 export const StartupFullSync = async (plugin: FastSync) => {
   dump("Starting clean empty folders...")
   await cleanEmptyFolders(plugin)
@@ -392,6 +439,10 @@ interface ReceivePathMessage {
 }
 
 // ReceiveNoteModify 接收文件修改
+/**
+ * 接收服务端笔记修改通知
+ * 更新本地笔记内容
+ */
 export const ReceiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive note modify:`, data.path, data.contentHash, data.mtime, data.pathHash)
 
@@ -413,6 +464,10 @@ export const ReceiveNoteSyncModify = async function (data: ReceiveMessage, plugi
 }
 
 // ReceiveNoteSyncNeed 接收处理需要上传需求
+/**
+ * 接收服务端请求上传笔记
+ * 当服务端发现缺少该笔记或内容不一致时触发，客户端需重新推送该笔记
+ */
 export const ReceiveNoteSyncNeedPush = async function (data: ReceivePathMessage, plugin: FastSync) {
   dump(`Receive note need push:`, data.path)
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -422,6 +477,10 @@ export const ReceiveNoteSyncNeedPush = async function (data: ReceivePathMessage,
 }
 
 // ReceiveNoteSyncNeedMtime 接收需求修改mtime
+/**
+ * 接收服务端笔记元数据(mtime)更新通知
+ * 仅更新本地文件的修改时间，不修改内容
+ */
 export const ReceiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   dump(`Receive note sync mtime:`, data.path, data.mtime)
 
@@ -434,7 +493,10 @@ export const ReceiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
   }
 }
 
-// 接收文件删除任务
+/**
+ * 接收服务端笔记删除通知
+ * 删除本地对应的笔记
+ */
 export const ReceiveNoteSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive note delete:`, data.action, data.path, data.mtime, data.pathHash)
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -446,6 +508,10 @@ export const ReceiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
 }
 
 // ReceiveFileNeedUpload 接收处理文件上传需求
+/**
+ * 接收服务端文件上传请求 (FileNeedUpload)
+ * 服务端请求客户端上传特定文件的元数据检查 (FileUploadCheck)
+ */
 export const ReceiveFileNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
   dump(`Receive file need upload:`, data.path)
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -456,6 +522,10 @@ export const ReceiveFileNeedUpload = async function (data: ReceivePathMessage, p
   FileModify(file, plugin, false)
 }
 // ReceiveFileNeedUpload 接收处理文件上传需求
+/**
+ * 接收服务端文件上传指令 (FileUpload)
+ * 服务端确认需要文件内容，客户端读取文件并分片发送二进制数据
+ */
 export const ReceiveFileUpload = async function (data: FileUploadMessage, plugin: FastSync) {
   dump(`Receive file need upload:`, data.path, data.sessionId)
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -498,6 +568,10 @@ export const ReceiveFileUpload = async function (data: FileUploadMessage, plugin
 }
 
 // ReceiveFileSyncUpdate 接收更新(下载) - 使用 WebSocket 分片下载
+/**
+ * 接收服务端文件更新通知 (FileSyncUpdate)
+ * 准备下载文件：创建临时会话并发送下载请求 (FileChunkDownload)
+ */
 export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
   dump(`Receive file sync update (download):`, data.path)
 
@@ -526,6 +600,10 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
 }
 
 // ReceiveFileSyncDelete 接收文件删除
+/**
+ * 接收服务端文件删除通知
+ * 删除本地对应的文件
+ */
 export const ReceiveFileSyncDelete = async function (data: ReceivePathMessage, plugin: FastSync) {
   dump(`Receive file delete:`, data.path)
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -537,6 +615,9 @@ export const ReceiveFileSyncDelete = async function (data: ReceivePathMessage, p
 }
 
 // ReceiveFileSyncMtime 接收 mtime 更新
+/**
+ * 接收服务端文件元数据(mtime)更新通知
+ */
 export const ReceiveFileSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   dump(`Receive file sync mtime:`, data.path, data.mtime)
   const file = plugin.app.vault.getFileByPath(data.path)
@@ -551,6 +632,10 @@ export const ReceiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
 }
 
 // ReceiveFileSyncChunkDownload 接收分片下载响应
+/**
+ * 接收服务端分片下载响应 (FileSyncChunkDownload)
+ * 初始化或迁移下载会话，准备接收二进制分片
+ */
 export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkDownloadMessage, plugin: FastSync) {
   dump(`Receive file chunk download:`, data.path, data.sessionId, `totalChunks: ${data.totalChunks}`)
 
@@ -593,6 +678,9 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
 }
 
 // HandleFileDownloadChunk 处理二进制分片
+/**
+ * 处理接收到的二进制文件分片
+ */
 export const HandleFileDownloadChunk = async function (buf: ArrayBuffer | Blob, plugin: FastSync) {
   const binaryData = buf instanceof Blob ? await buf.arrayBuffer() : buf
 
@@ -633,6 +721,10 @@ export const HandleFileDownloadChunk = async function (buf: ArrayBuffer | Blob, 
 }
 
 // CompleteFileDownload 重组并保存文件
+/**
+ * 完成文件下载
+ * 组装所有分片，验证大小，并写入本地文件
+ */
 async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSync) {
   try {
     // 按 chunkIndex 顺序合并分片
@@ -700,6 +792,10 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
 }
 
 // ReceiveFileSyncEnd 接收结束
+/**
+ * 接收文件同步结束通知
+ * 更新最后同步时间，并检查是否所有同步步骤都已完成
+ */
 export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive file sync end:`, data.vault, data.lastTime)
   plugin.settings.lastFileSyncTime = data.lastTime
@@ -714,7 +810,10 @@ export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: 
   }
 }
 
-//接收同步结束消息
+/**
+ * 接收笔记同步结束通知
+ * 更新最后同步时间，并检查是否所有同步步骤都已完成
+ */
 export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
   dump(`Receive note end:`, data.vault, data, data.lastTime)
   plugin.settings.lastNoteSyncTime = data.lastTime
@@ -743,4 +842,3 @@ export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map
   ["FileSyncMtime", ReceiveFileSyncMtime],
   ["FileSyncEnd", ReceiveFileSyncEnd],
 ])
-
