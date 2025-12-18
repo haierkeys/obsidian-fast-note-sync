@@ -819,7 +819,7 @@ const CheckSyncCompletion = (plugin: FastSync) => {
     plugin.updateStatusBar($("同步完成"))
     setTimeout(() => {
       plugin.updateStatusBar("")
-    }, 50000)
+    }, 5000)
   }
 }
 
