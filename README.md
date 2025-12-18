@@ -15,7 +15,7 @@
 <p align="center">
   <strong>Fast, stable, efficient, and deployable Obsidian note sync & backup plugin</strong>
   <br>
-  <em>Supports private deployment, dedicated to providing Obsidian users with an uninterrupted, silky smooth, multi-device real-time note sync & backup plugin. Supports platforms such as Mac, Windows, Android, iOS, and provides multi-language support.</em>
+  <em>Supports private deployment, dedicated to providing Obsidian users with an uninterrupted, silky-smooth, multi-device real-time note sync & backup plugin. Supports Mac, Windows, Android, iOS, and other platforms, with multi-language support.</em>
 </p>
 
 <p align="center">
@@ -29,19 +29,24 @@
 
 ## ✨ Plugin Features
 
-- **Minimal Configuration**: No complicated settings needed. Just paste the remote service configuration to use out of the box.
-- **Real-time Note Sync**: Automatically monitors and syncs all note creation, update, and deletion operations in the Vault.
-- **Full Attachment Support**: Real-time syncs images, videos, audio, and other non-setting files.
+- **Minimal Configuration**: No complicated settings needed. Just paste the remote service configuration to get started out of the box.
+- **Real-time Note Sync**: Automatically monitors and synchronizes all note creation, update, and deletion operations within the Vault.
+- **Comprehensive Attachment Support**: Real-time sync of images, videos, audio, and other non-setting files.
     > ⚠️ **Note**: Requires v1.0+ and server v0.9+. Please control attachment file sizes; large files may cause sync delays.
-- **Multi-device Sync**: Supports platforms such as Mac, Windows, Android, iOS.
+- **Multi-device Sync**: Supports Mac, Windows, Android, iOS, and other platforms.
 
 ## 🗺️ Roadmap
 
-We are continuously improving. Here are our future development plans:
+We are continuously improving. Here are the future development plans:
 
-- No next-step development plans at the moment
+- [ ] **Server Version Check**: Display server version information for easy understanding of the server's version status.
+- [ ] **Configuration Sync**: Provide configuration sync functionality, supporting configuration sync across multiple devices, eliminating the hassle of manually copying configuration files to multiple devices.
+- [ ] **Note History**: Provide note history snapshot functionality. You can view note version history and revert to previous versions via the plugin or server WebGui.
+- [ ] **Cloud Storage Backup Status**: View cloud storage backup status at any time, keeping you informed of the latest backup status.
+- [ ] **Note Sharing Feature**: Generate share links for your cloud notes, making it easy to share your work with others.
+- [ ] **AI Notes**: Explore innovative AI + note features. We welcome your valuable suggestions.
 
-> **If you have suggestions for improvements or new ideas, feel free to share them by submitting an issue—we will carefully evaluate and adopt suitable suggestions.**
+> **If you have improvement suggestions or new ideas, feel free to share them by submitting an issue—we will carefully evaluate and adopt suitable suggestions.**
 
 ## 💰 Pricing
 
@@ -51,10 +56,10 @@ We are continuously improving. Here are our future development plans:
 
 ## 🚀 Quick Start
 
-1. Install the plugin (choose one of the two options)
-   - **Official Store**: <s>Open the OBSidian Community Plugin Store, search for **Fast Note Sync** and install</s>
-        > ⚠️ The plugin is not yet listed on the official store and cannot be searched for. Please install manually.
-   - **Manual Installation**: Visit https://github.com/haierkeys/obsidian-fast-note-sync/releases to download the installation package, unzip it to the Obsidian plugins directory **.obsidian/plugin**
+1. Install the plugin (choose one)
+   - **Official Store**: <s>Open the Obsidian Community Plugin Market, search for **Fast Note Sync** and install</s>
+        > ⚠️ The plugin is not yet listed in the official store and cannot be searched. Please install manually.
+   - **Manual Installation**: Visit https://github.com/haierkeys/obsidian-fast-note-sync/releases to download the installation package, unzip it to the Obsidian plugin directory **.obsidian/plugin**
 2. Open the plugin configuration, click the **Paste Remote Configuration** button, and paste the remote service configuration into the input box.
 
 
