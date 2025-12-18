@@ -1,104 +1,133 @@
-.fast-note-sync-ribbon-icon{
-    animation: rotate 2s linear infinite;
-    /* 旋转动画：2秒一圈，线性，无限循环 */
+.fast-note-sync-ribbon-icon {
+  animation: rotate 2s linear infinite;
+  /* 旋转动画：2秒一圈，线性，无限循环 */
 }
 
 @keyframes rotate {
-    from {
-        transform: rotate(0deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(-360deg);
-    }
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
-
-.fast-note-sync-settings-tag{
-    .setting-item-name {
-        color: var(--interactive-accent);
-    }
+.fast-note-sync-settings-tag {
+  .setting-item-name {
+    color: var(--interactive-accent);
+  }
 }
 
 .fast-note-sync-settings-support {
-    .ko-fi-logo {
-        height: 36px !important;
-        border: 0px !important;
-    }
+  .ko-fi-logo {
+    height: 36px !important;
+    border: 0px !important;
+  }
 }
 
 .fast-note-sync-settings-debug {
+  margin: var(--size-4-2);
+  text-align: center;
+  button {
     margin: var(--size-4-2);
-    text-align: center;
-    button {
-        margin: var(--size-4-2);
-    }
+  }
 }
 
 .fast-note-sync-settings {
-    padding: 0.75em 0;
-    border-top: 1px solid var(--background-modifier-border);
+  padding: 0.75em 0;
+  border-top: 1px solid var(--background-modifier-border);
 
-    table {
-        width: 100%;
-        border: 1px solid var(--background-modifier-border);
-        margin-bottom: 20px;
+  table {
+    width: 100%;
+    border: 1px solid var(--background-modifier-border);
+    margin-bottom: 20px;
 
-        a {
-            color: var(--color-blue);
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        th, td {
-            border: 0 !important;
-        }
-
-        th {
-            text-align: center;
-            padding: 8px 10px;
-            font-size: var(--font-ui-smaller);
-            background-color: var(--background-secondary);
-        }
-
-        .no-columns-added {
-            padding: 15px;
-            text-align: center;
-            background-color: var(--background-secondary);
-
-            p {
-                margin: 4px;
-                font-size: 10px;
-            }
-        }
-
-        thead  {
-            border-bottom: 1px solid var(--color-base-40) !important;
-        }
-
-        tbody  {
-            tr {
-                background-color: var(--background-secondary);
-
-                &:nth-child(odd) {
-                    background-color: var(--background-secondary-alt);
-                }
-            }
-
-            td {
-                padding: 4px 8px;
-                font-size: var(--font-ui-small);
-            }
-        }
-
-
-        tfoot td {
-            padding: 8px 10px;
-        }
+    a {
+      color: var(--color-blue);
+      text-decoration: none;
     }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    th,
+    td {
+      border: 0 !important;
+    }
+
+    th {
+      text-align: center;
+      padding: 8px 10px;
+      font-size: var(--font-ui-smaller);
+      background-color: var(--background-secondary);
+    }
+
+    .no-columns-added {
+      padding: 15px;
+      text-align: center;
+      background-color: var(--background-secondary);
+
+      p {
+        margin: 4px;
+        font-size: 10px;
+      }
+    }
+
+    thead {
+      border-bottom: 1px solid var(--color-base-40) !important;
+    }
+
+    tbody {
+      tr {
+        background-color: var(--background-secondary);
+
+        &:nth-child(odd) {
+          background-color: var(--background-secondary-alt);
+        }
+      }
+
+      td {
+        padding: 4px 8px;
+        font-size: var(--font-ui-small);
+      }
+    }
+
+    tfoot td {
+      padding: 8px 10px;
+    }
+  }
 }
 
+.fast-note-sync-status-bar-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+.fast-note-sync-progress-bar {
+  width: 60px;
+  min-width: 60px;
+  flex-shrink: 0;
+  height: 10px;
+  background-color: var(--background-secondary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: block;
+
+  .fast-note-sync-progress-fill {
+    display: block;
+    height: 100%;
+    background-color: var(--interactive-accent);
+    width: 0%;
+    transition: width 0.05s linear;
+  }
+}
+
+.fast-note-sync-progress-text {
+  font-size: 0.9em;
+  min-width: 40px;
+  text-align: right;
+}

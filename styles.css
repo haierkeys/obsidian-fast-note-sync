@@ -45,7 +45,8 @@
 .fast-note-sync-settings table a:hover {
   text-decoration: underline;
 }
-.fast-note-sync-settings table th, .fast-note-sync-settings table td {
+.fast-note-sync-settings table th,
+.fast-note-sync-settings table td {
   border: 0 !important;
 }
 .fast-note-sync-settings table th {
@@ -78,6 +79,37 @@
 }
 .fast-note-sync-settings table tfoot td {
   padding: 8px 10px;
+}
+
+.fast-note-sync-status-bar-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fast-note-sync-progress-bar {
+  width: 60px;
+  min-width: 60px;
+  flex-shrink: 0;
+  height: 10px;
+  background-color: var(--background-secondary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: block;
+}
+.fast-note-sync-progress-bar .fast-note-sync-progress-fill {
+  display: block;
+  height: 100%;
+  background-color: var(--interactive-accent);
+  width: 0%;
+  transition: width 0.05s linear;
+}
+
+.fast-note-sync-progress-text {
+  font-size: 0.9em;
+  min-width: 40px;
+  text-align: right;
 }
 
 /*# sourceMappingURL=styles.css.map */

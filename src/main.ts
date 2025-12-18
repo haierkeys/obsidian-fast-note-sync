@@ -18,11 +18,17 @@ export default class FastSync extends Plugin {
 
   ribbonIcon: HTMLElement
   ribbonIconStatus: boolean = false
+  statusBarItem: HTMLElement
 
   isWatchEnabled: boolean = false
   ignoredFiles: Set<string> = new Set()
 
   syncTypeCompleteCount: number = 0
+
+  totalFilesToDownload: number = 0
+  downloadedFilesCount: number = 0
+  totalChunksToDownload: number = 0
+  downloadedChunksCount: number = 0
 
   // 文件下载会话管理
   fileDownloadSessions: Map<string, any> = new Map()
@@ -59,12 +65,51 @@ export default class FastSync extends Plugin {
     }
   }
 
+  statusBarText: HTMLElement
+  statusBarFill: HTMLElement
+  statusBarProgressBar: HTMLElement
+
+  updateStatusBar(text: string, current?: number, total?: number) {
+    if (!this.statusBarText) {
+      this.statusBarItem.addClass("fast-note-sync-status-bar-progress")
+
+      this.statusBarProgressBar = this.statusBarItem.createDiv("fast-note-sync-progress-bar")
+      this.statusBarFill = this.statusBarProgressBar.createDiv("fast-note-sync-progress-fill")
+
+      this.statusBarText = this.statusBarItem.createDiv("fast-note-sync-progress-text")
+    }
+
+    if (current !== undefined && total !== undefined && total > 0) {
+      this.statusBarItem.style.display = "flex"
+      this.statusBarProgressBar.style.display = "block"
+
+      const percentage = Math.min(100, Math.round((current / total) * 100))
+      this.statusBarFill.style.width = `${percentage}%`
+      this.statusBarText.setText(`${percentage}%`)
+      this.statusBarItem.setAttribute("aria-label", text)
+    } else {
+
+      if (text) {
+        // Show full progress bar when text is present (e.g. "Sync Complete")
+        this.statusBarItem.style.display = "flex"
+        this.statusBarProgressBar.style.display = "block"
+        this.statusBarFill.style.width = "100%"
+        this.statusBarText.setText(text)
+      } else {
+        this.statusBarItem.style.display = "none"
+        this.statusBarText.setText("")
+      }
+    }
+  }
+
   async onload() {
     await this.loadSettings()
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
     this.addSettingTab(this.settingTab)
+    this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
+    this.statusBarItem = this.addStatusBarItem()
 
     // Create Ribbon Icon once
     this.ribbonIcon = this.addRibbonIcon("wifi", "Fast Note Sync:" + $("同步全部笔记"), (event: MouseEvent) => {

@@ -275,6 +275,10 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
   }
 
   plugin.syncTypeCompleteCount = 0
+  plugin.totalFilesToDownload = 0
+  plugin.downloadedFilesCount = 0
+  plugin.totalChunksToDownload = 0
+  plugin.downloadedChunksCount = 0
   plugin.disableWatch()
 
   new Notice($("开始同步"))
@@ -597,6 +601,8 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   }
   plugin.websocket.MsgSend("FileChunkDownload", requestData)
   dump(`File chunk download request sent:`, requestData)
+
+  plugin.totalFilesToDownload++
 }
 
 // ReceiveFileSyncDelete 接收文件删除
@@ -670,9 +676,11 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
       size: data.size,
       chunks: new Map<number, ArrayBuffer>(),
     }
-    plugin.fileDownloadSessions.set(data.sessionId, session)
     dump(`Download session created directly: ${data.sessionId}`)
   }
+
+  plugin.totalChunksToDownload += data.totalChunks
+  plugin.updateStatusBar($("同步中"), plugin.downloadedChunksCount, plugin.totalChunksToDownload)
 
   dump(`Download session initialized:`, data.path, `expecting ${data.totalChunks} chunks`)
 }
@@ -710,6 +718,9 @@ export const HandleFileDownloadChunk = async function (buf: ArrayBuffer | Blob, 
 
   // 存储分片
   session.chunks.set(chunkIndex, chunkData)
+
+  plugin.downloadedChunksCount++
+  plugin.updateStatusBar($("同步中"), plugin.downloadedChunksCount, plugin.totalChunksToDownload)
 
   // 检查是否接收完所有分片
   if (session.chunks.size === session.totalChunks) {
@@ -784,10 +795,31 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
 
     // 清理会话
     plugin.fileDownloadSessions.delete(session.sessionId)
+
+    plugin.downloadedFilesCount++
+    CheckSyncCompletion(plugin)
   } catch (e) {
     dump("File download error:", e)
     new Notice(`File download failed: ${session.path}`)
     plugin.fileDownloadSessions.delete(session.sessionId)
+    CheckSyncCompletion(plugin)
+  }
+}
+
+// CheckSyncCompletion check sync completion
+const CheckSyncCompletion = (plugin: FastSync) => {
+  if (plugin.syncTypeCompleteCount >= 2 && plugin.fileDownloadSessions.size === 0) {
+    plugin.enableWatch()
+    plugin.syncTypeCompleteCount = 0
+    plugin.totalFilesToDownload = 0
+    plugin.downloadedFilesCount = 0
+    plugin.totalChunksToDownload = 0
+    plugin.downloadedChunksCount = 0
+    new Notice($("同步完成"))
+    plugin.updateStatusBar($("同步完成"))
+    setTimeout(() => {
+      plugin.updateStatusBar("")
+    }, 50000)
   }
 }
 
@@ -803,11 +835,7 @@ export const ReceiveFileSyncEnd = async function (data: ReceiveMessage, plugin: 
 
   plugin.syncTypeCompleteCount++
 
-  if (plugin.syncTypeCompleteCount === 2) {
-    plugin.enableWatch()
-    plugin.syncTypeCompleteCount = 0
-    new Notice($("同步完成"))
-  }
+  CheckSyncCompletion(plugin)
 }
 
 /**
@@ -820,11 +848,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
   await plugin.saveData(plugin.settings)
   plugin.syncTypeCompleteCount++
 
-  if (plugin.syncTypeCompleteCount === 2) {
-    plugin.enableWatch()
-    plugin.syncTypeCompleteCount = 0
-    new Notice($("同步完成"))
-  }
+  CheckSyncCompletion(plugin)
 }
 
 type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void
