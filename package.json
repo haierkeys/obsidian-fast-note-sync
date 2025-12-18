@@ -7,7 +7,7 @@
     "dev": "node esbuild.config.mjs",
     "devcss": "sass --watch src/styles.scss styles.css && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "ver": "node ./update-version.js"
+    "ver": "node ./scripts/update-version.js"
   },
   "keywords": [],
   "author": "",

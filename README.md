@@ -1,4 +1,4 @@
-[中文文档](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/readme-zh.md) / [English Document](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/README.md)
+[中文文档](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-CN.md) / [English Document](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/README.md)
 
 
 <h1 align="center">Fast Note Sync For Obsidian</h1>

@@ -80,17 +80,32 @@ jobs:
             echo "should_release=true" >> $GITHUB_OUTPUT
             echo "release_tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           fi
+      - name: Prepare Commit Message
+        id: prepare
+        if: steps.check_version.outputs.should_release == 'true'
+        run: |
+          # 获取提交文本信息
+          msg=$(git log -1 --pretty=%B)
 
+          # 设置 Python 进行翻译
+          pip install deep-translator > /dev/null 2>&1 || true
+
+          # 运行翻译脚本
+          export COMMIT_MSG="$msg"
+
+          echo "commit_msg<<EOF" >> $GITHUB_OUTPUT
+          if [ -f "scripts/translate_commit.py" ]; then
+              python3 scripts/translate_commit.py >> $GITHUB_OUTPUT
+          else
+              echo "未找到翻译脚本，使用原始消息"
+              echo "$msg" >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
       - name: Build
         id: build
         # 只有在 check_version 步骤输出 should_release 为 true 时才执行
         if: steps.check_version.outputs.should_release == 'true'
         run: |
-          # 获取提交文本信息
-          msg=$(git log -1 --pretty=%B)
-          echo "commit_msg<<EOF" >> $GITHUB_OUTPUT
-          echo "$msg" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
 
           pnpm install
           pnpm run build
@@ -110,7 +125,7 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          body: ${{ steps.build.outputs.commit_msg }}
+          body: ${{ steps.prepare.outputs.commit_msg }}
           target_commitish: ${{ github.sha }} # 明确指定在当前分支的 commit 上创建 tag
           overwrite_files: true
           files: |
