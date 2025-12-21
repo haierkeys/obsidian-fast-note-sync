@@ -113,7 +113,7 @@ export function RibbonMenu(menu: Menu, plugin: FastSync) {
         .onClick(async () => {
           plugin.settings.syncEnabled = false
           await plugin.saveSettings()
-          new Notice($("关闭后您的笔记将不做任何同步"))
+          new Notice($("启用笔记自动同步描述"))
         })
     })
   } else {

@@ -1,5 +1,6 @@
 ﻿import { TFile, TAbstractFile, TFolder, Notice } from "obsidian";
 
+import { getAllConfigPaths, configWatcherHandlers, readConfigFile, writeConfigFile, updateConfigFileTime, removeConfigFile, cleanEmptyConfigFolders } from "./config_watcher";
 import { hashContent, hashArrayBuffer, dump } from "./helps";
 import { $ } from "../lang/lang";
 import FastSync from "../main";
@@ -225,6 +226,65 @@ export const FileDeleteByPath = function (path: string, plugin: FastSync) {
   plugin.websocket.MsgSend("FileDelete", data)
 }
 
+/* -------------------------------- Config 推送相关 ------------------------------------------------ */
+
+/**
+ * 配置文件修改事件处理
+ */
+export const ConfigModify = async function (path: string, plugin: FastSync) {
+
+
+
+  if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
+  if (!plugin.getConfigWatchEnabled()) return
+  if (plugin.ignoredConfigFiles.has(path)) return
+
+  plugin.addIgnoredConfigFile(path)
+
+  const { content, stat } = await readConfigFile(path, plugin)
+  if (!stat) return
+  const contentHash = hashContent(content)
+  const data = {
+    vault: plugin.settings.vault,
+    path: path, // 这里的 path 是相对于 .obsidian/ 的相对路径
+    pathHash: hashContent(path),
+    content: content,
+    contentHash: contentHash,
+    mtime: stat.mtime,
+    ctime: stat.ctime,
+  }
+
+  // 读取内容
+  plugin.websocket.MsgSend("SettingModify", data)
+
+  plugin.removeIgnoredConfigFile(path)
+
+  dump(`SettingModify send`, data)
+}
+
+/**
+ * 配置文件删除事件处理
+ */
+export const ConfigDelete = function (path: string, plugin: FastSync) {
+  if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
+  if (!plugin.getConfigWatchEnabled()) return
+  if (plugin.ignoredConfigFiles.has(path)) return
+
+  plugin.addIgnoredConfigFile(path)
+
+  const data = {
+    vault: plugin.settings.vault,
+    path: path,
+    pathHash: hashContent(path),
+  }
+
+  plugin.websocket.MsgSend("SettingDelete", data)
+
+  plugin.removeIgnoredConfigFile(path)
+
+  dump(`SettingDelete send`, path)
+}
+
 /**
   本地文件快照数据
  */
@@ -240,22 +300,35 @@ interface SnapFile {
  * 发送同步请求
  * 将本地文件快照（Notes 和 Files）发送给服务端进行差异比对
  */
-export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = []) {
-  const noteSyncData = {
-    vault: plugin.settings.vault,
-    lastTime: noteLastTime,
-    notes: notes,
-  }
-  plugin.websocket.MsgSend("NoteSync", noteSyncData)
-  dump("Notesync", noteSyncData)
+export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, configLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = []) {
 
-  const fileSyncData = {
-    vault: plugin.settings.vault,
-    lastTime: fileLastTime,
-    files: files,
+  if (plugin.settings.syncEnabled) {
+    const noteSyncData = {
+      vault: plugin.settings.vault,
+      lastTime: noteLastTime,
+      notes: notes,
+    }
+    plugin.websocket.MsgSend("NoteSync", noteSyncData)
+    dump("Notesync", noteSyncData)
+
+    const fileSyncData = {
+      vault: plugin.settings.vault,
+      lastTime: fileLastTime,
+      files: files,
+    }
+    plugin.websocket.MsgSend("FileSync", fileSyncData)
+    dump("FileSync", fileSyncData)
   }
-  plugin.websocket.MsgSend("FileSync", fileSyncData)
-  dump("FileSync", fileSyncData)
+
+  if (plugin.getConfigWatchEnabled()) {
+    const configSyncData = {
+      vault: plugin.settings.vault,
+      lastTime: configLastTime,
+      settings: configs,
+    }
+    plugin.websocket.MsgSend("SettingSync", configSyncData)
+    dump("ConfigSync", configSyncData)
+  }
 }
 
 /**
@@ -284,42 +357,78 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
   new Notice($("开始同步"))
 
   const notes: SnapFile[] = [],
-    files: SnapFile[] = []
-  const list = plugin.app.vault.getFiles()
-  for (const file of list) {
-    if (file.extension === "md") {
-      // 同步笔记
-      if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) {
-        continue
+    files: SnapFile[] = [],
+    configs: SnapFile[] = []
+
+  if (plugin.settings.syncEnabled) {
+    const list = plugin.app.vault.getFiles()
+    for (const file of list) {
+      if (file.extension === "md") {
+        // 同步笔记
+        if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) {
+          continue
+        }
+        const content: string = await plugin.app.vault.cachedRead(file)
+        notes.push({
+          path: file.path,
+          pathHash: hashContent(file.path),
+          contentHash: hashContent(content),
+          mtime: file.stat.mtime,
+        })
+      } else {
+        // 同步文件
+        if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) {
+          continue
+        }
+        const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+        files.push({
+          path: file.path,
+          pathHash: hashContent(file.path),
+          contentHash: hashArrayBuffer(content),
+          mtime: file.stat.mtime,
+        })
       }
-      const content: string = await plugin.app.vault.cachedRead(file)
-      notes.push({
-        path: file.path,
-        pathHash: hashContent(file.path),
-        contentHash: hashContent(content),
-        mtime: file.stat.mtime,
-      })
-    } else {
-      // 同步文件
-      if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) {
-        continue
-      }
-      const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
-      files.push({
-        path: file.path,
-        pathHash: hashContent(file.path),
-        contentHash: hashArrayBuffer(content),
-        mtime: file.stat.mtime,
-      })
     }
   }
+
+  // 同步配置
+  const configPaths = (plugin.getConfigWatchEnabled()) ? await getAllConfigPaths(plugin) : []
+  for (const path of configPaths) {
+    if (plugin.ignoredConfigFiles.has(path)) continue
+    const fullPath = `${plugin.app.vault.configDir}/${path}`
+    const stat = await plugin.app.vault.adapter.stat(fullPath)
+    if (!stat) continue
+
+    if (isLoadLastTime && stat.mtime < Number(plugin.settings.lastConfigSyncTime)) {
+      continue
+    }
+
+    let contentHash: string
+    if (path.endsWith(".json") || path.endsWith(".css") || path.endsWith(".js")) {
+      const content = await plugin.app.vault.adapter.read(fullPath)
+      contentHash = hashContent(content)
+    } else {
+      const content = await plugin.app.vault.adapter.readBinary(fullPath)
+      contentHash = hashArrayBuffer(content)
+    }
+
+    configs.push({
+      path: path,
+      pathHash: hashContent(path),
+      contentHash: contentHash,
+      mtime: stat.mtime,
+    })
+  }
+
   let fileLastTime = 0,
-    noteLastTime = 0
+    noteLastTime = 0,
+    configLastTime = 0
   if (isLoadLastTime) {
     fileLastTime = Number(plugin.settings.lastFileSyncTime)
     noteLastTime = Number(plugin.settings.lastNoteSyncTime)
+    configLastTime = Number(plugin.settings.lastConfigSyncTime)
   }
-  SyncRequestSend(plugin, noteLastTime, fileLastTime, notes, files)
+  SyncRequestSend(plugin, noteLastTime, fileLastTime, configLastTime, notes, files, configs)
 }
 
 /**
@@ -462,8 +571,10 @@ export const ReceiveNoteSyncModify = async function (data: ReceiveMessage, plugi
     }
     await plugin.app.vault.create(data.path, data.content, { ctime: data.ctime, mtime: data.mtime })
   }
-  plugin.settings.lastNoteSyncTime = data.lastTime
-  await plugin.saveData(plugin.settings)
+  if (plugin.settings.lastNoteSyncTime < data.lastTime) {
+    plugin.settings.lastNoteSyncTime = data.lastTime
+    await plugin.saveData(plugin.settings)
+  }
   plugin.removeIgnoredFile(data.path)
 }
 
@@ -591,6 +702,8 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     size: data.size,
     chunks: new Map<number, ArrayBuffer>(),
   }
+
+
   plugin.fileDownloadSessions.set(tempKey, tempSession)
 
   // 发送 FileChunkDownload 请求
@@ -786,7 +899,7 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
     plugin.removeIgnoredFile(session.path)
 
     // 更新同步时间
-    if (session.lastTime > 0) {
+    if (plugin.settings.lastFileSyncTime < session.lastTime) {
       plugin.settings.lastFileSyncTime = session.lastTime
       await plugin.saveData(plugin.settings)
     }
@@ -808,7 +921,18 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
 
 // CheckSyncCompletion check sync completion
 const CheckSyncCompletion = (plugin: FastSync) => {
-  if (plugin.syncTypeCompleteCount >= 2 && plugin.fileDownloadSessions.size === 0) {
+  // Calculate expected completion count
+  // syncEnabled -> NoteSync + FileSync (2)
+  // configSyncEnabled -> ConfigSync (1)
+  let expectedCount = 0;
+  if (plugin.settings.syncEnabled) {
+    expectedCount += 2;
+  }
+  if (plugin.settings.configSyncEnabled) {
+    expectedCount += 1;
+  }
+
+  if (plugin.syncTypeCompleteCount >= expectedCount && plugin.fileDownloadSessions.size === 0) {
     plugin.enableWatch()
     plugin.syncTypeCompleteCount = 0
     plugin.totalFilesToDownload = 0
@@ -851,6 +975,81 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
   CheckSyncCompletion(plugin)
 }
 
+/* -------------------------------- Config 接收操作方法 ------------------------------------------------ */
+
+/**
+ * 接收服务端配置文件修改通知
+ */
+export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
+  if (!plugin.getConfigWatchEnabled()) return
+  if (plugin.ignoredConfigFiles.has(data.path)) return
+
+  plugin.addIgnoredConfigFile(data.path)
+  dump(`Receive config modify:`, data.path, data.contentHash)
+
+  await writeConfigFile(data.path, data.content, data, plugin)
+
+  plugin.removeIgnoredConfigFile(data.path)
+
+  if (plugin.settings.lastConfigSyncTime < data.lastTime) {
+    plugin.settings.lastConfigSyncTime = data.lastTime
+    await plugin.saveData(plugin.settings)
+  }
+
+
+}
+
+/**
+ * 接收服务端请求上传配置文件
+ */
+export const ReceiveConfigSyncNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
+  dump(`Receive config need upload:`, data.path)
+  if (!plugin.getConfigWatchEnabled()) return
+  if (plugin.ignoredConfigFiles.has(data.path)) return
+
+  await ConfigModify(data.path, plugin)
+}
+
+/**
+ * 接收服务端配置文件元数据更新通知
+ */
+export const ReceiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
+  if (!plugin.getConfigWatchEnabled()) return
+  if (plugin.ignoredConfigFiles.has(data.path)) return
+
+  plugin.addIgnoredConfigFile(data.path)
+
+  dump(`Receive config sync mtime:`, data.path, data.mtime)
+  await updateConfigFileTime(data.path, data, plugin)
+
+  plugin.removeIgnoredConfigFile(data.path)
+}
+
+/**
+ * 接收服务端配置文件删除通知
+ */
+export const ReceiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
+  if (!plugin.getConfigWatchEnabled()) return
+  if (plugin.ignoredConfigFiles.has(data.path)) return
+
+  dump(`Receive config delete:`, data.path)
+  const fullPath = `${plugin.app.vault.configDir}/${data.path}`
+  if (await plugin.app.vault.adapter.exists(fullPath)) {
+    await plugin.app.vault.adapter.remove(fullPath)
+  }
+}
+
+/**
+ * 接收配置同步结束通知
+ */
+export const ReceiveConfigSyncEnd = async function (data: ReceiveMessage, plugin: FastSync) {
+  dump(`Receive config sync end:`, data.lastTime)
+  plugin.settings.lastConfigSyncTime = data.lastTime
+  await plugin.saveData(plugin.settings)
+  plugin.syncTypeCompleteCount++
+  CheckSyncCompletion(plugin)
+}
+
 type ReceiveSyncMethod = (data: unknown, plugin: FastSync) => void
 export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map([
   ["NoteSyncModify", ReceiveNoteSyncModify],
@@ -865,4 +1064,9 @@ export const syncReceiveMethodHandlers: Map<string, ReceiveSyncMethod> = new Map
   ["FileSyncDelete", ReceiveFileSyncDelete],
   ["FileSyncMtime", ReceiveFileSyncMtime],
   ["FileSyncEnd", ReceiveFileSyncEnd],
+  ["SettingSyncModify", ReceiveConfigSyncModify],
+  ["SettingSyncNeedUpload", ReceiveConfigSyncNeedUpload],
+  ["SettingSyncMtime", ReceiveConfigSyncMtime],
+  ["SettingSyncDelete", ReceiveConfigSyncDelete],
+  ["SettingSyncEnd", ReceiveConfigSyncEnd],
 ])

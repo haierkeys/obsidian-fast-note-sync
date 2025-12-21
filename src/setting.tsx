@@ -10,6 +10,8 @@ import FastSync from "./main";
 export interface PluginSettings {
   //是否自动上传
   syncEnabled: boolean
+  // 是否开启配置项同步
+  configSyncEnabled: boolean
   // 是否开启日志
   logEnabled: boolean
   //API地址
@@ -20,8 +22,8 @@ export interface PluginSettings {
   vault: string
   lastNoteSyncTime: number
   lastFileSyncTime: number
+  lastConfigSyncTime: number
   //  [propName: string]: any;
-  clipboardReadTip: string
   apiVersion: string
 }
 
@@ -36,6 +38,7 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
   // 是否自动上传
   syncEnabled: true,
+  configSyncEnabled: false,
   logEnabled: false,
   // API 网关地址
   api: "",
@@ -44,9 +47,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   apiToken: "",
   lastNoteSyncTime: 0,
   lastFileSyncTime: 0,
+  lastConfigSyncTime: 0,
   vault: "defaultVault",
-  // 剪贴板读取提示
-  clipboardReadTip: "",
   apiVersion: "",
 }
 
@@ -57,7 +59,6 @@ export class SettingTab extends PluginSettingTab {
   constructor(app: App, plugin: FastSync) {
     super(app, plugin)
     this.plugin = plugin
-    this.plugin.clipboardReadTip = ""
   }
 
   hide(): void {
@@ -75,15 +76,27 @@ export class SettingTab extends PluginSettingTab {
     // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
 
     new Setting(set)
-      .setName($("启用自动同步"))
-      .setDesc($("关闭后您的笔记将不做任何同步"))
+      .setName($("启用笔记自动同步"))
+      .setDesc($("启用笔记自动同步描述"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.syncEnabled) {
             this.plugin.wsSettingChange = true
             this.plugin.settings.syncEnabled = value
             this.display()
-            await this.plugin.saveSettings()
+            await this.plugin.saveSettings("syncEnabled")
+          }
+        })
+      )
+
+    new Setting(set)
+      .setName($("启用配置项同步"))
+      .setDesc($("启用配置项同步描述"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.configSyncEnabled) {
+            this.plugin.settings.configSyncEnabled = value
+            await this.plugin.saveSettings("configSyncEnabled")
           }
         })
       )
@@ -199,7 +212,7 @@ export class SettingTab extends PluginSettingTab {
       if (Platform.isMacOS === true) {
         keys.createEl("kbd", { text: $("console_mac") })
       } else {
-        keys.createEl("kbd", { text: $("console_windows") })
+        keys.createEl("kbd", { text: $("console_win") })
       }
     }
   }

@@ -19,6 +19,7 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
 
     setTimeout(() => {
       plugin.clipboardReadTip = ""
+      plugin.settingTab.display()
     }, 2000)
   }
 
@@ -31,6 +32,7 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
 
     setTimeout(() => {
       plugin.clipboardReadTip = ""
+      plugin.settingTab.display()
     }, 2000)
   }
 

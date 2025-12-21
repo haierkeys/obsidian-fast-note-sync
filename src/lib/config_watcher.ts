@@ -1,7 +1,9 @@
-import { TFile, TAbstractFile, TFolder, Notice, Setting, normalizePath, debounce } from "obsidian";
+import { TFile, TAbstractFile, TFolder, Notice, Setting, Stat, normalizePath, debounce } from "obsidian";
 
+import { ConfigModify, ConfigDelete } from "./fs";
 import { $ } from "../lang/lang";
 import FastSync from "../main";
+import { dump } from "./helps";
 
 
 /**
@@ -36,8 +38,35 @@ import FastSync from "../main";
  * └── graph.json                   # 【关系图谱】记录关系图谱视图的显示设置、筛选条件等配置
  */
 
+/**
+ * [根目录] 需要监听的核心配置文件列表
+ */
+export const ROOT_FILES_TO_WATCH = [
+    "app.json",
+    "appearance.json",
+    "backlink.json",
+    "bookmarks.json",
+    "command-palette.json",
+    "community-plugins.json",
+    "core-plugins.json",
+    "core-plugins-migration.json",
+    "graph.json",
+    "hotkeys.json",
+    "page-preview.json",
+    "starred.json",
+    "webviewer.json",
+    "types.json",
+]
 
+/**
+ * [插件目录] 需要监听的插件内部核心文件
+ */
+export const PLUGIN_FILES_TO_WATCH = ["data.json", "manifest.json", "main.js", "styles.css"]
 
+/**
+ * [主题目录] 需要监听的主题内部核心文件
+ */
+export const THEME_FILES_TO_WATCH = ["theme.css", "manifest.json"]
 
 /**
  * ConfigWatcher 类
@@ -45,52 +74,35 @@ import FastSync from "../main";
  * 通过轮询（Polling）机制检测文件的修改时间（mtime），并在检测到变化时触发同步。
  */
 export class ConfigWatcher {
-    private plugin: FastSync;
-    private intervalId: number | null = null;
+    private plugin: FastSync
+    private intervalId: number | null = null
 
     /**
      * 记录文件路径及其上一次已知的修改时间戳
      * 用于对比判断文件是否发生了内容更新
      */
-    private fileStates: Map<string, number> = new Map();
+    private fileStates: Map<string, number> = new Map()
 
     /**
      * [根目录] 需要监听的核心配置文件列表
      * 这些文件直接位于 .obsidian/ 目录下
      */
-    private rootFilesToWatch = [
-        'app.json',                // 核心设置（如附件位置、编辑器偏好）
-        'appearance.json',         // 外观设置（主题选择、CSS 片段开关）
-        'community-plugins.json',  // 已启用的社区插件列表
-        'core-plugins.json',       // 核心插件的开关状态
-        'hotkeys.json',            // 自定义快捷键
-        'types.json',              // 文档属性（Properties）类型定义
-        'command-palette.json',    // 命令面板设置
-        'graph.json'               // 关系图谱显示设置
-    ];
+    private rootFilesToWatch = ROOT_FILES_TO_WATCH
 
     /**
      * [插件目录] 需要监听的插件内部核心文件
      * 位于 .obsidian/plugins/{plugin-id}/ 目录下
      */
-    private pluginFilesToWatch = [
-        'data.json',      // 插件的持久化设置（最重要）
-        'manifest.json',  // 插件元数据（版本信息）
-        'main.js',        // 插件逻辑代码
-        'styles.css'      // 插件自定义样式
-    ];
+    private pluginFilesToWatch = PLUGIN_FILES_TO_WATCH
 
     /**
      * [主题目录] 需要监听的主题内部核心文件
      * 位于 .obsidian/themes/{theme-name}/ 目录下
      */
-    private themeFilesToWatch = [
-        'theme.css',      // 主题样式表
-        'manifest.json'   // 主题信息
-    ];
+    private themeFilesToWatch = THEME_FILES_TO_WATCH
 
     constructor(plugin: FastSync) {
-        this.plugin = plugin;
+        this.plugin = plugin
     }
 
     /**
@@ -98,15 +110,28 @@ export class ConfigWatcher {
      * 首先执行一次全量初始化扫描，标记当前文件状态，然后开启 3 秒一次的轮询
      */
     start() {
-        console.log("ConfigWatcher: 开始全量监听 (设置 + 插件 + 主题 + 片段)...");
+        this.stop() // 确保在启动新定时器前清理旧定时器，防止泄露
+
+        dump("ConfigWatcher: 开始全量监听 (设置 + 插件 + 主题 + 片段)...")
 
         // 初始化扫描：仅记录状态，不触发上传
-        this.scanAll(true);
+        this.scanAll(true)
 
         // 设置轮询定时器
         this.intervalId = window.setInterval(() => {
-            this.scanAll(false);
-        }, 3000);
+            this.scanAll(false)
+        }, 3000)
+    }
+
+    /**
+     * 手动更新文件状态（用于在接收服务器同步后同步本地状态，防止触发回环同步）
+     * @param relativePath - 配置文件相对路径 (相对于 .obsidian/)
+     * @param mtime - 新的修改时间戳
+     */
+    updateFileState(relativePath: string, mtime: number) {
+        const filePath = normalizePath(`${this.plugin.app.vault.configDir}/${relativePath}`)
+        this.fileStates.set(filePath, mtime)
+        dump(`[ConfigWatcher] 手动更新文件状态: ${relativePath} -> ${mtime}`)
     }
 
     /**
@@ -115,8 +140,8 @@ export class ConfigWatcher {
      */
     stop() {
         if (this.intervalId) {
-            window.clearInterval(this.intervalId);
-            this.intervalId = null;
+            window.clearInterval(this.intervalId)
+            this.intervalId = null
         }
     }
 
@@ -126,36 +151,25 @@ export class ConfigWatcher {
      * @param isInit - 是否为初始化扫描。初次扫描仅记录 mtime，不做同步触发。
      */
     private async scanAll(isInit: boolean) {
-        const configDir = this.plugin.app.vault.configDir;
+        const configDir = this.plugin.app.vault.configDir
 
         // --- 1. 扫描根配置文件 ---
         for (const fileName of this.rootFilesToWatch) {
-            const filePath = normalizePath(`${configDir}/${fileName}`);
-            await this.checkFileChange(filePath, isInit);
+            const filePath = normalizePath(`${configDir}/${fileName}`)
+            await this.checkFileChange(filePath, isInit)
         }
 
         // --- 2. 扫描插件 (Plugins) ---
         // 遍历 .obsidian/plugins/ 下的所有子目录
-        await this.scanSubFolders(
-            normalizePath(`${configDir}/plugins`),
-            this.pluginFilesToWatch,
-            isInit
-        );
+        await this.scanSubFolders(normalizePath(`${configDir}/plugins`), this.pluginFilesToWatch, isInit)
 
         // --- 3. 扫描主题 (Themes) ---
         // 遍历 .obsidian/themes/ 下的所有子目录
-        await this.scanSubFolders(
-            normalizePath(`${configDir}/themes`),
-            this.themeFilesToWatch,
-            isInit
-        );
+        await this.scanSubFolders(normalizePath(`${configDir}/themes`), this.themeFilesToWatch, isInit)
 
         // --- 4. 扫描 CSS 片段 (Snippets) ---
         // 扫描 .obsidian/snippets/ 目录下的所有 .css 文件
-        await this.scanSnippets(
-            normalizePath(`${configDir}/snippets`),
-            isInit
-        );
+        await this.scanSnippets(normalizePath(`${configDir}/snippets`), isInit)
     }
 
     /**
@@ -167,11 +181,11 @@ export class ConfigWatcher {
      */
     private async scanSubFolders(rootPath: string, filesToWatch: string[], isInit: boolean) {
         try {
-            const result = await this.plugin.app.vault.adapter.list(rootPath);
+            const result = await this.plugin.app.vault.adapter.list(rootPath)
             for (const folderPath of result.folders) {
                 for (const fileName of filesToWatch) {
-                    const filePath = normalizePath(`${folderPath}/${fileName}`);
-                    await this.checkFileChange(filePath, isInit);
+                    const filePath = normalizePath(`${folderPath}/${fileName}`)
+                    await this.checkFileChange(filePath, isInit)
                 }
             }
         } catch (e) {
@@ -187,11 +201,11 @@ export class ConfigWatcher {
      */
     private async scanSnippets(rootPath: string, isInit: boolean) {
         try {
-            const result = await this.plugin.app.vault.adapter.list(rootPath);
+            const result = await this.plugin.app.vault.adapter.list(rootPath)
             for (const filePath of result.files) {
                 // 仅监听以 .css 结尾的文件
-                if (filePath.endsWith('.css')) {
-                    await this.checkFileChange(filePath, isInit);
+                if (filePath.endsWith(".css")) {
+                    await this.checkFileChange(filePath, isInit)
                 }
             }
         } catch (e) {
@@ -206,27 +220,33 @@ export class ConfigWatcher {
      */
     private async checkFileChange(filePath: string, isInit: boolean) {
         try {
-            const stat = await this.plugin.app.vault.adapter.stat(filePath);
+            const stat = await this.plugin.app.vault.adapter.stat(filePath)
 
             // 如果文件不存在
             if (!stat) {
                 if (this.fileStates.has(filePath)) {
-                    this.fileStates.delete(filePath);
+                    this.fileStates.delete(filePath)
                     if (!isInit) {
-                        console.log(`[ConfigWatcher] 文件被删除: ${filePath}`);
+                        const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+                        dump(`[ConfigWatcher] 文件被删除: ${relativePath}`)
+
+                        const handler = configWatcherHandlers.get("delete")
+                        if (handler) {
+                            handler(relativePath, this.plugin)
+                        }
                         // 预留：此处可扩展删除同步逻辑
                     }
                 }
-                return;
+                return
             }
 
             // 对比修改时间戳
-            const lastMtime = this.fileStates.get(filePath);
+            const lastMtime = this.fileStates.get(filePath)
             if (stat.mtime !== lastMtime) {
-                this.fileStates.set(filePath, stat.mtime);
+                this.fileStates.set(filePath, stat.mtime)
                 // 非初始化阶段检测到变化，触发同步
                 if (!isInit) {
-                    this.triggerSync(filePath);
+                    this.triggerSync(filePath)
                 }
             }
         } catch (e) {
@@ -238,48 +258,72 @@ export class ConfigWatcher {
      * 触发同步动作（防抖处理，防止频繁写入导致重复上传）
      * 设置为 2 秒防抖，并且在首个调用时立即触发
      */
-    private triggerSync = debounce((filePath: string) => {
-        console.log(`[ConfigWatcher] 准备上传同步: ${filePath}`);
+    private triggerSync = debounce(
+        (filePath: string) => {
+            const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+            dump(`[ConfigWatcher] 准备上传同步: ${relativePath}`)
 
-        // TODO: 这里应调用 FastSync 插件的上传管理器进行配置同步
-        // 例如：this.plugin.syncConfig(filePath);
-    }, 2000, true);
+            const handler = configWatcherHandlers.get("sync")
+            if (handler) {
+                handler(relativePath, this.plugin)
+            }
+
+            // TODO: 这里应调用 FastSync 插件的上传管理器进行配置同步
+            // 例如：this.plugin.syncConfig(filePath);
+        },
+        2000,
+        true
+    )
 }
-
 
 /**
- * 调试辅助：列出当前所有插件
- * @param plugin - 插件实例
+ * ConfigWatcher 事件处理器类型
  */
-export async function listPlugins(plugin: FastSync) {
-    const pluginsPath = normalizePath(`${plugin.app.vault.configDir}/plugins`);
+export type ConfigWatcherHandler = (relativePath: string, plugin: FastSync) => void
 
-    try {
-        const result = await plugin.app.vault.adapter.list(pluginsPath);
-        console.log("配置目录下的插件列表:", result.folders);
-    } catch (e) {
-        console.error("无法列出插件目录", e);
-    }
-}
+/**
+ * ConfigWatcher 外部注册表
+ * 模仿 syncReceiveMethodHandlers 的实现
+ */
+export const configWatcherHandlers: Map<string, ConfigWatcherHandler> = new Map()
+
+configWatcherHandlers.set("sync", (path: string, plugin: FastSync) => {
+    ConfigModify(path, plugin)
+})
+configWatcherHandlers.set("delete", (path: string, plugin: FastSync) => {
+    ConfigDelete(path, plugin)
+})
 
 /**
  * 调试辅助：读取特定配置文件内容
  * @param plugin - 插件实例
  */
-export async function readConfigFile(plugin: FastSync) {
-    const filePath = normalizePath(`${plugin.app.vault.configDir}/data.json`);
+
+interface ConfigFile {
+    content: string
+    stat: Stat | null
+}
+
+interface FileTimeStat {
+    ctime: number
+    mtime: number
+}
+
+export async function readConfigFile(path: string, plugin: FastSync): Promise<ConfigFile> {
+    const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
 
     try {
-        const exists = await plugin.app.vault.adapter.exists(filePath);
-        if (exists) {
-            const content = await plugin.app.vault.adapter.read(filePath);
-            console.log("文件内容读取成功:", content);
-        } else {
-            console.log("文件不存在:", filePath);
+        const exists = await plugin.app.vault.adapter.exists(filePath)
+        if (!exists) {
+            return { content: "", stat: null }
         }
+        const stat = await plugin.app.vault.adapter.stat(filePath)
+        const content = await plugin.app.vault.adapter.read(filePath)
+        return { content: content, stat: stat }
     } catch (error) {
-        console.error("读取配置文件出错:", error);
+        console.error("读取配置文件出错:", error)
     }
+    return { content: "", stat: null }
 }
 
 /**
@@ -287,17 +331,169 @@ export async function readConfigFile(plugin: FastSync) {
  * @param plugin - 插件实例
  * @param data - 要写入的 JSON 数据
  */
-export async function writeConfigFile(plugin: FastSync, data: any) {
-    const filePath = normalizePath(`${plugin.app.vault.configDir}/my-plugin-config.json`);
-    const content = JSON.stringify(data, null, 2);
+export async function writeConfigFile(path: string, content: any, time: FileTimeStat, plugin: FastSync) {
+    // 确保父目录存在
+    const folder = path.split("/").slice(0, -1).join("/")
+    if (folder !== "") {
+        const fullFolderPath = `${plugin.app.vault.configDir}/${folder}`
+        if (!(await plugin.app.vault.adapter.exists(fullFolderPath))) {
+            await plugin.app.vault.adapter.mkdir(fullFolderPath)
+        }
+    }
+
+    const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
+
+    plugin.configWatcher.updateFileState(path, time.mtime)
 
     try {
-        await plugin.app.vault.adapter.write(filePath, content);
-        console.log("配置文件写入成功:", filePath);
+        await plugin.app.vault.adapter.write(filePath, content, { ctime: time.ctime, mtime: time.mtime })
+        dump("配置文件写入成功:", filePath)
     } catch (e) {
-        console.error("写入配置文件失败", e);
+        console.error("写入配置文件失败", e)
     }
 }
 
+/**
+ * 调试辅助：更新配置文件的时间戳 (mtime/ctime)
+ * @param path - 相对路径
+ * @param time - 时间对象
+ * @param plugin - 插件实例
+ */
+export async function updateConfigFileTime(path: string, time: FileTimeStat, plugin: FastSync) {
+    const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
 
+    try {
+        if (await plugin.app.vault.adapter.exists(filePath)) {
+            // 读取现有二进制内容
+            const content = await plugin.app.vault.adapter.readBinary(filePath)
 
+            // 手动同步监听器状态，防止触发回环上传
+            plugin.configWatcher.updateFileState(path, time.mtime)
+
+            // 重新写入，仅为了更新元数据 (ctime/mtime)
+            await plugin.app.vault.adapter.writeBinary(filePath, content, {
+                ctime: time.ctime,
+                mtime: time.mtime,
+            })
+
+            dump("配置文件时间更新成功:", filePath)
+        }
+    } catch (e) {
+        console.error("更新配置文件时间失败", e)
+    }
+}
+
+/**
+ * 调试辅助：删除配置文件
+ * @param path - 相对路径
+ * @param plugin - 插件实例
+ */
+export async function removeConfigFile(path: string, plugin: FastSync) {
+    const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
+
+    try {
+        const exists = await plugin.app.vault.adapter.exists(filePath)
+        if (exists) {
+            await plugin.app.vault.adapter.remove(filePath)
+            dump("配置文件删除成功:", filePath)
+        } else {
+            dump("文件不存在，无需删除:", filePath)
+        }
+    } catch (e) {
+        console.error("删除配置文件失败", e)
+    }
+}
+
+/**
+ * 调试辅助：清理配置目录下的空目录（如空插件或空主题目录）
+ * @param plugin - 插件实例
+ */
+export async function cleanEmptyConfigFolders(plugin: FastSync) {
+    const configDir = plugin.app.vault.configDir
+    const foldersToClean = [normalizePath(`${configDir}/plugins`), normalizePath(`${configDir}/themes`)]
+
+    for (const rootPath of foldersToClean) {
+        try {
+            if (!(await plugin.app.vault.adapter.exists(rootPath))) continue
+
+            const result = await plugin.app.vault.adapter.list(rootPath)
+            for (const folderPath of result.folders) {
+                const folderResult = await plugin.app.vault.adapter.list(folderPath)
+                // 如果文件夹内没有任何文件和子文件夹
+                if (folderResult.files.length === 0 && folderResult.folders.length === 0) {
+                    await plugin.app.vault.adapter.rmdir(folderPath, true)
+                    dump(`[ConfigWatcher] 已清理空配置目录: ${folderPath}`)
+                }
+            }
+        } catch (e) {
+            // 忽略错误
+        }
+    }
+}
+
+/**
+ * 调试辅助：获取配置目录下所有【受监听】的文件路径
+ * @param plugin - 插件实例
+ * @returns 相对路径列表
+ */
+export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
+    const configDir = plugin.app.vault.configDir
+    const paths: string[] = []
+
+    const adapter = plugin.app.vault.adapter
+
+    try {
+        // 1. 根目录文件
+        for (const fileName of ROOT_FILES_TO_WATCH) {
+            const filePath = normalizePath(`${configDir}/${fileName}`)
+            if (await adapter.exists(filePath)) {
+                paths.push(fileName)
+            }
+        }
+
+        // 2. 插件文件
+        const pluginsPath = normalizePath(`${configDir}/plugins`)
+        if (await adapter.exists(pluginsPath)) {
+            const result = await adapter.list(pluginsPath)
+            for (const folderPath of result.folders) {
+                const pluginFolderName = folderPath.split("/").pop()
+                for (const fileName of PLUGIN_FILES_TO_WATCH) {
+                    const filePath = normalizePath(`${folderPath}/${fileName}`)
+                    if (await adapter.exists(filePath)) {
+                        paths.push(`plugins/${pluginFolderName}/${fileName}`)
+                    }
+                }
+            }
+        }
+
+        // 3. 主题文件
+        const themesPath = normalizePath(`${configDir}/themes`)
+        if (await adapter.exists(themesPath)) {
+            const result = await adapter.list(themesPath)
+            for (const folderPath of result.folders) {
+                const themeFolderName = folderPath.split("/").pop()
+                for (const fileName of THEME_FILES_TO_WATCH) {
+                    const filePath = normalizePath(`${folderPath}/${fileName}`)
+                    if (await adapter.exists(filePath)) {
+                        paths.push(`themes/${themeFolderName}/${fileName}`)
+                    }
+                }
+            }
+        }
+
+        // 4. CSS 片段
+        const snippetsPath = normalizePath(`${configDir}/snippets`)
+        if (await adapter.exists(snippetsPath)) {
+            const result = await adapter.list(snippetsPath)
+            for (const filePath of result.files) {
+                if (filePath.endsWith(".css")) {
+                    paths.push(`snippets/${filePath.split("/").pop()}`)
+                }
+            }
+        }
+    } catch (e) {
+        dump("Error getting config paths:", e)
+    }
+
+    return paths
+}

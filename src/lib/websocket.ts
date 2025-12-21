@@ -216,8 +216,6 @@ export class WebSocketClient {
       dump(`Service not connected, queuing message: ${action}`)
       return
     }
-
-    dump(`Sending message: ${action}`)
     if (typeof data === "string") {
       this.ws.send(action + "|" + data)
     } else {

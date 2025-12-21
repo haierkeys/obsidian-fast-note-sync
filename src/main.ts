@@ -1,4 +1,4 @@
-import { Plugin, setIcon, Menu, requestUrl } from "obsidian";
+import { Plugin, setIcon, Menu, Setting } from "obsidian";
 
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
@@ -13,15 +13,19 @@ export default class FastSync extends Plugin {
   wsSettingChange: boolean
   settings: PluginSettings
   websocket: WebSocketClient
-  clipboardReadTip: string = ""
   configWatcher: ConfigWatcher
 
   ribbonIcon: HTMLElement
   ribbonIconStatus: boolean = false
   statusBarItem: HTMLElement
 
+  clipboardReadTip: string = ""
+
   isWatchEnabled: boolean = false
   ignoredFiles: Set<string> = new Set()
+
+  isWatchConfigEnabled: boolean = false
+  ignoredConfigFiles: Set<string> = new Set()
 
   syncTypeCompleteCount: number = 0
 
@@ -51,6 +55,26 @@ export default class FastSync extends Plugin {
 
   removeIgnoredFile(path: string) {
     this.ignoredFiles.delete(path)
+  }
+
+  getConfigWatchEnabled(): boolean {
+    return this.isWatchConfigEnabled
+  }
+
+  enableConfigWatch() {
+    this.isWatchConfigEnabled = true
+  }
+
+  disableConfigWatch() {
+    this.isWatchConfigEnabled = false
+  }
+
+  addIgnoredConfigFile(path: string) {
+    this.ignoredConfigFiles.add(path)
+  }
+
+  removeIgnoredConfigFile(path: string) {
+    this.ignoredConfigFiles.delete(path)
   }
 
   updateRibbonIcon(status: boolean) {
@@ -88,7 +112,6 @@ export default class FastSync extends Plugin {
       this.statusBarText.setText(`${percentage}%`)
       this.statusBarItem.setAttribute("aria-label", text)
     } else {
-
       if (text) {
         // Show full progress bar when text is present (e.g. "Sync Complete")
         this.statusBarItem.style.display = "flex"
@@ -107,10 +130,8 @@ export default class FastSync extends Plugin {
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
     this.addSettingTab(this.settingTab)
-    this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
     this.statusBarItem = this.addStatusBarItem()
-
     // Create Ribbon Icon once
     this.ribbonIcon = this.addRibbonIcon("wifi", "Fast Note Sync:" + $("同步全部笔记"), (event: MouseEvent) => {
       const menu = new Menu()
@@ -120,16 +141,6 @@ export default class FastSync extends Plugin {
     })
     setIcon(this.ribbonIcon, "wifi-off")
 
-    if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
-      this.websocket.register((status) => this.updateRibbonIcon(status))
-      this.isWatchEnabled = true
-      this.ignoredFiles = new Set()
-      setLogEnabled(this.settings.logEnabled)
-    } else {
-      this.websocket.unRegister()
-      this.isWatchEnabled = false
-      this.ignoredFiles = new Set()
-    }
     //
     this.registerEvent(
       this.app.vault.on("create", (file) => {
@@ -169,42 +180,62 @@ export default class FastSync extends Plugin {
       callback: () => StartupFullSync(this),
     })
 
-    //this.configWatcher = new ConfigWatcher(this)
-    //this.configWatcher.start()
+    this.configWatcher = new ConfigWatcher(this)
+    this.refreshRuntime()
   }
 
   onunload() {
-    //this.configWatcher.stop()
     // 取消注册文件事件
-    this.websocket.unRegister()
-    this.ignoredFiles = new Set()
-    this.isWatchEnabled = false
-    this.fileDownloadSessions.clear()
+    this.refreshRuntime(false)
   }
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
   }
 
-  async saveSettings() {
+  async onExternalSettingsChange() {
+    this.loadSettings()
+  }
+
+  async saveSettings(setItem: string = "") {
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
-
       this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
     }
-    dump("settings", this.settings)
+    this.refreshRuntime()
+    await this.saveData(this.settings)
+  }
 
-    if (this.settings.syncEnabled && this.settings.api && this.settings.apiToken) {
+  refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
+    if (forceRegister && this.settings.api && this.settings.apiToken) {
+      this.isWatchConfigEnabled = this.settings.configSyncEnabled
+    } else {
+      this.isWatchConfigEnabled = false
+    }
+
+    if (forceRegister && (this.settings.syncEnabled || this.settings.configSyncEnabled) && this.settings.api && this.settings.apiToken) {
       this.websocket.register((status) => this.updateRibbonIcon(status))
       this.isWatchEnabled = true
       this.ignoredFiles = new Set()
-      setLogEnabled(this.settings.logEnabled)
+      this.ignoredConfigFiles = new Set()
+      this.fileDownloadSessions = new Map<string, any>()
     } else {
       this.websocket.unRegister()
       this.isWatchEnabled = false
       this.ignoredFiles = new Set()
-      this.settings.apiVersion = ""
+      this.ignoredConfigFiles = new Set()
+      this.fileDownloadSessions.clear()
     }
-    await this.saveData(this.settings)
+
+    console.log("配置文件监听", this.isWatchConfigEnabled)
+    if (this.isWatchConfigEnabled) {
+      console.log("开始配置文件监听")
+      this.configWatcher.start()
+    } else {
+      console.log("停止配置文件监听")
+      this.configWatcher.stop()
+    }
+
+    setLogEnabled(this.settings.logEnabled)
   }
 }
