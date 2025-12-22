@@ -190,7 +190,7 @@ export class WebSocketClient {
   }
   public StartHandle() {
     dump("Service start handle")
-    StartupFullSync(this.plugin)
+    StartupSync(this.plugin)
   }
 
   public OnlineStatusCheck() {

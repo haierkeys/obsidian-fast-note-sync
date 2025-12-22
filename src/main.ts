@@ -181,8 +181,15 @@ export default class FastSync extends Plugin {
   }
 
   async onExternalSettingsChange() {
-    this.loadSettings()
+    dump("onExternalSettingsChange")
+    await this.loadSettings()
+    if (this.settings.api && this.settings.apiToken) {
+      this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
+      this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
+    }
+    this.refreshRuntime(true)
   }
+
 
   async saveSettings(setItem: string = "") {
     if (this.settings.api && this.settings.apiToken) {

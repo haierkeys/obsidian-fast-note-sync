@@ -1,6 +1,6 @@
 ﻿import { TFile, TAbstractFile, TFolder, Notice } from "obsidian";
 
-import { getAllConfigPaths, configWatcherHandlers, readConfigFile, writeConfigFile, updateConfigFileTime, removeConfigFile, cleanEmptyConfigFolders } from "./config_watcher";
+import { getAllConfigPaths, configWatcherHandlers, readConfigFile, writeConfigFile, updateConfigFileTime, removeConfigFile, cleanEmptyConfigFolders, isConfigPathExcluded } from "./config_watcher";
 import { hashContent, hashArrayBuffer, dump } from "./helps";
 import { $ } from "../lang/lang";
 import FastSync from "../main";
@@ -233,10 +233,14 @@ export const FileDeleteByPath = function (path: string, plugin: FastSync) {
 /**
  * 配置文件修改事件处理
  */
-export const ConfigModify = async function (path: string, plugin: FastSync) {
+export const ConfigModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
+
+  console.log("[ConfigModify] 文件被修改:", path)
+
   if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
-  if (!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) return
-  if (plugin.ignoredConfigFiles.has(path)) return
+  if ((!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) && eventEnter) return
+  if (isConfigPathExcluded(path, plugin)) return
+  if (plugin.ignoredConfigFiles.has(path) && eventEnter) return
 
   plugin.addIgnoredConfigFile(path)
 
@@ -264,10 +268,11 @@ export const ConfigModify = async function (path: string, plugin: FastSync) {
 /**
  * 配置文件删除事件处理
  */
-export const ConfigDelete = function (path: string, plugin: FastSync) {
+export const ConfigDelete = function (path: string, plugin: FastSync, eventEnter: boolean = false) {
   if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
-  if (!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) return
-  if (plugin.ignoredConfigFiles.has(path)) return
+  if ((!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) && eventEnter) return
+  if (isConfigPathExcluded(path, plugin)) return
+  if (plugin.ignoredConfigFiles.has(path) && eventEnter) return
 
   plugin.addIgnoredConfigFile(path)
 
@@ -326,6 +331,7 @@ export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number,
       vault: plugin.settings.vault,
       lastTime: configLastTime,
       settings: configs,
+      cover: plugin.settings.lastConfigSyncTime == 0,
     }
     plugin.websocket.MsgSend("SettingSync", configSyncData)
     dump("ConfigSync", configSyncData)
@@ -405,11 +411,11 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     }
   }
 
-
   // 同步配置
   const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await getAllConfigPaths(plugin) : []
   for (const path of configPaths) {
-    if (plugin.ignoredConfigFiles.has(path)) continue
+    if (isConfigPathExcluded(path, plugin)) continue
+
     const fullPath = `${plugin.app.vault.configDir}/${path}`
     const stat = await plugin.app.vault.adapter.stat(fullPath)
     if (!stat) continue
@@ -423,8 +429,7 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
       const content = await plugin.app.vault.adapter.read(fullPath)
       contentHash = hashContent(content)
     } else {
-      const content = await plugin.app.vault.adapter.readBinary(fullPath)
-      contentHash = hashArrayBuffer(content)
+      continue
     }
 
     configs.push({
@@ -443,9 +448,6 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     noteLastTime = Number(plugin.settings.lastNoteSyncTime)
     configLastTime = Number(plugin.settings.lastConfigSyncTime)
   }
-
-
-
 
   SyncRequestSend(plugin, noteLastTime, fileLastTime, configLastTime, notes, files, configs, syncMode)
 }
@@ -958,7 +960,6 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
   }
 }
 
-
 // ReceiveFileSyncEnd 接收结束
 /**
  * 接收文件同步结束通知
@@ -994,6 +995,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
  */
 export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
   if (!plugin.settings.configSyncEnabled) return
+  if (isConfigPathExcluded(data.path, plugin)) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   plugin.addIgnoredConfigFile(data.path)
@@ -1015,9 +1017,10 @@ export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plu
 export const ReceiveConfigSyncNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
   dump(`Receive config need upload:`, data.path)
   if (!plugin.settings.configSyncEnabled) return
+  if (isConfigPathExcluded(data.path, plugin)) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
-  await ConfigModify(data.path, plugin)
+  await ConfigModify(data.path, plugin, false)
 }
 
 /**
@@ -1025,6 +1028,7 @@ export const ReceiveConfigSyncNeedUpload = async function (data: ReceivePathMess
  */
 export const ReceiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (!plugin.settings.configSyncEnabled) return
+  if (isConfigPathExcluded(data.path, plugin)) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   plugin.addIgnoredConfigFile(data.path)
@@ -1040,6 +1044,7 @@ export const ReceiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
  */
 export const ReceiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
   if (!plugin.settings.configSyncEnabled) return
+  if (isConfigPathExcluded(data.path, plugin)) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   dump(`Receive config delete:`, data.path)

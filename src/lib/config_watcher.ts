@@ -7,6 +7,30 @@ import { dump } from "./helps";
 
 
 /**
+ * 排除监听文件的集合（相对路径）
+ */
+export const CONFIG_EXCLUDE_SET: Set<string> = new Set(["plugins/obsidian-fast-note-sync/data.json"])
+
+/**
+ * 判断配置路径是否被排除
+ * @param relativePath - 相对于 .obsidian 目录的路径
+ * @param plugin - 插件实例
+ */
+export function isConfigPathExcluded(relativePath: string, plugin: FastSync): boolean {
+    if (CONFIG_EXCLUDE_SET.has(relativePath)) return true
+
+    const excludeSetting = plugin.settings.configExclude || ""
+    if (!excludeSetting.trim()) return false
+
+    const excludePaths = excludeSetting
+        .split("\n")
+        .map((p) => p.trim())
+        .filter((p) => p !== "")
+
+    return excludePaths.some((p) => relativePath === p || relativePath.startsWith(p + "/"))
+}
+
+/**
  * Obsidian 配置目录结构说明 (.obsidian/)
  * 此文件仅作为开发参考，描述了插件需要关注或同步的核心配置文件。
  *
@@ -41,21 +65,11 @@ import { dump } from "./helps";
 /**
  * [根目录] 需要监听的核心配置文件列表
  */
-export const ROOT_FILES_TO_WATCH = [
-    "app.json",
-    "appearance.json",
-    "backlink.json",
-    "bookmarks.json",
-    "command-palette.json",
-    "community-plugins.json",
-    "core-plugins.json",
-    "core-plugins-migration.json",
-    "graph.json",
-    "hotkeys.json",
-    "page-preview.json",
-    "starred.json",
-    "webviewer.json",
-    "types.json",
+export const ROOT_FILES_TO_WATCH = ["app.json",
+    "appearance.json", "backlink.json", "bookmarks.json", "command-palette.json",
+    "community-plugins.json", "core-plugins.json", "core-plugins-migration.json",
+    "graph.json", "hotkeys.json", "page-preview.json", "starred.json", "webviewer.json",
+    "types.json"
 ]
 
 /**
@@ -76,12 +90,14 @@ export const THEME_FILES_TO_WATCH = ["theme.css", "manifest.json"]
 export class ConfigWatcher {
     private plugin: FastSync
     private intervalId: number | null = null
+    private isScanning: boolean = false
 
     /**
      * 记录文件路径及其上一次已知的修改时间戳
      * 用于对比判断文件是否发生了内容更新
      */
     private fileStates: Map<string, number> = new Map()
+
 
     /**
      * [根目录] 需要监听的核心配置文件列表
@@ -110,16 +126,31 @@ export class ConfigWatcher {
      * @param relativePath - 相对于 .obsidian 目录的路径
      */
     private isPathExcluded(relativePath: string): boolean {
-        const excludeSetting = this.plugin.settings.configExclude || ""
-        if (!excludeSetting.trim()) return false
-
-        const excludePaths = excludeSetting
-            .split("\n")
-            .map((p) => p.trim())
-            .filter((p) => p !== "")
-
-        return excludePaths.some((p) => relativePath === p || relativePath.startsWith(p + "/"))
+        return isConfigPathExcluded(relativePath, this.plugin)
     }
+    /**
+     * 添加排除路径
+     */
+    addExclude(relativePath: string) {
+        CONFIG_EXCLUDE_SET.add(relativePath)
+    }
+
+    /**
+     * 移除排除路径
+     */
+    removeExclude(relativePath: string) {
+        CONFIG_EXCLUDE_SET.delete(relativePath)
+    }
+
+    /**
+     * 清空排除路径
+     */
+    clearExcludes() {
+        CONFIG_EXCLUDE_SET.clear()
+        // 重新添加默认排除项
+        CONFIG_EXCLUDE_SET.add("plugins/obsidian-fast-note-sync/data.json")
+    }
+
 
     /**
      * 启动配置监听器
@@ -146,6 +177,9 @@ export class ConfigWatcher {
      */
     updateFileState(relativePath: string, mtime: number) {
         const filePath = normalizePath(`${this.plugin.app.vault.configDir}/${relativePath}`)
+
+        console.log("updateFileState:", { filePath, mtime })
+
         this.fileStates.set(filePath, mtime)
         dump(`[ConfigWatcher] 手动更新文件状态: ${relativePath} -> ${mtime}`)
     }
@@ -167,26 +201,38 @@ export class ConfigWatcher {
      * @param isInit - 是否为初始化扫描。初次扫描仅记录 mtime，不做同步触发。
      */
     private async scanAll(isInit: boolean) {
-        const configDir = this.plugin.app.vault.configDir
-
-        // --- 1. 扫描根配置文件 ---
-        for (const fileName of this.rootFilesToWatch) {
-            if (this.isPathExcluded(fileName)) continue
-            const filePath = normalizePath(`${configDir}/${fileName}`)
-            await this.checkFileChange(filePath, isInit)
+        if (this.isScanning) {
+            dump("[ConfigWatcher] 上一次扫描仍在进行中，跳过本次扫描")
+            return
         }
+        this.isScanning = true
 
-        // --- 2. 扫描插件 (Plugins) ---
-        // 遍历 .obsidian/plugins/ 下的所有子目录
-        await this.scanSubFolders(normalizePath(`${configDir}/plugins`), this.pluginFilesToWatch, isInit)
+        try {
+            const configDir = this.plugin.app.vault.configDir
 
-        // --- 3. 扫描主题 (Themes) ---
-        // 遍历 .obsidian/themes/ 下的所有子目录
-        await this.scanSubFolders(normalizePath(`${configDir}/themes`), this.themeFilesToWatch, isInit)
+            // --- 1. 扫描根配置文件 ---
+            for (const fileName of this.rootFilesToWatch) {
+                if (this.isPathExcluded(fileName)) continue
+                const filePath = normalizePath(`${configDir}/${fileName}`)
+                await this.checkFileChange(filePath, isInit)
+            }
 
-        // --- 4. 扫描 CSS 片段 (Snippets) ---
-        // 扫描 .obsidian/snippets/ 目录下的所有 .css 文件
-        await this.scanSnippets(normalizePath(`${configDir}/snippets`), isInit)
+            // --- 2. 扫描插件 (Plugins) ---
+            // 遍历 .obsidian/plugins/ 下的所有子目录
+            await this.scanSubFolders(normalizePath(`${configDir}/plugins`), this.pluginFilesToWatch, isInit)
+
+            // --- 3. 扫描主题 (Themes) ---
+            // 遍历 .obsidian/themes/ 下的所有子目录
+            await this.scanSubFolders(normalizePath(`${configDir}/themes`), this.themeFilesToWatch, isInit)
+
+            // --- 4. 扫描 CSS 片段 (Snippets) ---
+            // 扫描 .obsidian/snippets/ 目录下的所有 .css 文件
+            await this.scanSnippets(normalizePath(`${configDir}/snippets`), isInit)
+        } catch (e) {
+            dump("[ConfigWatcher] 扫描过程中出错:", e)
+        } finally {
+            this.isScanning = false
+        }
     }
 
     /**
@@ -241,6 +287,13 @@ export class ConfigWatcher {
      * @param isInit - 是否为初始化扫描
      */
     private async checkFileChange(filePath: string, isInit: boolean) {
+        const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+
+        // 如果该配置正处于写入状态，跳过本次轮询检测，防止读取到中间状态的时间戳
+        if (this.plugin.ignoredConfigFiles.has(relativePath)) {
+            return
+        }
+
         try {
             const stat = await this.plugin.app.vault.adapter.stat(filePath)
 
@@ -250,7 +303,7 @@ export class ConfigWatcher {
                     this.fileStates.delete(filePath)
                     if (!isInit) {
                         const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
-                        dump(`[ConfigWatcher] 文件被删除: ${relativePath}`)
+                        console.log(`[ConfigWatcher] 文件被删除: ${relativePath}`)
 
                         const handler = configWatcherHandlers.get("delete")
                         if (handler) {
@@ -265,6 +318,8 @@ export class ConfigWatcher {
             // 对比修改时间戳
             const lastMtime = this.fileStates.get(filePath)
             if (stat.mtime !== lastMtime) {
+                const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+                console.log("[ConfigWatcher] 文件被修改:", relativePath, lastMtime, stat.mtime)
                 this.fileStates.set(filePath, stat.mtime)
                 // 非初始化阶段检测到变化，触发同步
                 if (!isInit) {
@@ -280,22 +335,15 @@ export class ConfigWatcher {
      * 触发同步动作（防抖处理，防止频繁写入导致重复上传）
      * 设置为 2 秒防抖，并且在首个调用时立即触发
      */
-    private triggerSync = debounce(
-        (filePath: string) => {
-            const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
-            dump(`[ConfigWatcher] 准备上传同步: ${relativePath}`)
+    private triggerSync = (filePath: string) => {
+        const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+        dump(`[ConfigWatcher] 准备上传同步: ${relativePath}`)
 
-            const handler = configWatcherHandlers.get("sync")
-            if (handler) {
-                handler(relativePath, this.plugin)
-            }
-
-            // TODO: 这里应调用 FastSync 插件的上传管理器进行配置同步
-            // 例如：this.plugin.syncConfig(filePath);
-        },
-        2000,
-        true
-    )
+        const handler = configWatcherHandlers.get("sync")
+        if (handler) {
+            handler(relativePath, this.plugin)
+        }
+    }
 }
 
 /**
@@ -310,10 +358,10 @@ export type ConfigWatcherHandler = (relativePath: string, plugin: FastSync) => v
 export const configWatcherHandlers: Map<string, ConfigWatcherHandler> = new Map()
 
 configWatcherHandlers.set("sync", (path: string, plugin: FastSync) => {
-    ConfigModify(path, plugin)
+    ConfigModify(path, plugin, true)
 })
 configWatcherHandlers.set("delete", (path: string, plugin: FastSync) => {
-    ConfigDelete(path, plugin)
+    ConfigDelete(path, plugin, true)
 })
 
 /**
@@ -354,25 +402,52 @@ export async function readConfigFile(path: string, plugin: FastSync): Promise<Co
  * @param data - 要写入的 JSON 数据
  */
 export async function writeConfigFile(path: string, content: any, time: FileTimeStat, plugin: FastSync) {
-    // 确保父目录存在
-    const folder = path.split("/").slice(0, -1).join("/")
-    if (folder !== "") {
-        const fullFolderPath = `${plugin.app.vault.configDir}/${folder}`
-        if (!(await plugin.app.vault.adapter.exists(fullFolderPath))) {
-            await plugin.app.vault.adapter.mkdir(fullFolderPath)
-        }
-    }
+    // 1. 锁定配置文件，防止 ConfigWatcher 在写入期间触发同步
 
-    const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
-
-    plugin.configWatcher.updateFileState(path, time.mtime)
 
     try {
+        // 确保父目录存在
+        const folder = path.split("/").slice(0, -1).join("/")
+        if (folder !== "") {
+            const fullFolderPath = normalizePath(`${plugin.app.vault.configDir}/${folder}`)
+            if (!(await plugin.app.vault.adapter.exists(fullFolderPath))) {
+                await plugin.app.vault.adapter.mkdir(fullFolderPath)
+            }
+        }
+
+        const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
+
+        // 2. 更新内存中记录的状态，防止写完后监听器认为文件变了
+        plugin.configWatcher.updateFileState(path, time.mtime)
+
+        // 3. 执行写入
         await plugin.app.vault.adapter.write(filePath, content, { ctime: time.ctime, mtime: time.mtime })
-        dump("配置文件写入成功:", filePath)
+        console.log(`[writeConfigFile] 写入完成: ${path}, 预期 mtime: ${time.mtime}`)
+
+        // 4. 二次校准逻辑：Obsidian 或系统可能会在写入后再次重写文件
+        // 延迟 500ms 检查最终的 mtime 是否符合预期
+        // setTimeout(async () => {
+        //     try {
+        //         const finalStat = await plugin.app.vault.adapter.stat(filePath)
+        //         if (finalStat && finalStat.mtime !== time.mtime) {
+        //             console.log(`[writeConfigFile] 检测到 mtime 偏移! 预期: ${time.mtime}, 实际: ${finalStat.mtime}. 正在进行二次校准...`)
+        //             // 再次更新内存状态
+        //             plugin.configWatcher.updateFileState(path, time.mtime)
+        //             // 再次强制更新文件时间戳
+        //             await updateConfigFileTime(path, time, plugin)
+        //         }
+        //         // 校验完成后解锁
+        //         plugin.removeIgnoredConfigFile(path)
+        //     } catch (err) {
+        //         plugin.removeIgnoredConfigFile(path)
+        //     }
+        // }, 500)
+
     } catch (e) {
         console.error("写入配置文件失败", e)
     }
+
+
 }
 
 /**
@@ -398,7 +473,9 @@ export async function updateConfigFileTime(path: string, time: FileTimeStat, plu
                 mtime: time.mtime,
             })
 
-            dump("配置文件时间更新成功:", filePath)
+            const finalStat = await plugin.app.vault.adapter.stat(filePath)
+
+            console.log("配置文件时间更新成功:", filePath, finalStat)
         }
     } catch (e) {
         console.error("更新配置文件时间失败", e)
@@ -464,15 +541,7 @@ export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
 
     const adapter = plugin.app.vault.adapter
 
-    const isPathExcluded = (relativePath: string) => {
-        const excludeSetting = plugin.settings.configExclude || ""
-        if (!excludeSetting.trim()) return false
-        const excludePaths = excludeSetting
-            .split("\n")
-            .map((p) => p.trim())
-            .filter((p) => p !== "")
-        return excludePaths.some((p) => relativePath === p || relativePath.startsWith(p + "/"))
-    }
+    const isPathExcluded = (relativePath: string) => isConfigPathExcluded(relativePath, plugin)
 
     try {
         // 1. 根目录文件
