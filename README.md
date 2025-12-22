@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  Requires use with a separate server: <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+  Requires separate server: <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
 </p>
 
 <div align="center">
@@ -29,22 +29,23 @@
 
 ## ✨ Plugin Features
 
-- **Minimal Configuration**: No complicated settings needed. Just paste the remote service configuration to get started out of the box.
+- **Minimal Configuration**: No tedious setup, just paste the remote service configuration to get started out of the box.
 - **Real-time Note Sync**: Automatically monitors and synchronizes all note creation, update, and deletion operations within the Vault.
 - **Comprehensive Attachment Support**: Real-time sync of images, videos, audio, and other non-setting files.
-    > ⚠️ **Note**: Requires v1.0+ and server v0.9+. Please control attachment file sizes; large files may cause sync delays.
-- **Multi-device Sync**: Supports Mac, Windows, Android, iOS, and other platforms.
+    > ⚠️ **Note**: Requires v1.0+, server v0.9+. Please control attachment file size; large files may cause synchronization delays.
+- **Config Sync**: Provides configuration synchronization, supporting config sync across multiple devices. Say goodbye to the pain of manually copying configuration files to multiple devices.
+    > ⚠️ **Note**: Requires v1.4+, server v1.0+. Currently in beta, please use with caution.
+- **Server Version Viewing**: Displays server version information, making it easy to understand the server's version status.
+- **Multi-platform Synchronization**: Supports Mac, Windows, Android, iOS, and other platforms.
 
 ## 🗺️ Roadmap
 
 We are continuously improving. Here are the future development plans:
 
-- [ ] **Server Version Check**: Display server version information for easy understanding of the server's version status.
-- [ ] **Configuration Sync**: Provide configuration sync functionality, supporting configuration sync across multiple devices, eliminating the hassle of manually copying configuration files to multiple devices.
-- [ ] **Note History**: Provide note history snapshot functionality. You can view note version history and revert to previous versions via the plugin or server WebGui.
+- [ ] **Note History**: Provides note history snapshot functionality. You can view note version history and revert to previous versions via the plugin or server WebGui.
 - [ ] **Cloud Storage Backup Status**: View cloud storage backup status at any time, keeping you informed of the latest backup status.
-- [ ] **Note Sharing Feature**: Generate share links for your cloud notes, making it easy to share your work with others.
-- [ ] **AI Notes**: Explore innovative AI + note features. We welcome your valuable suggestions.
+- [ ] **Note Sharing**: Generate share links for your cloud notes, making it easy to share your work with others.
+- [ ] **AI Notes**: Explore innovative AI+ note features. We look forward to your valuable suggestions.
 
 > **If you have improvement suggestions or new ideas, feel free to share them by submitting an issue—we will carefully evaluate and adopt suitable suggestions.**
 
@@ -57,12 +58,12 @@ We are continuously improving. Here are the future development plans:
 ## 🚀 Quick Start
 
 1. Install the plugin (choose one)
-   - **Official Store**: <s>Open the Obsidian Community Plugin Market, search for **Fast Note Sync** and install</s>
+   - **Official Store**: <s>Open the Obsidian community plugin market, search for **Fast Note Sync** to install</s>
         > ⚠️ The plugin is not yet listed in the official store and cannot be searched. Please install manually.
    - **Manual Installation**: Visit https://github.com/haierkeys/obsidian-fast-note-sync/releases to download the installation package, unzip it to the Obsidian plugin directory **.obsidian/plugin**
-2. Open the plugin configuration, click the **Paste Remote Configuration** button, and paste the remote service configuration into the input box.
+2. Open the plugin settings, click the **Paste Remote Configuration** button, and paste the remote service configuration into the input box.
 
 
 ## 📦 Server Deployment
 
-For backend service setup, please refer to: [Fast Note Sync Service](https://github.com/haierkeys/fast-note-sync-service).
+For backend service settings, please refer to: [Fast Note Sync Service](https://github.com/haierkeys/fast-note-sync-service).
