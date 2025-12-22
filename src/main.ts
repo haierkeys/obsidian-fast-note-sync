@@ -1,6 +1,6 @@
 import { Plugin, setIcon, Menu, Setting } from "obsidian";
 
-import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, FileModify, FileDelete, FileRename } from "./lib/fs";
+import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, StartSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { dump, setLogEnabled, RibbonMenu } from "./lib/helps";
 import { ConfigWatcher } from "./lib/config_watcher";
@@ -23,11 +23,10 @@ export default class FastSync extends Plugin {
 
   isWatchEnabled: boolean = false
   ignoredFiles: Set<string> = new Set()
-
-  isWatchConfigEnabled: boolean = false
   ignoredConfigFiles: Set<string> = new Set()
 
   syncTypeCompleteCount: number = 0
+  expectedSyncCount: number = 0
 
   totalFilesToDownload: number = 0
   downloadedFilesCount: number = 0
@@ -55,18 +54,6 @@ export default class FastSync extends Plugin {
 
   removeIgnoredFile(path: string) {
     this.ignoredFiles.delete(path)
-  }
-
-  getConfigWatchEnabled(): boolean {
-    return this.isWatchConfigEnabled
-  }
-
-  enableConfigWatch() {
-    this.isWatchConfigEnabled = true
-  }
-
-  disableConfigWatch() {
-    this.isWatchConfigEnabled = false
   }
 
   addIgnoredConfigFile(path: string) {
@@ -202,20 +189,24 @@ export default class FastSync extends Plugin {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
       this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
     }
-    this.refreshRuntime()
+    this.refreshRuntime(true, setItem)
     await this.saveData(this.settings)
   }
 
   refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
-    if (forceRegister && this.settings.api && this.settings.apiToken) {
-      this.isWatchConfigEnabled = this.settings.configSyncEnabled
-    } else {
-      this.isWatchConfigEnabled = false
-    }
-
     if (forceRegister && (this.settings.syncEnabled || this.settings.configSyncEnabled) && this.settings.api && this.settings.apiToken) {
       this.websocket.register((status) => this.updateRibbonIcon(status))
       this.isWatchEnabled = true
+      if (this.websocket.isAuth) {
+        console.log("refreshRuntime", this.isWatchEnabled)
+        console.log("refreshRuntime", setItem)
+        if (setItem == "syncEnabled") {
+          StartSync(this, true, "note")
+        } else if (setItem == "configSyncEnabled") {
+          StartSync(this, true, "config")
+        }
+      }
+
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
       this.fileDownloadSessions = new Map<string, any>()
@@ -227,12 +218,10 @@ export default class FastSync extends Plugin {
       this.fileDownloadSessions.clear()
     }
 
-    console.log("配置文件监听", this.isWatchConfigEnabled)
-    if (this.isWatchConfigEnabled) {
-      console.log("开始配置文件监听")
+
+    if (forceRegister && this.isWatchEnabled && this.settings.configSyncEnabled) {
       this.configWatcher.start()
     } else {
-      console.log("停止配置文件监听")
       this.configWatcher.stop()
     }
 

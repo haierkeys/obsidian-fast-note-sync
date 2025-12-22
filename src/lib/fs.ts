@@ -6,6 +6,8 @@ import { $ } from "../lang/lang";
 import FastSync from "../main";
 
 
+export type SyncMode = "auto" | "note" | "config"
+
 /* -------------------------------- Note 推送相关 ------------------------------------------------ */
 
 export const BINARY_PREFIX_FILE_SYNC = "00"
@@ -20,7 +22,7 @@ export const BINARY_PREFIX_FILE_SYNC = "00"
  */
 export const NoteModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
-  if (!plugin.getWatchEnabled() && eventEnter) {
+  if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -56,7 +58,7 @@ export const NoteModify = async function (file: TAbstractFile, plugin: FastSync,
  */
 export const NoteDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
-  if (!plugin.getWatchEnabled() && eventEnter) {
+  if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -80,7 +82,7 @@ export const NoteDelete = function (file: TAbstractFile, plugin: FastSync, event
  */
 export const NoteRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
   if (!file.path.endsWith(".md")) return
-  if (!plugin.getWatchEnabled() && eventEnter) {
+  if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -135,7 +137,7 @@ export const NoteDeleteByPath = function (path: string, plugin: FastSync) {
  */
 export const FileModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (file.path.endsWith(".md")) return
-  if (!plugin.getWatchEnabled() && eventEnter) {
+  if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -169,7 +171,7 @@ export const FileModify = async function (file: TAbstractFile, plugin: FastSync,
  */
 export const FileDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (file.path.endsWith(".md")) return
-  if (!plugin.getWatchEnabled() && eventEnter) {
+  if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -192,7 +194,7 @@ export const FileDelete = function (file: TAbstractFile, plugin: FastSync, event
  */
 export const FileRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
   if (file.path.endsWith(".md")) return
-  if (!plugin.getWatchEnabled() && eventEnter) {
+  if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) {
     return
   }
   if (plugin.ignoredFiles.has(file.path) && eventEnter) {
@@ -232,11 +234,8 @@ export const FileDeleteByPath = function (path: string, plugin: FastSync) {
  * 配置文件修改事件处理
  */
 export const ConfigModify = async function (path: string, plugin: FastSync) {
-
-
-
   if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
-  if (!plugin.getConfigWatchEnabled()) return
+  if (!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) return
   if (plugin.ignoredConfigFiles.has(path)) return
 
   plugin.addIgnoredConfigFile(path)
@@ -267,7 +266,7 @@ export const ConfigModify = async function (path: string, plugin: FastSync) {
  */
 export const ConfigDelete = function (path: string, plugin: FastSync) {
   if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
-  if (!plugin.getConfigWatchEnabled()) return
+  if (!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) return
   if (plugin.ignoredConfigFiles.has(path)) return
 
   plugin.addIgnoredConfigFile(path)
@@ -300,9 +299,11 @@ interface SnapFile {
  * 发送同步请求
  * 将本地文件快照（Notes 和 Files）发送给服务端进行差异比对
  */
-export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, configLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = []) {
+export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, configLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], syncMode: SyncMode = "auto") {
+  const shouldSyncNotes = syncMode === "auto" || syncMode === "note"
+  const shouldSyncConfigs = syncMode === "auto" || syncMode === "config"
 
-  if (plugin.settings.syncEnabled) {
+  if (plugin.settings.syncEnabled && shouldSyncNotes) {
     const noteSyncData = {
       vault: plugin.settings.vault,
       lastTime: noteLastTime,
@@ -320,7 +321,7 @@ export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number,
     dump("FileSync", fileSyncData)
   }
 
-  if (plugin.getConfigWatchEnabled()) {
+  if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
     const configSyncData = {
       vault: plugin.settings.vault,
       lastTime: configLastTime,
@@ -332,12 +333,12 @@ export const SyncRequestSend = function (plugin: FastSync, noteLastTime: number,
 }
 
 /**
- * 开始同步流程
  * 收集本地文件信息，并调用 SyncRequestSend 发送同步请求
  * @param plugin 插件实例
  * @param isLoadLastTime 是否加载上次同步时间（增量同步）
+ * @param syncMode 同步模式 "auto" | "note" | "config"
  */
-export const StartSync = async function (plugin: FastSync, isLoadLastTime: boolean = false) {
+export const StartSync = async function (plugin: FastSync, isLoadLastTime: boolean = false, syncMode: SyncMode = "auto") {
   if (!plugin.ribbonIconStatus) {
     new Notice($("服务已断开"))
     return
@@ -360,7 +361,20 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     files: SnapFile[] = [],
     configs: SnapFile[] = []
 
-  if (plugin.settings.syncEnabled) {
+  const shouldSyncNotes = syncMode === "auto" || syncMode === "note"
+  const shouldSyncConfigs = syncMode === "auto" || syncMode === "config"
+
+  let expectedCount = 0
+  if (plugin.settings.syncEnabled && shouldSyncNotes) {
+    expectedCount += 2
+  }
+  if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
+    expectedCount += 1
+  }
+  plugin.expectedSyncCount = expectedCount
+  console.log("StartSync expectedCount:", expectedCount, "syncMode:", syncMode)
+
+  if (plugin.settings.syncEnabled && shouldSyncNotes) {
     const list = plugin.app.vault.getFiles()
     for (const file of list) {
       if (file.extension === "md") {
@@ -391,8 +405,9 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     }
   }
 
+
   // 同步配置
-  const configPaths = (plugin.getConfigWatchEnabled()) ? await getAllConfigPaths(plugin) : []
+  const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await getAllConfigPaths(plugin) : []
   for (const path of configPaths) {
     if (plugin.ignoredConfigFiles.has(path)) continue
     const fullPath = `${plugin.app.vault.configDir}/${path}`
@@ -428,7 +443,11 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     noteLastTime = Number(plugin.settings.lastNoteSyncTime)
     configLastTime = Number(plugin.settings.lastConfigSyncTime)
   }
-  SyncRequestSend(plugin, noteLastTime, fileLastTime, configLastTime, notes, files, configs)
+
+
+
+
+  SyncRequestSend(plugin, noteLastTime, fileLastTime, configLastTime, notes, files, configs, syncMode)
 }
 
 /**
@@ -438,6 +457,16 @@ export const StartupSync = (plugin: FastSync): void => {
   void StartSync(plugin, true)
 }
 
+/**
+ * 启动全量同步
+ * 先清理空文件夹，然后进行全量同步
+ */
+export const StartupFullSync = async (plugin: FastSync) => {
+  void StartSync(plugin)
+  dump("Starting clean empty folders...")
+  await cleanEmptyFolders(plugin)
+  dump("Clean empty folders done.")
+}
 /**
  * 递归清理空文件夹
  */
@@ -475,16 +504,6 @@ const cleanEmptyFolders = async (plugin: FastSync) => {
   }
 }
 
-/**
- * 启动全量同步
- * 先清理空文件夹，然后进行全量同步
- */
-export const StartupFullSync = async (plugin: FastSync) => {
-  dump("Starting clean empty folders...")
-  await cleanEmptyFolders(plugin)
-  dump("Clean empty folders done.")
-  void StartSync(plugin)
-}
 //
 
 /* -------------------------------- 消息接收操作方法  Message receiving methods ------------------------------------------------ */
@@ -703,7 +722,6 @@ export const ReceiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     chunks: new Map<number, ArrayBuffer>(),
   }
 
-
   plugin.fileDownloadSessions.set(tempKey, tempSession)
 
   // 发送 FileChunkDownload 请求
@@ -799,6 +817,27 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
 }
 
 // HandleFileDownloadChunk 处理二进制分片
+
+/**
+ * 检查同步是否完成
+ */
+function CheckSyncCompletion(plugin: FastSync) {
+  console.log("CheckSyncCompletion:", plugin.syncTypeCompleteCount, "/", plugin.expectedSyncCount, "Sessions:", plugin.fileDownloadSessions.size)
+  if (plugin.syncTypeCompleteCount >= plugin.expectedSyncCount && plugin.fileDownloadSessions.size === 0) {
+    plugin.enableWatch()
+    plugin.syncTypeCompleteCount = 0
+    plugin.totalFilesToDownload = 0
+    plugin.downloadedFilesCount = 0
+    plugin.totalChunksToDownload = 0
+    plugin.downloadedChunksCount = 0
+    new Notice($("同步完成"))
+    plugin.updateStatusBar($("同步完成"))
+    setTimeout(() => {
+      plugin.updateStatusBar("")
+    }, 5000)
+  }
+}
+
 /**
  * 处理接收到的二进制文件分片
  */
@@ -919,33 +958,6 @@ async function CompleteFileDownload(session: FileDownloadSession, plugin: FastSy
   }
 }
 
-// CheckSyncCompletion check sync completion
-const CheckSyncCompletion = (plugin: FastSync) => {
-  // Calculate expected completion count
-  // syncEnabled -> NoteSync + FileSync (2)
-  // configSyncEnabled -> ConfigSync (1)
-  let expectedCount = 0;
-  if (plugin.settings.syncEnabled) {
-    expectedCount += 2;
-  }
-  if (plugin.settings.configSyncEnabled) {
-    expectedCount += 1;
-  }
-
-  if (plugin.syncTypeCompleteCount >= expectedCount && plugin.fileDownloadSessions.size === 0) {
-    plugin.enableWatch()
-    plugin.syncTypeCompleteCount = 0
-    plugin.totalFilesToDownload = 0
-    plugin.downloadedFilesCount = 0
-    plugin.totalChunksToDownload = 0
-    plugin.downloadedChunksCount = 0
-    new Notice($("同步完成"))
-    plugin.updateStatusBar($("同步完成"))
-    setTimeout(() => {
-      plugin.updateStatusBar("")
-    }, 5000)
-  }
-}
 
 // ReceiveFileSyncEnd 接收结束
 /**
@@ -981,7 +993,7 @@ export const ReceiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
  * 接收服务端配置文件修改通知
  */
 export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
-  if (!plugin.getConfigWatchEnabled()) return
+  if (!plugin.settings.configSyncEnabled) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   plugin.addIgnoredConfigFile(data.path)
@@ -995,8 +1007,6 @@ export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plu
     plugin.settings.lastConfigSyncTime = data.lastTime
     await plugin.saveData(plugin.settings)
   }
-
-
 }
 
 /**
@@ -1004,7 +1014,7 @@ export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plu
  */
 export const ReceiveConfigSyncNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
   dump(`Receive config need upload:`, data.path)
-  if (!plugin.getConfigWatchEnabled()) return
+  if (!plugin.settings.configSyncEnabled) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   await ConfigModify(data.path, plugin)
@@ -1014,7 +1024,7 @@ export const ReceiveConfigSyncNeedUpload = async function (data: ReceivePathMess
  * 接收服务端配置文件元数据更新通知
  */
 export const ReceiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
-  if (!plugin.getConfigWatchEnabled()) return
+  if (!plugin.settings.configSyncEnabled) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   plugin.addIgnoredConfigFile(data.path)
@@ -1029,7 +1039,7 @@ export const ReceiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
  * 接收服务端配置文件删除通知
  */
 export const ReceiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
-  if (!plugin.getConfigWatchEnabled()) return
+  if (!plugin.settings.configSyncEnabled) return
   if (plugin.ignoredConfigFiles.has(data.path)) return
 
   dump(`Receive config delete:`, data.path)

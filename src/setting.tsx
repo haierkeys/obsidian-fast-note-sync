@@ -25,6 +25,7 @@ export interface PluginSettings {
   lastConfigSyncTime: number
   //  [propName: string]: any;
   apiVersion: string
+  configExclude: string
 }
 
 /**
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastConfigSyncTime: 0,
   vault: "defaultVault",
   apiVersion: "",
+  configExclude: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -154,6 +156,21 @@ export class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.vault = value
             await this.plugin.saveSettings()
+          })
+      )
+
+    new Setting(set)
+      .setName($("配置文件排除项"))
+      .setDesc($("配置文件排除项描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder($("输入配置文件排除项"))
+          .setValue(this.plugin.settings.configExclude)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.configExclude) {
+              this.plugin.settings.configExclude = value
+              await this.plugin.saveSettings()
+            }
           })
       )
 

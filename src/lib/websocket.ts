@@ -63,6 +63,7 @@ export class WebSocketClient {
       }
       this.ws.onopen = (e: Event): void => {
         this.timeConnect = 0
+        this.isAuth = false
         this.isOpen = true
         dump("Service connected")
         if (this.onStatusChange) this.onStatusChange(true)

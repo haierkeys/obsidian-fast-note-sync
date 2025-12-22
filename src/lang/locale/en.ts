@@ -13,6 +13,8 @@ const en: Partial<LangMap> = {
   "启用笔记自动同步描述": "Once enabled, it will sync notes, images and various attachments in the vault.",
   "启用配置项同步": "Enable configuration sync",
   "启用配置项同步描述": "Once enabled, it will sync core configurations, plugins and themes in the .obsidian directory. Initial sync will overwrite local config with server config.",
+  "配置文件排除项": "Config file exclusion",
+  "配置文件排除项描述": "Enter the file names or paths (relative to .obsidian/) to be excluded, separated by commas. For example: workspace.json,workspace-mobile.json",
   "复制 Debug 信息": "Copy Debug Info",
   "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "If you like this plugin, please consider donating to support continued development.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copy debug info to clipboard, may contain sensitive information!",
@@ -44,6 +46,9 @@ const en: Partial<LangMap> = {
   "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Open console via shortcut to see logs of this and other plugins",
   "速度好, 自由配置, 无隐私风险": "High speed, custom config, no privacy risks",
   "Buy me a coffee at ko-fi.com": "Buy me a coffee at ko-fi.com",
+  "配置文件排除项": "Config file exclusion",
+  "配置文件排除项描述": "File paths relative to .obsidian directory, one line per file (e.g. plugins/obsidian-fast-note-sync/data.json)",
+  "输入配置文件排除项": "Enter your config file paths, one per line",
 }
 
 

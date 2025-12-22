@@ -106,6 +106,22 @@ export class ConfigWatcher {
     }
 
     /**
+     * 检查路径是否被排除
+     * @param relativePath - 相对于 .obsidian 目录的路径
+     */
+    private isPathExcluded(relativePath: string): boolean {
+        const excludeSetting = this.plugin.settings.configExclude || ""
+        if (!excludeSetting.trim()) return false
+
+        const excludePaths = excludeSetting
+            .split("\n")
+            .map((p) => p.trim())
+            .filter((p) => p !== "")
+
+        return excludePaths.some((p) => relativePath === p || relativePath.startsWith(p + "/"))
+    }
+
+    /**
      * 启动配置监听器
      * 首先执行一次全量初始化扫描，标记当前文件状态，然后开启 3 秒一次的轮询
      */
@@ -155,6 +171,7 @@ export class ConfigWatcher {
 
         // --- 1. 扫描根配置文件 ---
         for (const fileName of this.rootFilesToWatch) {
+            if (this.isPathExcluded(fileName)) continue
             const filePath = normalizePath(`${configDir}/${fileName}`)
             await this.checkFileChange(filePath, isInit)
         }
@@ -183,7 +200,10 @@ export class ConfigWatcher {
         try {
             const result = await this.plugin.app.vault.adapter.list(rootPath)
             for (const folderPath of result.folders) {
+                const folderName = folderPath.split("/").pop()
                 for (const fileName of filesToWatch) {
+                    const relativePath = `${rootPath.split("/").pop()}/${folderName}/${fileName}`
+                    if (this.isPathExcluded(relativePath)) continue
                     const filePath = normalizePath(`${folderPath}/${fileName}`)
                     await this.checkFileChange(filePath, isInit)
                 }
@@ -205,6 +225,8 @@ export class ConfigWatcher {
             for (const filePath of result.files) {
                 // 仅监听以 .css 结尾的文件
                 if (filePath.endsWith(".css")) {
+                    const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+                    if (this.isPathExcluded(relativePath)) continue
                     await this.checkFileChange(filePath, isInit)
                 }
             }
@@ -442,9 +464,20 @@ export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
 
     const adapter = plugin.app.vault.adapter
 
+    const isPathExcluded = (relativePath: string) => {
+        const excludeSetting = plugin.settings.configExclude || ""
+        if (!excludeSetting.trim()) return false
+        const excludePaths = excludeSetting
+            .split("\n")
+            .map((p) => p.trim())
+            .filter((p) => p !== "")
+        return excludePaths.some((p) => relativePath === p || relativePath.startsWith(p + "/"))
+    }
+
     try {
         // 1. 根目录文件
         for (const fileName of ROOT_FILES_TO_WATCH) {
+            if (isPathExcluded(fileName)) continue
             const filePath = normalizePath(`${configDir}/${fileName}`)
             if (await adapter.exists(filePath)) {
                 paths.push(fileName)
@@ -458,9 +491,11 @@ export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
             for (const folderPath of result.folders) {
                 const pluginFolderName = folderPath.split("/").pop()
                 for (const fileName of PLUGIN_FILES_TO_WATCH) {
+                    const relativePath = `plugins/${pluginFolderName}/${fileName}`
+                    if (isPathExcluded(relativePath)) continue
                     const filePath = normalizePath(`${folderPath}/${fileName}`)
                     if (await adapter.exists(filePath)) {
-                        paths.push(`plugins/${pluginFolderName}/${fileName}`)
+                        paths.push(relativePath)
                     }
                 }
             }
@@ -473,9 +508,11 @@ export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
             for (const folderPath of result.folders) {
                 const themeFolderName = folderPath.split("/").pop()
                 for (const fileName of THEME_FILES_TO_WATCH) {
+                    const relativePath = `themes/${themeFolderName}/${fileName}`
+                    if (isPathExcluded(relativePath)) continue
                     const filePath = normalizePath(`${folderPath}/${fileName}`)
                     if (await adapter.exists(filePath)) {
-                        paths.push(`themes/${themeFolderName}/${fileName}`)
+                        paths.push(relativePath)
                     }
                 }
             }
@@ -487,7 +524,9 @@ export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
             const result = await adapter.list(snippetsPath)
             for (const filePath of result.files) {
                 if (filePath.endsWith(".css")) {
-                    paths.push(`snippets/${filePath.split("/").pop()}`)
+                    const relativePath = `snippets/${filePath.split("/").pop()}`
+                    if (isPathExcluded(relativePath)) continue
+                    paths.push(relativePath)
                 }
             }
         }

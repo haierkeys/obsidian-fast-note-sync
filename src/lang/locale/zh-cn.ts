@@ -13,6 +13,8 @@ const zh_cn: Partial<LangMap> = {
   "启用笔记自动同步描述": "开启后将同步笔记仓库下的笔记、图片和各类附件",
   "启用配置项同步": "启用配置项同步",
   "启用配置项同步描述": "开启后将同步 .obsidian 目录下的核心配置、插件和主题设置，首次开启将会使用服务端配置覆盖本地配置",
+  "配置文件排除项": "配置文件排除项",
+  "配置文件排除项描述": "输入要排除的文件名或路径（相对于 .obsidian/），以逗号分隔。例如：workspace.json,workspace-mobile.json",
   "复制 Debug 信息": "复制 Debug 信息",
   "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "如果您喜欢这个插件，请考虑捐赠以支持继续开发。",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "将调试信息复制到剪贴板, 可能包含敏感信!",
@@ -46,6 +48,9 @@ const zh_cn: Partial<LangMap> = {
   "Buy me a coffee at ko-fi.com": "在 ko-fi.com 请我喝一杯咖啡",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
   "console_win": "CTRL + SHIFT + I",
+  "配置文件排除项": "配置文件排除项",
+  "配置文件排除项描述": "文件路径相对于 .obsidian 目录，每行一个文件（例如：plugins/obsidian-fast-note-sync/data.json）",
+  "输入配置文件排除项": "输入您的配置文件路径，每行一个",
 }
 
 
