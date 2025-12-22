@@ -235,8 +235,6 @@ export const FileDeleteByPath = function (path: string, plugin: FastSync) {
  */
 export const ConfigModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
 
-  console.log("[ConfigModify] 文件被修改:", path)
-
   if (!path.endsWith(".json") && !path.endsWith(".css") && !path.endsWith(".js")) return
   if ((!plugin.getWatchEnabled() || !plugin.settings.configSyncEnabled) && eventEnter) return
   if (isConfigPathExcluded(path, plugin)) return
@@ -378,7 +376,7 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
     expectedCount += 1
   }
   plugin.expectedSyncCount = expectedCount
-  console.log("StartSync expectedCount:", expectedCount, "syncMode:", syncMode)
+  dump("StartSync expectedCount:", expectedCount, "syncMode:", syncMode)
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     const list = plugin.app.vault.getFiles()
@@ -824,7 +822,7 @@ export const ReceiveFileSyncChunkDownload = async function (data: FileSyncChunkD
  * 检查同步是否完成
  */
 function CheckSyncCompletion(plugin: FastSync) {
-  console.log("CheckSyncCompletion:", plugin.syncTypeCompleteCount, "/", plugin.expectedSyncCount, "Sessions:", plugin.fileDownloadSessions.size)
+  dump(`CheckSyncCompletion:`, plugin.syncTypeCompleteCount, "/", plugin.expectedSyncCount, "Sessions:", plugin.fileDownloadSessions.size)
   if (plugin.syncTypeCompleteCount >= plugin.expectedSyncCount && plugin.fileDownloadSessions.size === 0) {
     plugin.enableWatch()
     plugin.syncTypeCompleteCount = 0

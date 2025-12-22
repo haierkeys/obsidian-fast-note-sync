@@ -205,8 +205,8 @@ export default class FastSync extends Plugin {
       this.websocket.register((status) => this.updateRibbonIcon(status))
       this.isWatchEnabled = true
       if (this.websocket.isAuth) {
-        console.log("refreshRuntime", this.isWatchEnabled)
-        console.log("refreshRuntime", setItem)
+        dump("refreshRuntime", this.isWatchEnabled)
+        dump("refreshRuntime", setItem)
         if (setItem == "syncEnabled") {
           StartSync(this, true, "note")
         } else if (setItem == "configSyncEnabled") {

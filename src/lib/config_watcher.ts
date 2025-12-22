@@ -65,12 +65,7 @@ export function isConfigPathExcluded(relativePath: string, plugin: FastSync): bo
 /**
  * [根目录] 需要监听的核心配置文件列表
  */
-export const ROOT_FILES_TO_WATCH = ["app.json",
-    "appearance.json", "backlink.json", "bookmarks.json", "command-palette.json",
-    "community-plugins.json", "core-plugins.json", "core-plugins-migration.json",
-    "graph.json", "hotkeys.json", "page-preview.json", "starred.json", "webviewer.json",
-    "types.json"
-]
+export const ROOT_FILES_TO_WATCH = ["app.json", "appearance.json", "backlink.json", "bookmarks.json", "command-palette.json", "community-plugins.json", "core-plugins.json", "core-plugins-migration.json", "graph.json", "hotkeys.json", "page-preview.json", "starred.json", "webviewer.json", "types.json"]
 
 /**
  * [插件目录] 需要监听的插件内部核心文件
@@ -97,7 +92,6 @@ export class ConfigWatcher {
      * 用于对比判断文件是否发生了内容更新
      */
     private fileStates: Map<string, number> = new Map()
-
 
     /**
      * [根目录] 需要监听的核心配置文件列表
@@ -151,7 +145,6 @@ export class ConfigWatcher {
         CONFIG_EXCLUDE_SET.add("plugins/obsidian-fast-note-sync/data.json")
     }
 
-
     /**
      * 启动配置监听器
      * 首先执行一次全量初始化扫描，标记当前文件状态，然后开启 3 秒一次的轮询
@@ -177,11 +170,8 @@ export class ConfigWatcher {
      */
     updateFileState(relativePath: string, mtime: number) {
         const filePath = normalizePath(`${this.plugin.app.vault.configDir}/${relativePath}`)
-
-        console.log("updateFileState:", { filePath, mtime })
-
         this.fileStates.set(filePath, mtime)
-        dump(`[ConfigWatcher] 手动更新文件状态: ${relativePath} -> ${mtime}`)
+        dump(`[ConfigWatcher] update file state: ${relativePath} -> ${mtime}`)
     }
 
     /**
@@ -202,7 +192,7 @@ export class ConfigWatcher {
      */
     private async scanAll(isInit: boolean) {
         if (this.isScanning) {
-            dump("[ConfigWatcher] 上一次扫描仍在进行中，跳过本次扫描")
+            dump("[ConfigWatcher] scan is in progress, skip this scan")
             return
         }
         this.isScanning = true
@@ -229,7 +219,7 @@ export class ConfigWatcher {
             // 扫描 .obsidian/snippets/ 目录下的所有 .css 文件
             await this.scanSnippets(normalizePath(`${configDir}/snippets`), isInit)
         } catch (e) {
-            dump("[ConfigWatcher] 扫描过程中出错:", e)
+            dump("[ConfigWatcher] scan error:", e)
         } finally {
             this.isScanning = false
         }
@@ -277,7 +267,7 @@ export class ConfigWatcher {
                 }
             }
         } catch (e) {
-            // 忽略 snippets 目录不存在的情况
+            dump("[ConfigWatcher] scan snippets error:", e)
         }
     }
 
@@ -303,7 +293,7 @@ export class ConfigWatcher {
                     this.fileStates.delete(filePath)
                     if (!isInit) {
                         const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
-                        console.log(`[ConfigWatcher] 文件被删除: ${relativePath}`)
+                        dump(`[ConfigWatcher] deleted: ${relativePath}`)
 
                         const handler = configWatcherHandlers.get("delete")
                         if (handler) {
@@ -319,7 +309,7 @@ export class ConfigWatcher {
             const lastMtime = this.fileStates.get(filePath)
             if (stat.mtime !== lastMtime) {
                 const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
-                console.log("[ConfigWatcher] 文件被修改:", relativePath, lastMtime, stat.mtime)
+                dump("[ConfigWatcher] modified:", relativePath, lastMtime, stat.mtime)
                 this.fileStates.set(filePath, stat.mtime)
                 // 非初始化阶段检测到变化，触发同步
                 if (!isInit) {
@@ -404,7 +394,6 @@ export async function readConfigFile(path: string, plugin: FastSync): Promise<Co
 export async function writeConfigFile(path: string, content: any, time: FileTimeStat, plugin: FastSync) {
     // 1. 锁定配置文件，防止 ConfigWatcher 在写入期间触发同步
 
-
     try {
         // 确保父目录存在
         const folder = path.split("/").slice(0, -1).join("/")
@@ -422,32 +411,11 @@ export async function writeConfigFile(path: string, content: any, time: FileTime
 
         // 3. 执行写入
         await plugin.app.vault.adapter.write(filePath, content, { ctime: time.ctime, mtime: time.mtime })
-        console.log(`[writeConfigFile] 写入完成: ${path}, 预期 mtime: ${time.mtime}`)
-
-        // 4. 二次校准逻辑：Obsidian 或系统可能会在写入后再次重写文件
-        // 延迟 500ms 检查最终的 mtime 是否符合预期
-        // setTimeout(async () => {
-        //     try {
-        //         const finalStat = await plugin.app.vault.adapter.stat(filePath)
-        //         if (finalStat && finalStat.mtime !== time.mtime) {
-        //             console.log(`[writeConfigFile] 检测到 mtime 偏移! 预期: ${time.mtime}, 实际: ${finalStat.mtime}. 正在进行二次校准...`)
-        //             // 再次更新内存状态
-        //             plugin.configWatcher.updateFileState(path, time.mtime)
-        //             // 再次强制更新文件时间戳
-        //             await updateConfigFileTime(path, time, plugin)
-        //         }
-        //         // 校验完成后解锁
-        //         plugin.removeIgnoredConfigFile(path)
-        //     } catch (err) {
-        //         plugin.removeIgnoredConfigFile(path)
-        //     }
-        // }, 500)
+        dump(`[writeConfigFile] ${path}, mtime: ${time.mtime}`)
 
     } catch (e) {
-        console.error("写入配置文件失败", e)
+        console.error("[writeConfigFile] error:", e)
     }
-
-
 }
 
 /**
@@ -473,12 +441,10 @@ export async function updateConfigFileTime(path: string, time: FileTimeStat, plu
                 mtime: time.mtime,
             })
 
-            const finalStat = await plugin.app.vault.adapter.stat(filePath)
-
-            console.log("配置文件时间更新成功:", filePath, finalStat)
+            dump(`[updateConfigFileTime] ${path}, mtime: ${time.mtime}`)
         }
     } catch (e) {
-        console.error("更新配置文件时间失败", e)
+        console.error("[updateConfigFileTime] error:", e)
     }
 }
 
@@ -494,12 +460,12 @@ export async function removeConfigFile(path: string, plugin: FastSync) {
         const exists = await plugin.app.vault.adapter.exists(filePath)
         if (exists) {
             await plugin.app.vault.adapter.remove(filePath)
-            dump("配置文件删除成功:", filePath)
+            dump(`[removeConfigFile] deleted: ${filePath}`)
         } else {
-            dump("文件不存在，无需删除:", filePath)
+            dump(`[removeConfigFile] not exists: ${filePath}`)
         }
     } catch (e) {
-        console.error("删除配置文件失败", e)
+        console.error("[removeConfigFile] error:", e)
     }
 }
 
