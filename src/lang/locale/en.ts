@@ -50,6 +50,11 @@ const en: Partial<LangMap> = {
   "配置文件排除项描述": "File paths relative to .obsidian directory, one per line (e.g., plugins/obsidian-fast-note-sync/data.json)",
   "输入配置文件排除项": "Enter your config file paths, one per line",
   "清理本地同步时间": "Clear Local Sync Time",
+  "笔记历史": "Note History",
+  "详情": "Details",
+  "时间": "Time",
+  "已同步": "Synced",
+  "当前文件": "Current File",
 };
 
 export default en;

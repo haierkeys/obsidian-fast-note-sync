@@ -112,4 +112,104 @@
   text-align: right;
 }
 
+.note-history-title {
+  margin-bottom: 4px !important;
+}
+
+.note-history-file-path {
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.note-history-container {
+  margin-top: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+}
+.note-history-container .note-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-ui-small);
+}
+.note-history-container .note-history-table th {
+  background-color: var(--background-secondary);
+  color: var(--text-muted);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  font-size: var(--font-smaller);
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.note-history-container .note-history-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border-loader);
+  vertical-align: middle;
+}
+.note-history-container .note-history-table tr:last-child td {
+  border-bottom: none;
+}
+.note-history-container .note-history-table tr:hover {
+  background-color: var(--background-modifier-hover);
+}
+.note-history-container .note-history-table code {
+  background-color: var(--background-primary-alt);
+  padding: 2px 6px;
+  border-radius: var(--radius-s);
+  font-family: var(--font-monospace);
+}
+.note-history-container .note-history-table .note-history-status {
+  font-size: var(--font-smaller);
+  color: var(--text-success);
+  background-color: rgba(var(--color-green-rgb), 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
+.note-history-container .note-history-table .note-history-btn-group {
+  display: flex;
+  gap: 8px;
+}
+.note-history-container .note-history-table button {
+  cursor: pointer;
+  background-color: var(--interactive-normal);
+  border: 1px solid var(--button-border);
+  border-radius: var(--radius-s);
+  padding: 4px 12px;
+  font-size: var(--font-smaller);
+  transition: background-color 0.2s;
+}
+.note-history-container .note-history-table button:hover {
+  background-color: var(--interactive-hover);
+}
+
+.note-history-diff-view {
+  background-color: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: 12px;
+  font-family: var(--font-monospace);
+  font-size: var(--font-small);
+  line-height: 1.5;
+  max-height: 600px;
+  overflow-y: auto;
+}
+.note-history-diff-view .diff-line {
+  white-space: pre-wrap;
+  padding: 0 4px;
+}
+.note-history-diff-view .diff-add {
+  background-color: rgba(var(--color-green-rgb), 0.15);
+  color: var(--text-success);
+}
+.note-history-diff-view .diff-del {
+  background-color: rgba(var(--color-red-rgb), 0.15);
+  color: var(--text-error);
+  text-decoration: line-through;
+}
+
 /*# sourceMappingURL=styles.css.map */

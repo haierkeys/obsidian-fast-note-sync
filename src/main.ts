@@ -1,8 +1,9 @@
-import { Plugin, setIcon, Menu, Platform, Setting } from 'obsidian';
+import { Plugin, setIcon, Menu, Platform, Setting, TFile } from 'obsidian';
 
 import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, CleanLocalSyncTime, StartSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { dump, setLogEnabled, RibbonMenu } from "./lib/helps";
+import { NoteHistoryModal } from "./views/history_modal";
 import { ConfigWatcher } from "./lib/config_watcher";
 import { WebSocketClient } from "./lib/websocket";
 import { $ } from "./lang/lang";
@@ -154,6 +155,38 @@ export default class FastSync extends Plugin {
         FileRename(file, oldfile, this, true)
       })
     )
+
+    // 注册右键菜单
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (file instanceof TFile && file.extension === "md") {
+          menu.addItem((item) => {
+            item
+              .setTitle($("笔记历史"))
+              .setIcon("history")
+              .onClick(() => {
+                new NoteHistoryModal(this.app, file).open();
+              });
+          });
+        }
+      })
+    );
+
+    this.registerEvent(
+      this.app.workspace.on("editor-menu", (menu, editor, view) => {
+        const file = view.file;
+        if (file instanceof TFile && file.extension === "md") {
+          menu.addItem((item) => {
+            item
+              .setTitle($("笔记历史"))
+              .setIcon("history")
+              .onClick(() => {
+                new NoteHistoryModal(this.app, file).open();
+              });
+          });
+        }
+      })
+    );
 
     // 注册命令
     this.addCommand({
