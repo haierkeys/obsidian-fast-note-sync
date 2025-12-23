@@ -177,10 +177,9 @@ export default class FastSync extends Plugin {
     this.configWatcher = new ConfigWatcher(this)
     this.refreshRuntime()
 
-    // window.addEventListener('focus', this.onWindowFocus);
-    // // 监听窗口失去焦点
-    // window.addEventListener('blur', this.onWindowBlur);
-    // window.addEventListener('visibilitychange', this.onVisibilityChange);
+    window.addEventListener('focus', this.onWindowFocus);
+    window.addEventListener('blur', this.onWindowBlur);
+    window.addEventListener('visibilitychange', this.onVisibilityChange);
 
 
     // 务必在插件卸载时移除监听，防止内存泄漏
@@ -226,8 +225,6 @@ export default class FastSync extends Plugin {
       this.websocket.register((status) => this.updateRibbonIcon(status))
       this.isWatchEnabled = true
       if (this.websocket.isAuth) {
-        dump("refreshRuntime", this.isWatchEnabled)
-        dump("refreshRuntime", setItem)
         if (setItem == "syncEnabled") {
           StartSync(this, true, "note")
         } else if (setItem == "configSyncEnabled") {
@@ -257,18 +254,27 @@ export default class FastSync extends Plugin {
   }
 
   onWindowFocus = () => {
-    console.log("欢迎回来");
+    if (Platform.isMobile) {
+      dump("Obsidian Mobile Focus");
+      this.configWatcher.start()
+    }
   };
 
   onWindowBlur = () => {
-    console.log("用户离开了");
+    if (Platform.isMobile) {
+      dump("Obsidian Mobile Blur");
+      this.configWatcher.stop()
+    }
   };
 
   onVisibilityChange = () => {
-    console.log(Platform.isMobile, Platform.isDesktop)
-    console.log("Obsidian 已从最小化恢复");
+    if (document.visibilityState === "hidden") {
+      dump("Obsidian 已最小化");
+      this.configWatcher.stop()
 
-    console.log(document.visibilityState);
-
+    } else {
+      dump("Obsidian 已从最小化恢复");
+      this.configWatcher.start()
+    }
   };
 }

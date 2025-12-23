@@ -166,6 +166,7 @@ export class ConfigWatcher {
         if (this.intervalId) {
             window.clearInterval(this.intervalId)
             this.intervalId = null
+            dump("ConfigWatcher: 停止全量监听 ...")
         }
     }
 
