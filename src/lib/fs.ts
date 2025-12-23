@@ -467,6 +467,13 @@ export const StartupFullSync = async (plugin: FastSync) => {
   await cleanEmptyFolders(plugin)
   dump("Clean empty folders done.")
 }
+
+export const CleanLocalSyncTime = async (plugin: FastSync) => {
+  plugin.settings.lastFileSyncTime = 0
+  plugin.settings.lastNoteSyncTime = 0
+  plugin.settings.lastConfigSyncTime = 0
+  plugin.saveSettings()
+}
 /**
  * 递归清理空文件夹
  */

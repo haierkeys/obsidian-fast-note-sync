@@ -1,6 +1,6 @@
-import { Plugin, setIcon, Menu, Setting } from "obsidian";
+import { Plugin, setIcon, Menu, Platform, Setting } from 'obsidian';
 
-import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, StartSync, FileModify, FileDelete, FileRename } from "./lib/fs";
+import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, CleanLocalSyncTime, StartSync, FileModify, FileDelete, FileRename } from "./lib/fs";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { dump, setLogEnabled, RibbonMenu } from "./lib/helps";
 import { ConfigWatcher } from "./lib/config_watcher";
@@ -113,6 +113,7 @@ export default class FastSync extends Plugin {
   }
 
   async onload() {
+    this.manifest.description = $("fast-node-sync-desc")
     await this.loadSettings()
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
@@ -167,8 +168,28 @@ export default class FastSync extends Plugin {
       callback: () => StartupFullSync(this),
     })
 
+    this.addCommand({
+      id: "clean-local-sync-time",
+      name: $("清理本地同步时间"),
+      callback: () => CleanLocalSyncTime(this),
+    })
+
     this.configWatcher = new ConfigWatcher(this)
     this.refreshRuntime()
+
+    // window.addEventListener('focus', this.onWindowFocus);
+    // // 监听窗口失去焦点
+    // window.addEventListener('blur', this.onWindowBlur);
+    // window.addEventListener('visibilitychange', this.onVisibilityChange);
+
+
+    // 务必在插件卸载时移除监听，防止内存泄漏
+    this.register(() => {
+      console.log("remove event listener");
+      window.removeEventListener('focus', this.onWindowFocus);
+      window.removeEventListener('blur', this.onWindowBlur);
+      window.removeEventListener('visibilitychange', this.onVisibilityChange);
+    });
   }
 
   onunload() {
@@ -234,4 +255,20 @@ export default class FastSync extends Plugin {
 
     setLogEnabled(this.settings.logEnabled)
   }
+
+  onWindowFocus = () => {
+    console.log("欢迎回来");
+  };
+
+  onWindowBlur = () => {
+    console.log("用户离开了");
+  };
+
+  onVisibilityChange = () => {
+    console.log(Platform.isMobile, Platform.isDesktop)
+    console.log("Obsidian 已从最小化恢复");
+
+    console.log(document.visibilityState);
+
+  };
 }

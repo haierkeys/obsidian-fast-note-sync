@@ -9,7 +9,7 @@ import { dump } from "./helps";
 /**
  * 排除监听文件的集合（相对路径）
  */
-export const CONFIG_EXCLUDE_SET: Set<string> = new Set(["plugins/obsidian-fast-note-sync/data.json"])
+export const CONFIG_EXCLUDE_SET: Set<string> = new Set()
 
 /**
  * 判断配置路径是否被排除
@@ -113,6 +113,11 @@ export class ConfigWatcher {
 
     constructor(plugin: FastSync) {
         this.plugin = plugin
+        const manifest = this.plugin.manifest.dir ?? ""
+
+        const relativePath = manifest.replace(this.plugin.app.vault.configDir + "/", "") + "/data.json"
+        CONFIG_EXCLUDE_SET.add(relativePath)
+
     }
 
     /**
@@ -122,28 +127,7 @@ export class ConfigWatcher {
     private isPathExcluded(relativePath: string): boolean {
         return isConfigPathExcluded(relativePath, this.plugin)
     }
-    /**
-     * 添加排除路径
-     */
-    addExclude(relativePath: string) {
-        CONFIG_EXCLUDE_SET.add(relativePath)
-    }
 
-    /**
-     * 移除排除路径
-     */
-    removeExclude(relativePath: string) {
-        CONFIG_EXCLUDE_SET.delete(relativePath)
-    }
-
-    /**
-     * 清空排除路径
-     */
-    clearExcludes() {
-        CONFIG_EXCLUDE_SET.clear()
-        // 重新添加默认排除项
-        CONFIG_EXCLUDE_SET.add("plugins/obsidian-fast-note-sync/data.json")
-    }
 
     /**
      * 启动配置监听器
@@ -234,6 +218,9 @@ export class ConfigWatcher {
      */
     private async scanSubFolders(rootPath: string, filesToWatch: string[], isInit: boolean) {
         try {
+            if (!(await this.plugin.app.vault.adapter.exists(rootPath))) {
+                return
+            }
             const result = await this.plugin.app.vault.adapter.list(rootPath)
             for (const folderPath of result.folders) {
                 const folderName = folderPath.split("/").pop()
@@ -257,6 +244,9 @@ export class ConfigWatcher {
      */
     private async scanSnippets(rootPath: string, isInit: boolean) {
         try {
+            if (!(await this.plugin.app.vault.adapter.exists(rootPath))) {
+                return
+            }
             const result = await this.plugin.app.vault.adapter.list(rootPath)
             for (const filePath of result.files) {
                 // 仅监听以 .css 结尾的文件

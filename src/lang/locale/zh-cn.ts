@@ -3,7 +3,7 @@ import type { LangMap } from "../lang";
 
 
 const zh_cn: Partial<LangMap> = {
-  "Fast sync": "可私有化部署，专注为用户提供无打扰、丝般顺滑、多端实时同步的笔记同步插件，支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。",
+  "fast-node-sync-desc": "可私有化部署，多端笔记,附件,配置实时同步&备份插件， 支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。",
   "关闭自动同步": "关闭自动同步",
   "同步全部笔记": "同步全部笔记",
   "同步全部笔记(覆盖远端)": "同步全部笔记(覆盖远端)",
@@ -49,6 +49,7 @@ const zh_cn: Partial<LangMap> = {
   "配置文件排除项": "配置文件排除项",
   "配置文件排除项描述": "文件路径相对于 .obsidian 目录，每行一个文件（例如：plugins/obsidian-fast-note-sync/data.json）",
   "输入配置文件排除项": "输入您的配置文件路径，每行一个",
+  "清理本地同步时间": "清理本地同步时间",
 }
 
 
