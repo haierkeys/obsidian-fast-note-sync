@@ -1,6 +1,6 @@
 ﻿import { TFile, TAbstractFile, TFolder, Notice } from "obsidian";
 
-import { getAllConfigPaths, configWatcherHandlers, readConfigFile, writeConfigFile, updateConfigFileTime, removeConfigFile, cleanEmptyConfigFolders, isConfigPathExcluded } from "./config_watcher";
+import { getAllConfigPaths, configWatcherHandlers, readConfigFile, writeConfigFile, updateConfigFileTime, removeConfigFile, cleanEmptyConfigFolders, isConfigPathExcluded, reloadConfig } from "./config_watcher";
 import { hashContent, hashArrayBuffer, dump } from "./helps";
 import { $ } from "../lang/lang";
 import FastSync from "../main";
@@ -1007,6 +1007,7 @@ export const ReceiveConfigSyncModify = async function (data: ReceiveMessage, plu
   dump(`Receive config modify:`, data.path, data.contentHash)
 
   await writeConfigFile(data.path, data.content, data, plugin)
+  await reloadConfig(data.path, data.content, plugin)
 
   plugin.removeIgnoredConfigFile(data.path)
 

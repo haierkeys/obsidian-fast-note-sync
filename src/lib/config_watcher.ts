@@ -562,3 +562,64 @@ export async function getAllConfigPaths(plugin: FastSync): Promise<string[]> {
 
     return paths
 }
+
+/**
+ * 重新加载特定配置
+ * @param path - 相对路径
+ * @param content - 文件内容 (字符串)
+ * @param plugin - 插件实例
+ */
+export async function reloadConfig(path: string, content: string, plugin: FastSync) {
+    const app = plugin.app as any
+
+    // 1. 基础数据重载
+    if (app.vault.reloadConfig) {
+        await app.vault.reloadConfig()
+        dump(`[reloadConfig] vault config reloaded from disk`)
+    }
+
+    // 2. 核心设置/外观设置应用
+    if (path === "app.json" || path === "appearance.json") {
+        try {
+            const config = JSON.parse(content)
+            for (const key in config) {
+                if (Object.prototype.hasOwnProperty.call(config, key)) {
+                    // 对于有些设置，setConfig 会触发内部的 change 事件
+                    app.vault.setConfig(key, config[key])
+                }
+            }
+
+            if (path === "appearance.json") {
+                // 处理主题切换
+                if (config.theme && app.customCss) {
+                    app.customCss.setTheme(config.theme)
+                    app.customCss.onConfigChange()
+                }
+            }
+            dump(`[reloadConfig] ${path} details applied`)
+        } catch (e) {
+            console.error(`Failed to apply details for ${path}`, e)
+        }
+    } else if (path === "hotkeys.json") {
+        if (app.hotkeys) {
+            await app.hotkeys.load()
+            dump(`[reloadConfig] hotkeys reloaded`)
+        }
+    } else if (path.startsWith("snippets/") && path.endsWith(".css")) {
+        if (app.customCss) {
+            await app.customCss.readSnippets()
+            dump(`[reloadConfig] snippets reloaded`)
+        }
+    }
+
+    // 3. 刷新设置界面 (最重要的 UI 交互改进)
+    // 如果用户正打开着设置面板，强制刷新当前选项卡以显示同步后的新值
+    if (app.setting?.activeTab) {
+        try {
+            app.setting.activeTab.display()
+            dump(`[reloadConfig] settings UI refreshed`)
+        } catch (e) {
+            // 忽略刷新失败
+        }
+    }
+}
