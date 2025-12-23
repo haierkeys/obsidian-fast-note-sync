@@ -5,6 +5,8 @@ on:
   push:
     branches-ignore:
       - "master" # 明确忽略 master，由 release.yml 处理
+    paths:
+      - "manifest.json"
 
 # 权限配置
 permissions:

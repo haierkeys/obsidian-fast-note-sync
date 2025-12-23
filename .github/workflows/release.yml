@@ -6,6 +6,8 @@ on:
     # 针对 master 分支的普通提交也触发
     branches:
       - "master"
+    paths:
+      - "manifest.json"
 # 权限配置：允许脚本写入仓库内容（用于发布 Release）
 permissions:
   contents: write
