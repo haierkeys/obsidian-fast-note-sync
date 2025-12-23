@@ -1,7 +1,6 @@
-import { TFile, TAbstractFile, TFolder, Notice, Setting, Stat, normalizePath, debounce } from "obsidian";
+import { Stat, normalizePath, Platform } from "obsidian";
 
 import { ConfigModify, ConfigDelete } from "./fs";
-import { $ } from "../lang/lang";
 import FastSync from "../main";
 import { dump } from "./helps";
 
@@ -86,6 +85,7 @@ export class ConfigWatcher {
     private plugin: FastSync
     private intervalId: number | null = null
     private isScanning: boolean = false
+    private nativeWatcher: any = null
 
     /**
      * 记录文件路径及其上一次已知的修改时间戳
@@ -117,7 +117,6 @@ export class ConfigWatcher {
 
         const relativePath = manifest.replace(this.plugin.app.vault.configDir + "/", "") + "/data.json"
         CONFIG_EXCLUDE_SET.add(relativePath)
-
     }
 
     /**
@@ -127,7 +126,6 @@ export class ConfigWatcher {
     private isPathExcluded(relativePath: string): boolean {
         return isConfigPathExcluded(relativePath, this.plugin)
     }
-
 
     /**
      * 启动配置监听器
@@ -141,10 +139,94 @@ export class ConfigWatcher {
         // 初始化扫描：仅记录状态，不触发上传
         this.scanAll(true)
 
-        // 设置轮询定时器
-        this.intervalId = window.setInterval(() => {
-            this.scanAll(false)
-        }, 3000)
+        // 针对 MAC 和 Windows 系统使用原生文件监听
+        if (Platform.isMacOS || Platform.isWin) {
+            this.startNativeWatcher()
+        } else {
+            // 设置轮询定时器
+            this.intervalId = window.setInterval(() => {
+                this.scanAll(false)
+            }, 3000)
+        }
+    }
+
+    /**
+     * 启动原生文件监听 (Node.js fs.watch)
+     * 仅适用于桌面端 (macOS/Windows)
+     */
+    private startNativeWatcher() {
+        try {
+            const fs = require("fs")
+            const configDir = normalizePath(`${(this.plugin.app.vault.adapter as any).getBasePath()}/${this.plugin.app.vault.configDir}`)
+
+            dump(`[ConfigWatcher] Node Watcher: ${configDir}`)
+
+            this.nativeWatcher = fs.watch(configDir, { recursive: true }, (eventType: string, filename: string) => {
+                if (!filename) return
+
+                // 将 Windows 反斜杠转换为正斜杠
+                const normalizedFilename = filename.replace(/\\/g, "/")
+                const parts = normalizedFilename.split("/")
+                const fileName = parts.pop() || ""
+                const subDir = parts[0] // plugins, themes, snippets or undefined (root)
+
+                let shouldCheck = false
+
+                if (parts.length === 0) {
+                    // 根目录下的文件
+                    if (this.rootFilesToWatch.includes(fileName)) {
+                        shouldCheck = true
+                    }
+                } else if (subDir === "plugins" && parts.length === 2) {
+                    // plugins/{plugin-id}/{filename}
+                    if (this.pluginFilesToWatch.includes(fileName)) {
+                        shouldCheck = true
+                    }
+                } else if (subDir === "themes" && parts.length === 2) {
+                    // themes/{theme-name}/{filename}
+                    if (this.themeFilesToWatch.includes(fileName)) {
+                        shouldCheck = true
+                    }
+                } else if (subDir === "snippets" && fileName.endsWith(".css")) {
+                    // snippets/{filename}.css
+                    shouldCheck = true
+                }
+
+                if (isConfigPathExcluded(normalizedFilename, this.plugin)) return
+
+                if (shouldCheck) {
+                    const filePath = normalizePath(`${this.plugin.app.vault.configDir}/${normalizedFilename}`)
+                    // 原生监听可能会瞬间触发多个重复事件，checkFileChange 内部的时间戳对比已足够过滤
+                    this.checkFileChange(filePath, false)
+                }
+            })
+
+            this.nativeWatcher.on("error", (err: any) => {
+                dump("[ConfigWatcher] Node Watcher error:", err)
+                this.stopNativeWatcher()
+                // 降级回轮询
+                this.intervalId = window.setInterval(() => {
+                    this.scanAll(false)
+                }, 3000)
+            })
+        } catch (e) {
+            dump("[ConfigWatcher] Node Watcher error, fallback to polling:", e)
+            this.intervalId = window.setInterval(() => {
+                this.scanAll(false)
+            }, 3000)
+        }
+    }
+
+    private stopNativeWatcher() {
+        if (this.nativeWatcher) {
+            try {
+                this.nativeWatcher.close()
+            } catch (e) {
+                // 忽略关闭错误
+            }
+            this.nativeWatcher = null
+            dump("[ConfigWatcher] Node Watcher stopped")
+        }
     }
 
     /**
@@ -166,8 +248,9 @@ export class ConfigWatcher {
         if (this.intervalId) {
             window.clearInterval(this.intervalId)
             this.intervalId = null
-            dump("ConfigWatcher: 停止全量监听 ...")
+            dump("ConfigWatcher: stop polling ...")
         }
+        this.stopNativeWatcher()
     }
 
     /**
@@ -318,7 +401,10 @@ export class ConfigWatcher {
      */
     private triggerSync = (filePath: string) => {
         const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
-        dump(`[ConfigWatcher] 准备上传同步: ${relativePath}`)
+        if (isConfigPathExcluded(relativePath, this.plugin)) {
+            return
+        }
+        dump(`[ConfigWatcher] sync: ${relativePath}`)
 
         const handler = configWatcherHandlers.get("sync")
         if (handler) {
@@ -403,7 +489,6 @@ export async function writeConfigFile(path: string, content: any, time: FileTime
         // 3. 执行写入
         await plugin.app.vault.adapter.write(filePath, content, { ctime: time.ctime, mtime: time.mtime })
         dump(`[writeConfigFile] ${path}, mtime: ${time.mtime}`)
-
     } catch (e) {
         console.error("[writeConfigFile] error:", e)
     }
