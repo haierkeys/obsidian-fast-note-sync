@@ -454,7 +454,7 @@ export const StartSync = async function (plugin: FastSync, isLoadLastTime: boole
  * 启动时同步（增量同步）
  */
 export const StartupSync = (plugin: FastSync): void => {
-  void StartSync(plugin, true)
+  void StartSync(plugin)
 }
 
 /**
