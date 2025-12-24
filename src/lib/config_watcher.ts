@@ -111,6 +111,11 @@ export class ConfigWatcher {
      */
     private themeFilesToWatch = THEME_FILES_TO_WATCH
 
+    /**
+     * 已启用的插件 ID 集合
+     */
+    public enabledPlugins: Set<string> = new Set()
+
     constructor(plugin: FastSync) {
         this.plugin = plugin
         const manifest = this.plugin.manifest.dir ?? ""
@@ -131,10 +136,13 @@ export class ConfigWatcher {
      * 启动配置监听器
      * 首先执行一次全量初始化扫描，标记当前文件状态，然后开启 3 秒一次的轮询
      */
-    start() {
+    async start() {
         this.stop() // 确保在启动新定时器前清理旧定时器，防止泄露
 
         dump("ConfigWatcher: 开始全量监听 (设置 + 插件 + 主题 + 片段)...")
+
+        // 加载已启用的插件列表
+        await this.loadEnabledPlugins()
 
         // 初始化扫描：仅记录状态，不触发上传
         this.scanAll(true)
@@ -251,6 +259,28 @@ export class ConfigWatcher {
             dump("ConfigWatcher: stop polling ...")
         }
         this.stopNativeWatcher()
+    }
+
+    /**
+     * 加载已启用的插件列表
+     */
+    async loadEnabledPlugins() {
+        try {
+            const configDir = this.plugin.app.vault.configDir
+            const filePath = normalizePath(`${configDir}/community-plugins.json`)
+            const adapter = this.plugin.app.vault.adapter
+
+            if (await adapter.exists(filePath)) {
+                const content = await adapter.read(filePath)
+                const plugins = JSON.parse(content)
+                if (Array.isArray(plugins)) {
+                    this.enabledPlugins = new Set(plugins)
+                    dump(`[ConfigWatcher] 已加载启用插件列表: ${plugins.length} 个`)
+                }
+            }
+        } catch (e) {
+            dump("[ConfigWatcher] 加载已启用插件列表失败:", e)
+        }
     }
 
     /**
@@ -685,6 +715,33 @@ export async function reloadConfig(path: string, content: string, plugin: FastSy
         } catch (e) {
             console.error(`Failed to apply details for ${path}`, e)
         }
+    } else if (path === "community-plugins.json") {
+        try {
+            const newPlugins = JSON.parse(content) as string[]
+            const oldPlugins = Array.from(plugin.configWatcher.enabledPlugins)
+
+            const toEnable = newPlugins.filter((p) => !oldPlugins.includes(p))
+            const toDisable = oldPlugins.filter((p) => !newPlugins.includes(p))
+
+            // 更新内存状态
+            plugin.configWatcher.enabledPlugins = new Set(newPlugins)
+
+            // 启用新插件
+            for (const pluginId of toEnable) {
+                dump(`[reloadConfig] 启用新插件: ${pluginId}`)
+                await (app.plugins as any).enablePlugin(pluginId)
+            }
+
+            // 禁用移除的插件
+            for (const pluginId of toDisable) {
+                dump(`[reloadConfig] 禁用插件: ${pluginId}`)
+                await (app.plugins as any).disablePlugin(pluginId)
+            }
+
+            dump(`[reloadConfig] community-plugins.json applied`)
+        } catch (e) {
+            console.error(`Failed to reload community-plugins.json`, e)
+        }
     } else if (path === "hotkeys.json") {
         if (app.hotkeys) {
             await app.hotkeys.load()
@@ -694,6 +751,22 @@ export async function reloadConfig(path: string, content: string, plugin: FastSy
         if (app.customCss) {
             await app.customCss.readSnippets()
             dump(`[reloadConfig] snippets reloaded`)
+        }
+    } else if (path.startsWith("plugins/")) {
+        // 如果插件本身的文件（main.js, styles.css, data.json）发生变化，且该插件已启用，则尝试热重载
+        const parts = path.split("/")
+        if (parts.length >= 3) {
+            const pluginId = parts[1]
+            if (plugin.configWatcher.enabledPlugins.has(pluginId)) {
+                try {
+                    dump(`[reloadConfig] 检测到已启用插件 ${pluginId} 的文件变化，正在热重载...`)
+                    await (app.plugins as any).disablePlugin(pluginId)
+                    await (app.plugins as any).enablePlugin(pluginId)
+                    dump(`[reloadConfig] 插件 ${pluginId} 热重载完成`)
+                } catch (e) {
+                    console.error(`Failed to hot reload plugin ${pluginId}`, e)
+                }
+            }
         }
     }
 
