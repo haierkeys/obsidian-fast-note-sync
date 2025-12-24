@@ -1,10 +1,14 @@
-import { Plugin, setIcon, Menu, Platform, Setting } from 'obsidian';
+import { Plugin, setIcon, Menu, Platform, Setting, MenuItem, Notice } from 'obsidian';
+import type { App, TAbstractFile } from 'obsidian';
 
-import { NoteModify, NoteDelete, NoteRename, StartupSync, StartupFullSync, CleanLocalSyncTime, StartSync, FileModify, FileDelete, FileRename } from "./lib/fs";
+import { startupSync, startupFullSync, resetSettingSyncTime, handleSync } from "./lib/operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
-import { dump, setLogEnabled, RibbonMenu } from "./lib/helps";
-import { ConfigWatcher } from "./lib/config_watcher";
+import { noteModify, noteDelete, noteRename } from "./lib/note_operator";
+import { fileModify, fileDelete, fileRename } from "./lib/file_operator";
+import { ConfigManager } from "./lib/config_manager";
+import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
+import { dump, setLogEnabled } from "./lib/helps";
 import { $ } from "./lang/lang";
 
 
@@ -13,7 +17,8 @@ export default class FastSync extends Plugin {
   wsSettingChange: boolean
   settings: PluginSettings
   websocket: WebSocketClient
-  configWatcher: ConfigWatcher
+  configManager: ConfigManager
+  eventManager: EventManager
 
   ribbonIcon: HTMLElement
   ribbonIconStatus: boolean = false
@@ -122,73 +127,35 @@ export default class FastSync extends Plugin {
     this.statusBarItem = this.addStatusBarItem()
     // Create Ribbon Icon once
     this.ribbonIcon = this.addRibbonIcon("wifi", "Fast Note Sync:" + $("同步全部笔记"), (event: MouseEvent) => {
-      const menu = new Menu()
-      RibbonMenu(menu, this)
-      menu.showAtMouseEvent(event)
-      // StartupSync(this)
+      this.showRibbonMenu(event);
     })
     setIcon(this.ribbonIcon, "wifi-off")
 
-    //
-    this.registerEvent(
-      this.app.vault.on("create", (file) => {
-        NoteModify(file, this, true)
-        FileModify(file, this, true)
-      })
-    )
-    this.registerEvent(
-      this.app.vault.on("modify", (file) => {
-        NoteModify(file, this, true)
-        FileModify(file, this, true)
-      })
-    )
-    this.registerEvent(
-      this.app.vault.on("delete", (file) => {
-        NoteDelete(file, this, true)
-        FileDelete(file, this, true)
-      })
-    )
-    this.registerEvent(
-      this.app.vault.on("rename", (file, oldfile) => {
-        NoteRename(file, oldfile, this, true)
-        FileRename(file, oldfile, this, true)
-      })
-    )
+    // 初始化并注册事件层
+    this.eventManager = new EventManager(this)
+    this.eventManager.registerEvents()
 
     // 注册命令
     this.addCommand({
       id: "start-sync",
       name: $("同步全部笔记"),
-      callback: () => StartupSync(this),
+      callback: () => startupSync(this),
     })
 
     this.addCommand({
       id: "start-full-sync",
       name: $("同步全部笔记(完整比对)"),
-      callback: () => StartupFullSync(this),
+      callback: () => startupFullSync(this),
     })
 
     this.addCommand({
       id: "clean-local-sync-time",
       name: $("清理本地同步时间"),
-      callback: () => CleanLocalSyncTime(this),
+      callback: () => resetSettingSyncTime(this),
     })
 
-    this.configWatcher = new ConfigWatcher(this)
+    this.configManager = new ConfigManager(this)
     this.refreshRuntime()
-
-    window.addEventListener('focus', this.onWindowFocus);
-    window.addEventListener('blur', this.onWindowBlur);
-    window.addEventListener('visibilitychange', this.onVisibilityChange);
-
-
-    // 务必在插件卸载时移除监听，防止内存泄漏
-    this.register(() => {
-      console.log("remove event listener");
-      window.removeEventListener('focus', this.onWindowFocus);
-      window.removeEventListener('blur', this.onWindowBlur);
-      window.removeEventListener('visibilitychange', this.onVisibilityChange);
-    });
   }
 
   onunload() {
@@ -226,55 +193,73 @@ export default class FastSync extends Plugin {
       this.isWatchEnabled = true
       if (this.websocket.isAuth) {
         if (setItem == "syncEnabled") {
-          StartSync(this, true, "note")
+          handleSync(this, true, "note")
         } else if (setItem == "configSyncEnabled") {
-          StartSync(this, true, "config")
+          handleSync(this, true, "config")
         }
       }
 
-      this.ignoredFiles = new Set()
-      this.ignoredConfigFiles = new Set()
       this.fileDownloadSessions = new Map<string, any>()
-    } else {
-      this.websocket.unRegister()
-      this.isWatchEnabled = false
-      this.ignoredFiles = new Set()
-      this.ignoredConfigFiles = new Set()
-      this.fileDownloadSessions.clear()
-    }
-
-
-    if (forceRegister && this.isWatchEnabled && this.settings.configSyncEnabled) {
-      this.configWatcher.start()
-    } else {
-      this.configWatcher.stop()
     }
 
     setLogEnabled(this.settings.logEnabled)
   }
 
-  onWindowFocus = () => {
-    if (Platform.isMobile) {
-      dump("Obsidian Mobile Focus");
-      this.configWatcher.start()
-    }
-  };
+  showRibbonMenu(event: MouseEvent) {
+    const menu = new Menu();
 
-  onWindowBlur = () => {
-    if (Platform.isMobile) {
-      dump("Obsidian Mobile Blur");
-      this.configWatcher.stop()
-    }
-  };
-
-  onVisibilityChange = () => {
-    if (document.visibilityState === "hidden") {
-      dump("Obsidian 已最小化");
-      this.configWatcher.stop()
-
+    if (this.settings.syncEnabled) {
+      menu.addItem((item: MenuItem) => {
+        item
+          .setIcon("pause")
+          .setTitle($("关闭自动同步"))
+          .onClick(async () => {
+            this.settings.syncEnabled = false
+            await this.saveSettings()
+            new Notice($("启用笔记自动同步描述"))
+          })
+      })
     } else {
-      dump("Obsidian 已从最小化恢复");
-      this.configWatcher.start()
+      menu.addItem((item: MenuItem) => {
+        item
+          .setIcon("play")
+          .setTitle($("启动自动同步"))
+          .onClick(async () => {
+            this.settings.syncEnabled = true
+            await this.saveSettings()
+            new Notice($("启动自动同步"))
+          })
+      })
     }
-  };
+    menu.addSeparator()
+
+    menu.addItem((item: MenuItem) => {
+      item
+        .setIcon("cloud")
+        .setTitle($("同步全部笔记"))
+        .onClick(async () => {
+          startupSync(this)
+        })
+    })
+    menu.addSeparator()
+    menu.addItem((item: MenuItem) => {
+      item
+        .setIcon("cloudy")
+        .setTitle($("同步全部笔记(完整比对)"))
+        .onClick(async () => {
+          startupFullSync(this)
+        })
+    })
+
+    if (this.settings.apiVersion) {
+      menu.addSeparator()
+      menu.addItem((item: MenuItem) => {
+        item
+          .setTitle($("服务端版本") + ": v" + this.settings.apiVersion)
+          .setDisabled(true)
+      })
+    }
+
+    menu.showAtMouseEvent(event);
+  }
 }

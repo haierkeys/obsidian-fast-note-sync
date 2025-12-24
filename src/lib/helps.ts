@@ -1,6 +1,5 @@
 import { Notice, moment, Menu, MenuItem } from "obsidian";
 
-import { StartupSync, StartupFullSync } from "./fs";
 import { $ } from "../lang/lang";
 import FastSync from "../main";
 
@@ -102,58 +101,4 @@ export function isWsUrl(url: string): boolean {
 }
 
 
-export function RibbonMenu(menu: Menu, plugin: FastSync) {
 
-
-  if (plugin.settings.syncEnabled) {
-    menu.addItem((item: MenuItem) => {
-      item
-        .setIcon("pause")
-        .setTitle($("关闭自动同步"))
-        .onClick(async () => {
-          plugin.settings.syncEnabled = false
-          await plugin.saveSettings()
-          new Notice($("启用笔记自动同步描述"))
-        })
-    })
-  } else {
-    menu.addItem((item: MenuItem) => {
-      item
-        .setIcon("play")
-        .setTitle($("启动自动同步"))
-        .onClick(async () => {
-          plugin.settings.syncEnabled = true
-          await plugin.saveSettings()
-          new Notice($("启动自动同步"))
-        })
-    })
-  }
-  menu.addSeparator()
-
-  menu.addItem((item: MenuItem) => {
-    item
-      .setIcon("cloud")
-      .setTitle($("同步全部笔记"))
-      .onClick(async () => {
-        StartupSync(plugin)
-      })
-  })
-  menu.addSeparator()
-  menu.addItem((item: MenuItem) => {
-    item
-      .setIcon("cloudy")
-      .setTitle($("同步全部笔记(完整比对)"))
-      .onClick(async () => {
-      })
-  })
-
-  if (plugin.settings.apiVersion) {
-    menu.addSeparator()
-    menu.addItem((item: MenuItem) => {
-      item
-        .setTitle($("服务端版本") + ": v" + plugin.settings.apiVersion)
-        .setDisabled(true)
-    })
-  }
-
-}

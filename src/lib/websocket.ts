@@ -1,13 +1,15 @@
 import { Notice, moment } from "obsidian";
 
-import { syncReceiveMethodHandlers, HandleFileDownloadChunk, StartupSync, StartupFullSync, BINARY_PREFIX_FILE_SYNC } from "./fs";
+import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
+import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC } from "./file_operator";
 import { dump, isWsUrl } from "./helps";
-import FastSync from "../main";
+import type FastSync from "../main";
 
 
 // WebSocket 连接常量
 const RECONNECT_BASE_DELAY = 3000 // 重连基础延迟 (毫秒)
 const CONNECTION_CHECK_INTERVAL = 3000 // 连接检查间隔 (毫秒)
+const WS_COUNT_STORAGE_KEY = "fast-note-sync-ws-count"
 
 export class WebSocketClient {
   private ws: WebSocket
@@ -32,8 +34,12 @@ export class WebSocketClient {
     this.plugin = plugin
     this.wsApi = plugin.settings.wsApi.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
 
+    // Load count from local storage
+    const storedCount = localStorage.getItem(WS_COUNT_STORAGE_KEY)
+    this.count = storedCount ? parseInt(storedCount) : 0
+
     // Register default file sync handler
-    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, HandleFileDownloadChunk);
+    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, (data, plugin) => handleFileChunkDownload(data, plugin, checkSyncCompletion));
   }
 
   public registerBinaryHandler(prefix: string, handler: (data: ArrayBuffer | Blob, plugin: FastSync) => void) {
@@ -57,6 +63,7 @@ export class WebSocketClient {
       this.isRegister = true
       this.ws = new WebSocket(this.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
       this.count++
+      localStorage.setItem(WS_COUNT_STORAGE_KEY, this.count.toString())
       this.ws.onerror = (error) => {
         dump("WebSocket error:", error)
         if (this.onStatusChange) this.onStatusChange(false)
@@ -150,7 +157,7 @@ export class WebSocketClient {
         if (data.code == 0 || data.code > 200) {
           new Notice("Service Error: Code=" + data.code + " Msg=" + data.msg + data.details)
         } else {
-          const handler = syncReceiveMethodHandlers.get(msgAction)
+          const handler = receiveOperators.get(msgAction)
           if (handler) {
             handler(data.data, this.plugin)
           }
@@ -190,7 +197,7 @@ export class WebSocketClient {
   }
   public StartHandle() {
     dump("Service start handle")
-    StartupSync(this.plugin)
+    startupSync(this.plugin)
   }
 
   public OnlineStatusCheck() {
