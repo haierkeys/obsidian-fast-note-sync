@@ -1,10 +1,7 @@
-import { Plugin, setIcon, Menu, Platform, Setting, MenuItem, Notice } from 'obsidian';
-import type { App, TAbstractFile } from 'obsidian';
+import { Plugin, setIcon, Menu, MenuItem, Notice } from 'obsidian';
 
 import { startupSync, startupFullSync, resetSettingSyncTime, handleSync } from "./lib/operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
-import { noteModify, noteDelete, noteRename } from "./lib/note_operator";
-import { fileModify, fileDelete, fileRename } from "./lib/file_operator";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";

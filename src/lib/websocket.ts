@@ -1,4 +1,4 @@
-import { Notice, moment } from "obsidian";
+import { Notice, moment, Platform } from "obsidian";
 
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC } from "./file_operator";
@@ -151,6 +151,22 @@ export class WebSocketClient {
             this.plugin.settings.apiVersion = data.data.version
             this.plugin.saveSettings()
             dump("Service authorization success")
+
+            let clientName = ""
+            if (Platform.isMacOS) {
+              clientName += "Mac"
+            } else if (Platform.isWin) {
+              clientName += "Win"
+            } else if (Platform.isLinux) {
+              clientName += "Linux"
+            } else if (Platform.isIosApp) {
+              clientName += "iOS"
+            } else if (Platform.isAndroidApp) {
+              clientName += "Android"
+            }
+            clientName = this.plugin.settings.clientName + (this.plugin.settings.clientName != "" ? " " + clientName : clientName)
+
+            this.Send("ClientInfo", JSON.stringify({ name: clientName, version: this.plugin.settings.apiVersion }))
             this.StartHandle()
           }
         }

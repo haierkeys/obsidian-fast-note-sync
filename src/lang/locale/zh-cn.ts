@@ -46,10 +46,13 @@ const zh_cn: Partial<LangMap> = {
   "Buy me a coffee at ko-fi.com": "在 ko-fi.com 请我喝一杯咖啡",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
   "console_win": "CTRL + SHIFT + I",
-  "配置文件排除项": "配置文件排除项",
-  "配置文件排除项描述": "文件路径相对于 .obsidian 目录，每行一个文件（例如：plugins/obsidian-fast-note-sync/data.json）",
-  "输入配置文件排除项": "输入您的配置文件路径，每行一个",
+  "配置同步排除": "配置同步排除",
+  "配置同步排除描述": "文件路径相对于 .obsidian 目录，每行一个文件（例如：plugins/obsidian-fast-note-sync/data.json）",
+  "配置同步排除输入": "输入您的配置文件路径，每行一个",
   "清理本地同步时间": "清理本地同步时间",
+  "客户端名称": "客户端名称",
+  "客户端名称描述": "为当前客户端设置一个自定义名称，用于多端同步时识别设备",
+  "输入客户端名称": "输入客户端名称",
 }
 
 

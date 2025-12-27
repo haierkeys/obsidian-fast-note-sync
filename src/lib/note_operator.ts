@@ -81,6 +81,15 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
     handleNoteDeleteByPath(oldfile, plugin);
     dump(`Note rename delete send`, oldfile);
 
+    const dataRename = {
+        vault: plugin.settings.vault,
+        path: file.path,
+        oldPath: oldfile,
+    };
+    plugin.websocket.MsgSend("NoteRename", dataRename);
+
+    dump(`Note rename send`, dataRename.path, dataRename.oldPath);
+
     plugin.removeIgnoredFile(file.path);
 };
 

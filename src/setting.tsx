@@ -26,6 +26,7 @@ export interface PluginSettings {
   //  [propName: string]: any;
   apiVersion: string
   configExclude: string
+  clientName: string
 }
 
 /**
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   vault: "defaultVault",
   apiVersion: "",
   configExclude: "",
+  clientName: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -102,7 +104,20 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
-
+    new Setting(set)
+      .setName($("配置同步排除"))
+      .setDesc($("配置同步排除描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder($("配置同步排除输入"))
+          .setValue(this.plugin.settings.configExclude)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.configExclude) {
+              this.plugin.settings.configExclude = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
     new Setting(set)
       .setName("| " + $("远端"))
       .setHeading()
@@ -160,15 +175,16 @@ export class SettingTab extends PluginSettingTab {
       )
 
     new Setting(set)
-      .setName($("配置文件排除项"))
-      .setDesc($("配置文件排除项描述"))
-      .addTextArea((text) =>
+      .setName($("客户端名称"))
+      .setDesc($("客户端名称描述"))
+      .addText((text) =>
         text
-          .setPlaceholder($("输入配置文件排除项"))
-          .setValue(this.plugin.settings.configExclude)
+          .setPlaceholder($("输入客户端名称"))
+          .setValue(this.plugin.settings.clientName)
           .onChange(async (value) => {
-            if (value != this.plugin.settings.configExclude) {
-              this.plugin.settings.configExclude = value
+            const trimmedValue = value.trim()
+            if (trimmedValue != this.plugin.settings.clientName) {
+              this.plugin.settings.clientName = trimmedValue
               await this.plugin.saveSettings()
             }
           })
@@ -199,8 +215,6 @@ export class SettingTab extends PluginSettingTab {
     debugDiv.addClass("fast-note-sync-settings-debug")
 
     const debugButton = debugDiv.createEl("button")
-
-
 
     debugButton.setText($("复制 Debug 信息"))
     debugButton.onclick = async () => {

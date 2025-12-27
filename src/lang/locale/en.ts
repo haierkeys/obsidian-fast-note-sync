@@ -50,6 +50,9 @@ const en: Partial<LangMap> = {
   "配置文件排除项描述": "File paths relative to .obsidian directory, one per line (e.g., plugins/obsidian-fast-note-sync/data.json)",
   "输入配置文件排除项": "Enter your config file paths, one per line",
   "清理本地同步时间": "Clear Local Sync Time",
+  "客户端名称": "Client Name",
+  "客户端名称描述": "Set a name for this client to identify it during sync",
+  "输入客户端名称": "Enter client name",
 };
 
 export default en;
