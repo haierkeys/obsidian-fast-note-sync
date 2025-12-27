@@ -45,7 +45,14 @@ export const noteDelete = function (file: TAbstractFile, plugin: FastSync, event
     if (eventEnter && plugin.ignoredFiles.has(file.path)) return;
 
     plugin.addIgnoredFile(file.path);
-    handleNoteDeleteByPath(file.path, plugin);
+
+    const data = {
+        vault: plugin.settings.vault,
+        path: file.path,
+        pathHash: hashContent(file.path),
+    };
+    plugin.websocket.MsgSend("NoteDelete", data);
+
     dump(`Note delete send`, file.path);
     plugin.removeIgnoredFile(file.path);
 };
@@ -73,22 +80,12 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
         pathHash: hashContent(file.path),
         content: content,
         contentHash: contentHash,
-    };
-
-    plugin.websocket.MsgSend("NoteModify", data);
-    dump(`Note rename modify send`, data.path, data.contentHash, data.mtime, data.pathHash);
-
-    handleNoteDeleteByPath(oldfile, plugin);
-    dump(`Note rename delete send`, oldfile);
-
-    const dataRename = {
-        vault: plugin.settings.vault,
-        path: file.path,
         oldPath: oldfile,
+        oldPathHash: hashContent(oldfile),
     };
-    plugin.websocket.MsgSend("NoteRename", dataRename);
 
-    dump(`Note rename send`, dataRename.path, dataRename.oldPath);
+    plugin.websocket.MsgSend("NoteRename", data);
+    dump(`Note rename send`, data.path, data.contentHash, data.mtime, data.pathHash);
 
     plugin.removeIgnoredFile(file.path);
 };
@@ -171,17 +168,4 @@ export const receiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: 
     plugin.syncTypeCompleteCount++;
 
     checkCompletion(plugin);
-};
-
-/**
- * 根据路径发送笔记删除消息
- */
-export const handleNoteDeleteByPath = function (path: string, plugin: FastSync) {
-    if (!path.endsWith(".md")) return;
-    const data = {
-        vault: plugin.settings.vault,
-        path: path,
-        pathHash: hashContent(path),
-    };
-    plugin.websocket.MsgSend("NoteDelete", data);
 };
