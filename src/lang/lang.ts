@@ -19,6 +19,7 @@ import ja from "src/lang/locale/ja";
 import it from "src/lang/locale/it";
 import id from "src/lang/locale/id";
 import hu from "src/lang/locale/hu";
+import hi from "src/lang/locale/hi";
 import he from "src/lang/locale/he";
 //import fa from "src/lang/locale/fa";
 import fr from "src/lang/locale/fr";
@@ -49,6 +50,7 @@ export const localeMap: { [k: string]: Partial<typeof en> } = {
     // fa,
     fr,
     he,
+    hi,
     hu,
     id,
     it,

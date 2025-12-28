@@ -173,6 +173,11 @@ export class WebSocketClient {
         if (data.code == 0 || data.code > 200) {
           new Notice("Service Error: Code=" + data.code + " Msg=" + data.msg + data.details)
         } else {
+
+          if (typeof data === 'object' && 'vault' in data && data.vault != null && data.vault != this.plugin.settings.vault) {
+            dump("Service vault " + data.vault + " not match " + this.plugin.settings.vault)
+            return
+          }
           const handler = receiveOperators.get(msgAction)
           if (handler) {
             handler(data.data, this.plugin)
