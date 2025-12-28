@@ -53,6 +53,22 @@ const en: Partial<LangMap> = {
   "客户端名称": "Client Name",
   "客户端名称描述": "Set a name for this client to identify it during sync",
   "输入客户端名称": "Enter client name",
+  "笔记历史": "Note History",
+  "版本": "Version",
+  "修改时间": "Modified Time",
+  "查看": "View",
+  "差异详情": "Diff Details",
+  "只看差异": "Show Diffs Only",
+  "新增": "Add",
+  "删除": "Delete",
+  "客户端": "Client",
+  "仅支持 Markdown 文件": "Only supports Markdown files",
+  "完整内容": "Previous Content",
+  "上一页": "Previous",
+  "下一页": "Next",
+  "第 {page} 页 / 共 {total} 页": "Page {page} of {total}",
+  "复制内容": "Copy",
+  "已复制": "Copied",
 };
 
 export default en;

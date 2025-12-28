@@ -2,6 +2,7 @@ import { Plugin, setIcon, Menu, MenuItem, Notice } from 'obsidian';
 
 import { startupSync, startupFullSync, resetSettingSyncTime, handleSync } from "./lib/operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
+import { NoteHistoryModal } from './views/note-history/history-modal';
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
@@ -20,6 +21,7 @@ export default class FastSync extends Plugin {
   ribbonIcon: HTMLElement
   ribbonIconStatus: boolean = false
   statusBarItem: HTMLElement
+  historyStatusBarItem: HTMLElement
 
   clipboardReadTip: string = ""
 
@@ -127,6 +129,20 @@ export default class FastSync extends Plugin {
       this.showRibbonMenu(event);
     })
     setIcon(this.ribbonIcon, "wifi-off")
+
+    // 初始化 笔记历史 状态栏入口
+    this.historyStatusBarItem = this.addStatusBarItem();
+    this.historyStatusBarItem.addClass("mod-clickable");
+    setIcon(this.historyStatusBarItem, "history");
+    this.historyStatusBarItem.setAttribute("aria-label", $("笔记历史"));
+    this.historyStatusBarItem.addEventListener("click", () => {
+      const activeFile = this.app.workspace.getActiveFile();
+      if (activeFile && activeFile.extension === "md") {
+        new NoteHistoryModal(this.app, this, activeFile.path).open();
+      } else {
+        new Notice($("仅支持 Markdown 文件"));
+      }
+    });
 
     // 初始化并注册事件层
     this.eventManager = new EventManager(this)

@@ -1,6 +1,6 @@
 {
   "name": "Fast Note Sync",
-  "version": "1.4.12",
+  "version": "1.5.1",
   "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
   "main": "main.js",
   "scripts": {
@@ -19,6 +19,7 @@
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "builtin-modules": "^4.0.0",
+    "concurrently": "^9.2.1",
     "esbuild": "^0.24.2",
     "eslint": "^9.39.1",
     "obsidian": "^1.10.3",

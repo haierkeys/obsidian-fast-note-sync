@@ -1,8 +1,10 @@
-import { TAbstractFile, Platform } from "obsidian";
+import { TAbstractFile, Platform, TFile, Menu, MenuItem } from "obsidian";
 
+import { NoteHistoryModal } from "../views/note-history/history-modal";
 import { noteModify, noteDelete, noteRename } from "./note_operator";
 import { fileModify, fileDelete, fileRename } from "./file_operator";
 import type FastSync from "../main";
+import { $ } from "../lang/lang";
 import { dump } from "./helps";
 
 
@@ -24,6 +26,9 @@ export class EventManager {
         this.plugin.registerEvent(app.vault.on("rename", this.watchRename));
         //@ts-ignore Internal RAW API
         this.plugin.registerEvent(app.vault.on("raw", this.watchRaw));
+
+        // --- Workspace Events ---
+        this.plugin.registerEvent(app.workspace.on("file-menu", this.watchFileMenu));
 
         // --- Window Events ---
         window.addEventListener('focus', this.onWindowFocus);
@@ -96,6 +101,19 @@ export class EventManager {
         if (path.startsWith(this.plugin.app.vault.configDir + "/")) {
             this.plugin.configManager.handleRawEvent(path, true);
         }
+    }
+
+    private watchFileMenu = (menu: Menu, file: TAbstractFile) => {
+        if (!(file instanceof TFile) || !file.path.endsWith(".md")) return;
+
+        menu.addItem((item: MenuItem) => {
+            item
+                .setTitle($("笔记历史"))
+                .setIcon("history")
+                .onClick(() => {
+                    new NoteHistoryModal(this.plugin.app, this.plugin, file.path).open();
+                });
+        });
     }
 
 }
