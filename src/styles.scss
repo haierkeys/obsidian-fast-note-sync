@@ -265,10 +265,20 @@
         }
       }
 
-      .empty-state {
+      .state {
         text-align: center;
         padding: 40px;
         color: var(--text-faint);
+        display: table-cell !important;
+        vertical-align: middle;
+      }
+
+      .error-state {
+        color: var(--text-normal);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
       }
     }
 

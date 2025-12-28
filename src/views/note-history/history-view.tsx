@@ -16,6 +16,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
     const [historyList, setHistoryList] = React.useState<NoteHistoryItem[]>([]);
     const [selectedHistory, setSelectedHistory] = React.useState<NoteHistoryDetailData | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
     const [showOnlyDiff, setShowOnlyDiff] = React.useState(false);
     const [showOriginal, setShowOriginal] = React.useState(false);
     const [page, setPage] = React.useState(1);
@@ -27,15 +28,25 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
         loadHistory(1);
     }, [filePath]);
 
+    React.useEffect(() => {
+        console.log("Error state changed:", error);
+        console.log("Loading state:", loading);
+        console.log("History list length:", historyList.length);
+    }, [error, loading, historyList]);
+
     const loadHistory = async (targetPage = 1) => {
         try {
             setLoading(true);
+            setError(null);
             const data = await service.getNoteHistoryList(filePath, targetPage, pageSize);
             setHistoryList(data?.list || []);
             setTotalRows(data?.totalRows || 0);
             setPage(targetPage);
         } catch (e) {
-            console.error(e);
+            console.error("loadHistory error:", e);
+            const errorMessage = e instanceof Error ? e.message : $("加载失败，请重试");
+            console.log("Setting error state to:", errorMessage);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -76,7 +87,17 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                             </tr>
                         </thead>
                         <tbody>
-                            {historyList.length > 0 ? (
+                            {error ? (
+                                <tr>
+                                    <td colSpan={4} className="state error-state">
+                                        <span>{error}</span>
+                                    </td>
+                                </tr>
+                            ) : loading ? (
+                                <tr>
+                                    <td colSpan={4} className="state">{$("加载中...")}</td>
+                                </tr>
+                            ) : historyList.length > 0 ? (
                                 historyList.map(item => (
                                     <tr key={item.id} className={selectedHistory?.id === item.id ? "is-selected" : ""}>
                                         <td>v{item.version}</td>
@@ -97,7 +118,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="empty-state">{$("暂无历史记录")}</td>
+                                    <td colSpan={4} className="state">{$("暂无历史记录")}</td>
                                 </tr>
                             )}
                         </tbody>

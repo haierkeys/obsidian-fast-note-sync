@@ -222,10 +222,19 @@
 .note-history-view .history-list-section .history-table .view-btn:hover {
   color: var(--text-normal);
 }
-.note-history-view .history-list-section .history-table .empty-state {
+.note-history-view .history-list-section .history-table .state {
   text-align: center;
   padding: 40px;
   color: var(--text-faint);
+  display: table-cell !important;
+  vertical-align: middle;
+}
+.note-history-view .history-list-section .history-table .error-state {
+  color: var(--text-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .note-history-view .history-list-section .history-pagination {
   display: flex;

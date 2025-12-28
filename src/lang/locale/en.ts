@@ -69,6 +69,9 @@ const en: Partial<LangMap> = {
   "第 {page} 页 / 共 {total} 页": "Page {page} of {total}",
   "复制内容": "Copy",
   "已复制": "Copied",
+  "加载中...": "Loading...",
+  "加载失败，请重试": "Failed to load, please retry",
+  "无法连接到服务器，请检查网络连接": "Unable to connect to server, please check network connection",
 };
 
 export default en;

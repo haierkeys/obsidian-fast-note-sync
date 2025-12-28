@@ -55,12 +55,17 @@ export class HttpApiService {
                     "token": this.plugin.settings.apiToken
                 }
             });
+
+            if (!res.ok) {
+                const msg = `HTTP ${res.status}: Failed to fetch history list`;
+                throw new Error(msg);
+            }
+
             const json = await res.json();
             console.log("getNoteHistoryList response:", res.status, json);
 
-            if (res.status !== 200 || !json.status) {
+            if (!json.status) {
                 const msg = json?.message || "Failed to fetch history list";
-                new Notice(msg);
                 throw new Error(msg);
             }
 
@@ -70,7 +75,12 @@ export class HttpApiService {
             };
         } catch (e) {
             console.log("getNoteHistoryList error:", e);
-            // new Notice("Failed to connect to history API"); // 暂时移除 Notice 避免干扰
+
+            // Handle network errors specifically
+            if (e instanceof TypeError && e.message.includes('fetch')) {
+                throw new Error("无法连接到服务器，请检查网络连接");
+            }
+
             throw e;
         }
     }
