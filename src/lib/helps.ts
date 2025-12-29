@@ -1,7 +1,40 @@
 import { Notice, moment, Menu, MenuItem } from "obsidian";
 
+import { CONFIG_ROOT_FILES_TO_WATCH } from './config_operator';
 import { $ } from "../lang/lang";
 import FastSync from "../main";
+
+
+export const getFileName = function (path: string, includeExt: boolean = true): string {
+  const base = path.split(/[\\/]/).pop() || ""
+  const lastDotIndex = base.lastIndexOf(".")
+
+  // 如果没有点，或者点在字符串末尾（即没有实际后缀内容），视为不含后缀
+  if (lastDotIndex === -1) return ""
+
+  if (includeExt) return base
+  return base.substring(0, lastDotIndex)
+}
+
+export const getDirName = function (path: string): string {
+  // 1. 统一将 Windows 分隔符 \ 替换为 /，方便统一处理
+  // 2. 找到最后一个斜杠的位置
+  const lastSlashIndex = path.replace(/\\/g, "/").lastIndexOf("/");
+
+  // 如果找不到斜杠，说明路径只包含文件名（在当前目录下），返回空字符串
+  if (lastSlashIndex === -1) return "";
+
+  const parts = path.split("/");
+  return parts[0] || "";
+};
+
+export const getDirNameOrEmpty = function (path: string): string {
+  console.log("getDirNameOrEmpty", path)
+
+  return path != undefined && path.includes(".") ? "" : path;
+};
+
+
 
 
 /**
@@ -72,11 +105,11 @@ export const showErrorDialog = function (message: string): void {
 }
 
 // 默认开启日志
-let isLogEnabled = false;
+let isLogEnabled = false
 
 export const setLogEnabled = (enabled: boolean) => {
-  isLogEnabled = enabled;
-};
+  isLogEnabled = enabled
+}
 
 /**
  * dump
@@ -89,16 +122,10 @@ export const dump = function (...message: unknown[]): void {
   }
 }
 
-
-
-
 export function isHttpUrl(url: string): boolean {
-  return /^https?:\/\/.+/i.test(url);
+  return /^https?:\/\/.+/i.test(url)
 }
 
 export function isWsUrl(url: string): boolean {
-  return /^wss?:\/\/.+/i.test(url);
+  return /^wss?:\/\/.+/i.test(url)
 }
-
-
-
