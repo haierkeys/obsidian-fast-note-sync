@@ -12,10 +12,10 @@ export const BINARY_PREFIX_FILE_SYNC = "00";
  * 文件（非笔记）修改事件处理
  */
 export const fileModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.syncEnabled == false) return;
     if (!(file instanceof TFile)) return;
     if (file.path.endsWith(".md")) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.syncEnabled) return;
     if (eventEnter && plugin.ignoredFiles.has(file.path)) return;
 
     plugin.addIgnoredFile(file.path);
@@ -41,10 +41,10 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
  * 文件删除事件处理
  */
 export const fileDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.syncEnabled == false) return;
     if (!(file instanceof TFile)) return;
     if (file.path.endsWith(".md")) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.syncEnabled) return;
     if (eventEnter && plugin.ignoredFiles.has(file.path)) return;
 
     plugin.addIgnoredFile(file.path);
@@ -57,8 +57,9 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
  * 文件重命名事件处理
  */
 export const fileRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.syncEnabled == false) return;
     if (file.path.endsWith(".md")) return;
-    if ((!plugin.getWatchEnabled() || !plugin.settings.syncEnabled) && eventEnter) return;
+    if ((!plugin.getWatchEnabled()) && eventEnter) return;
     if (plugin.ignoredFiles.has(file.path) && eventEnter) return;
     if (!(file instanceof TFile)) return;
 
@@ -77,6 +78,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
  * 接收服务端文件开始上传请求 只有 hash
  */
 export const receiveFileNeedUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file need upload: `, data.path);
     const file = plugin.app.vault.getFileByPath(normalizePath(data.path));
     if (!file) {
@@ -90,6 +92,7 @@ export const receiveFileNeedUpload = async function (data: ReceivePathMessage, p
  * 接收服务端文件上传指令 (FileUpload)
  */
 export const receiveFileUpload = async function (data: FileUploadMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file need upload: `, data.path, data.sessionId);
     const file = plugin.app.vault.getFileByPath(normalizePath(data.path));
     if (!file) {
@@ -123,6 +126,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
  * 接收服务端文件更新通知 (FileSyncUpdate)
  */
 export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file sync update(download): `, data.path);
     const tempKey = `temp_${data.path} `;
     const tempSession = {
@@ -150,6 +154,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
  * 接收服务端文件删除通知
  */
 export const receiveFileSyncDelete = async function (data: ReceivePathMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file delete: `, data.path);
     const normalizedPath = normalizePath(data.path);
     const file = plugin.app.vault.getFileByPath(normalizedPath);
@@ -164,6 +169,7 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
  * 接收服务端文件元数据(mtime)更新通知
  */
 export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file sync mtime: `, data.path, data.mtime);
     const normalizedPath = normalizePath(data.path);
     const file = plugin.app.vault.getFileByPath(normalizedPath);
@@ -179,6 +185,7 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
  * 接收服务端分片下载响应 (FileSyncChunkDownload)
  */
 export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkDownloadMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file chunk download: `, data.path, data.sessionId, `totalChunks: ${data.totalChunks} `);
     const tempKey = `temp_${data.path} `;
     const tempSession = plugin.fileDownloadSessions.get(tempKey);
@@ -218,6 +225,7 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
  * 接收文件同步结束通知
  */
 export const receiveFileSyncEnd = async function (data: ReceiveMessage, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive file sync end: `, data.vault, data.lastTime);
     plugin.settings.lastFileSyncTime = data.lastTime;
     await plugin.saveData(plugin.settings);
@@ -232,6 +240,7 @@ export const receiveFileSyncEnd = async function (data: ReceiveMessage, plugin: 
  * 根据路径发送文件删除消息
  */
 const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     if (path.endsWith(".md")) return;
     const data = {
         vault: plugin.settings.vault,
@@ -245,6 +254,7 @@ const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
  * 处理接收到的二进制文件分片
  */
 export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+    if (plugin.settings.syncEnabled == false) return;
     const binaryData = buf instanceof Blob ? await buf.arrayBuffer() : buf;
     if (binaryData.byteLength < 40) return;
 

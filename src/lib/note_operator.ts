@@ -9,10 +9,10 @@ import type FastSync from "../main";
  * 笔记修改事件处理
  */
 export const noteModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.syncEnabled == false) return;
     if (!(file instanceof TFile)) return;
     if (!file.path.endsWith(".md")) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.syncEnabled) return;
     if (eventEnter && plugin.ignoredFiles.has(file.path)) return;
 
     plugin.addIgnoredFile(file.path);
@@ -38,10 +38,10 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
  * 笔记删除事件处理
  */
 export const noteDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.syncEnabled == false) return;
     if (!(file instanceof TFile)) return;
     if (!file.path.endsWith(".md")) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.syncEnabled) return;
     if (eventEnter && plugin.ignoredFiles.has(file.path)) return;
 
     plugin.addIgnoredFile(file.path);
@@ -61,10 +61,10 @@ export const noteDelete = function (file: TAbstractFile, plugin: FastSync, event
  * 笔记重命名事件处理
  */
 export const noteRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.syncEnabled == false) return;
     if (!(file instanceof TFile)) return;
     if (!file.path.endsWith(".md")) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.syncEnabled) return;
     if (eventEnter && plugin.ignoredFiles.has(file.path)) return;
 
     plugin.addIgnoredFile(file.path);
@@ -95,7 +95,10 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
  * 接收服务端笔记修改通知
  */
 export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive note modify:`, data.path, data.contentHash, data.mtime, data.pathHash);
+
+
 
     const normalizedPath = normalizePath(data.path);
     const file = plugin.app.vault.getFileByPath(normalizedPath);
@@ -121,6 +124,7 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
  * 接收服务端请求上传笔记
  */
 export const receiveNoteUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive note need push:`, data.path);
     const file = plugin.app.vault.getFileByPath(normalizePath(data.path));
     if (file) {
@@ -132,6 +136,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
  * 接收服务端笔记元数据(mtime)更新通知
  */
 export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive note sync mtime:`, data.path, data.mtime);
 
     const normalizedPath = normalizePath(data.path);
@@ -148,6 +153,7 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
  * 接收服务端笔记删除通知
  */
 export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive note delete:`, data.action, data.path, data.mtime, data.pathHash);
     const normalizedPath = normalizePath(data.path);
     const file = plugin.app.vault.getFileByPath(normalizedPath);
@@ -162,6 +168,7 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
  * 接收笔记同步结束通知
  */
 export const receiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+    if (plugin.settings.syncEnabled == false) return;
     dump(`Receive note end:`, data.vault, data, data.lastTime);
     plugin.settings.lastNoteSyncTime = data.lastTime;
     await plugin.saveData(plugin.settings);

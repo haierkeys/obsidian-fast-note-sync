@@ -91,7 +91,7 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
  * 启动全量/增量同步
  */
 export const handleSync = async function (plugin: FastSync, isLoadLastTime: boolean = false, syncMode: SyncMode = "auto") {
-  if (!plugin.ribbonIconStatus) {
+  if (!plugin.menuManager.ribbonIconStatus) {
     new Notice($("服务已断开"));
     return;
   }

@@ -23,8 +23,8 @@ const CONFIG_EXCLUDE_SET = new Set<string>();
  */
 
 export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.configSyncEnabled == false) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.configSyncEnabled) return;
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return;
     if (configIsPathExcluded(path, plugin)) return;
 
@@ -68,8 +68,8 @@ export const configModify = async function (path: string, plugin: FastSync, even
 };
 
 export const configDelete = function (path: string, plugin: FastSync, eventEnter: boolean = false) {
+    if (plugin.settings.configSyncEnabled == false) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
-    if (eventEnter && !plugin.settings.configSyncEnabled) return;
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return;
     if (configIsPathExcluded(path, plugin)) return;
 
@@ -86,7 +86,7 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
 
 
 export const receiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
-    if (!plugin.settings.configSyncEnabled) return;
+    if (plugin.settings.configSyncEnabled == false) return;
     if (configIsPathExcluded(data.path, plugin)) return;
     if (plugin.ignoredConfigFiles.has(data.path)) return;
 
@@ -115,11 +115,12 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 };
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
+    if (plugin.settings.configSyncEnabled == false) return;
     await configModify(data.path, plugin, false);
 };
 
 export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
-    if (!plugin.settings.configSyncEnabled) return;
+    if (plugin.settings.configSyncEnabled == false) return;
     if (configIsPathExcluded(data.path, plugin)) return;
     if (plugin.ignoredConfigFiles.has(data.path)) return;
 
@@ -137,7 +138,7 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
 };
 
 export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
-    if (!plugin.settings.configSyncEnabled) return;
+    if (plugin.settings.configSyncEnabled == false) return;
     if (configIsPathExcluded(data.path, plugin)) return;
     if (plugin.ignoredConfigFiles.has(data.path)) return;
 
@@ -148,6 +149,7 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
 };
 
 export const receiveConfigSyncEnd = async function (data: ReceiveMessage, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+    if (plugin.settings.configSyncEnabled == false) return;
     plugin.settings.lastConfigSyncTime = data.lastTime;
     await plugin.saveData(plugin.settings);
     plugin.syncTypeCompleteCount++;
@@ -207,6 +209,7 @@ export const configAllPaths = async function (configDir: string, plugin: FastSyn
 }
 
 export const configEmptyFoldersClean = async function (configDir: string, plugin: FastSync) {
+    if (plugin.settings.configSyncEnabled == false) return;
     const folders = [normalizePath(`${configDir}/plugins`), normalizePath(`${configDir}/themes`)];
     for (const root of folders) {
         try {
