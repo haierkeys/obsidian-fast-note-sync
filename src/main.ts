@@ -131,9 +131,7 @@ export default class FastSync extends Plugin {
           handleSync(this, true, "config")
         }
       }
-
-      this.isWatchEnabled = false
-      this.ignoredFiles = new Set() 
+      this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
       this.fileDownloadSessions = new Map<string, any>()
     } else {
