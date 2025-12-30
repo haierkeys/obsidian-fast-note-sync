@@ -20,6 +20,9 @@ dev:
 air:
 	npx concurrently "pnpm run devcss" "pnpm run dev"
 
+cp:
+	cp  ./main.js /Users/DevApps/@JsApps/ObsPlugins2/.obsidian/plugins/obsidian-fast-note-sync/
+
 
 # 更新版本脚本调用
 ver:
