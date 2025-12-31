@@ -22,6 +22,9 @@ const CONFIG_EXCLUDE_SET = new Set<string>();
  * 配置操作函数导出
  */
 
+let reloadTimer: NodeJS.Timeout | null = null;
+const pendingConfigUpdates: Map<string, string> = new Map();
+
 export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.configSyncEnabled == false) return;
     if (eventEnter && !plugin.getWatchEnabled()) return;
@@ -226,43 +229,69 @@ export const configEmptyFoldersClean = async function (configDir: string, plugin
 }
 
 export const configReload = async function (path: string, plugin: FastSync, eventEnter: boolean = false, data: string = "") {
-    const app = plugin.app as any;
-    if (app.vault.reloadConfig) await app.vault.reloadConfig();
+    // 将更新加入待处理列表
+    pendingConfigUpdates.set(path, data);
 
-    if (path === "app.json" || path === "appearance.json") {
-        try {
-            const config = JSON.parse(data);
-            for (const key in config) app.vault.setConfig(key, config[key]);
-            if (path === "appearance.json" && config.theme && app.customCss) {
-                app.customCss.setTheme(config.theme);
-                app.customCss.onConfigChange();
+    // 清除旧计时器
+    if (reloadTimer) {
+        clearTimeout(reloadTimer);
+    }
+
+    // 设置新计时器，延迟 1 秒
+    reloadTimer = setTimeout(async () => {
+        const app = plugin.app as any;
+        const updates = Array.from(pendingConfigUpdates.entries());
+        pendingConfigUpdates.clear();
+        reloadTimer = null;
+
+        console.log("Config reloading, files updated:", updates.map(([p]) => p));
+
+        if (app.vault.reloadConfig) await app.vault.reloadConfig();
+
+        const pluginsToReload = new Set<string>();
+
+        for (const [p, d] of updates) {
+            if (p === "app.json" || p === "appearance.json") {
+                try {
+                    const config = JSON.parse(d);
+                    for (const key in config) app.vault.setConfig(key, config[key]);
+                    if (p === "appearance.json" && config.theme && app.customCss) {
+                        app.customCss.setTheme(config.theme);
+                        app.customCss.onConfigChange();
+                    }
+                } catch (e) { }
+            } else if (p === "community-plugins.json") {
+                try {
+                    const newP = JSON.parse(d);
+                    const oldP = Array.from(plugin.configManager.enabledPlugins);
+                    const toE = newP.filter((p: string) => !oldP.includes(p));
+                    const toD = oldP.filter((p: string) => !newP.includes(p));
+                    plugin.configManager.enabledPlugins = new Set(newP);
+                    for (const id of toE) await app.plugins.enablePlugin(id);
+                    for (const id of toD) await app.plugins.disablePlugin(id);
+                } catch (e) { }
+            } else if (p === "hotkeys.json") {
+                if (app.hotkeys) await app.hotkeys.load();
+            } else if (p.startsWith("snippets/") && p.endsWith(".css")) {
+                if (app.customCss) await app.customCss.readSnippets();
+            } else if (p.startsWith("plugins/")) {
+                const parts = p.split("/");
+                if (parts.length >= 3) {
+                    const id = parts[1];
+                    pluginsToReload.add(id);
+                }
             }
-        } catch (e) { }
-    } else if (path === "community-plugins.json") {
-        try {
-            const newP = JSON.parse(data);
-            const oldP = Array.from(plugin.configManager.enabledPlugins);
-            const toE = newP.filter((p: string) => !oldP.includes(p));
-            const toD = oldP.filter((p: string) => !newP.includes(p));
-            plugin.configManager.enabledPlugins = new Set(newP);
-            for (const id of toE) await app.plugins.enablePlugin(id);
-            for (const id of toD) await app.plugins.disablePlugin(id);
-        } catch (e) { }
-    } else if (path === "hotkeys.json") {
-        if (app.hotkeys) await app.hotkeys.load();
-    } else if (path.startsWith("snippets/") && path.endsWith(".css")) {
-        if (app.customCss) await app.customCss.readSnippets();
-    } else if (path.startsWith("plugins/")) {
-        const parts = path.split("/");
-        if (parts.length >= 3) {
-            const id = parts[1];
+        }
+
+        // 统一处理插件重载
+        for (const id of pluginsToReload) {
             if (plugin.configManager.enabledPlugins.has(id)) {
                 await app.plugins.disablePlugin(id);
                 await app.plugins.enablePlugin(id);
             }
         }
-    }
-    if (app.setting?.activeTab) app.setting.activeTab.display();
+        if (app.setting?.activeTab) app.setting.activeTab.display();
+    }, 1000);
 }
 
 /**
