@@ -25,6 +25,9 @@ export class ConfigManager {
 
     const relativePath = this.pluginDir + "/data.json"
     configAddPathExcluded(relativePath, this.plugin)
+    configAddPathExcluded("plugins/hot-reload/data.json", this.plugin)
+    configAddPathExcluded("plugins/hot-reload/main.js", this.plugin)
+
     this.loadEnabledPlugins()
     this.initializeFileStates()
   }
@@ -105,7 +108,7 @@ export class ConfigManager {
         const plugins = JSON.parse(await this.plugin.app.vault.adapter.read(filePath))
         if (Array.isArray(plugins)) this.enabledPlugins = new Set(plugins)
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   private async checkFileChange(filePath: string, eventEnter: boolean = false, isFolder: boolean = false) {
@@ -154,6 +157,6 @@ export class ConfigManager {
         dump("Config Modify", relativePath)
       }
       dump("Config Modify mtime no change, skip", relativePath)
-    } catch (e) {}
+    } catch (e) { }
   }
 }

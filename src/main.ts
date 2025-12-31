@@ -21,6 +21,7 @@ export default class FastSync extends Plugin {
 
   clipboardReadTip: string = ""
 
+  isFirstSync: boolean = false
   isWatchEnabled: boolean = false
   ignoredFiles: Set<string> = new Set()
   ignoredConfigFiles: Set<string> = new Set()
@@ -35,6 +36,7 @@ export default class FastSync extends Plugin {
 
   // 文件下载会话管理
   fileDownloadSessions: Map<string, any> = new Map()
+  syncTimer: NodeJS.Timeout | null = null
 
   getWatchEnabled(): boolean {
     return this.isWatchEnabled
@@ -123,13 +125,20 @@ export default class FastSync extends Plugin {
   refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
     if (forceRegister && (this.settings.syncEnabled || this.settings.configSyncEnabled) && this.settings.api && this.settings.apiToken) {
       this.websocket.register((status) => this.updateRibbonIcon(status))
-      this.isWatchEnabled = true
-      if (this.websocket.isAuth) {
-        if (setItem == "syncEnabled") {
-          handleSync(this, true, "note")
-        } else if (setItem == "configSyncEnabled") {
-          handleSync(this, true, "config")
-        }
+
+      if (this.syncTimer) {
+        clearTimeout(this.syncTimer)
+      }
+
+      if (this.isFirstSync && this.websocket.isAuth) {
+        this.syncTimer = setTimeout(() => {
+          if (setItem == "syncEnabled" && this.settings.syncEnabled) {
+            handleSync(this, true, "note")
+          } else if (setItem == "configSyncEnabled" && this.settings.configSyncEnabled) {
+            handleSync(this, true, "config")
+          }
+          this.syncTimer = null
+        }, 2000)
       }
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()

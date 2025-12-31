@@ -14,7 +14,6 @@ export class EventManager {
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
-    console.log("EventManager: constructor", this.plugin)
   }
 
   public registerEvents() {
@@ -38,7 +37,7 @@ export class EventManager {
 
     // 注册插件卸载时的清理逻辑
     this.plugin.register(() => {
-      console.log("EventManager: removing window event listeners")
+     dump("EventManager: removing window event listeners")
       window.removeEventListener("focus", this.onWindowFocus)
       window.removeEventListener("blur", this.onWindowBlur)
       window.removeEventListener("visibilitychange", this.onVisibilityChange)

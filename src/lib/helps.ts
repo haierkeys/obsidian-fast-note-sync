@@ -29,8 +29,6 @@ export const getDirName = function (path: string): string {
 };
 
 export const getDirNameOrEmpty = function (path: string): string {
-  console.log("getDirNameOrEmpty", path)
-
   return path != undefined && path.includes(".") ? "" : path;
 };
 

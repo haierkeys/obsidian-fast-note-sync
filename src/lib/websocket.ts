@@ -21,6 +21,7 @@ export class WebSocketClient {
   public checkReConnectTimeout: number
   public timeConnect = 0
   public count = 0
+  private currentStartHandleId: number = 0
   //同步全部文件时设置
 
 
@@ -216,8 +217,22 @@ export class WebSocketClient {
       }, delay)
     }
   }
-  public StartHandle() {
-    dump("Service start handle")
+  public async StartHandle() {
+    const handleId = ++this.currentStartHandleId
+    dump(`Service start handle, id: ${handleId}`)
+
+    if (this.plugin.settings.startupDelay > 0) {
+      dump(`Startup delay: ${this.plugin.settings.startupDelay}ms`)
+      await new Promise((resolve) => setTimeout(resolve, this.plugin.settings.startupDelay))
+    }
+
+    if (handleId !== this.currentStartHandleId) {
+      dump(`Service start handle cancelled, id: ${handleId}`)
+      return
+    }
+
+    this.plugin.isFirstSync = true
+    this.plugin.isWatchEnabled = true
     startupSync(this.plugin)
   }
 
@@ -233,7 +248,7 @@ export class WebSocketClient {
   }
 
   public MsgSend(action: string, data: object | string) {
-    if (!this.isAuth) {
+    if (!this.isAuth || !this.plugin.isFirstSync) {
       dump(`Service not ready or sync in progress, queuing message: ${action}`)
       return
     }

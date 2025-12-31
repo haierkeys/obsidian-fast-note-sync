@@ -111,7 +111,7 @@ export class HttpApiService {
             return json.data;
         } catch (e) {
             console.log("getNoteHistoryDetail error:", e);
-            // new Notice("Failed to fetch history detail");
+            //  new Notice("Failed to fetch history detail");
             throw e;
         }
     }

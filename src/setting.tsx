@@ -27,6 +27,7 @@ export interface PluginSettings {
   apiVersion: string
   configExclude: string
   clientName: string
+  startupDelay: number
 }
 
 /**
@@ -54,6 +55,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   apiVersion: "",
   configExclude: "",
   clientName: "",
+  startupDelay: 500,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -185,6 +187,22 @@ export class SettingTab extends PluginSettingTab {
             const trimmedValue = value.trim()
             if (trimmedValue != this.plugin.settings.clientName) {
               this.plugin.settings.clientName = trimmedValue
+              await this.plugin.saveSettings()
+            }
+          })
+      )
+
+    new Setting(set)
+      .setName($("启动延迟"))
+      .setDesc($("启动延迟描述"))
+      .addText((text) =>
+        text
+          .setPlaceholder($("输入延迟毫秒数"))
+          .setValue(this.plugin.settings.startupDelay.toString())
+          .onChange(async (value) => {
+            const numValue = parseInt(value)
+            if (!isNaN(numValue) && numValue >= 0) {
+              this.plugin.settings.startupDelay = numValue
               await this.plugin.saveSettings()
             }
           })

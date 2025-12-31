@@ -29,9 +29,6 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
     }, [filePath]);
 
     React.useEffect(() => {
-        console.log("Error state changed:", error);
-        console.log("Loading state:", loading);
-        console.log("History list length:", historyList.length);
     }, [error, loading, historyList]);
 
     const loadHistory = async (targetPage = 1) => {
@@ -45,7 +42,6 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
         } catch (e) {
             console.error("loadHistory error:", e);
             const errorMessage = e instanceof Error ? e.message : $("加载失败，请重试");
-            console.log("Setting error state to:", errorMessage);
             setError(errorMessage);
         } finally {
             setLoading(false);
