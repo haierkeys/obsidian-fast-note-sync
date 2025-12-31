@@ -63,7 +63,7 @@ const es: Partial<LangMap> = {
   "删除": "Eliminado",
   "客户端": "Cliente",
   "仅支持 Markdown 文件": "Solo archivos Markdown",
-  "完整内容": "Contenido original",
+  "完整内容": "Contenido anterior",
   "上一页": "Anterior",
   "下一页": "Siguiente",
   "第 {page} 页 / 共 {total} 页": "Página {page} de {total}",
@@ -72,6 +72,8 @@ const es: Partial<LangMap> = {
   "加载中...": "Cargando...",
   "加载失败，请重试": "Error al cargar, por favor reintente",
   "无法连接到服务器，请检查网络连接": "No se puede conectar al servidor, por favor verifique la conexión de red",
+  "启动延迟": "Retraso de inicio (ms)",
+  "启动延迟描述": "Retrasa la ejecución de la primera comprobación de actualizaciones tras una conexión correcta. Pruebe esto si Obsidian se ralentiza al iniciarse debido a la carga de otros plugins. Por defecto 500 ms",
 }
 
 
