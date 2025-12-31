@@ -26,33 +26,58 @@ export const HistoryDetail: React.FC<HistoryDetailProps> = ({ content, diffs, sh
             ));
         }
 
-        const lines: { type: 'normal' | 'add' | 'delete', text: string, lineNumber?: number }[] = [];
-        let currentLineNumber = 1;
+        interface DiffSegment {
+            type: 'normal' | 'add' | 'delete';
+            text: string;
+        }
+
+        interface Line {
+            segments: DiffSegment[];
+            hasChange: boolean;
+            lineNumber?: number;
+        }
+
+        const lines: Line[] = [];
+        let currentLine: Line = { segments: [], hasChange: false };
+        let lineNumberCounter = 1;
 
         diffs.forEach(diff => {
             const type = diff.Type === 1 ? 'add' : diff.Type === -1 ? 'delete' : 'normal';
             const textLines = diff.Text.split('\n');
 
-            textLines.forEach((line, index) => {
-                // 如果是最后一行且是空的（由于 split('\n') 产生的），通常可以忽略，除非它是唯一的行
-                if (index === textLines.length - 1 && line === "" && textLines.length > 1) return;
+            textLines.forEach((text, index) => {
+                if (index > 0) {
+                    lines.push(currentLine);
+                    currentLine = { segments: [], hasChange: false };
+                }
 
-                lines.push({
-                    type,
-                    text: line,
-                    lineNumber: type !== 'delete' ? currentLineNumber++ : undefined
-                });
+                if (text !== "" || textLines.length === 1) {
+                    currentLine.segments.push({ type, text });
+                    if (type !== 'normal') {
+                        currentLine.hasChange = true;
+                    }
+                    if (type !== 'delete' && currentLine.lineNumber === undefined) {
+                        currentLine.lineNumber = lineNumberCounter++;
+                    }
+                }
             });
         });
+        lines.push(currentLine);
 
         const filteredLines = showOnlyDiff
-            ? lines.filter(line => line.type !== 'normal')
+            ? lines.filter(line => line.hasChange)
             : lines;
 
         return filteredLines.map((line, index) => (
-            <div key={index} className={`history-detail-line type-${line.type}`}>
+            <div key={index} className={`history-detail-line ${line.hasChange ? 'has-change' : 'type-normal'} ${!line.lineNumber ? 'is-deleted-line' : ''}`}>
                 <div className="line-number">{line.lineNumber || ""}</div>
-                <div className="line-content">{line.text}</div>
+                <div className="line-content">
+                    {line.segments.map((seg, i) => (
+                        <span key={i} className={`diff-seg type-${seg.type}`}>
+                            {seg.text}
+                        </span>
+                    ))}
+                </div>
             </div>
         ));
     };
