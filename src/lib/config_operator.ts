@@ -237,6 +237,7 @@ export const configReload = async function (path: string, plugin: FastSync, even
     }
 
     // 设置新计时器，延迟 1 秒
+
     reloadTimer = setTimeout(async () => {
         const app = plugin.app as any
 
@@ -252,12 +253,33 @@ export const configReload = async function (path: string, plugin: FastSync, even
             if (p === "app.json" || p === "appearance.json") {
                 try {
                     const config = JSON.parse(d)
-                    for (const key in config) app.vault.setConfig(key, config[key])
-                    if (p === "appearance.json" && config.theme && app.customCss) {
-                        app.customCss.setTheme(config.theme)
-                        app.customCss.onConfigChange()
+                    // 仅在值确实改变时才设置，减少刷新频率
+                    for (const key in config) {
+                        if (app.vault.getConfig(key) !== config[key]) {
+                            app.vault.setConfig(key, config[key])
+                        }
                     }
-                } catch (e) { }
+
+                    if (p === "appearance.json" && app.customCss) {
+                        // 修正属性名：社区主题使用的是 cssTheme
+                        const targetTheme = config.cssTheme;
+                        if (targetTheme !== undefined) {
+                            // 核心检查：在切换主题前，先检查本地是否存在该主题文件
+                            // 防止因为同步延迟导致主题文件夹还没下载完就切换，触发 Obsidian 的自动回落
+                            const themes = (app.customCss as any).themes || {};
+                            if (targetTheme === "" || themes.hasOwnProperty(targetTheme)) {
+                                if (app.customCss.theme !== targetTheme) {
+                                    app.customCss.setTheme(targetTheme)
+                                    app.customCss.onConfigChange()
+                                }
+                            } else {
+                                console.warn(`[Sync] 主题 "${targetTheme}" 本地尚未就绪，暂不切换以防重置为默认`);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error(`[Sync] 处理 ${p} 失败:`, e);
+                }
             } else if (p === "community-plugins.json") {
                 try {
                     const newP = JSON.parse(d)
