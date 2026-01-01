@@ -2,7 +2,7 @@ import { Notice, moment, Platform } from "obsidian";
 
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC } from "./file_operator";
-import { dump, isWsUrl } from "./helps";
+import { dump, isWsUrl, addRandomParam } from "./helps";
 import type FastSync from "../main";
 
 
@@ -62,7 +62,8 @@ export class WebSocketClient {
 
     if ((!this.ws || this.ws.readyState !== WebSocket.OPEN) && isWsUrl(this.wsApi)) {
       this.isRegister = true
-      this.ws = new WebSocket(this.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
+      const url = addRandomParam(this.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
+      this.ws = new WebSocket(url)
       this.count++
       localStorage.setItem(WS_COUNT_STORAGE_KEY, this.count.toString())
       this.ws.onerror = (error) => {

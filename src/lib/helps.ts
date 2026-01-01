@@ -127,3 +127,11 @@ export function isHttpUrl(url: string): boolean {
 export function isWsUrl(url: string): boolean {
   return /^wss?:\/\/.+/i.test(url)
 }
+
+/**
+ * 为 URL 增加随机参数以防止缓存
+ */
+export function addRandomParam(url: string): string {
+  const separator = url.includes("?") ? "&" : "?"
+  return `${url}${separator}_t=${Date.now()}`
+}

@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
 
-import { hashContent } from "./helps";
+import { hashContent, addRandomParam } from "./helps";
 import type FastSync from "../main";
 
 
@@ -45,7 +45,7 @@ export class HttpApiService {
             pageSize: pageSize.toString()
         });
 
-        const url = `${baseUrl}?${params.toString()}`;
+        const url = addRandomParam(`${baseUrl}?${params.toString()}`);
         console.log("getNoteHistoryList request:", url);
 
         try {
@@ -89,7 +89,7 @@ export class HttpApiService {
      * 获取笔记历史详情
      */
     async getNoteHistoryDetail(id: number): Promise<NoteHistoryDetail> {
-        const url = `${this.plugin.settings.api}/api/note/history?id=${id}`;
+        const url = addRandomParam(`${this.plugin.settings.api}/api/note/history?id=${id}`);
         console.log("getNoteHistoryDetail request:", url);
 
         try {
