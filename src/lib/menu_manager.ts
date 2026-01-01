@@ -1,4 +1,4 @@
-import { Menu, MenuItem, Notice, setIcon } from 'obsidian';
+import { Menu, MenuItem, Notice, setIcon, Platform } from 'obsidian';
 
 import { startupSync, startupFullSync, resetSettingSyncTime } from './operator';
 import { NoteHistoryModal } from '../views/note-history/history-modal';
@@ -154,6 +154,33 @@ export class MenuManager {
           startupFullSync(this.plugin);
         });
     });
+
+    // menu.addSeparator();
+    // menu.addItem((item: MenuItem) => {
+    //   item
+    //     .setIcon("cloudy")
+    //     .setTitle($("TEST") + "TEST")
+    //     .onClick(async () => {
+    //       console.log("TESTqqqqq")
+    //       console.table({
+    //         isDesktop: Platform.isDesktop,
+    //         isMobile: Platform.isMobile,
+    //         isIosApp: Platform.isIosApp,
+    //         isAndroidApp: Platform.isAndroidApp,
+    //         isTablet: Platform.isTablet,
+    //         isMacOS: Platform.isMacOS,
+    //         isWindows: Platform.isWin,
+    //         isLinux: Platform.isLinux,
+    //         isPhone: Platform.isPhone,
+    //         isMobileApp: Platform.isMobileApp,
+    //         isDesktopApp: Platform.isDesktopApp,
+    //       })
+    //     });
+    // });
+
+
+
+
 
     if (this.plugin.settings.apiVersion) {
       menu.addSeparator();

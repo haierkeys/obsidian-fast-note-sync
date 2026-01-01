@@ -155,15 +155,19 @@ export class WebSocketClient {
             dump("Service authorization success")
 
             let clientName = ""
-            if (Platform.isMacOS) {
+            if (Platform.isDesktopApp && Platform.isMacOS) {
               clientName += "Mac"
-            } else if (Platform.isWin) {
+            } else if (Platform.isDesktopApp && Platform.isWin) {
               clientName += "Win"
-            } else if (Platform.isLinux) {
+            } else if (Platform.isDesktopApp && Platform.isLinux) {
               clientName += "Linux"
-            } else if (Platform.isIosApp) {
-              clientName += "iOS"
-            } else if (Platform.isAndroidApp) {
+            } else if (Platform.isIosApp && Platform.isTablet) {
+              clientName += "iPad"
+            } else if (Platform.isIosApp && Platform.isPhone) {
+              clientName += "iPhone"
+            } else if (Platform.isAndroidApp && Platform.isTablet) {
+              clientName += "Android"
+            } else if (Platform.isAndroidApp && Platform.isPhone) {
               clientName += "Android"
             }
             clientName = this.plugin.settings.clientName + (this.plugin.settings.clientName != "" ? " " + clientName : clientName)
