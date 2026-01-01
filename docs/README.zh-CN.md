@@ -53,7 +53,7 @@
 
 - 如果觉得这个插件很有用，并且想要它继续开发，请在以下方式支持我:
 
-  | Ko-fi *非中国地区*  |  | 支付宝扫码打赏 *中国地区* |
+  | Ko-fi *非中国地区*  |  | 微信扫码打赏 *中国地区* |
   | --- | ---| --- |
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
