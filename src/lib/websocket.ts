@@ -1,7 +1,7 @@
 import { Notice, moment, Platform } from "obsidian";
 
+import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
-import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC } from "./file_operator";
 import { dump, isWsUrl, addRandomParam } from "./helps";
 import type FastSync from "../main";
 
@@ -93,6 +93,7 @@ export class WebSocketClient {
         if (this.isRegister && e.reason != "AuthorizationFaild" && e.reason != "ClientClose") {
           this.checkReConnect()
         }
+        clearUploadQueue()
         dump("Service close")
       }
       this.ws.onmessage = (event) => {
@@ -201,6 +202,7 @@ export class WebSocketClient {
     if (this.ws) {
       this.ws.close(1000, "unRegister")
     }
+    clearUploadQueue()
     dump("Service unregister")
   }
 

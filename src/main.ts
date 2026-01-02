@@ -34,6 +34,9 @@ export default class FastSync extends Plugin {
   totalChunksToDownload: number = 0
   downloadedChunksCount: number = 0
 
+  totalChunksToUpload: number = 0
+  uploadedChunksCount: number = 0
+
   // 文件下载会话管理
   fileDownloadSessions: Map<string, any> = new Map()
   syncTimer: NodeJS.Timeout | null = null

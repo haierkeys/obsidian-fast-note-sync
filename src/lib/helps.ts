@@ -135,3 +135,9 @@ export function addRandomParam(url: string): string {
   const separator = url.includes("?") ? "&" : "?"
   return `${url}${separator}_t=${Date.now()}`
 }
+
+/**
+ * 延迟执行（让出主线程）
+ * @param ms 毫秒
+ */
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -105,6 +105,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.downloadedFilesCount = 0;
   plugin.totalChunksToDownload = 0;
   plugin.downloadedChunksCount = 0;
+  plugin.totalChunksToUpload = 0;
+  plugin.uploadedChunksCount = 0;
   plugin.disableWatch();
 
   new Notice($("开始同步"));
@@ -128,6 +130,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           pathHash: hashContent(file.path),
           contentHash: hashContent(await plugin.app.vault.cachedRead(file)),
           mtime: file.stat.mtime,
+          size: file.stat.size,
         });
       } else {
         if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) continue;
@@ -136,6 +139,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           pathHash: hashContent(file.path),
           contentHash: hashArrayBuffer(await plugin.app.vault.readBinary(file)),
           mtime: file.stat.mtime,
+          size: file.stat.size,
         });
       }
     }
@@ -153,8 +157,9 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
       configs.push({
         path: path,
         pathHash: hashContent(path),
-        contentHash: hashContent(await plugin.app.vault.adapter.read(fullPath)),
+        contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
         mtime: stat.mtime,
+        size: stat.size,
       });
     }
   }

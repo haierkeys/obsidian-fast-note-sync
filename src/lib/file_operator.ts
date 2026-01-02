@@ -1,9 +1,23 @@
 import { TFile, TAbstractFile, Notice, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage } from "./types";
-import { hashContent, hashArrayBuffer, dump } from "./helps";
+import { hashContent, hashArrayBuffer, dump, sleep } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
+
+
+// 上传并发控制
+const MAX_CONCURRENT_UPLOADS = 5;
+let activeUploads = 0;
+const uploadQueue: (() => Promise<void>)[] = [];
+
+/**
+ * 清理上传队列
+ */
+export const clearUploadQueue = () => {
+    uploadQueue.length = 0;
+    activeUploads = 0;
+};
 
 
 export const BINARY_PREFIX_FILE_SYNC = "00";
@@ -93,33 +107,75 @@ export const receiveFileNeedUpload = async function (data: ReceivePathMessage, p
  */
 export const receiveFileUpload = async function (data: FileUploadMessage, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return;
-    dump(`Receive file need upload: `, data.path, data.sessionId);
+    dump(`Receive file need upload (queued): `, data.path, data.sessionId);
+
     const file = plugin.app.vault.getFileByPath(normalizePath(data.path));
     if (!file) {
         dump(`File not found for upload: ${data.path} `);
         return;
     }
 
-    const content: ArrayBuffer = await plugin.app.vault.readBinary(file);
+    // 预估分块数并累加到总计，用于进度显示
     const chunkSize = data.chunkSize || 1024 * 1024;
-    const totalChunks = Math.ceil(content.byteLength / chunkSize);
+    const totalChunks = Math.ceil(file.stat.size / chunkSize);
+    plugin.totalChunksToUpload += totalChunks;
+    plugin.updateStatusBar($("同步中"), plugin.uploadedChunksCount, plugin.totalChunksToUpload);
 
-    for (let i = 0; i < totalChunks; i++) {
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, content.byteLength);
-        const chunk = content.slice(start, end);
+    const runUpload = async () => {
+        const content: ArrayBuffer = await plugin.app.vault.readBinary(file);
+        const actualTotalChunks = Math.ceil(content.byteLength / chunkSize);
 
-        const sessionIdBytes = new TextEncoder().encode(data.sessionId);
-        const chunkIndexBytes = new Uint8Array(4);
-        const view = new DataView(chunkIndexBytes.buffer);
-        view.setUint32(0, i, false);
+        dump(`Starting upload: ${data.path}, total chunks: ${actualTotalChunks}`);
 
-        const frame = new Uint8Array(36 + 4 + chunk.byteLength);
-        frame.set(sessionIdBytes, 0);
-        frame.set(chunkIndexBytes, 36);
-        frame.set(new Uint8Array(chunk), 40);
-        plugin.websocket.SendBinary(frame, BINARY_PREFIX_FILE_SYNC);
-    }
+        for (let i = 0; i < actualTotalChunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min(start + chunkSize, content.byteLength);
+            const chunk = content.slice(start, end);
+
+            const sessionIdBytes = new TextEncoder().encode(data.sessionId);
+            const chunkIndexBytes = new Uint8Array(4);
+            const view = new DataView(chunkIndexBytes.buffer);
+            view.setUint32(0, i, false);
+
+            const frame = new Uint8Array(36 + 4 + chunk.byteLength);
+            frame.set(sessionIdBytes, 0);
+            frame.set(chunkIndexBytes, 36);
+            frame.set(new Uint8Array(chunk), 40);
+            plugin.websocket.SendBinary(frame, BINARY_PREFIX_FILE_SYNC);
+
+            // 更新已上传分块并刷新 UI
+            plugin.uploadedChunksCount++;
+            plugin.updateStatusBar($("同步中"), plugin.uploadedChunksCount, plugin.totalChunksToUpload);
+
+            // 每发送一个分块，让出主线程，防止阻塞 WebSocket 心跳 (Ping/Pong)
+            await sleep(0);
+        }
+        dump(`Upload completed: ${data.path}`);
+    };
+
+    // 并发控制逻辑
+    const processQueue = async () => {
+        while (activeUploads < MAX_CONCURRENT_UPLOADS && uploadQueue.length > 0) {
+            activeUploads++;
+            const task = uploadQueue.shift();
+            if (task) {
+                // 异步执行任务，完成后释放槽位并继续触发
+                (async () => {
+                    try {
+                        await task();
+                    } finally {
+                        activeUploads--;
+                        processQueue();
+                    }
+                })();
+            } else {
+                activeUploads--;
+            }
+        }
+    };
+
+    uploadQueue.push(runUpload);
+    processQueue();
 };
 
 /**

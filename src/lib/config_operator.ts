@@ -1,7 +1,7 @@
 import { normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage } from "./types";
-import { hashContent, dump } from "./helps";
+import { hashContent, hashArrayBuffer, dump, sleep } from "./helps";
 import type FastSync from "../main";
 
 
@@ -34,7 +34,8 @@ export const configModify = async function (path: string, plugin: FastSync, even
     plugin.addIgnoredConfigFile(path)
 
     const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
-    let content = ""
+    let contentStr = ""
+    let contentBuf: ArrayBuffer | null = null
     let mtime = 0
     let ctime = 0
 
@@ -43,7 +44,8 @@ export const configModify = async function (path: string, plugin: FastSync, even
         if (exists) {
             const stat = await plugin.app.vault.adapter.stat(filePath)
             if (stat) {
-                content = await plugin.app.vault.adapter.read(filePath)
+                contentBuf = await plugin.app.vault.adapter.readBinary(filePath)
+                contentStr = new TextDecoder().decode(contentBuf)
                 mtime = stat.mtime
                 ctime = stat.ctime
             }
@@ -52,7 +54,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
         console.error("读取配置文件出错:", error)
     }
 
-    if (mtime === 0) {
+    if (!contentBuf || mtime === 0) {
         plugin.removeIgnoredConfigFile(path)
         return
     }
@@ -61,8 +63,8 @@ export const configModify = async function (path: string, plugin: FastSync, even
         vault: plugin.settings.vault,
         path: path,
         pathHash: hashContent(path),
-        content: content,
-        contentHash: hashContent(content),
+        content: contentStr,
+        contentHash: hashArrayBuffer(contentBuf),
         mtime: mtime,
         ctime: ctime,
     }

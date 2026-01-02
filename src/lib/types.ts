@@ -5,6 +5,7 @@ export interface SnapFile {
     pathHash: string;
     contentHash: string;
     mtime: number;
+    size: number;
 }
 
 export interface ReceiveMessage {
