@@ -178,7 +178,7 @@ export class WebSocketClient {
           }
         }
         if (data.code == 0 || data.code > 200) {
-          new Notice("Service Error: Code=" + data.code + " Msg=" + data.msg + data.details)
+          new Notice("Service Error: Code=" + data.code + " Message=" + data.message + " Details=" + data.details)
         } else {
 
           if (typeof data === 'object' && 'vault' in data && data.vault != null && data.vault != this.plugin.settings.vault) {
