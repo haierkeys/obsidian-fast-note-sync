@@ -238,6 +238,28 @@ export class WebSocketClient {
       return
     }
 
+    // 等待 fileHashManager 初始化完成
+    if (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
+      dump(`Waiting for fileHashManager to be ready...`)
+
+      // 最多等待 30 秒
+      const maxWaitTime = 30000
+      const startTime = Date.now()
+
+      while (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
+        if (Date.now() - startTime > maxWaitTime) {
+          dump(`FileHashManager initialization timeout after ${maxWaitTime}ms`)
+          new Notice("文件哈希管理器初始化超时,同步可能不稳定")
+          break
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+
+      if (this.plugin.fileHashManager && this.plugin.fileHashManager.isReady()) {
+        dump(`FileHashManager is ready, proceeding with sync`)
+      }
+    }
+
     this.plugin.isFirstSync = true
     this.plugin.isWatchEnabled = true
     startupSync(this.plugin)

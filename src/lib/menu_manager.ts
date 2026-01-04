@@ -64,6 +64,14 @@ export class MenuManager {
       name: $("清理本地同步时间"),
       callback: () => resetSettingSyncTime(this.plugin),
     });
+
+    this.plugin.addCommand({
+      id: "rebuild-file-hash-map",
+      name: $("重建文件哈希映射"),
+      callback: async () => {
+        await this.plugin.fileHashManager.rebuildHashMap();
+      },
+    });
   }
 
   updateRibbonIcon(status: boolean) {

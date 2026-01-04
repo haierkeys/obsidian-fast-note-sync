@@ -36,6 +36,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
 
     const content: ArrayBuffer = await plugin.app.vault.readBinary(file);
     const contentHash = hashArrayBuffer(content);
+    const baseHash = plugin.fileHashManager.getPathHash(file.path);
 
     const data = {
         vault: plugin.settings.vault,
@@ -45,9 +46,14 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
         mtime: file.stat.mtime,
         ctime: file.stat.ctime,
         size: file.stat.size,
+        ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
     };
     plugin.websocket.MsgSend("FileUploadCheck", data);
     dump(`File modify check sent`, data.path, data.contentHash);
+
+    // WebSocket 消息发送后更新哈希表(使用内容哈希)
+    plugin.fileHashManager.setFileHash(file.path, contentHash);
+
     plugin.removeIgnoredFile(file.path);
 };
 
@@ -64,6 +70,10 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
     plugin.addIgnoredFile(file.path);
     handleFileDeleteByPath(file.path, plugin);
     dump(`File delete send`, file.path);
+
+    // WebSocket 消息发送后从哈希表中删除
+    plugin.fileHashManager.removeFileHash(file.path);
+
     plugin.removeIgnoredFile(file.path);
 };
 
@@ -82,6 +92,13 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
     dump(`File rename modify send`, file.path);
     handleFileDeleteByPath(oldfile, plugin);
     dump(`File rename delete send`, oldfile);
+
+    // 删除旧路径,添加新路径(使用内容哈希)
+    plugin.fileHashManager.removeFileHash(oldfile);
+    const content: ArrayBuffer = await plugin.app.vault.readBinary(file);
+    const newHash = hashArrayBuffer(content);
+    plugin.fileHashManager.setFileHash(file.path, newHash);
+
     plugin.removeIgnoredFile(file.path);
 };
 
@@ -204,6 +221,9 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     };
     plugin.websocket.MsgSend("FileChunkDownload", requestData);
     plugin.totalFilesToDownload++;
+
+    // 服务端推送文件更新,更新哈希表(使用内容哈希)
+    plugin.fileHashManager.setFileHash(data.path, data.contentHash);
 };
 
 /**
@@ -218,6 +238,9 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
         plugin.addIgnoredFile(normalizedPath);
         await plugin.app.vault.delete(file);
         plugin.removeIgnoredFile(normalizedPath);
+
+        // 服务端推送删除,从哈希表中移除
+        plugin.fileHashManager.removeFileHash(normalizedPath);
     }
 };
 

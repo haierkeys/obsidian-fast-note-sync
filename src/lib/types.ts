@@ -6,6 +6,7 @@ export interface SnapFile {
     contentHash: string;
     mtime: number;
     size: number;
+    baseHash?: string | null;
 }
 
 export interface ReceiveMessage {

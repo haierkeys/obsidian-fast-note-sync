@@ -17,6 +17,12 @@ export class EventManager {
   }
 
   public registerEvents() {
+    // 添加哈希表就绪检查
+    if (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
+      dump("EventManager: 文件哈希管理器未就绪,跳过事件注册")
+      return
+    }
+
     const { app } = this.plugin
 
     // --- Vault Events ---
@@ -69,6 +75,11 @@ export class EventManager {
   }
 
   private watchModify = (file: TAbstractFile, ctx?: any) => {
+    // 检查 WebSocket 认证状态
+    if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+      return
+    }
+
     if (file.path.endsWith(".md")) {
       noteModify(file, this.plugin, true)
     } else {
@@ -77,6 +88,11 @@ export class EventManager {
   }
 
   private watchDelete = (file: TAbstractFile, ctx?: any) => {
+    // 检查 WebSocket 认证状态
+    if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+      return
+    }
+
     if (file.path.endsWith(".md")) {
       noteDelete(file, this.plugin, true)
     } else {
@@ -85,6 +101,11 @@ export class EventManager {
   }
 
   private watchRename = (file: TAbstractFile, oldFile: string, ctx?: any) => {
+    // 检查 WebSocket 认证状态
+    if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+      return
+    }
+
     if (file.path.endsWith(".md")) {
       noteRename(file, oldFile, this.plugin, true)
     } else {
@@ -94,6 +115,11 @@ export class EventManager {
 
   private watchRaw = (path: string, ctx?: any) => {
     if (!path) return
+
+    // 检查 WebSocket 认证状态
+    if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
+      return
+    }
 
     // 清除该路径之前的定时器，确保只处理最后一次触发
     if (this.rawEventTimers.has(path)) {

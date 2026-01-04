@@ -19,6 +19,10 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
 
     const content: string = await plugin.app.vault.cachedRead(file);
     const contentHash = hashContent(content);
+    const baseHash = plugin.fileHashManager.getPathHash(file.path);
+
+
+    console.log(baseHash === contentHash, baseHash, contentHash);
 
     const data = {
         vault: plugin.settings.vault,
@@ -28,9 +32,14 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
         pathHash: hashContent(file.path),
         content: content,
         contentHash: contentHash,
+        ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
     };
     plugin.websocket.MsgSend("NoteModify", data);
     dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash);
+
+    // WebSocket 消息发送后更新哈希表(使用内容哈希)
+    plugin.fileHashManager.setFileHash(file.path, contentHash);
+
     plugin.removeIgnoredFile(file.path);
 };
 
@@ -54,6 +63,10 @@ export const noteDelete = function (file: TAbstractFile, plugin: FastSync, event
     plugin.websocket.MsgSend("NoteDelete", data);
 
     dump(`Note delete send`, file.path);
+
+    // WebSocket 消息发送后从哈希表中删除
+    plugin.fileHashManager.removeFileHash(file.path);
+
     plugin.removeIgnoredFile(file.path);
 };
 
@@ -71,6 +84,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
 
     const content: string = await plugin.app.vault.cachedRead(file);
     const contentHash = hashContent(content);
+    const baseHash = plugin.fileHashManager.getPathHash(file.path);
 
     const data = {
         vault: plugin.settings.vault,
@@ -82,10 +96,15 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
         contentHash: contentHash,
         oldPath: oldfile,
         oldPathHash: hashContent(oldfile),
+        ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
     };
 
     plugin.websocket.MsgSend("NoteRename", data);
     dump(`Note rename send`, data.path, data.contentHash, data.mtime, data.pathHash);
+
+    // 删除旧路径,添加新路径(使用内容哈希)
+    plugin.fileHashManager.removeFileHash(oldfile);
+    plugin.fileHashManager.setFileHash(file.path, contentHash);
 
     plugin.removeIgnoredFile(file.path);
 };
@@ -118,6 +137,9 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
         await plugin.saveData(plugin.settings);
     }
     plugin.removeIgnoredFile(normalizedPath);
+
+    // 服务端推送笔记更新,更新哈希表(使用内容哈希)
+    plugin.fileHashManager.setFileHash(data.path, data.contentHash);
 };
 
 /**
@@ -161,6 +183,9 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
         plugin.addIgnoredFile(normalizedPath);
         await plugin.app.vault.delete(file);
         plugin.removeIgnoredFile(normalizedPath);
+
+        // 服务端推送删除,从哈希表中移除
+        plugin.fileHashManager.removeFileHash(normalizedPath);
     }
 };
 

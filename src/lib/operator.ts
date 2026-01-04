@@ -125,22 +125,32 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     for (const file of list) {
       if (file.extension === "md") {
         if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) continue;
-        notes.push({
+        const contentHash = hashContent(await plugin.app.vault.cachedRead(file));
+        const baseHash = plugin.fileHashManager.getPathHash(file.path);
+        let item = {
           path: file.path,
           pathHash: hashContent(file.path),
-          contentHash: hashContent(await plugin.app.vault.cachedRead(file)),
+          contentHash: contentHash,
           mtime: file.stat.mtime,
           size: file.stat.size,
-        });
+          ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+        }
+
+        console.log(baseHash === contentHash, baseHash, contentHash, item);
+        notes.push(item);
       } else {
         if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) continue;
-        files.push({
+        const contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
+        const baseHash = plugin.fileHashManager.getPathHash(file.path);
+        let item = {
           path: file.path,
           pathHash: hashContent(file.path),
-          contentHash: hashArrayBuffer(await plugin.app.vault.readBinary(file)),
+          contentHash: contentHash,
           mtime: file.stat.mtime,
           size: file.stat.size,
-        });
+          ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+        }
+        files.push(item);
       }
     }
   }
@@ -159,7 +169,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         pathHash: hashContent(path),
         contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
         mtime: stat.mtime,
-        size: stat.size,
+        size: stat.size
       });
     }
   }

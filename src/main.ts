@@ -2,6 +2,7 @@ import { Plugin } from "obsidian";
 
 import { startupSync, startupFullSync, resetSettingSyncTime, handleSync } from "./lib/operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
+import { FileHashManager } from "./lib/file_hash_manager";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
@@ -18,6 +19,7 @@ export default class FastSync extends Plugin {
   configManager: ConfigManager
   eventManager: EventManager
   menuManager: MenuManager
+  fileHashManager: FileHashManager
 
   clipboardReadTip: string = ""
 
@@ -89,9 +91,20 @@ export default class FastSync extends Plugin {
     this.menuManager = new MenuManager(this)
     this.menuManager.init()
 
-    // 初始化并注册事件层
-    this.eventManager = new EventManager(this)
-    this.eventManager.registerEvents()
+    // 初始化文件哈希管理器(必须在事件管理器之前)
+    this.fileHashManager = new FileHashManager(this)
+
+    // 等待 workspace 布局准备就绪后再初始化文件哈希映射
+    // 这样可以确保 vault 文件索引已经完全加载
+    this.app.workspace.onLayoutReady(async () => {
+      await this.fileHashManager.initialize()
+
+      // 只有在哈希表初始化完成后才注册事件
+      if (this.fileHashManager.isReady()) {
+        this.eventManager = new EventManager(this)
+        this.eventManager.registerEvents()
+      }
+    })
 
     this.configManager = new ConfigManager(this)
     this.refreshRuntime()
@@ -109,11 +122,7 @@ export default class FastSync extends Plugin {
   async onExternalSettingsChange() {
     dump("onExternalSettingsChange")
     await this.loadSettings()
-    if (this.settings.api && this.settings.apiToken) {
-      this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
-      this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
-    }
-    this.refreshRuntime(true)
+    this.saveSettings()
   }
 
   async saveSettings(setItem: string = "") {
