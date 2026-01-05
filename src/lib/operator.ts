@@ -9,7 +9,9 @@ import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
 
-export const startupSync = (plugin: FastSync): void => { void handleSync(plugin); };
+export const startupSync = (plugin: FastSync): void => {
+  void handleSync(plugin);
+};
 export const startupFullSync = async (plugin: FastSync) => {
   void handleSync(plugin);
   await vaultEmptyFoldersClean(plugin);
@@ -47,20 +49,106 @@ const vaultEmptyFoldersClean = async (plugin: FastSync) => {
 /**
  * 检查同步是否完成
  */
-export function checkSyncCompletion(plugin: FastSync) {
-  if (plugin.syncTypeCompleteCount >= plugin.expectedSyncCount && plugin.fileDownloadSessions.size === 0) {
+export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeout) {
+  const totalTasks = plugin.getTotalTasks();
+  const completedTasks = plugin.getCompletedTasks();
+
+  // 检查 WebSocket 缓冲区状态
+  const ws = plugin.websocket.ws;
+  const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
+
+  // 计算综合进度(包含任务和分片传输)
+  // 任务权重 70%,分片传输权重 30%
+  let overallProgress = 0;
+  let overallTotal = 100;
+
+  if (totalTasks > 0) {
+    const taskProgress = (completedTasks / totalTasks) * 70;
+    overallProgress += taskProgress;
+  } else {
+    overallProgress += 70; // 如果没有任务,任务部分算完成
+  }
+
+  // 计算分片传输进度
+  const totalChunks = plugin.totalChunksToUpload + plugin.totalChunksToDownload;
+  const completedChunks = plugin.uploadedChunksCount + plugin.downloadedChunksCount;
+
+  if (totalChunks > 0) {
+    const chunkProgress = (completedChunks / totalChunks) * 30;
+    overallProgress += chunkProgress;
+  } else {
+    overallProgress += 30; // 如果没有分片传输,分片部分算完成
+  }
+
+  dump(`Sync progress: tasks ${completedTasks}/${totalTasks}, chunks ${completedChunks}/${totalChunks}, overall ${overallProgress.toFixed(1)}%, bufferedAmount: ${bufferedAmount}`);
+
+  // 检查是否所有 SyncEnd 消息都已收到
+  const allSyncEndReceived = plugin.syncTypeCompleteCount >= plugin.expectedSyncCount;
+
+  // 检查是否所有任务都已完成
+  const allTasksCompleted = totalTasks === 0 || completedTasks >= totalTasks;
+
+  // 检查是否所有分片传输都已完成
+  const allChunksCompleted = totalChunks === 0 || completedChunks >= totalChunks;
+
+  // 检查是否所有文件下载会话都已完成
+  const allDownloadsComplete = plugin.fileDownloadSessions.size === 0;
+
+  // 检查 WebSocket 发送缓冲区是否已清空
+  const bufferCleared = bufferedAmount === 0;
+
+  // 输出详细的完成状态
+  dump(`  - allSyncEndReceived: ${allSyncEndReceived} (${plugin.syncTypeCompleteCount}/${plugin.expectedSyncCount})`);
+  dump(`  - allTasksCompleted: ${allTasksCompleted} (注意:此检查已禁用,因为存在时序问题)`);
+  dump(`  - allChunksCompleted: ${allChunksCompleted}`);
+  dump(`  - allDownloadsComplete: ${allDownloadsComplete} (sessions: ${plugin.fileDownloadSessions.size})`);
+  dump(`  - bufferCleared: ${bufferCleared}`);
+
+  // 修复:移除 allTasksCompleted 检查
+  // 原因:任务计数存在时序问题 - SyncEnd 消息设置 totalTasks,但任务可能在此之前已完成
+  // 解决方案:只依赖 SyncEnd 消息(服务端确认)+ 分块传输 + 下载会话 + 缓冲区状态
+  if (allSyncEndReceived && allChunksCompleted && allDownloadsComplete && bufferCleared) {
+    // 清除进度检测定时器
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+
     plugin.enableWatch();
     plugin.syncTypeCompleteCount = 0;
+    plugin.resetSyncTasks();
     plugin.totalFilesToDownload = 0;
     plugin.downloadedFilesCount = 0;
     plugin.totalChunksToDownload = 0;
     plugin.downloadedChunksCount = 0;
+    plugin.totalChunksToUpload = 0;
+    plugin.uploadedChunksCount = 0;
     new Notice($("同步完成"));
     plugin.updateStatusBar($("同步完成"));
     setTimeout(() => plugin.updateStatusBar(""), 5000);
+  } else {
+    // 如果任务已完成但缓冲区还有数据,持续检查直到缓冲区清空
+    if (allSyncEndReceived && allChunksCompleted && allDownloadsComplete && !bufferCleared) {
+      const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
+      // 使用一个虚拟的总数来显示进度,避免显示 100%
+      plugin.updateStatusBar(`${$("同步中")} (发送中: ${bufferMB}MB)`, 99, 100);
+
+      // 100ms 后再次检查
+      setTimeout(() => checkSyncCompletion(plugin, intervalId), 100);
+    } else {
+      // 正常的进度更新 - 使用综合进度
+      let statusText = $("同步中");
+
+      if (bufferedAmount > 0) {
+        const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
+        statusText = `${$("同步中")} (发送中: ${bufferMB}MB)`;
+      }
+
+      // 显示综合进度
+      const displayProgress = Math.floor(overallProgress);
+      plugin.updateStatusBar(statusText, displayProgress, 100);
+    }
   }
 }
-
 /**
  * 消息接收调度
  */
@@ -71,18 +159,18 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["NoteSyncNeedPush", receiveNoteUpload],
   ["NoteSyncMtime", receiveNoteSyncMtime],
   ["NoteSyncDelete", receiveNoteSyncDelete],
-  ["NoteSyncEnd", (data: ReceiveMessage, plugin: FastSync) => receiveNoteSyncEnd(data, plugin, checkSyncCompletion)],
+  ["NoteSyncEnd", receiveNoteSyncEnd],
   ["FileUpload", receiveFileUpload],
   ["FileSyncUpdate", receiveFileSyncUpdate],
   ["FileSyncChunkDownload", receiveFileSyncChunkDownload],
   ["FileSyncDelete", receiveFileSyncDelete],
   ["FileSyncMtime", receiveFileSyncMtime],
-  ["FileSyncEnd", (data: ReceiveMessage, plugin: FastSync) => receiveFileSyncEnd(data, plugin, checkSyncCompletion)],
+  ["FileSyncEnd", receiveFileSyncEnd],
   ["SettingSyncModify", receiveConfigSyncModify],
   ["SettingSyncNeedUpload", receiveConfigUpload],
   ["SettingSyncMtime", receiveConfigSyncMtime],
   ["SettingSyncDelete", receiveConfigSyncDelete],
-  ["SettingSyncEnd", (data: ReceiveMessage, plugin: FastSync) => receiveConfigSyncEnd(data, plugin, checkSyncCompletion)],
+  ["SettingSyncEnd", receiveConfigSyncEnd],
 ]);
 
 
@@ -101,6 +189,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
 
   plugin.syncTypeCompleteCount = 0;
+  plugin.resetSyncTasks();
   plugin.totalFilesToDownload = 0;
   plugin.downloadedFilesCount = 0;
   plugin.totalChunksToDownload = 0;
@@ -110,6 +199,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.disableWatch();
 
   new Notice($("开始同步"));
+  plugin.updateStatusBar($("同步中"), 0, 1);
 
   const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [];
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
@@ -136,7 +226,6 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
         }
 
-        console.log(baseHash === contentHash, baseHash, contentHash, item);
         notes.push(item);
       } else {
         if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) continue;
@@ -181,6 +270,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     configTime = Number(plugin.settings.lastConfigSyncTime);
   }
   handleRequestSend(plugin, noteTime, fileTime, configTime, notes, files, configs, syncMode);
+
+  // 启动进度检测循环,每 200ms 检测一次
+  const progressCheckInterval = setInterval(() => {
+    checkSyncCompletion(plugin, progressCheckInterval);
+  }, 200);
 };
 
 

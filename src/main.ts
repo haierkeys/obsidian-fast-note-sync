@@ -43,6 +43,54 @@ export default class FastSync extends Plugin {
   fileDownloadSessions: Map<string, any> = new Map()
   syncTimer: NodeJS.Timeout | null = null
 
+  // 任务统计
+  noteSyncTasks = {
+    needUpload: 0,
+    needModify: 0,
+    needSyncMtime: 0,
+    needDelete: 0,
+    completed: 0
+  }
+
+  fileSyncTasks = {
+    needUpload: 0,
+    needModify: 0,
+    needSyncMtime: 0,
+    needDelete: 0,
+    completed: 0
+  }
+
+  configSyncTasks = {
+    needUpload: 0,
+    needModify: 0,
+    needSyncMtime: 0,
+    needDelete: 0,
+    completed: 0
+  }
+
+  // 重置所有任务统计
+  resetSyncTasks() {
+    this.noteSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
+    this.fileSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
+    this.configSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
+  }
+
+  // 计算总任务数
+  getTotalTasks() {
+    const noteTotal = this.noteSyncTasks.needUpload + this.noteSyncTasks.needModify +
+      this.noteSyncTasks.needSyncMtime + this.noteSyncTasks.needDelete
+    const fileTotal = this.fileSyncTasks.needUpload + this.fileSyncTasks.needModify +
+      this.fileSyncTasks.needSyncMtime + this.fileSyncTasks.needDelete
+    const configTotal = this.configSyncTasks.needUpload + this.configSyncTasks.needModify +
+      this.configSyncTasks.needSyncMtime + this.configSyncTasks.needDelete
+    return noteTotal + fileTotal + configTotal
+  }
+
+  // 计算已完成任务数
+  getCompletedTasks() {
+    return this.noteSyncTasks.completed + this.fileSyncTasks.completed + this.configSyncTasks.completed
+  }
+
   getWatchEnabled(): boolean {
     return this.isWatchEnabled
   }

@@ -1,6 +1,6 @@
 import { normalizePath } from "obsidian";
 
-import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage } from "./types";
+import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import { hashContent, hashArrayBuffer, dump, sleep } from "./helps";
 import type FastSync from "../main";
 
@@ -115,11 +115,15 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
         plugin.settings.lastConfigSyncTime = data.lastTime
         await plugin.saveData(plugin.settings)
     }
+
+    plugin.configSyncTasks.completed++
 }
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
     await configModify(data.path, plugin, false)
+
+    plugin.configSyncTasks.completed++
 }
 
 export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
@@ -138,6 +142,8 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
         console.error("[updateConfigFileTime] error:", e)
     }
     plugin.removeIgnoredConfigFile(data.path)
+
+    plugin.configSyncTasks.completed++
 }
 
 export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
@@ -149,14 +155,24 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
     if (await plugin.app.vault.adapter.exists(fullPath)) {
         await plugin.app.vault.adapter.remove(fullPath)
     }
+
+    plugin.configSyncTasks.completed++
 }
 
-export const receiveConfigSyncEnd = async function (data: ReceiveMessage, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+export const receiveConfigSyncEnd = async function (data: any, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
-    plugin.settings.lastConfigSyncTime = data.lastTime
+    dump(`Receive config sync end:`, data)
+
+    // 从 data 对象中提取任务统计信息
+    const syncData = data as SyncEndData
+    plugin.configSyncTasks.needUpload = syncData.needUploadCount || 0
+    plugin.configSyncTasks.needModify = syncData.needModifyCount || 0
+    plugin.configSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0
+    plugin.configSyncTasks.needDelete = syncData.needDeleteCount || 0
+
+    plugin.settings.lastConfigSyncTime = syncData.lastTime
     await plugin.saveData(plugin.settings)
     plugin.syncTypeCompleteCount++
-    checkCompletion(plugin)
 }
 
 /**

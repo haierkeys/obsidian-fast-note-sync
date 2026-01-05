@@ -71,3 +71,11 @@ export interface ReceiveMtimeMessage {
 export interface ReceivePathMessage {
     path: string;
 }
+
+export interface SyncEndData {
+    lastTime: number;
+    needUploadCount: number;
+    needModifyCount: number;
+    needSyncMtimeCount: number;
+    needDeleteCount: number;
+}

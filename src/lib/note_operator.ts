@@ -1,6 +1,6 @@
 import { TFile, TAbstractFile, normalizePath } from "obsidian";
 
-import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage } from "./types";
+import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import { hashContent, dump } from "./helps";
 import type FastSync from "../main";
 
@@ -20,9 +20,6 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
     const content: string = await plugin.app.vault.cachedRead(file);
     const contentHash = hashContent(content);
     const baseHash = plugin.fileHashManager.getPathHash(file.path);
-
-
-    console.log(baseHash === contentHash, baseHash, contentHash);
 
     const data = {
         vault: plugin.settings.vault,
@@ -140,6 +137,8 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
 
     // 服务端推送笔记更新,更新哈希表(使用内容哈希)
     plugin.fileHashManager.setFileHash(data.path, data.contentHash);
+
+    plugin.noteSyncTasks.completed++;
 };
 
 /**
@@ -152,6 +151,8 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
     if (file) {
         await noteModify(file, plugin, false);
     }
+
+    plugin.noteSyncTasks.completed++;
 };
 
 /**
@@ -169,6 +170,8 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
         await plugin.app.vault.modify(file, content, { ctime: data.ctime, mtime: data.mtime });
         plugin.removeIgnoredFile(normalizedPath);
     }
+
+    plugin.noteSyncTasks.completed++;
 };
 
 /**
@@ -187,17 +190,25 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath);
     }
+
+    plugin.noteSyncTasks.completed++;
 };
 
 /**
  * 接收笔记同步结束通知
  */
-export const receiveNoteSyncEnd = async function (data: ReceiveMessage, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return;
-    dump(`Receive note end:`, data.vault, data, data.lastTime);
-    plugin.settings.lastNoteSyncTime = data.lastTime;
+    dump(`Receive note end:`, data);
+
+    // 从 data 对象中提取任务统计信息
+    const syncData = data as SyncEndData;
+    plugin.noteSyncTasks.needUpload = syncData.needUploadCount || 0;
+    plugin.noteSyncTasks.needModify = syncData.needModifyCount || 0;
+    plugin.noteSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0;
+    plugin.noteSyncTasks.needDelete = syncData.needDeleteCount || 0;
+
+    plugin.settings.lastNoteSyncTime = syncData.lastTime;
     await plugin.saveData(plugin.settings);
     plugin.syncTypeCompleteCount++;
-
-    checkCompletion(plugin);
 };

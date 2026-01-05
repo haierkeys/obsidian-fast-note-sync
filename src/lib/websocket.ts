@@ -12,7 +12,7 @@ const CONNECTION_CHECK_INTERVAL = 3000 // 连接检查间隔 (毫秒)
 const WS_COUNT_STORAGE_KEY = "fast-note-sync-ws-count"
 
 export class WebSocketClient {
-  private ws: WebSocket
+  public ws: WebSocket
   private wsApi: string
   private plugin: FastSync
   public isOpen: boolean = false
@@ -40,7 +40,7 @@ export class WebSocketClient {
     this.count = storedCount ? parseInt(storedCount) : 0
 
     // Register default file sync handler
-    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, (data, plugin) => handleFileChunkDownload(data, plugin, checkSyncCompletion));
+    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, (data, plugin) => handleFileChunkDownload(data, plugin));
   }
 
   public registerBinaryHandler(prefix: string, handler: (data: ArrayBuffer | Blob, plugin: FastSync) => void) {
@@ -276,6 +276,21 @@ export class WebSocketClient {
     }, CONNECTION_CHECK_INTERVAL)
   }
 
+  /**
+   * 等待发送缓冲区清空
+   * @param maxBufferSize 最大缓冲区大小(字节),默认 1MB
+   */
+  private async waitForBufferDrain(maxBufferSize: number = 1024 * 1024): Promise<void> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return
+    }
+
+    while (this.ws.bufferedAmount > maxBufferSize) {
+      await new Promise(resolve => setTimeout(resolve, 400))
+    }
+    dump(`WebSocket send buffer drain, size: ${this.ws.bufferedAmount}`)
+  }
+
   public MsgSend(action: string, data: object | string) {
     if (!this.isAuth || !this.plugin.isFirstSync) {
       dump(`Service not ready or sync in progress, queuing message: ${action}`)
@@ -284,11 +299,15 @@ export class WebSocketClient {
     this.Send(action, data)
   }
 
-  public Send(action: string, data: object | string) {
+  public async Send(action: string, data: object | string) {
     if (this.ws.readyState !== WebSocket.OPEN) {
       dump(`Service not connected, queuing message: ${action}`)
       return
     }
+
+    // 等待缓冲区有足够空间
+    await this.waitForBufferDrain()
+
     if (typeof data === "string") {
       this.ws.send(action + "|" + data)
     } else {
@@ -296,7 +315,7 @@ export class WebSocketClient {
     }
   }
 
-  public SendBinary(data: ArrayBuffer | Uint8Array, prefix: string) {
+  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string) {
     if (this.ws.readyState !== WebSocket.OPEN) {
       dump(`Service not connected, discarding binary message`)
       return
@@ -306,6 +325,8 @@ export class WebSocketClient {
       dump("SendBinary error: prefix must be exactly 2 characters of string");
       return;
     }
+    // 等待缓冲区有足够空间
+    await this.waitForBufferDrain()
 
     // 增加二进制消息管理层: 增加前两位字符
     const prefixBytes = new TextEncoder().encode(prefix);
@@ -322,6 +343,8 @@ export class WebSocketClient {
       dataToSend.set(prefixBytes);
       dataToSend.set(dataView, prefixBytes.length);
     }
+
+
 
     this.ws.send(dataToSend)
   }

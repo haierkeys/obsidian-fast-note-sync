@@ -58,7 +58,6 @@ export class FileHashManager {
     try {
       const files = this.plugin.app.vault.getFiles();
 
-      console.log(files);
       const totalFiles = files.length;
       let processedFiles = 0;
 

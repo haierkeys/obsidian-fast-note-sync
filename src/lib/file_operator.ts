@@ -1,6 +1,6 @@
 import { TFile, TAbstractFile, Notice, normalizePath } from "obsidian";
 
-import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage } from "./types";
+import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import { hashContent, hashArrayBuffer, dump, sleep } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
@@ -224,6 +224,8 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
 
     // 服务端推送文件更新,更新哈希表(使用内容哈希)
     plugin.fileHashManager.setFileHash(data.path, data.contentHash);
+
+    plugin.fileSyncTasks.completed++;
 };
 
 /**
@@ -242,6 +244,8 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath);
     }
+
+    plugin.fileSyncTasks.completed++;
 };
 
 /**
@@ -258,6 +262,8 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
         await plugin.app.vault.modifyBinary(file, content, { ctime: data.ctime, mtime: data.mtime });
         plugin.removeIgnoredFile(normalizedPath);
     }
+
+    plugin.fileSyncTasks.completed++;
 };
 
 /**
@@ -303,14 +309,20 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
 /**
  * 接收文件同步结束通知
  */
-export const receiveFileSyncEnd = async function (data: ReceiveMessage, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+export const receiveFileSyncEnd = async function (data: any, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return;
-    dump(`Receive file sync end: `, data.vault, data.lastTime);
-    plugin.settings.lastFileSyncTime = data.lastTime;
+    dump(`Receive file sync end:`, data);
+
+    // 从 data 对象中提取任务统计信息
+    const syncData = data as SyncEndData;
+    plugin.fileSyncTasks.needUpload = syncData.needUploadCount || 0;
+    plugin.fileSyncTasks.needModify = syncData.needModifyCount || 0;
+    plugin.fileSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0;
+    plugin.fileSyncTasks.needDelete = syncData.needDeleteCount || 0;
+
+    plugin.settings.lastFileSyncTime = syncData.lastTime;
     await plugin.saveData(plugin.settings);
     plugin.syncTypeCompleteCount++;
-
-    checkCompletion(plugin);
 };
 
 
@@ -332,7 +344,7 @@ const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
 /**
  * 处理接收到的二进制文件分片
  */
-export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return;
     const binaryData = buf instanceof Blob ? await buf.arrayBuffer() : buf;
     if (binaryData.byteLength < 40) return;
@@ -352,14 +364,14 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
     plugin.updateStatusBar($("同步中"), plugin.downloadedChunksCount, plugin.totalChunksToDownload);
 
     if (session.chunks.size === session.totalChunks) {
-        await handleFileChunkDownloadComplete(session, plugin, checkCompletion);
+        await handleFileChunkDownloadComplete(session, plugin);
     }
 };
 
 /**
  * 完成文件下载
  */
-const handleFileChunkDownloadComplete = async function (session: FileDownloadSession, plugin: FastSync, checkCompletion: (plugin: FastSync) => void) {
+const handleFileChunkDownloadComplete = async function (session: FileDownloadSession, plugin: FastSync) {
     try {
         const chunks: ArrayBuffer[] = [];
         for (let i = 0; i < session.totalChunks; i++) {
@@ -406,10 +418,8 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
 
         plugin.fileDownloadSessions.delete(session.sessionId);
         plugin.downloadedFilesCount++;
-        checkCompletion(plugin);
     } catch (e) {
         plugin.fileDownloadSessions.delete(session.sessionId);
-        checkCompletion(plugin);
     }
 }
 
