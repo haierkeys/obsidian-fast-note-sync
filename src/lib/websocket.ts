@@ -288,26 +288,25 @@ export class WebSocketClient {
     while (this.ws.bufferedAmount > maxBufferSize) {
       await new Promise(resolve => setTimeout(resolve, 400))
     }
-    dump(`WebSocket send buffer drain, size: ${this.ws.bufferedAmount}`)
   }
 
-  public MsgSend(action: string, data: object | string) {
+  public async MsgSend(action: string, data: object | string, defer?: () => void) {
     if (!this.isAuth || !this.plugin.isFirstSync) {
-      dump(`Service not ready or sync in progress, queuing message: ${action}`)
-      return
-    }
-    this.Send(action, data)
-  }
-
-  public async Send(action: string, data: object | string) {
-    if (this.ws.readyState !== WebSocket.OPEN) {
-      dump(`Service not connected, queuing message: ${action}`)
       return
     }
 
     // 等待缓冲区有足够空间
     await this.waitForBufferDrain()
+    this.Send(action, data)
 
+    defer?.()
+  }
+
+  public Send(action: string, data: object | string) {
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      dump(`Service not connected, queuing message: ${action}`)
+      return
+    }
     if (typeof data === "string") {
       this.ws.send(action + "|" + data)
     } else {
@@ -315,14 +314,12 @@ export class WebSocketClient {
     }
   }
 
-  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string) {
+  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, defer?: () => void) {
     if (this.ws.readyState !== WebSocket.OPEN) {
-      dump(`Service not connected, discarding binary message`)
       return
     }
 
     if (!prefix || prefix.length !== 2) {
-      dump("SendBinary error: prefix must be exactly 2 characters of string");
       return;
     }
     // 等待缓冲区有足够空间
@@ -343,9 +340,7 @@ export class WebSocketClient {
       dataToSend.set(prefixBytes);
       dataToSend.set(dataView, prefixBytes.length);
     }
-
-
-
     this.ws.send(dataToSend)
+    defer?.()
   }
 }

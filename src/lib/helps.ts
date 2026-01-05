@@ -120,6 +120,12 @@ export const dump = function (...message: unknown[]): void {
   }
 }
 
+export const dumpTable = function (message: any): void {
+  if (isLogEnabled) {
+    console.table(message)
+  }
+}
+
 export function isHttpUrl(url: string): boolean {
   return /^https?:\/\/.+/i.test(url)
 }

@@ -80,7 +80,6 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
     overallProgress += 30; // 如果没有分片传输,分片部分算完成
   }
 
-  dump(`Sync progress: tasks ${completedTasks}/${totalTasks}, chunks ${completedChunks}/${totalChunks}, overall ${overallProgress.toFixed(1)}%, bufferedAmount: ${bufferedAmount}`);
 
   // 检查是否所有 SyncEnd 消息都已收到
   const allSyncEndReceived = plugin.syncTypeCompleteCount >= plugin.expectedSyncCount;
@@ -97,12 +96,6 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
   // 检查 WebSocket 发送缓冲区是否已清空
   const bufferCleared = bufferedAmount === 0;
 
-  // 输出详细的完成状态
-  dump(`  - allSyncEndReceived: ${allSyncEndReceived} (${plugin.syncTypeCompleteCount}/${plugin.expectedSyncCount})`);
-  dump(`  - allTasksCompleted: ${allTasksCompleted} (注意:此检查已禁用,因为存在时序问题)`);
-  dump(`  - allChunksCompleted: ${allChunksCompleted}`);
-  dump(`  - allDownloadsComplete: ${allDownloadsComplete} (sessions: ${plugin.fileDownloadSessions.size})`);
-  dump(`  - bufferCleared: ${bufferCleared}`);
 
   // 修复:移除 allTasksCompleted 检查
   // 原因:任务计数存在时序问题 - SyncEnd 消息设置 totalTasks,但任务可能在此之前已完成
@@ -126,27 +119,35 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
     plugin.updateStatusBar($("同步完成"));
     setTimeout(() => plugin.updateStatusBar(""), 5000);
   } else {
-    // 如果任务已完成但缓冲区还有数据,持续检查直到缓冲区清空
-    if (allSyncEndReceived && allChunksCompleted && allDownloadsComplete && !bufferCleared) {
-      const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
-      // 使用一个虚拟的总数来显示进度,避免显示 100%
-      plugin.updateStatusBar(`${$("同步中")} (发送中: ${bufferMB}MB)`, 99, 100);
+    // 实时计算准确进度
+    let statusText = $("同步中");
+    let displayProgress = 0;
+    let displayTotal = 100;
 
-      // 100ms 后再次检查
-      setTimeout(() => checkSyncCompletion(plugin, intervalId), 100);
-    } else {
-      // 正常的进度更新 - 使用综合进度
-      let statusText = $("同步中");
+    // 基于分片计数和缓冲区状态计算实时进度
+    if (totalChunks > 0) {
+      // 估算缓冲区中的分片数(假设平均分片大小 512KB)
+      const avgChunkSize = 512 * 1024;
+      const bufferChunks = Math.ceil(bufferedAmount / avgChunkSize);
+
+      // 实际完成的分片 = 已提交 - 缓冲区中的估算值
+      const actualCompletedChunks = Math.max(0, completedChunks - bufferChunks);
+
+      displayProgress = actualCompletedChunks;
+      displayTotal = totalChunks;
 
       if (bufferedAmount > 0) {
         const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
-        statusText = `${$("同步中")} (发送中: ${bufferMB}MB)`;
+        statusText = `${$("同步中")} (缓冲区: ${bufferMB}MB)`;
       }
-
-      // 显示综合进度
-      const displayProgress = Math.floor(overallProgress);
-      plugin.updateStatusBar(statusText, displayProgress, 100);
+    } else if (totalTasks > 0) {
+      // 没有分片传输,使用任务进度
+      displayProgress = completedTasks;
+      displayTotal = totalTasks;
     }
+
+    // 统一更新状态栏(所有进度更新都在这里)
+    plugin.updateStatusBar(statusText, displayProgress, displayTotal);
   }
 }
 /**
@@ -271,10 +272,10 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
   handleRequestSend(plugin, noteTime, fileTime, configTime, notes, files, configs, syncMode);
 
-  // 启动进度检测循环,每 200ms 检测一次
+  // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
   const progressCheckInterval = setInterval(() => {
     checkSyncCompletion(plugin, progressCheckInterval);
-  }, 200);
+  }, 100);
 };
 
 

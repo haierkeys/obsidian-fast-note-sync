@@ -120,11 +120,53 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 }
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
-    if (plugin.settings.configSyncEnabled == false) return
-    await configModify(data.path, plugin, false)
+    if (plugin.settings.configSyncEnabled == false) return;
+    if (configIsPathExcluded(data.path, plugin)) return;
 
-    plugin.configSyncTasks.completed++
-}
+    plugin.addIgnoredConfigFile(data.path);
+
+    const filePath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`);
+    let contentStr = "";
+    let contentBuf: ArrayBuffer | null = null;
+    let mtime = 0;
+    let ctime = 0;
+
+    try {
+        const exists = await plugin.app.vault.adapter.exists(filePath);
+        if (exists) {
+            const stat = await plugin.app.vault.adapter.stat(filePath);
+            if (stat) {
+                contentBuf = await plugin.app.vault.adapter.readBinary(filePath);
+                contentStr = new TextDecoder().decode(contentBuf);
+                mtime = stat.mtime;
+                ctime = stat.ctime;
+            }
+        }
+    } catch (error) {
+        console.error("读取配置文件出错:", error);
+        return
+    }
+
+    if (!contentBuf || mtime === 0) {
+        return;
+    }
+
+    plugin.removeIgnoredConfigFile(data.path);
+
+    const sendData = {
+        vault: plugin.settings.vault,
+        path: data.path,
+        pathHash: hashContent(data.path),
+        content: contentStr,
+        contentHash: hashArrayBuffer(contentBuf),
+        mtime: mtime,
+        ctime: ctime,
+    };
+    plugin.websocket.MsgSend("SettingModify", sendData ,function(){
+        plugin.removeIgnoredConfigFile(data.path);
+        plugin.configSyncTasks.completed++;
+    });
+};
 
 export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
