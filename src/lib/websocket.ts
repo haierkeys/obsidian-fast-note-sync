@@ -67,14 +67,22 @@ export class WebSocketClient {
       this.count++
       localStorage.setItem(WS_COUNT_STORAGE_KEY, this.count.toString())
       this.ws.onerror = (error) => {
-        dump("WebSocket error:", error)
+        dump("WebSocket error:", {
+          timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          url: url,
+          readyState: this.ws.readyState,
+          error: error
+        })
         if (this.onStatusChange) this.onStatusChange(false)
       }
       this.ws.onopen = (e: Event): void => {
         this.timeConnect = 0
         this.isAuth = false
         this.isOpen = true
-        dump("Service connected")
+        dump("Service connected", {
+          timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          url: url
+        })
         if (this.onStatusChange) this.onStatusChange(true)
         this.Send("Authorization", this.plugin.settings.apiToken)
         dump("Service authorization")
@@ -85,6 +93,16 @@ export class WebSocketClient {
         this.isOpen = false
         if (this.onStatusChange) this.onStatusChange(false)
         window.clearInterval(this.checkConnection)
+
+        dump("Service close details:", {
+          timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          code: e.code,
+          reason: e.reason,
+          wasClean: e.wasClean,
+          timeConnect: this.timeConnect,
+          isRegister: this.isRegister
+        })
+
         if (e.reason == "AuthorizationFaild") {
           new Notice("Remote Service Connection Closed: " + e.reason)
         } else if (e.reason == "ClientClose") {

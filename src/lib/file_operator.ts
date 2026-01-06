@@ -122,8 +122,10 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
     const actualTotalChunks = Math.ceil(content.byteLength / chunkSize)
 
-    // 使用实际分片数累加到总计,确保进度准确
-    plugin.totalChunksToUpload += actualTotalChunks
+    // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
+    if (plugin.getWatchEnabled()) {
+      plugin.totalChunksToUpload += actualTotalChunks
+    }
 
     // 打印上传信息表格
     dumpTable([
@@ -305,7 +307,10 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
     plugin.fileDownloadSessions.set(data.sessionId, session)
   }
 
-  plugin.totalChunksToDownload += data.totalChunks
+  // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
+  if (plugin.getWatchEnabled()) {
+    plugin.totalChunksToDownload += data.totalChunks
+  }
 }
 
 /**
@@ -317,11 +322,6 @@ export const receiveFileSyncEnd = async function (data: any, plugin: FastSync) {
 
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
-  plugin.fileSyncTasks.needUpload = syncData.needUploadCount || 0
-  plugin.fileSyncTasks.needModify = syncData.needModifyCount || 0
-  plugin.fileSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0
-  plugin.fileSyncTasks.needDelete = syncData.needDeleteCount || 0
-
   plugin.settings.lastFileSyncTime = syncData.lastTime
   await plugin.saveData(plugin.settings)
   plugin.syncTypeCompleteCount++

@@ -3,7 +3,7 @@
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, configIsPathExcluded } from "./config_operator";
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd } from "./file_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd } from "./note_operator";
-import { SyncMode, SnapFile, ReceiveMessage } from "./types";
+import { SyncMode, SnapFile, ReceiveMessage, SyncEndData } from "./types";
 import { hashContent, hashArrayBuffer, dump } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
@@ -160,19 +160,75 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["NoteSyncNeedPush", receiveNoteUpload],
   ["NoteSyncMtime", receiveNoteSyncMtime],
   ["NoteSyncDelete", receiveNoteSyncDelete],
-  ["NoteSyncEnd", receiveNoteSyncEnd],
+  ["NoteSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "note")],
   ["FileUpload", receiveFileUpload],
   ["FileSyncUpdate", receiveFileSyncUpdate],
   ["FileSyncChunkDownload", receiveFileSyncChunkDownload],
   ["FileSyncDelete", receiveFileSyncDelete],
   ["FileSyncMtime", receiveFileSyncMtime],
-  ["FileSyncEnd", receiveFileSyncEnd],
+  ["FileSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "file")],
   ["SettingSyncModify", receiveConfigSyncModify],
   ["SettingSyncNeedUpload", receiveConfigUpload],
   ["SettingSyncMtime", receiveConfigSyncMtime],
   ["SettingSyncDelete", receiveConfigSyncDelete],
-  ["SettingSyncEnd", receiveConfigSyncEnd],
+  ["SettingSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "config")],
 ]);
+
+/**
+ * 统一处理 SyncEnd 消息的装饰器
+ */
+async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" | "file" | "config") {
+  const syncData = data as SyncEndData;
+  dump(`Receive ${type} sync end (wrapper):`, syncData);
+
+  // 1. 基础任务计数解析
+  const tasks = type === "note" ? plugin.noteSyncTasks : type === "file" ? plugin.fileSyncTasks : plugin.configSyncTasks;
+  tasks.needUpload = syncData.needUploadCount || 0;
+  tasks.needModify = syncData.needModifyCount || 0;
+  tasks.needSyncMtime = syncData.needSyncMtimeCount || 0;
+  tasks.needDelete = syncData.needDeleteCount || 0;
+
+  // 2. 详细消息解析与分块统计预估 (仅针对 file 同步)
+  if (syncData.messages && syncData.messages.length > 0) {
+    for (const msg of syncData.messages) {
+      if (msg.action === "FileSyncUpdate") {
+        const d = msg.data;
+        const totalChunks = Math.ceil(d.size / (d.chunkSize || 1024 * 1024));
+        plugin.totalChunksToDownload += totalChunks;
+      } else if (msg.action === "FileUpload") {
+        const d = msg.data;
+        const file = plugin.app.vault.getFileByPath(normalizePath(d.path));
+        if (file) {
+          const totalChunks = Math.ceil(file.stat.size / (d.chunkSize || 1024 * 1024));
+          plugin.totalChunksToUpload += totalChunks;
+        }
+      }
+    }
+  }
+
+  // 3. 调用原始 End 处理函数 (更新时间戳等)
+  if (type === "note") await receiveNoteSyncEnd(data, plugin);
+  else if (type === "file") await receiveFileSyncEnd(data, plugin);
+  else if (type === "config") await receiveConfigSyncEnd(data, plugin);
+
+  // 4. 异步启动子任务处理
+  if (syncData.messages && syncData.messages.length > 0) {
+    processSyncMessages(syncData.messages, plugin);
+  }
+}
+
+/**
+ * 统一分发子任务消息
+ */
+async function processSyncMessages(messages: any[], plugin: FastSync) {
+  for (const msg of messages) {
+    const handler = receiveOperators.get(msg.action);
+    if (handler) {
+      await handler(msg.data, plugin);
+      await sleep(2)
+    }
+  }
+}
 
 
 

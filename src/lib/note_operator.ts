@@ -220,11 +220,6 @@ export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
 
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
-  plugin.noteSyncTasks.needUpload = syncData.needUploadCount || 0
-  plugin.noteSyncTasks.needModify = syncData.needModifyCount || 0
-  plugin.noteSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0
-  plugin.noteSyncTasks.needDelete = syncData.needDeleteCount || 0
-
   plugin.settings.lastNoteSyncTime = syncData.lastTime
   await plugin.saveData(plugin.settings)
   plugin.syncTypeCompleteCount++

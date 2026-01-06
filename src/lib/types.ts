@@ -21,6 +21,11 @@ export interface ReceiveMessage {
     lastTime: number;
 }
 
+export interface SyncMessage {
+    action: string;
+    data: any;
+}
+
 export interface ReceiveFileSyncUpdateMessage {
     path: string;
     vault: string;
@@ -74,8 +79,9 @@ export interface ReceivePathMessage {
 
 export interface SyncEndData {
     lastTime: number;
-    needUploadCount: number;
-    needModifyCount: number;
-    needSyncMtimeCount: number;
-    needDeleteCount: number;
+    messages: SyncMessage[];
+    needUploadCount?: number;
+    needModifyCount?: number;
+    needSyncMtimeCount?: number;
+    needDeleteCount?: number;
 }

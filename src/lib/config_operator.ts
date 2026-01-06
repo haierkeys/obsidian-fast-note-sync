@@ -162,7 +162,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         mtime: mtime,
         ctime: ctime,
     };
-    plugin.websocket.MsgSend("SettingModify", sendData ,function(){
+    plugin.websocket.MsgSend("SettingModify", sendData, function () {
         plugin.removeIgnoredConfigFile(data.path);
         plugin.configSyncTasks.completed++;
     });
@@ -207,11 +207,6 @@ export const receiveConfigSyncEnd = async function (data: any, plugin: FastSync)
 
     // 从 data 对象中提取任务统计信息
     const syncData = data as SyncEndData
-    plugin.configSyncTasks.needUpload = syncData.needUploadCount || 0
-    plugin.configSyncTasks.needModify = syncData.needModifyCount || 0
-    plugin.configSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0
-    plugin.configSyncTasks.needDelete = syncData.needDeleteCount || 0
-
     plugin.settings.lastConfigSyncTime = syncData.lastTime
     await plugin.saveData(plugin.settings)
     plugin.syncTypeCompleteCount++
