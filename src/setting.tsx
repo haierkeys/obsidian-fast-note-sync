@@ -236,11 +236,39 @@ export class SettingTab extends PluginSettingTab {
 
     debugButton.setText($("复制 Debug 信息"))
     debugButton.onclick = async () => {
+      const maskValue = (val: string) => {
+        if (!val) return ""
+        const parts = val.split("://")
+        const protocol = parts.length > 1 ? parts[0] + "://" : ""
+        const address = parts.length > 1 ? parts[1] : parts[0]
+
+        // 处理端口号
+        const lastColonIndex = address.lastIndexOf(":")
+        let port = ""
+        let host = address
+        if (lastColonIndex !== -1 && !address.includes("/", lastColonIndex)) {
+          host = address.slice(0, lastColonIndex)
+          port = address.slice(lastColonIndex)
+        }
+
+        // 脱敏 Host 部分
+        let maskedHost = host
+        if (host.length > 4) {
+          maskedHost = host[0] + "***" + host.slice(-1)
+        } else if (host.length > 0) {
+          maskedHost = host[0] + "***"
+        }
+
+        return protocol + maskedHost + port
+      }
+
       await window.navigator.clipboard.writeText(
         JSON.stringify(
           {
             settings: {
               ...this.plugin.settings,
+              api: maskValue(this.plugin.settings.api),
+              wsApi: maskValue(this.plugin.settings.wsApi),
               apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
             },
             pluginVersion: this.plugin.manifest.version,
