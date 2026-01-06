@@ -280,7 +280,7 @@ export class WebSocketClient {
    * 等待发送缓冲区清空
    * @param maxBufferSize 最大缓冲区大小(字节),默认 1MB
    */
-  private async waitForBufferDrain(maxBufferSize: number = 1024 * 1024): Promise<void> {
+  private async waitForBufferDrain(maxBufferSize: number = 5 * 1024 * 1024): Promise<void> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return
     }

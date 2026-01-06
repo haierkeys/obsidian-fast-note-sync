@@ -7,7 +7,7 @@ import { $ } from "../lang/lang";
 
 
 // 上传并发控制
-const MAX_CONCURRENT_UPLOADS = 5
+const MAX_CONCURRENT_UPLOADS = 100
 let activeUploads = 0
 const uploadQueue: (() => Promise<void>)[] = []
 
@@ -167,7 +167,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       activeUploads++
       const task = uploadQueue.shift()
       if (task) {
-        ;(async () => {
+        ; (async () => {
           try {
             await task()
           } finally {

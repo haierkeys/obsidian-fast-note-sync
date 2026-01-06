@@ -116,7 +116,6 @@ export class FileHashManager {
   setFileHash(path: string, hash: string): void {
     this.hashMap.set(path, hash);
     this.saveToStorage();
-    dump(`FileHashManager: 更新哈希 ${path} -> ${hash}`);
   }
 
   /**
@@ -126,7 +125,6 @@ export class FileHashManager {
     const deleted = this.hashMap.delete(path);
     if (deleted) {
       this.saveToStorage();
-      dump(`FileHashManager: 删除哈希 ${path}`);
     }
   }
 
