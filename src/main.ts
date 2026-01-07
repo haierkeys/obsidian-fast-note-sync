@@ -43,6 +43,11 @@ export default class FastSync extends Plugin {
   fileDownloadSessions: Map<string, any> = new Map()
   syncTimer: NodeJS.Timeout | null = null
 
+  lastStatusBarPercentage: number = 0
+  noteSyncEnd: boolean = false
+  fileSyncEnd: boolean = false
+  configSyncEnd: boolean = false
+
   // 任务统计
   noteSyncTasks = {
     needUpload: 0,
@@ -73,6 +78,10 @@ export default class FastSync extends Plugin {
     this.noteSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
     this.fileSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
     this.configSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
+    this.lastStatusBarPercentage = 0
+    this.noteSyncEnd = false
+    this.fileSyncEnd = false
+    this.configSyncEnd = false
   }
 
   // 计算总任务数
@@ -161,6 +170,7 @@ export default class FastSync extends Plugin {
   onunload() {
     // 取消注册文件事件
     this.refreshRuntime(false)
+    this.updateStatusBar("")
   }
 
   async loadSettings() {
@@ -209,6 +219,7 @@ export default class FastSync extends Plugin {
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
       this.fileDownloadSessions.clear()
+      this.updateStatusBar("")
     }
 
     setLogEnabled(this.settings.logEnabled)

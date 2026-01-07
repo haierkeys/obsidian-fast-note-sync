@@ -100,7 +100,15 @@ export class MenuManager {
       this.statusBarItem.style.display = "flex";
       this.statusBarProgressBar.style.display = "block";
 
-      const percentage = Math.min(100, Math.round((current / total) * 100));
+      let percentage = Math.min(100, Math.round((current / total) * 100));
+
+      // 确保进度不会回退
+      if (percentage < this.plugin.lastStatusBarPercentage) {
+        percentage = this.plugin.lastStatusBarPercentage;
+      } else {
+        this.plugin.lastStatusBarPercentage = percentage;
+      }
+
       this.statusBarFill.style.width = `${percentage}%`;
       this.statusBarText.setText(`${percentage}%`);
       this.statusBarItem.setAttribute("aria-label", text);

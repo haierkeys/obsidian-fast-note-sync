@@ -50,61 +50,19 @@ const vaultEmptyFoldersClean = async (plugin: FastSync) => {
  * 检查同步是否完成
  */
 export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeout) {
-  const totalTasks = plugin.getTotalTasks();
-  const completedTasks = plugin.getCompletedTasks();
-
-  // 检查 WebSocket 缓冲区状态
   const ws = plugin.websocket.ws;
   const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
 
-  // 计算综合进度(包含任务和分片传输)
-  // 任务权重 70%,分片传输权重 30%
-  let overallProgress = 0;
-  let overallTotal = 100;
-
-  if (totalTasks > 0) {
-    const taskProgress = (completedTasks / totalTasks) * 70;
-    overallProgress += taskProgress;
-  } else {
-    overallProgress += 70; // 如果没有任务,任务部分算完成
-  }
-
-  // 计算分片传输进度
+  // 检查是否满足所有完成条件
+  const allSyncEndReceived = plugin.syncTypeCompleteCount >= plugin.expectedSyncCount;
   const totalChunks = plugin.totalChunksToUpload + plugin.totalChunksToDownload;
   const completedChunks = plugin.uploadedChunksCount + plugin.downloadedChunksCount;
-
-  if (totalChunks > 0) {
-    const chunkProgress = (completedChunks / totalChunks) * 30;
-    overallProgress += chunkProgress;
-  } else {
-    overallProgress += 30; // 如果没有分片传输,分片部分算完成
-  }
-
-
-  // 检查是否所有 SyncEnd 消息都已收到
-  const allSyncEndReceived = plugin.syncTypeCompleteCount >= plugin.expectedSyncCount;
-
-  // 检查是否所有任务都已完成
-  const allTasksCompleted = totalTasks === 0 || completedTasks >= totalTasks;
-
-  // 检查是否所有分片传输都已完成
   const allChunksCompleted = totalChunks === 0 || completedChunks >= totalChunks;
-
-  // 检查是否所有文件下载会话都已完成
   const allDownloadsComplete = plugin.fileDownloadSessions.size === 0;
-
-  // 检查 WebSocket 发送缓冲区是否已清空
   const bufferCleared = bufferedAmount === 0;
 
-
-  // 修复:移除 allTasksCompleted 检查
-  // 原因:任务计数存在时序问题 - SyncEnd 消息设置 totalTasks,但任务可能在此之前已完成
-  // 解决方案:只依赖 SyncEnd 消息(服务端确认)+ 分块传输 + 下载会话 + 缓冲区状态
   if (allSyncEndReceived && allChunksCompleted && allDownloadsComplete && bufferCleared) {
-    // 清除进度检测定时器
-    if (intervalId) {
-      clearInterval(intervalId);
-    }
+    if (intervalId) clearInterval(intervalId);
 
     plugin.enableWatch();
     plugin.syncTypeCompleteCount = 0;
@@ -115,39 +73,66 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
     plugin.downloadedChunksCount = 0;
     plugin.totalChunksToUpload = 0;
     plugin.uploadedChunksCount = 0;
+
     new Notice($("同步完成"));
     plugin.updateStatusBar($("同步完成"));
     setTimeout(() => plugin.updateStatusBar(""), 5000);
   } else {
-    // 实时计算准确进度
-    let statusText = $("同步中");
-    let displayProgress = 0;
-    let displayTotal = 100;
+    // 实时计算加权进度，防止由于任务总数突增导致的百分比回跳
+    let totalProgressSum = 0;
+    const expectedCount = Math.max(1, plugin.expectedSyncCount);
 
-    // 基于分片计数和缓冲区状态计算实时进度
-    if (totalChunks > 0) {
-      // 估算缓冲区中的分片数(假设平均分片大小 512KB)
-      const avgChunkSize = 512 * 1024;
-      const bufferChunks = Math.ceil(bufferedAmount / avgChunkSize);
-
-      // 实际完成的分片 = 已提交 - 缓冲区中的估算值
-      const actualCompletedChunks = Math.max(0, completedChunks - bufferChunks);
-
-      displayProgress = actualCompletedChunks;
-      displayTotal = totalChunks;
-
-      if (bufferedAmount > 0) {
-        const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
-        statusText = `${$("同步中")} (缓冲区: ${bufferMB}MB)`;
+    // 1. 笔记同步进度
+    if (plugin.settings.syncEnabled) {
+      const noteTasks = plugin.noteSyncTasks;
+      const total = noteTasks.needUpload + noteTasks.needModify + noteTasks.needSyncMtime + noteTasks.needDelete;
+      if (!plugin.noteSyncEnd) {
+        totalProgressSum += 0; // 尚未收到结束通知，该项进度为 0
+      } else {
+        totalProgressSum += total > 0 ? noteTasks.completed / total : 1;
       }
-    } else if (totalTasks > 0) {
-      // 没有分片传输,使用任务进度
-      displayProgress = completedTasks;
-      displayTotal = totalTasks;
     }
 
-    // 统一更新状态栏(所有进度更新都在这里)
-    plugin.updateStatusBar(statusText, displayProgress, displayTotal);
+    // 2. 文件同步进度 (包含分片和缓冲区)
+    if (plugin.settings.syncEnabled) {
+      const fileTasks = plugin.fileSyncTasks;
+      const taskTotal = fileTasks.needUpload + fileTasks.needModify + fileTasks.needSyncMtime + fileTasks.needDelete;
+      if (!plugin.fileSyncEnd) {
+        totalProgressSum += 0;
+      } else {
+        // 计算分片进度，考虑缓冲区
+        const avgChunkSize = 512 * 1024;
+        const bufferChunks = Math.ceil(bufferedAmount / avgChunkSize);
+        const actualUploadedChunks = Math.max(0, plugin.uploadedChunksCount - bufferChunks);
+        const doneChunks = actualUploadedChunks + plugin.downloadedChunksCount;
+
+        const unitsTotal = taskTotal + totalChunks;
+        const unitsDone = fileTasks.completed + doneChunks;
+        totalProgressSum += unitsTotal > 0 ? unitsDone / unitsTotal : 1;
+      }
+    }
+
+    // 3. 配置同步进度
+    if (plugin.settings.configSyncEnabled) {
+      const configTasks = plugin.configSyncTasks;
+      const total = configTasks.needUpload + configTasks.needModify + configTasks.needSyncMtime + configTasks.needDelete;
+      if (!plugin.configSyncEnd) {
+        totalProgressSum += 0;
+      } else {
+        totalProgressSum += total > 0 ? configTasks.completed / total : 1;
+      }
+    }
+
+    const overallPercentage = (totalProgressSum / expectedCount) * 100;
+
+    let statusText = $("同步中");
+    if (bufferedAmount > 0) {
+      const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
+      statusText = `${$("同步中")} (缓冲区: ${bufferMB}MB)`;
+    }
+
+    // 使用 100 做分母，overallPercentage 做分子
+    plugin.updateStatusBar(statusText, Math.floor(overallPercentage), 100);
   }
 }
 /**
@@ -207,9 +192,16 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
   }
 
   // 3. 调用原始 End 处理函数 (更新时间戳等)
-  if (type === "note") await receiveNoteSyncEnd(data, plugin);
-  else if (type === "file") await receiveFileSyncEnd(data, plugin);
-  else if (type === "config") await receiveConfigSyncEnd(data, plugin);
+  if (type === "note") {
+    await receiveNoteSyncEnd(data, plugin);
+    plugin.noteSyncEnd = true;
+  } else if (type === "file") {
+    await receiveFileSyncEnd(data, plugin);
+    plugin.fileSyncEnd = true;
+  } else if (type === "config") {
+    await receiveConfigSyncEnd(data, plugin);
+    plugin.configSyncEnd = true;
+  }
 
   // 4. 异步启动子任务处理
   if (syncData.messages && syncData.messages.length > 0) {
