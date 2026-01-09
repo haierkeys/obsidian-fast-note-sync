@@ -10,7 +10,7 @@ const en: Partial<LangMap> = {
   "同步完成": "Sync complete",
   "启动自动同步": "Start auto sync",
   "启用笔记自动同步": "Enable note auto sync",
-  "启用笔记自动同步描述": "When enabled, notes, images, and various attachments in the warehouse will be synced",
+  "启用笔记自动同步描述": "When enabled, notes, images, and various attachments in the vault will be synced",
   "启用配置项同步": "Enable configuration sync",
   "启用配置项同步描述": "When enabled, core configurations, plugins, and theme settings in the .obsidian directory will be synced. First-time activation will use server configurations to overwrite local configurations",
   "复制 Debug 信息": "Copy Debug information",
@@ -35,7 +35,7 @@ const en: Partial<LangMap> = {
   "输入您的 API 访问令牌": "Enter your API access token",
   "输入您的 Fast note sync service 服务地址": "Enter your Fast note sync service address",
   "远端": "Remote",
-  "远端仓库名": "Remote warehouse name",
+  "远端仓库名": "Remote vault name",
   "远端服务令牌": "Remote service token",
   "远端服务地址": "Remote service address",
   "远端服务搭建与选择": "Remote service setup and selection",
@@ -74,7 +74,16 @@ const en: Partial<LangMap> = {
   "无法连接到服务器，请检查网络连接": "Unable to connect to server, please check network connection",
   "启动延迟": "Startup delay (ms)",
   "启动延迟描述": "Delay the execution of the first check for updates after the configuration connection is successful. If you experience lag when opening Obsidian due to other plugins loading, you can try setting this. Default 500 ms",
-}
+  "离线编辑合并策略": "Note offline sync strategy",
+  "离线编辑合并策略描述": "Set the merge method when reconnecting after note offline editing. Only applies to md notes and this setting is local-only.",
+  "策略": "Strategy",
+  "不合并_描述": "No merge, only the most recently edited version is kept. If the local version is not as new as the server version, the local version will be discarded.",
+  "newTimeMerge_描述": "Only merge with the server when the local version is the latest, otherwise adopt the server version (Note: deleted content will be restored).",
+  "ignoreTimeMerge_描述": "Ignore time differences and merge all local and server changes (Note: deleted content will be restored).",
+  "策略选项_默认": "No merge (keep latest)",
+  "策略选项_ignoreTimeMerge": "Direct merge (ignore time)",
+  "策略选项_newTimeMerge": "Merge for new edits only",
+};
 
 
 export default en;

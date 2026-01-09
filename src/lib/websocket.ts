@@ -191,7 +191,7 @@ export class WebSocketClient {
             }
             clientName = this.plugin.settings.clientName + (this.plugin.settings.clientName != "" ? " " + clientName : clientName)
 
-            this.Send("ClientInfo", JSON.stringify({ name: clientName, version: this.plugin.settings.apiVersion }))
+            this.Send("ClientInfo", JSON.stringify({ name: clientName, version: this.plugin.settings.apiVersion, offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy }))
             this.StartHandle()
           }
         }

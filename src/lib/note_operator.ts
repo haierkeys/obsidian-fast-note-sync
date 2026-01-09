@@ -35,7 +35,9 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
   dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
 
   // WebSocket 消息发送后更新哈希表(使用内容哈希)
-  plugin.fileHashManager.setFileHash(file.path, contentHash)
+  if (contentHash != baseHash) {
+    plugin.fileHashManager.setFileHash(file.path, contentHash)
+  }
 
   plugin.removeIgnoredFile(file.path)
 }

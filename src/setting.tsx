@@ -28,6 +28,7 @@ export interface PluginSettings {
   configExclude: string
   clientName: string
   startupDelay: number
+  offlineSyncStrategy: string
 }
 
 /**
@@ -56,6 +57,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   configExclude: "",
   clientName: "",
   startupDelay: 500,
+  offlineSyncStrategy: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -207,6 +209,40 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+
+    new Setting(set)
+      .setName($("离线编辑合并策略"))
+      .setDesc($("离线编辑合并策略描述"))
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("", $("策略选项_默认"))
+          .addOption("newTimeMerge", $("策略选项_newTimeMerge"))
+          .addOption("ignoreTimeMerge", $("策略选项_ignoreTimeMerge"))
+          .setValue(this.plugin.settings.offlineSyncStrategy || "")
+          .onChange(async (value) => {
+            this.plugin.settings.offlineSyncStrategy = value
+            await this.plugin.saveSettings("offlineSyncStrategy")
+          })
+      )
+
+    const strategyDesc = set.createDiv({ cls: "fast-note-sync-settings-strategy-desc fast-note-sync-settings" })
+    const table = strategyDesc.createEl("table")
+    const thead = table.createEl("thead")
+    const headerRow = thead.createEl("tr")
+    headerRow.createEl("th", { text: $("策略") })
+    headerRow.createEl("th", { text: $("说明") })
+
+    const tbody = table.createEl("tbody")
+
+    const addRow = (strategy: string, desc: string) => {
+      const row = tbody.createEl("tr")
+      row.createEl("td", { text: strategy })
+      row.createEl("td", { text: desc })
+    }
+
+    addRow($("策略选项_默认"), $("不合并_描述"))
+    addRow($("策略选项_newTimeMerge"), $("newTimeMerge_描述"))
+    addRow($("策略选项_ignoreTimeMerge"), $("ignoreTimeMerge_描述"))
 
     new Setting(set)
       .setName("| " + $("支持"))
