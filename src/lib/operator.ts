@@ -3,8 +3,8 @@
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, configIsPathExcluded } from "./config_operator";
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd } from "./file_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd } from "./note_operator";
+import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
 import { SyncMode, SnapFile, ReceiveMessage, SyncEndData } from "./types";
-import { hashContent, hashArrayBuffer, dump } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
@@ -262,6 +262,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     const list = plugin.app.vault.getFiles();
     for (const file of list) {
+      if (isPathExcluded(file.path, plugin)) continue;
       if (file.extension === "md") {
         if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) continue;
         const contentHash = hashContent(await plugin.app.vault.cachedRead(file));

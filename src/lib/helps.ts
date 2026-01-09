@@ -32,6 +32,33 @@ export const getDirNameOrEmpty = function (path: string): string {
   return path != undefined && path.includes(".") ? "" : path;
 };
 
+/**
+ * 检查路径是否被排除
+ */
+export const isPathExcluded = function (path: string, plugin: FastSync): boolean {
+  const { syncExcludeFolders, syncExcludeExtensions } = plugin.settings;
+
+  // 1. 检查扩展名排除
+  if (syncExcludeExtensions) {
+    const extList = syncExcludeExtensions.split(/\r?\n/).map(e => e.trim().toLowerCase()).filter(e => e !== "");
+    const ext = "." + path.split(".").pop()?.toLowerCase();
+    if (extList.some(e => ext === e || (e.startsWith(".") && ext === e) || (!e.startsWith(".") && ext === "." + e))) {
+      return true;
+    }
+  }
+
+  // 2. 检查目录排除
+  if (syncExcludeFolders) {
+    const folderList = syncExcludeFolders.split(/\r?\n/).map(f => f.trim()).filter(f => f !== "");
+    const pathParts = path.split(/[\\/]/);
+    if (folderList.some(folder => pathParts.some(part => part === folder))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 
 
 

@@ -2,7 +2,7 @@ import { Notice, moment, Platform } from "obsidian";
 
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
-import { dump, isWsUrl, addRandomParam } from "./helps";
+import { dump, isWsUrl, addRandomParam, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 

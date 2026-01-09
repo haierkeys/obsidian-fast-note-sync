@@ -83,6 +83,10 @@ const en: Partial<LangMap> = {
   "策略选项_默认": "No merge (keep latest)",
   "策略选项_ignoreTimeMerge": "Direct merge (ignore time)",
   "策略选项_newTimeMerge": "Merge for new edits only",
+  "同步排除目录": "Excluded Folders",
+  "同步排除目录描述": "Directories to exclude from sync, one per line. e.g., Cache",
+  "同步排除扩展名": "Excluded Extensions",
+  "同步排除扩展名描述": "File extensions to exclude from sync, one per line, with dot. e.g., .tmp",
 };
 
 

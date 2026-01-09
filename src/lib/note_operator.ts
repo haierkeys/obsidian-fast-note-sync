@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, dump } from "./helps";
+import { hashContent, dump, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 
@@ -14,6 +14,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
 
@@ -51,6 +52,7 @@ export const noteDelete = function (file: TAbstractFile, plugin: FastSync, event
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
 
@@ -78,6 +80,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
 
@@ -113,6 +116,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
  */
 export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive note modify:`, data.path, data.contentHash, data.mtime, data.pathHash)
 
   const normalizedPath = normalizePath(data.path)
@@ -145,6 +149,7 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
  */
 export const receiveNoteUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive note need push:`, data.path)
   if (!data.path.endsWith(".md")) return
   const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
@@ -179,6 +184,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
  */
 export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive note sync mtime:`, data.path, data.mtime)
 
   const normalizedPath = normalizePath(data.path)
@@ -198,6 +204,7 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
  */
 export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive note delete:`, data.action, data.path, data.mtime, data.pathHash)
   const normalizedPath = normalizePath(data.path)
   const file = plugin.app.vault.getFileByPath(normalizedPath)

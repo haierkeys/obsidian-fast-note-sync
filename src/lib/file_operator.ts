@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, Notice, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, hashArrayBuffer, dump, sleep, dumpTable } from "./helps";
+import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
@@ -30,6 +30,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
   if (file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
 
@@ -65,6 +66,7 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
   if (file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
   handleFileDeleteByPath(file.path, plugin)
@@ -84,6 +86,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) return
   if (plugin.ignoredFiles.has(file.path) && eventEnter) return
+  if (isPathExcluded(file.path, plugin)) return
   if (!(file instanceof TFile)) return
 
   plugin.addIgnoredFile(file.path)
@@ -107,6 +110,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
  */
 export const receiveFileUpload = async function (data: FileUploadMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive file need upload (queued): `, data.path, data.sessionId)
 
   const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
@@ -192,6 +196,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
  */
 export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive file sync update(download): `, data.path)
   const tempKey = `temp_${data.path} `
   const tempSession = {
@@ -225,6 +230,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
  */
 export const receiveFileSyncDelete = async function (data: ReceivePathMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive file delete: `, data.path)
   const normalizedPath = normalizePath(data.path)
   const file = plugin.app.vault.getFileByPath(normalizedPath)
@@ -245,6 +251,7 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
  */
 export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
   dump(`Receive file sync mtime: `, data.path, data.mtime)
   const normalizedPath = normalizePath(data.path)
   const file = plugin.app.vault.getFileByPath(normalizedPath)

@@ -29,6 +29,8 @@ export interface PluginSettings {
   clientName: string
   startupDelay: number
   offlineSyncStrategy: string
+  syncExcludeFolders: string
+  syncExcludeExtensions: string
 }
 
 /**
@@ -58,6 +60,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   clientName: "",
   startupDelay: 500,
   offlineSyncStrategy: "",
+  syncExcludeFolders: "",
+  syncExcludeExtensions: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -108,6 +112,37 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
+
+    new Setting(set)
+      .setName($("同步排除目录"))
+      .setDesc($("同步排除目录描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("Folder1\nFolder2")
+          .setValue(this.plugin.settings.syncExcludeFolders)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.syncExcludeFolders) {
+              this.plugin.settings.syncExcludeFolders = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
+
+    new Setting(set)
+      .setName($("同步排除扩展名"))
+      .setDesc($("同步排除扩展名描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder(".tmp\n.log")
+          .setValue(this.plugin.settings.syncExcludeExtensions)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.syncExcludeExtensions) {
+              this.plugin.settings.syncExcludeExtensions = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
+
     new Setting(set)
       .setName($("配置同步排除"))
       .setDesc($("配置同步排除描述"))
