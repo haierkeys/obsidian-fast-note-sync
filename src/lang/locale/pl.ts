@@ -75,7 +75,7 @@ const pl: Partial<LangMap> = {
   "启动延迟": "Opóźnienie uruchomienia (ms)",
   "启动延迟描述": "Opóźnienie wykonania pierwszego sprawdzenia aktualizacji po pomyślnym nawiązaniu połączenia. Dostosuj, jeśli Obsidian zacina się podczas uruchamiania z powodu ładowania innych wtyczek. Domyślnie 500 ms",
   "离线编辑合并策略": "Strategia scalania notatek po edycji offline",
-  "离线编辑合并策略描述": "Sposób postępowania z treścią po edycji offline przy ponownym połączeniu z serwerem. Dotyczy tylko tego klienta, działa po ponownym połączeniu.",
+  "离线编辑合并策略描述": "Sposób postępowania z treścią po edycji offline przy ponownym połączeniu z serwerem. Dotyczy tylko tego klienta.",
   "策略": "Strategia",
   "不合并_描述": "Nie scalaj, zachowaj tylko ostatnio edytowaną wersję. Jeśli wersja lokalna nie jest tak nowa jak wersja na serwerze, wersja lokalna zostanie odrzucona.",
   "newTimeMerge_描述": "Scalaj z serwerem tylko wtedy, gdy lokalna wersja jest najnowsza, w przeciwnym razie przyjmij wersję z serwera (Uwaga: usunięta treść zostanie przywrócona podczas procesu scalania).",
@@ -87,6 +87,8 @@ const pl: Partial<LangMap> = {
   "同步排除目录描述": "Katalogi, które mają być wykluczone z synchronizacji notatek i załączników, jeden w linii. Np. Folder1",
   "同步排除扩展名": "Rozszerzenia wykluczone z synchronizacji",
   "同步排除扩展名描述": "Typy plików, które mają być wykluczone z synchronizacji notatek i załączników, jeden w linii, z kropką. Np. .tmp",
+  "冲突文件已创建": "Plik konfliktu utworzony: ${path}. Proszę rozwiązać konflikt ręcznie.",
+  "合并冲突检测到": "Wykryto konflikt scalania. Na serwerze utworzono plik konfliktu.",
 };
 
 

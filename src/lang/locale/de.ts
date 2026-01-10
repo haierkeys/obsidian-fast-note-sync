@@ -75,7 +75,7 @@ const de: Partial<LangMap> = {
   "启动延迟": "Startverzögerung (ms)",
   "启动延迟描述": "Verzögerung bei der ersten Überprüfung auf Updates nach erfolgreicher Verbindung. Passen Sie dies an, wenn Obsidian beim Start aufgrund des Ladens anderer Plugins stockt. Standard 500 ms",
   "离线编辑合并策略": "Notiz-Offline-Bearbeitungs-Zusammenführungsstrategie",
-  "离线编辑合并策略描述": "Umgang mit Inhalten nach Offline-Bearbeitung bei erneuter Verbindung mit dem Server. Nur für diesen Client, wird nach der erneuten Verbindung wirksam.",
+  "离线编辑合并策略描述": "Umgang mit Inhalten nach Offline-Bearbeitung bei erneuter Verbindung mit dem Server. Nur für diesen Client.",
   "策略": "Strategie",
   "不合并_描述": "Nicht zusammenführen, nur die zuletzt bearbeitete Version behalten. Wenn die lokale Version älter als die Serverversion ist, wird die lokale Version verworfen.",
   "newTimeMerge_描述": "Nur mit dem Server zusammenführen, wenn die lokale Version die aktuellste ist, andernfalls die Serverversion übernehmen (Hinweis: Gelöschte Inhalte werden während des Zusammenführungsprozesses wiederhergestellt).",
@@ -87,6 +87,8 @@ const de: Partial<LangMap> = {
   "同步排除目录描述": "Verzeichnisse, die von der Notiz- und Anhangsynchronisierung ausgeschlossen werden sollen, eines pro Zeile. Z.B. Folder1",
   "同步排除扩展名": "Synchronisierungsausschlusserweiterungen",
   "同步排除扩展名描述": "Dateitypen, die von der Notiz- und Anhangsynchronisierung ausgeschlossen werden sollen, einer pro Zeile, mit Punkt. Z.B. .tmp",
+  "冲突文件已创建": "Konfliktdatei erstellt: ${path}. Bitte lösen Sie den Konflikt manuell.",
+  "合并冲突检测到": "Zusammenführungskonflikt erkannt. Eine Konfliktdatei wurde auf dem Server erstellt.",
 };
 
 

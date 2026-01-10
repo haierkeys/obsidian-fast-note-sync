@@ -75,7 +75,7 @@ const ca: Partial<LangMap> = {
   "启动延迟": "Retard d'inici (ms)",
   "启动延迟描述": "Retard en l'execució de la primera comprovació d'actualitzacions després de l'èxit de la connexió. Ajusteu-ho si Obsidian es retarda en iniciar-se a causa de la càrrega d'altres connectors. Per defecte 500 ms",
   "离线编辑合并策略": "Estratègia de fusió de notes després de l'edició fora de línia",
-  "离线编辑合并策略描述": "Com gestionar el contingut després de l'edició fora de línia en tornar-se a connectar al servidor. Només s'aplica a aquest client, entra en vigor després de la reconexió.",
+  "离线编辑合并策略描述": "Com gestionar el contingut després de l'edició fora de línia en tornar-se a connectar al servidor. Només s'aplica a aquest client.",
   "策略": "Estratègia",
   "不合并_描述": "No fusioneu, mantingueu només la versió editada més recent. Si la versió local no és tan nova com la versió del servidor, la versió local es descartarà.",
   "newTimeMerge_描述": "Fusioneu amb el servidor només quan la versió local sigui la més nova, en cas contrari, adopteu la versió del servidor (Nota: el contingut suprimit es restaurarà durant el procés de fusió).",
@@ -87,6 +87,8 @@ const ca: Partial<LangMap> = {
   "同步排除目录描述": "Directoris que cal excloure de la sincronització de notes i adjunts, un per línia. P. ex. Folder1",
   "同步排除扩展名": "Extensions extretes de la sincronització",
   "同步排除扩展名描述": "Tipus de fitxers que cal excloure de la sincronització de notes i adjunts, un per línia, amb punt. P. ex. .tmp",
+  "冲突文件已创建": "Fitxer de conflicte creat: ${path}. Si us plau, resoleu el conflicte manualment.",
+  "合并冲突检测到": "S'ha detectat un conflicte de fusió. S'ha creat un fitxer de conflicte al servidor.",
 };
 
 

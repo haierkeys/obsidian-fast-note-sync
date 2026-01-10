@@ -75,7 +75,7 @@ const sq: Partial<LangMap> = {
   "启动延迟": "Vonesa e fillimit (ms)",
   "启动延迟描述": "Vonesa në ekzekutimin e kontrollit të parë për përditësime pas suksesit të lidhjes. Rregullojeni nëse Obsidian bllokohet gjatë fillimit për shkak të ngarkimit të plugin-eve të tjera. Parazgjedhja 500 ms",
   "离线编辑合并策略": "Strategjia e bashkimit të shënimeve pas modifikimit offline",
-  "离线编辑合并策略描述": "Si të trajtohet përmbajtja pas modifikimit offline kur rilidheni me serverin. Vlen vetëm për këtë klient, hyn në fuqi pas rilidhjes.",
+  "离线编辑合并策略描述": "Si të trajtohet përmbajtja pas modifikimit offline kur rilidheni me serverin. Vlen vetëm për këtë klient.",
   "策略": "Strategjia",
   "不合并_描述": "Mos bashko, mbaj vetëm versionin e modifikuar së fundmi. Nëse versioni lokal nuk është aq i ri sa versioni i serverit, versioni lokal do të fshihet.",
   "newTimeMerge_描述": "Bashko me serverin vetëm kur versioni lokal është më i riu, përndryshe adopto versionin e serverit (Shënim: përmbajtja e fshirë do të rikthehet gjatë procesit të bashkimit).",
@@ -87,6 +87,8 @@ const sq: Partial<LangMap> = {
   "同步排除目录描述": "Direktoritë për t'u përjashtuar nga sinkronizimi i shënimeve dhe bashkëngjitjeve, një për rresht. P.sh. Folder1",
   "同步排除扩展名": "Prapashtesat e përjashtuara nga sinkronizimi",
   "同步排除扩展名描述": "Llojet e skedarëve për t'u përjashtuar nga sinkronizimi i shënimeve dhe bashkëngjitjeve, një për rresht, me pikë. P.sh. .tmp",
+  "冲突文件已创建": "Skedari i konfliktit u krijua: ${path}. Ju lutemi zgjidhni konfliktin manualisht.",
+  "合并冲突检测到": "U zbulua konflikt bashkimi. Një skedar konflikti është krijuar në server.",
 };
 
 

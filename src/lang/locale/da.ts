@@ -75,7 +75,7 @@ const da: Partial<LangMap> = {
   "启动延迟": "Opstartsforsinkelse (ms)",
   "启动延迟描述": "Forsinkelse i udførelsen af det første tjek for opdateringer efter vellykket forbindelse. Juster, hvis Obsidian hakker ved opstart på grund af andre plugins, der indlæses. Standard 500 ms",
   "离线编辑合并策略": "Note offline redigerings-fusionsstrategi",
-  "离线编辑合并策略描述": "Hvordan indhold skal håndteres efter offline redigering, når der igen oprettes forbindelse til serveren. Gælder kun for denne klient, træder i kraft efter genforbindelse.",
+  "离线编辑合并策略描述": "Hvordan indhold skal håndteres efter offline redigering, når der igen oprettes forbindelse til serveren. Gælder kun for denne klient.",
   "策略": "Strategi",
   "不合并_描述": "Ingen fusion, behold kun den senest redigerede version. Hvis den lokale version ikke er lige så ny som serverversionen, vil den lokale version blive kasseret.",
   "newTimeMerge_描述": "Fusioner kun med serveren, når den lokale version er den nyeste, ellers overtag serverversionen (Bemærk: Slettet indhold vil blive gendannet under fusionsprocessen).",
@@ -87,6 +87,8 @@ const da: Partial<LangMap> = {
   "同步排除目录描述": "Mapper, der skal udelukkes fra note- og vedhæftningssynkronisering, en pr. linje. F.eks. Folder1",
   "同步排除扩展名": "Synkroniseringsekskluderingsudvidelser",
   "同步排除扩展名描述": "Filtyper, der skal udelukkes fra note- og vedhæftningssynkronisering, en pr. linje, med punktum. F.eks. .tmp",
+  "冲突文件已创建": "Konfliktfil oprettet: ${path}. Løs venligst konflikten manuelt.",
+  "合并冲突检测到": "Fletningskonflikt opdaget. En konfliktfil er blevet oprettet på serveren.",
 };
 
 

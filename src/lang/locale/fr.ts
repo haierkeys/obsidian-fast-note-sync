@@ -75,7 +75,7 @@ const fr: Partial<LangMap> = {
   "启动延迟": "Délai de démarrage (ms)",
   "启动延迟描述": "Délai avant l'exécution de la première vérification de mise à jour après la réussite de la connexion. Ajustez si Obsidian ralentit au démarrage à cause du chargement d'autres plugins. Par défaut 500 ms",
   "离线编辑合并策略": "Stratégie de fusion des notes après édition hors ligne",
-  "离线编辑合并策略描述": "Comment gérer le contenu après une édition hors ligne lors de la reconnexion au serveur. S'applique uniquement à ce client, effectif après reconnexion.",
+  "离线编辑合并策略描述": "Comment gérer le contenu après une édition hors ligne lors de la reconnexion au serveur. S'applique uniquement à ce client.",
   "策略": "Stratégie",
   "不合并_描述": "Ne pas fusionner, conserver uniquement la version la plus récemment éditée. Si la version locale n'est pas aussi récente que celle du serveur, la version locale sera ignorée.",
   "newTimeMerge_描述": "Ne fusionner avec le serveur que si la version locale est la plus récente, sinon adopter la version du serveur (Remarque : le contenu supprimé sera restauré pendant le processus de fusion).",
@@ -87,6 +87,8 @@ const fr: Partial<LangMap> = {
   "同步排除目录描述": "Répertoires à exclure de la synchronisation des notes et des pièces jointes, un par ligne. Ex : Folder1",
   "同步排除扩展名": "Extensions d'exclusion de synchronisation",
   "同步排除扩展名描述": "Types de fichiers à exclure de la synchronisation des notes et des pièces jointes, un par ligne, avec le point. Ex : .tmp",
+  "冲突文件已创建": "Fichier de conflit créé : ${path}. Veuillez résoudre le conflit manuellement.",
+  "合并冲突检测到": "Conflit de fusion détecté. Un fichier de conflit a été créé sur le serveur.",
 };
 
 

@@ -75,7 +75,7 @@ const ro: Partial<LangMap> = {
   "启动延迟": "Întârziere pornire (ms)",
   "启动延迟描述": "Întârzierea executării primei verificări a actualizărilor după succesul conexiunii. Ajustați dacă Obsidian sacadează la pornire din cauza încărcării altor pluginuri. Implicit 500 ms",
   "离线编辑合并策略": "Strategie de fuziune a notelor după editare offline",
-  "离线编辑合并策略描述": "Cum se gestionează conținutul după editarea offline la reconectarea la server. Se aplică doar pentru acest client, intră în vigoare după reconectare.",
+  "离线编辑合并策略描述": "Cum se gestionează conținutul după editarea offline la reconectarea la server. Se aplică doar pentru acest client.",
   "策略": "Strategie",
   "不合并_描述": "Nu fuzionați, păstrați doar versiunea editată cel mai recent. Dacă versiunea locală nu este la fel de nouă ca versiunea de pe server, versiunea locală va fi aruncată.",
   "newTimeMerge_描述": "Fuzionați cu serverul numai când versiunea locală este cea mai nouă, altfel adoptați versiunea serverului (Notă: conținutul șters va fi restaurat în timpul procesului de fuziune).",
@@ -87,6 +87,8 @@ const ro: Partial<LangMap> = {
   "同步排除目录描述": "Directoare de exclus de la sincronizarea notelor și atașamentelor, unul pe linie. Ex: Folder1",
   "同步排除扩展名": "Extensii excluse de la sincronizare",
   "同步排除扩展名描述": "Tipuri de fișiere de exclus de la sincronizarea notelor și atașamentelor, unul pe linie, cu punct. Ex: .tmp",
+  "冲突文件已创建": "Fișier de conflict creat: ${path}. Vă rugăm să rezolvați conflictul manual.",
+  "合并冲突检测到": "Conflict de fuziune detectat. Un fișier de conflict a fost creat pe server.",
 };
 
 

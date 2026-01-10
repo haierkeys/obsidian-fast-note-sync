@@ -40,7 +40,7 @@ export class HttpApiService {
         const params = new URLSearchParams({
             vault: this.plugin.settings.vault,
             path: path,
-            path_hash: hashContent(path),
+            pathHash: hashContent(path),
             page: page.toString(),
             pageSize: pageSize.toString()
         });

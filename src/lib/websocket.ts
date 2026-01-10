@@ -3,7 +3,12 @@ import { Notice, moment, Platform } from "obsidian";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
 import { dump, isWsUrl, addRandomParam, isPathExcluded } from "./helps";
+import { $ } from "../lang/lang";
 import type FastSync from "../main";
+
+// 冲突相关错误码
+const ERROR_MERGE_CONFLICT = 532
+const ERROR_CONFLICT_FILE_CREATED = 533
 
 
 // WebSocket 连接常量
@@ -173,30 +178,17 @@ export class WebSocketClient {
             this.plugin.saveSettings()
             dump("Service authorization success")
 
-            let clientName = ""
-            if (Platform.isDesktopApp && Platform.isMacOS) {
-              clientName += "Mac"
-            } else if (Platform.isDesktopApp && Platform.isWin) {
-              clientName += "Win"
-            } else if (Platform.isDesktopApp && Platform.isLinux) {
-              clientName += "Linux"
-            } else if (Platform.isIosApp && Platform.isTablet) {
-              clientName += "iPad"
-            } else if (Platform.isIosApp && Platform.isPhone) {
-              clientName += "iPhone"
-            } else if (Platform.isAndroidApp && Platform.isTablet) {
-              clientName += "Android"
-            } else if (Platform.isAndroidApp && Platform.isPhone) {
-              clientName += "Android"
-            }
-            clientName = this.plugin.settings.clientName + (this.plugin.settings.clientName != "" ? " " + clientName : clientName)
-
-            this.Send("ClientInfo", JSON.stringify({ name: clientName, version: this.plugin.settings.apiVersion, offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy }))
+            this.sendClientInfo()
             this.StartHandle()
           }
         }
         if (data.code == 0 || data.code > 200) {
-          new Notice("Service Error: Code=" + data.code + " Message=" + data.message + " Details=" + data.details)
+          // 处理冲突相关错误码
+          if (data.code === ERROR_MERGE_CONFLICT || data.code === ERROR_CONFLICT_FILE_CREATED) {
+            this.handleConflictError(data)
+          } else {
+            new Notice("Service Error: Code=" + data.code + " Message=" + data.message + " Details=" + data.details)
+          }
         } else {
 
           if (typeof data === 'object' && 'vault' in data && data.vault != null && data.vault != this.plugin.settings.vault) {
@@ -332,6 +324,40 @@ export class WebSocketClient {
     }
   }
 
+  /**
+   * 发送客户端信息到服务端
+   * 用于更新客户端名称、版本、离线同步策略等信息
+   */
+  public sendClientInfo() {
+    if (!this.isAuth) {
+      return
+    }
+
+    let clientName = ""
+    if (Platform.isDesktopApp && Platform.isMacOS) {
+      clientName += "Mac"
+    } else if (Platform.isDesktopApp && Platform.isWin) {
+      clientName += "Win"
+    } else if (Platform.isDesktopApp && Platform.isLinux) {
+      clientName += "Linux"
+    } else if (Platform.isIosApp && Platform.isTablet) {
+      clientName += "iPad"
+    } else if (Platform.isIosApp && Platform.isPhone) {
+      clientName += "iPhone"
+    } else if (Platform.isAndroidApp && Platform.isTablet) {
+      clientName += "Android"
+    } else if (Platform.isAndroidApp && Platform.isPhone) {
+      clientName += "Android"
+    }
+    clientName = this.plugin.settings.clientName + (this.plugin.settings.clientName != "" ? " " + clientName : clientName)
+
+    this.Send("ClientInfo", JSON.stringify({
+      name: clientName,
+      version: this.plugin.settings.apiVersion,
+      offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy
+    }))
+  }
+
   public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, defer?: () => void) {
     if (this.ws.readyState !== WebSocket.OPEN) {
       return
@@ -360,5 +386,25 @@ export class WebSocketClient {
     }
     this.ws.send(dataToSend)
     defer?.()
+  }
+
+  /**
+   * 处理冲突相关错误
+   * 当服务端检测到合并冲突或创建冲突文件时调用
+   */
+  private handleConflictError(data: { code: number; data?: { conflictPath?: string; message?: string }; message?: string; details?: string }) {
+    const conflictData = data.data
+    const conflictPath = conflictData?.conflictPath || ""
+    const message = conflictData?.message || data.message || ""
+
+    dump("Conflict detected:", { code: data.code, conflictPath, message })
+
+    if (data.code === ERROR_CONFLICT_FILE_CREATED && conflictPath) {
+      // 冲突文件已创建，显示详细通知
+      new Notice($("冲突文件已创建", { path: conflictPath }), 10000)
+    } else if (data.code === ERROR_MERGE_CONFLICT) {
+      // 合并冲突，需要手动解决
+      new Notice($("合并冲突检测到"), 8000)
+    }
   }
 }

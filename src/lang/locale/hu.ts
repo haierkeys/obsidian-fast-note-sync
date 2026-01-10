@@ -75,7 +75,7 @@ const hu: Partial<LangMap> = {
   "启动延迟": "Indítási késleltetés (ms)",
   "启动延迟描述": "A frissítések első ellenőrzésének késleltetése a sikeres konfigurációs kapcsolat után. Állítsa be, ha az Obsidian akadozik indításkor más bővítmények betöltése miatt. Alapértelmezett 500 ms",
   "离线编辑合并策略": "Jegyzet offline szerkesztési-összevonási stratégia",
-  "离线编辑合并策略描述": "Hogyan kezeljük a tartalmat az offline szerkesztés után, amikor újra csatlakozunk a szerverhez. Csak erre a kliensre vonatkozik, az újracsatlakozás után lép érvénybe.",
+  "离线编辑合并策略描述": "Hogyan kezeljük a tartalmat az offline szerkesztés után, amikor újra csatlakozunk a szerverhez. Csak erre a kliensre vonatkozik.",
   "策略": "Stratégia",
   "不合并_描述": "Nincs összevonás, csak a legutóbb szerkesztett verziót tartjuk meg. Ha a helyi verzió nem olyan új, mint a szerververzió, a helyi verzió elvetésre kerül.",
   "newTimeMerge_描述": "Csak akkor vonja össze a szerverrel, ha a helyi verzió a legújabb, különben a szerver verzióját fogadja el (Megjegyzés: a törölt tartalom visszaállításra kerül az összevonási folyamat során).",
@@ -87,6 +87,8 @@ const hu: Partial<LangMap> = {
   "同步排除目录描述": "A jegyzet- és mellékletszinkronizálásból kizárandó könyvtárak, soronként egy. Pl. Folder1",
   "同步排除扩展名": "Szinkronizálásból kizárt kiterjesztések",
   "同步排除扩展名描述": "A jegyzet- és mellékletszinkronizálásból kizárandó fájltípusok, soronként egy, ponttal. Pl. .tmp",
+  "冲突文件已创建": "Konfliktus fájl létrehozva: ${path}. Kérjük, oldja meg a konfliktust manuálisan.",
+  "合并冲突检测到": "Összevonási konfliktus észlelve. Konfliktus fájl jött létre a szerveren.",
 };
 
 

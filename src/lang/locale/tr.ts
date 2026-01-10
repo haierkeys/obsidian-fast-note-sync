@@ -75,7 +75,7 @@ const tr: Partial<LangMap> = {
   "启动延迟": "Başlatma gecikmesi (ms)",
   "启动延迟描述": "Yapılandırma bağlantısı başarılı olduktan sonra güncellemeler için ilk kontrolün yürütülmesindeki gecikme. Diğer eklentilerin yüklenmesi nedeniyle Obsidian açılışta donuyorsa bunu ayarlayın. Varsayılan 500 ms",
   "离线编辑合并策略": "Not çevrimdışı düzenleme birleştirme stratejisi",
-  "离线编辑合并策略描述": "Sunucuya yeniden bağlandığında çevrimdışı düzenlemeden sonra içeriğin işlenme şekli. Yalnızca bu istemci için geçerlidir, yeniden bağlandıktan sonra etkili olur.",
+  "离线编辑合并策略描述": "Sunucuya yeniden bağlandığında çevrimdışı düzenlemeden sonra içeriğin işlenme şekli. Yalnızca bu istemci için geçerlidir.",
   "策略": "Strateji",
   "不合并_描述": "Birleştirme, yalnızca en son düzenlenen sürümü koru. Yerel sürüm sunucu sürümü kadar yeni değilse yerel sürüm atılacaktır.",
   "newTimeMerge_描述": "Yalnızca yerel sürüm en güncel olduğunda sunucuyla birleştir, aksi takdirde sunucu sürümünü benimse (Not: birleştirme işlemi sırasında silinen içerik geri yüklenecektir).",
@@ -87,6 +87,8 @@ const tr: Partial<LangMap> = {
   "同步排除目录描述": "Not ve ek senkronizasyonundan dışlanacak dizinler, her satıra bir tane. Örn: Folder1",
   "同步排除扩展名": "Senkronizasyon dışlama uzantıları",
   "同步排除扩展名描述": "Not ve ek senkronizasyonundan dışlanacak dosya türleri, her satıra bir tane, noktalı. Örn: .tmp",
+  "冲突文件已创建": "Çakışma dosyası oluşturuldu: ${path}. Lütfen çakışmayı manuel olarak çözün.",
+  "合并冲突检测到": "Birleştirme çakışması tespit edildi. Sunucuda bir çakışma dosyası oluşturuldu.",
 };
 
 
