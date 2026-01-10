@@ -75,7 +75,7 @@ const ms: Partial<LangMap> = {
   "启动延迟": "Penundaan mula (ms)",
   "启动延迟描述": "Penundaan pelaksanaan pemeriksaan kemas kini pertama selepas sambungan konfigurasi berjaya. Laraskan jika Obsidian tersekat semasa mula kerana plugin lain sedang dimuatkan. Lalai 500 ms",
   "离线编辑合并策略": "Strategi penggabungan nota selepas penyuntingan luar talian",
-  "离线编辑合并策略描述": "Cara mengendalikan kandungan selepas penyuntingan luar talian apabila menyambung semula ke pelayan. Hanya untuk klien ini, berkesan selepas penyambungan semula.",
+  "离线编辑合并策略描述": "Cara mengendalikan kandungan selepas penyuntingan luar talian apabila menyambung semula ke pelayan. Hanya untuk klien ini.",
   "策略": "Strategi",
   "不合并_描述": "Jangan gabungkan, hanya simpan versi yang paling baru disunting. Jika versi tempatan tidak sebaharu versi pelayan, versi tempatan akan dibuang.",
   "newTimeMerge_描述": "Hanya gabungkan dengan pelayan apabila versi tempatan adalah yang terbaru, jika tidak, terima versi pelayan (Nota: kandungan yang dipadam akan dipulihkan semasa proses penggabungan).",
@@ -87,6 +87,8 @@ const ms: Partial<LangMap> = {
   "同步排除目录描述": "Direktori yang dikecualikan daripada penyegerakan nota dan lampiran, satu setiap baris. Contoh: Folder1",
   "同步排除扩展名": "Ekstensi pengecualian penyegerakan",
   "同步排除扩展名描述": "Jenis fail yang dikecualikan daripada penyegerakan nota dan lampiran, satu setiap baris, dengan titik. Contoh: .tmp",
+  "冲突文件已创建": "Fail konflik dicipta: ${path}. Sila selesaikan konflik secara manual.",
+  "合并冲突检测到": "Konflik penggabungan dikesan. Fail konflik telah dicipta di pelayan.",
 };
 
 

@@ -273,7 +273,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           contentHash: contentHash,
           mtime: file.stat.mtime,
           size: file.stat.size,
-          ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+          // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+          ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
         }
 
         notes.push(item);
@@ -287,7 +288,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           contentHash: contentHash,
           mtime: file.stat.mtime,
           size: file.stat.size,
-          ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+          // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+          ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
         }
         files.push(item);
       }

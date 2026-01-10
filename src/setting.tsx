@@ -257,6 +257,8 @@ export class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.offlineSyncStrategy = value
             await this.plugin.saveSettings("offlineSyncStrategy")
+            // 立即发送 ClientInfo 到服务端，使设置立即生效
+            this.plugin.websocket.sendClientInfo()
           })
       )
 

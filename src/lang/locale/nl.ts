@@ -75,7 +75,7 @@ const nl: Partial<LangMap> = {
   "启动延迟": "Opstartvertraging (ms)",
   "启动延迟描述": "Vertraging bij het uitvoeren van de eerste controle op updates nadat de configuratieverbinding is geslaagd. Pas aan als Obsidian hapert bij het opstarten doordat andere plugins worden geladen. Standaard 500 ms",
   "离线编辑合并策略": "Notitie offline bewerkings-fusiestrategie",
-  "离线编辑合并策略描述": "Hoe om te gaan met inhoud na offline bewerking bij het opnieuw verbinden met de server. Geldt alleen voor deze client, effectief na herverbinding.",
+  "离线编辑合并策略描述": "Hoe om te gaan met inhoud na offline bewerking bij het opnieuw verbinden met de server. Geldt alleen voor deze client.",
   "策略": "Strategie",
   "不合并_描述": "Geen fusie, alleen de meest recent bewerkte versie behouden. Als de lokale versie niet zo nieuw is als de serverversie, wordt de lokale versie weggegooid.",
   "newTimeMerge_描述": "Alleen fuseren met de server als de lokale versie de nieuwste is, anders de serverversie overnemen (Opmerking: verwijderde inhoud wordt hersteld tijdens het fusieproces).",
@@ -87,6 +87,8 @@ const nl: Partial<LangMap> = {
   "同步排除目录描述": "Mappen die moeten worden uitgesloten van notitie- en bijlagesynchronisatie, één per regel. Bijv. Folder1",
   "同步排除扩展名": "Extensies voor synchronisatie-uitsluiting",
   "同步排除扩展名描述": "Bestandstypen die moeten worden uitgesloten van notitie- en bijlagesynchronisatie, één per regel, met punt. Bijv. .tmp",
+  "冲突文件已创建": "Conflictbestand aangemaakt: ${path}. Los het conflict handmatig op.",
+  "合并冲突检测到": "Samenvoegconflict gedetecteerd. Er is een conflictbestand aangemaakt op de server.",
 };
 
 

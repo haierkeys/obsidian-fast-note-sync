@@ -46,7 +46,8 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
     mtime: file.stat.mtime,
     ctime: file.stat.ctime,
     size: file.stat.size,
-    ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+    // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+    ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
   plugin.websocket.MsgSend("FileUploadCheck", data)
   dump(`File modify check sent`, data.path, data.contentHash)

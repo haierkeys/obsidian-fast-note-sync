@@ -30,7 +30,8 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
     pathHash: hashContent(file.path),
     content: content,
     contentHash: contentHash,
-    ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+    // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+    ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
   plugin.websocket.MsgSend("NoteModify", data)
   dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
@@ -98,7 +99,8 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
     contentHash: contentHash,
     oldPath: oldfile,
     oldPathHash: hashContent(oldfile),
-    ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+    // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+    ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
 
   plugin.websocket.MsgSend("NoteRename", data)
@@ -169,7 +171,8 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
     pathHash: hashContent(file.path),
     content: content,
     contentHash: contentHash,
-    ...(baseHash !== contentHash && baseHash !== null ? { baseHash } : {}),
+    // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+    ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
   plugin.websocket.MsgSend("NoteModify", sendData, function () {
     plugin.fileHashManager.setFileHash(file.path, contentHash)

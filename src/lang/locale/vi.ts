@@ -75,7 +75,7 @@ const vi: Partial<LangMap> = {
   "启动延迟": "Độ trễ khi khởi động (ms)",
   "启动延迟描述": "Độ trễ thực hiện lần kiểm tra cập nhật đầu tiên sau khi kết nối cấu hình thành công. Điều chỉnh nếu Obsidian bị lag khi khởi động do các plugin khác đang tải. Mặc định 500 ms",
   "离线编辑合并策略": "Chiến lược hợp nhất ghi chú khi chỉnh sửa ngoại tuyến",
-  "离线编辑合并策略描述": "Cách xử lý nội dung sau khi chỉnh sửa ngoại tuyến khi kết nối lại với máy chủ. Chỉ dành cho máy khách này, có hiệu lực sau khi kết nối lại.",
+  "离线编辑合并策略描述": "Cách xử lý nội dung sau khi chỉnh sửa ngoại tuyến khi kết nối lại với máy chủ. Chỉ dành cho máy khách này.",
   "策略": "Chiến lược",
   "不合并_描述": "Không hợp nhất, chỉ giữ lại phiên bản được chỉnh sửa gần đây nhất. Nếu phiên bản cục bộ cũ hơn phiên bản máy chủ, phiên bản cục bộ sẽ bị loại bỏ.",
   "newTimeMerge_描述": "Chỉ hợp nhất với máy chủ khi phiên bản cục bộ là mới nhất, nếu không sẽ sử dụng phiên bản máy chủ (Lưu ý: nội dung đã xóa sẽ được khôi phục trong quá trình hợp nhất).",
@@ -87,6 +87,8 @@ const vi: Partial<LangMap> = {
   "同步排除目录描述": "Các thư mục cần loại trừ khỏi đồng bộ ghi chú và tệp đính kèm, mỗi dòng một thư mục. Ví dụ: Folder1",
   "同步排除扩展名": "Phần mở rộng loại trừ đồng bộ",
   "同步排除扩展名描述": "Các loại tệp cần loại trừ khỏi đồng bộ ghi chú và tệp đính kèm, mỗi dòng một loại, có dấu chấm. Ví dụ: .tmp",
+  "冲突文件已创建": "Tệp xung đột đã được tạo: ${path}. Vui lòng giải quyết xung đột thủ công.",
+  "合并冲突检测到": "Phát hiện xung đột hợp nhất. Một tệp xung đột đã được tạo trên máy chủ.",
 };
 
 

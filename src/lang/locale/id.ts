@@ -75,7 +75,7 @@ const id: Partial<LangMap> = {
   "启动延迟": "Penundaan awal (ms)",
   "启动延迟描述": "Penundaan eksekusi pemeriksaan pembaruan pertama setelah koneksi konfigurasi berhasil. Sesuaikan jika Obsidian tersendat saat memulai karena plugin lain sedang dimuat. Default 500 ms",
   "离线编辑合并策略": "Strategi penggabungan catatan setelah pengeditan offline",
-  "离线编辑合并策略描述": "Cara menangani konten setelah pengeditan offline saat terhubung kembali ke server. Hanya untuk klien ini, berlaku setelah penyambungan kembali.",
+  "离线编辑合并策略描述": "Cara menangani konten setelah pengeditan offline saat terhubung kembali ke server. Hanya untuk klien ini.",
   "策略": "Strategi",
   "不合并_描述": "Jangan gabungkan, hanya simpan versi yang paling baru diedit. Jika versi lokal tidak terbaru dibandingkan versi server, versi lokal akan dibuang.",
   "newTimeMerge_描述": "Hanya gabungkan dengan server saat versi lokal adalah yang terbaru, jika tidak, adopsi versi server (Catatan: konten yang dihapus akan dipulihkan selama proses penggabungan).",
@@ -87,6 +87,8 @@ const id: Partial<LangMap> = {
   "同步排除目录描述": "Direktori yang dikecualikan dari sinkronisasi catatan and lampiran, satu per baris. Contoh: Folder1",
   "同步排除扩展名": "Ekstensi pengecualian sinkronisasi",
   "同步排除扩展名描述": "Jenis file yang dikecualikan dari sinkronisasi catatan and lampiran, satu per baris, dengan titik. Contoh: .tmp",
+  "冲突文件已创建": "File konflik dibuat: ${path}. Silakan selesaikan konflik secara manual.",
+  "合并冲突检测到": "Konflik penggabungan terdeteksi. File konflik telah dibuat di server.",
 };
 
 

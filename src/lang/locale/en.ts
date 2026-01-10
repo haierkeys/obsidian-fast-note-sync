@@ -87,6 +87,8 @@ const en: Partial<LangMap> = {
   "同步排除目录描述": "Directories to exclude from sync, one per line. e.g., Cache",
   "同步排除扩展名": "Excluded Extensions",
   "同步排除扩展名描述": "File extensions to exclude from sync, one per line, with dot. e.g., .tmp",
+  "冲突文件已创建": "Conflict file created: ${path}. Please manually resolve the conflict.",
+  "合并冲突检测到": "Merge conflict detected. A conflict file has been created on the server.",
 };
 
 
