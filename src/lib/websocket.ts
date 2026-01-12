@@ -3,12 +3,14 @@ import { Notice, moment, Platform } from "obsidian";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
 import { dump, isWsUrl, addRandomParam, isPathExcluded } from "./helps";
-import { $ } from "../lang/lang";
 import type FastSync from "../main";
+import { $ } from "../lang/lang";
+
 
 // 冲突相关错误码
-const ERROR_MERGE_CONFLICT = 532
-const ERROR_CONFLICT_FILE_CREATED = 533
+const ERROR_SYNC_CONFLICT = 530
+
+
 
 
 // WebSocket 连接常量
@@ -184,7 +186,7 @@ export class WebSocketClient {
         }
         if (data.code == 0 || data.code > 200) {
           // 处理冲突相关错误码
-          if (data.code === ERROR_MERGE_CONFLICT || data.code === ERROR_CONFLICT_FILE_CREATED) {
+          if (data.code === ERROR_SYNC_CONFLICT) {
             this.handleConflictError(data)
           } else {
             new Notice("Service Error: Code=" + data.code + " Message=" + data.message + " Details=" + data.details)
@@ -193,6 +195,9 @@ export class WebSocketClient {
 
           if (typeof data === 'object' && 'vault' in data && data.vault != null && data.vault != this.plugin.settings.vault) {
             dump("Service vault " + data.vault + " not match " + this.plugin.settings.vault)
+            return
+          }
+          if (data.code == "") {
             return
           }
           const handler = receiveOperators.get(msgAction)
@@ -392,19 +397,15 @@ export class WebSocketClient {
    * 处理冲突相关错误
    * 当服务端检测到合并冲突或创建冲突文件时调用
    */
-  private handleConflictError(data: { code: number; data?: { conflictPath?: string; message?: string }; message?: string; details?: string }) {
-    const conflictData = data.data
-    const conflictPath = conflictData?.conflictPath || ""
-    const message = conflictData?.message || data.message || ""
+  private handleConflictError(data: { code: number; data?: { Path?: string }; message?: string; }) {
+    const path = data.data?.Path
 
-    dump("Conflict detected:", { code: data.code, conflictPath, message })
 
-    if (data.code === ERROR_CONFLICT_FILE_CREATED && conflictPath) {
+    dump("Conflict detected:", { code: data.code, Path: path, message: data.message })
+
+    if (data.code === ERROR_SYNC_CONFLICT && path) {
       // 冲突文件已创建，显示详细通知
-      new Notice($("冲突文件已创建", { path: conflictPath }), 10000)
-    } else if (data.code === ERROR_MERGE_CONFLICT) {
-      // 合并冲突，需要手动解决
-      new Notice($("合并冲突检测到"), 8000)
+      new Notice($("同步冲突", { path: path }), 10000)
     }
   }
 }
