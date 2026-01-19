@@ -55,16 +55,17 @@
 
 - 如果觉得这个插件很有用，并且想要它继续开发，请在以下方式支持我:
 
-  | Ko-fi *非中国地区*  |  | 微信扫码打赏 *中国地区* |
-  | --- | ---| --- |
+  | Ko-fi *非中国地区*                                                                                                   |    | 微信扫码打赏 *中国地区*                                            |
+  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
 ## 🚀 快速开始
 
 1. 安装插件 (二选一)
-   - **官方商店**: <s>打开 OBSidian 社区插件市场, 搜索 **Fast Note Sync** 安装</s>
+   - **官方商店**: <s>打开 Obsidian 社区插件市场, 搜索 **Fast Note Sync** 安装</s>
         > ⚠️ 插件尚未上架官方商店,无法搜索, 请手动安装
    - **手动安装**: 访问 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下载安装包, 解压到 Obsidian 插件目录下 **.obsidian/plugin**
+   - 使用 **BRAT** 安装 ( 支持手机安装 ): 在 Obsidian 插件社区市场, 搜索并安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件, 进入插件设置界面, 点击 **Add beta plugin** 并粘贴 https://github.com/haierkeys/obsidian-fast-note-sync
 2. 打开插件配置项，点击 **粘贴远端配置** 按钮，将远端服务配置粘贴到输入框中。
 
 

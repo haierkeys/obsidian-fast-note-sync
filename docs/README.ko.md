@@ -66,6 +66,7 @@
    - **공식 스토어**: <s>Obsidian 커뮤니티 플러그인 마켓에서 **Fast Note Sync**를 검색하여 설치</s>
         > ⚠️ 아직 공식 스토어에 등록되지 않아 검색이 불가능합니다. 수동으로 설치해 주세요.
    - **수동 설치**: https://github.com/haierkeys/obsidian-fast-note-sync/releases 에서 설치 패키지를 다운로드하여 Obsidian 플러그인 디렉토리인 **.obsidian/plugins**에 압축을 풉니다.
+   - **BRAT**를 사용하여 설치 (모바일 설치 지원): Obsidian 플러그인 커뮤니티 마켓에서 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 플러그인을 검색하여 설치합니다. 플러그인 설정 인터페이스로 이동하여 **Add beta plugin**을 클릭하고 https://github.com/haierkeys/obsidian-fast-note-sync 를 붙여넣습니다.
 2. 플러그인 설정을 열고 **원격 구성 붙여넣기** 버튼을 클릭하여 원격 서비스 구성을 입력창에 붙여넣습니다.
 
 

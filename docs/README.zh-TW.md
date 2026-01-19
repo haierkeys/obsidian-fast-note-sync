@@ -66,6 +66,7 @@
    - **官方商店**: <s>打開 Obsidian 社區插件市場, 搜索 **Fast Note Sync** 安裝</s>
         > ⚠️ 插件尚未上架官方商店, 無法搜索, 請手動安裝
    - **手動安裝**: 訪問 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下載安裝包, 解压到 Obsidian 插件目錄下 **.obsidian/plugins**
+   - 使用 **BRAT** 安裝 ( 支持手機安裝 ): 在 Obsidian 插件社區市場, 搜索並安裝 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件, 進入插件設置界面, 點擊 **Add beta plugin** 並粘貼 https://github.com/haierkeys/obsidian-fast-note-sync
 2. 打開插件配置項，點擊 **粘貼遠端配置** 按鈕，將遠端服務配置粘貼到輸入框中。
 
 
