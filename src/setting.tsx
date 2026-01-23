@@ -8,6 +8,7 @@ import FastSync from "./main";
 
 
 export interface PluginSettings {
+  isInitSync: boolean
   //是否自动上传
   syncEnabled: boolean
   // 是否开启配置项同步
@@ -31,6 +32,7 @@ export interface PluginSettings {
   offlineSyncStrategy: string
   syncExcludeFolders: string
   syncExcludeExtensions: string
+  pdfSyncEnabled: boolean
 }
 
 /**
@@ -42,6 +44,7 @@ export interface PluginSettings {
 
 // 默认插件设置
 export const DEFAULT_SETTINGS: PluginSettings = {
+  isInitSync: false,
   // 是否自动上传
   syncEnabled: true,
   configSyncEnabled: false,
@@ -62,6 +65,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   offlineSyncStrategy: "",
   syncExcludeFolders: "",
   syncExcludeExtensions: "",
+  pdfSyncEnabled: true,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -157,6 +161,18 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+
+    new Setting(set)
+      .setName($("开启 PDF 状态同步"))
+      .setDesc($("开启 PDF 状态同步描述"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.pdfSyncEnabled) {
+            this.plugin.settings.pdfSyncEnabled = value
+            await this.plugin.saveSettings()
+          }
+        })
+      )
     new Setting(set)
       .setName("| " + $("远端"))
       .setHeading()
@@ -179,6 +195,7 @@ export class SettingTab extends PluginSettingTab {
             if (value != this.plugin.settings.api) {
               this.plugin.wsSettingChange = true
               this.plugin.settings.api = value
+              this.plugin.settings.isInitSync = false
               await this.plugin.saveSettings()
             }
           })
@@ -195,6 +212,7 @@ export class SettingTab extends PluginSettingTab {
             if (value != this.plugin.settings.apiToken) {
               this.plugin.wsSettingChange = true
               this.plugin.settings.apiToken = value
+              this.plugin.settings.isInitSync = false
               await this.plugin.saveSettings()
             }
           })
@@ -267,7 +285,7 @@ export class SettingTab extends PluginSettingTab {
     const thead = table.createEl("thead")
     const headerRow = thead.createEl("tr")
     headerRow.createEl("th", { text: $("策略") })
-    headerRow.createEl("th", { text: $("说明") })
+    headerRow.createEl("th", { text: $("策略说明") })
 
     const tbody = table.createEl("tbody")
 
@@ -280,6 +298,9 @@ export class SettingTab extends PluginSettingTab {
     addRow($("策略选项_默认"), $("不合并_描述"))
     addRow($("策略选项_newTimeMerge"), $("newTimeMerge_描述"))
     addRow($("策略选项_ignoreTimeMerge"), $("ignoreTimeMerge_描述"))
+
+    strategyDesc.createEl("div", { text: $("策略注意"), cls: "fast-note-sync-settings-strategy-notice" })
+
 
     new Setting(set)
       .setName("| " + $("支持"))

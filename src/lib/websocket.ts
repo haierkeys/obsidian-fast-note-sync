@@ -33,7 +33,7 @@ export class WebSocketClient {
 
 
   public isRegister: boolean = false
-  private onStatusChange?: (status: boolean) => void
+  private statusListeners: Set<(status: boolean) => void> = new Set();
 
   // Binary message handlers registry
   private binaryHandlers = new Map<string, (data: ArrayBuffer | Blob, plugin: FastSync) => void>();
@@ -58,6 +58,22 @@ export class WebSocketClient {
     this.binaryHandlers.set(prefix, handler);
   }
 
+  public addStatusListener(listener: (status: boolean) => void) {
+    this.statusListeners.add(listener);
+    // Notify immediately of current state if already registered
+    if (this.isRegister) {
+      listener(this.isOpen);
+    }
+  }
+
+  public removeStatusListener(listener: (status: boolean) => void) {
+    this.statusListeners.delete(listener);
+  }
+
+  private notifyStatusChange(status: boolean) {
+    this.statusListeners.forEach(listener => listener(status));
+  }
+
   public isConnected(): boolean {
     return this.isOpen
   }
@@ -65,7 +81,7 @@ export class WebSocketClient {
   public register(onStatusChange?: (status: boolean) => void) {
     this.wsApi = this.plugin.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
 
-    if (onStatusChange) this.onStatusChange = onStatusChange
+    if (onStatusChange) this.statusListeners.add(onStatusChange)
 
     if ((!this.ws || this.ws.readyState !== WebSocket.OPEN) && isWsUrl(this.wsApi)) {
       this.isRegister = true
@@ -80,7 +96,7 @@ export class WebSocketClient {
           readyState: this.ws.readyState,
           error: error
         })
-        if (this.onStatusChange) this.onStatusChange(false)
+        this.notifyStatusChange(false)
       }
       this.ws.onopen = (e: Event): void => {
         this.timeConnect = 0
@@ -90,7 +106,7 @@ export class WebSocketClient {
           timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
           url: url
         })
-        if (this.onStatusChange) this.onStatusChange(true)
+        this.notifyStatusChange(true)
         this.Send("Authorization", this.plugin.settings.apiToken)
         dump("Service authorization")
         this.OnlineStatusCheck()
@@ -98,7 +114,7 @@ export class WebSocketClient {
       this.ws.onclose = (e) => {
         this.isAuth = false
         this.isOpen = false
-        if (this.onStatusChange) this.onStatusChange(false)
+        this.notifyStatusChange(false)
         window.clearInterval(this.checkConnection)
 
         dump("Service close details:", {

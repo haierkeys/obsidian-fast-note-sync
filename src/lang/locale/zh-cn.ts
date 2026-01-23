@@ -94,9 +94,8 @@ const zh_cn: Partial<LangMap> = {
   "同步排除扩展名": "同步排除扩展名",
   "同步排除扩展名描述": "笔记和附件同步需要排除的文件类型，每行一个，带点。例如：.tmp",
   "同步冲突": "检测到同步冲突，已强制合并，需要手动处理 ${path}。",
-  "LocalStorage 同步": "LocalStorage 同步项",
-  "LocalStorage 同步描述": "需要同步的 LocalStorage 键，每行一个。例如：pdfjs.history",
-  "LocalStorage 同步输入": "输入 LocalStorage 键，每行一个"
+  "开启 PDF 状态同步": "开启 PDF 状态同步",
+  "开启 PDF 状态同步描述": "开启后将同步 PDF 查看器的阅读状态 (本设置需要开启配置项同步)"
 }
 
 

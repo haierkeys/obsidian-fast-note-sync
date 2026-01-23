@@ -24,37 +24,48 @@ const CONFIG_EXCLUDE_SET = new Set<string>()
 let reloadTimer: NodeJS.Timeout | null = null
 const pendingConfigUpdates: Map<string, string> = new Map()
 
-export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
-
+export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false, content?: string) {
     if (plugin.settings.configSyncEnabled == false) return
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
     if (configIsPathExcluded(path, plugin)) return
 
+    // 如果是文件系统事件（无 content），拦截 LocalStorage 虚拟路径
+    if (!content && path.startsWith(plugin.localStorageManager.prefix)) return
+
     plugin.addIgnoredConfigFile(path)
 
-    const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
-    let contentStr = ""
-    let contentBuf: ArrayBuffer | null = null
+    let contentStr = content || ""
+    let contentHash = ""
     let mtime = 0
     let ctime = 0
 
-    try {
-        const exists = await plugin.app.vault.adapter.exists(filePath)
-        if (exists) {
-            const stat = await plugin.app.vault.adapter.stat(filePath)
-            if (stat) {
-                contentBuf = await plugin.app.vault.adapter.readBinary(filePath)
-                contentStr = new TextDecoder().decode(contentBuf)
-                mtime = stat.mtime
-                ctime = stat.ctime
+    if (content !== undefined) {
+        // 直接使用传入的内容（通常是 LocalStorage）
+        contentHash = hashContent(content)
+        mtime = Date.now()
+        ctime = Date.now()
+    } else {
+        // 从文件系统读取
+        const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
+        try {
+            const exists = await plugin.app.vault.adapter.exists(filePath)
+            if (exists) {
+                const stat = await plugin.app.vault.adapter.stat(filePath)
+                if (stat) {
+                    const contentBuf = await plugin.app.vault.adapter.readBinary(filePath)
+                    contentStr = new TextDecoder().decode(contentBuf)
+                    contentHash = hashArrayBuffer(contentBuf)
+                    mtime = stat.mtime
+                    ctime = stat.ctime
+                }
             }
+        } catch (error) {
+            console.error("读取配置文件出错:", error)
         }
-    } catch (error) {
-        console.error("读取配置文件出错:", error)
     }
 
-    if (!contentBuf || mtime === 0) {
+    if (contentHash === "" || mtime === 0) {
         plugin.removeIgnoredConfigFile(path)
         return
     }
@@ -64,7 +75,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
         path: path,
         pathHash: hashContent(path),
         content: contentStr,
-        contentHash: hashArrayBuffer(contentBuf),
+        contentHash: contentHash,
         mtime: mtime,
         ctime: ctime,
     }
@@ -95,6 +106,20 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
     plugin.addIgnoredConfigFile(data.path)
     try {
+        // 拦截 LocalStorage 更新
+        if (data.path.startsWith(plugin.localStorageManager.prefix)) {
+            if (await plugin.localStorageManager.handleReceivedUpdate(data.path, data.content)) {
+                plugin.removeIgnoredConfigFile(data.path)
+                if (plugin.settings.lastConfigSyncTime < data.lastTime) {
+                    plugin.settings.lastConfigSyncTime = data.lastTime
+                    await plugin.saveData(plugin.settings)
+                }
+                plugin.configSyncTasks.completed++
+                return
+            }
+            return
+        }
+
         const folder = data.path.split("/").slice(0, -1).join("/")
         if (folder !== "") {
             const fullFolderPath = normalizePath(`${plugin.app.vault.configDir}/${folder}`)
@@ -122,6 +147,7 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
     if (configIsPathExcluded(data.path, plugin)) return;
+    if (data.path.startsWith(plugin.localStorageManager.prefix)) return;
 
     plugin.addIgnoredConfigFile(data.path);
 

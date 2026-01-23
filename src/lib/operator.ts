@@ -10,7 +10,7 @@ import { $ } from "../lang/lang";
 
 
 export const startupSync = (plugin: FastSync): void => {
-  void handleSync(plugin);
+  void handleSync(plugin, plugin.settings.isInitSync);
 };
 export const startupFullSync = async (plugin: FastSync) => {
   void handleSync(plugin);
@@ -21,6 +21,7 @@ export const resetSettingSyncTime = async (plugin: FastSync) => {
   plugin.settings.lastFileSyncTime = 0;
   plugin.settings.lastNoteSyncTime = 0;
   plugin.settings.lastConfigSyncTime = 0;
+  plugin.settings.isInitSync = false;
   plugin.saveSettings();
 };
 
@@ -76,6 +77,12 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
 
     new Notice($("同步完成"));
     plugin.updateStatusBar($("同步完成"));
+
+    if (plugin.expectedSyncCount > 0 && !plugin.settings.isInitSync) {
+      plugin.settings.isInitSync = true;
+      plugin.saveSettings();
+    }
+
     setTimeout(() => plugin.updateStatusBar(""), 5000);
   } else {
     // 实时计算加权进度，防止由于任务总数突增导致的百分比回跳
@@ -312,6 +319,14 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         mtime: stat.mtime,
         size: stat.size
       });
+    }
+  }
+
+  // 加入 LocalStorage 同步项
+  if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
+    const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
+    for (const sc of storageConfigs) {
+      configs.push(sc);
     }
   }
 

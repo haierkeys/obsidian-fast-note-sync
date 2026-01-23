@@ -1,4 +1,6 @@
+import { useState, useEffect, useRef } from "react";
 import { dump } from "src/lib/helps";
+import { setIcon } from "obsidian";
 import FastSync from "src/main";
 
 import { $ } from "../lang/lang";
@@ -68,9 +70,32 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
   }
 }
 
-const handleClipboardClick = (plugin: FastSync) => { getClipboardContent(plugin).catch(err => { dump(err); }); };
+const handleClipboardClick = (plugin: FastSync) => {
+  getClipboardContent(plugin).catch(err => { dump(err); });
+};
 
 export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
+  const [isConnected, setIsConnected] = useState<boolean>(plugin.websocket.isConnected());
+  const iconRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const listener = (status: boolean) => {
+      setIsConnected(status);
+    };
+
+    plugin.websocket.addStatusListener(listener);
+    return () => {
+      plugin.websocket.removeStatusListener(listener);
+    };
+  }, [plugin.websocket]);
+
+  useEffect(() => {
+    if (iconRef.current) {
+      iconRef.current.empty();
+      setIcon(iconRef.current, isConnected ? "wifi" : "wifi-off");
+    }
+  }, [isConnected]);
+
   return (
     <>
       <div className="setting-item">
@@ -101,9 +126,25 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
         </table>
       </div>
       <div className="clipboard-read">
-        <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
-          {$("粘贴的远端配置")}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
+            {$("粘贴服务端配置")}
+          </button>
+          <div className="connection-status-container" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+            <span
+              ref={iconRef}
+              className="connection-status-icon"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                color: isConnected ? '#4caf50' : '#f44336'
+              }}
+            />
+            <span style={{ color: 'var(--text-muted)' }}>
+              {isConnected ? $("服务已连接") : $("服务已断开")}
+            </span>
+          </div>
+        </div>
         <div className="clipboard-read-description">{plugin.clipboardReadTip}</div>
       </div>
     </>
