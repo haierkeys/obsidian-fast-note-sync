@@ -29,7 +29,7 @@ const it: Partial<LangMap> = {
   "未检测到配置信息!": "Nessuna configurazione rilevata!",
   "用于远端服务的访问授权令牌": "Token di autorizzazione accesso per servizio remoto",
   "私有服务搭建": "Configurazione servizio privato",
-  "粘贴的远端配置": "Configurazione remota incollata",
+  "粘贴服务端配置": "Configurazione remota incollata",
   "详情参考": "Per i dettagli, consultare",
   "说明": "Descrizione",
   "输入您的 API 访问令牌": "Inserisci il tuo token di accesso API",

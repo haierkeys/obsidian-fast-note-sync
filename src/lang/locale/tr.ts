@@ -29,7 +29,7 @@ const tr: Partial<LangMap> = {
   "未检测到配置信息!": "Yapılandırma algılanmadı!",
   "用于远端服务的访问授权令牌": "Uzak hizmet için erişim yetkilendirme belirteci",
   "私有服务搭建": "Özel hizmet kurulumu",
-  "粘贴的远端配置": "Yapıştırılan uzak yapılandırma",
+  "粘贴服务端配置": "Yapıştırılan uzak yapılandırma",
   "详情参考": "Ayrıntılar için bkz.",
   "说明": "Açıklama",
   "输入您的 API 访问令牌": "API erişim belirtecinizi girin",

@@ -29,7 +29,7 @@ const sq: Partial<LangMap> = {
   "未检测到配置信息!": "Nuk u zbulua asnjë konfigurim!",
   "用于远端服务的访问授权令牌": "Token autorizimi aksesi për shërbimin e largët",
   "私有服务搭建": "Konfigurimi i shërbimit privat",
-  "粘贴的远端配置": "Konfigurimi i largët i ngjitur",
+  "粘贴服务端配置": "Konfigurimi i largët i ngjitur",
   "详情参考": "Për detaje, shihni",
   "说明": "Përshkrim",
   "输入您的 API 访问令牌": "Vendosni tokenin tuaj të aksesit API",

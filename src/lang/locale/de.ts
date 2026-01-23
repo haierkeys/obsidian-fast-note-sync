@@ -29,7 +29,7 @@ const de: Partial<LangMap> = {
   "未检测到配置信息!": "Keine Konfiguration erkannt!",
   "用于远端服务的访问授权令牌": "Zugriffs-Autorisierungstoken für Remote-Dienst",
   "私有服务搭建": "Privater Dienst-Setup",
-  "粘贴的远端配置": "Eingefügte Remote-Konfiguration",
+  "粘贴服务端配置": "Eingefügte Remote-Konfiguration",
   "详情参考": "Für Details siehe",
   "说明": "Beschreibung",
   "输入您的 API 访问令牌": "Geben Sie Ihr API-Zugriffstoken ein",

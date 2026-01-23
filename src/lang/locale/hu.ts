@@ -29,7 +29,7 @@ const hu: Partial<LangMap> = {
   "未检测到配置信息!": "Nincs konfiguráció észlelve!",
   "用于远端服务的访问授权令牌": "Hozzáférési engedélyezési token a távoli szolgáltatáshoz",
   "私有服务搭建": "Privát szolgáltatás beállítása",
-  "粘贴的远端配置": "Beillesztett távoli konfiguráció",
+  "粘贴服务端配置": "Beillesztett távoli konfiguráció",
   "详情参考": "Részletekért lásd",
   "说明": "Leírás",
   "输入您的 API 访问令牌": "Adja meg az API hozzáférési tokent",

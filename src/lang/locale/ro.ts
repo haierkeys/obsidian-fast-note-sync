@@ -29,7 +29,7 @@ const ro: Partial<LangMap> = {
   "未检测到配置信息!": "Nicio configurație detectată!",
   "用于远端服务的访问授权令牌": "Token de autorizare acces pentru serviciu remote",
   "私有服务搭建": "Configurare serviciu privat",
-  "粘贴的远端配置": "Configurație remote lipită",
+  "粘贴服务端配置": "Configurație remote lipită",
   "详情参考": "Pentru detalii, consultați",
   "说明": "Descriere",
   "输入您的 API 访问令牌": "Introduceți tokenul de acces API",

@@ -29,7 +29,7 @@ const id: Partial<LangMap> = {
   "未检测到配置信息!": "Tidak ada konfigurasi terdeteksi!",
   "用于远端服务的访问授权令牌": "Token otorisasi akses untuk layanan remote",
   "私有服务搭建": "Pengaturan layanan pribadi",
-  "粘贴的远端配置": "Konfigurasi remote yang ditempel",
+  "粘贴服务端配置": "Konfigurasi remote yang ditempel",
   "详情参考": "Untuk detail, lihat",
   "说明": "Deskripsi",
   "输入您的 API 访问令牌": "Masukkan token akses API Anda",

@@ -29,7 +29,7 @@ const nl: Partial<LangMap> = {
   "未检测到配置信息!": "Geen configuratie gedetecteerd!",
   "用于远端服务的访问授权令牌": "Toegangsautorisatietoken voor externe service",
   "私有服务搭建": "Privé service-installatie",
-  "粘贴的远端配置": "Geplakte externe configuratie",
+  "粘贴服务端配置": "Geplakte externe configuratie",
   "详情参考": "Voor details, zie",
   "说明": "Beschrijving",
   "输入您的 API 访问令牌": "Voer uw API-toegangstoken in",

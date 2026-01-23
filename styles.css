@@ -80,6 +80,13 @@
 .fast-note-sync-settings table tfoot td {
   padding: 8px 10px;
 }
+.fast-note-sync-settings-strategy-notice {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  margin-top: -10px;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
 
 .fast-note-sync-status-bar-progress {
   display: flex;

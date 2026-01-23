@@ -29,7 +29,7 @@ const da: Partial<LangMap> = {
   "未检测到配置信息!": "Ingen konfiguration registreret!",
   "用于远端服务的访问授权令牌": "Adgangsautorisationstoken til fjerntjeneste",
   "私有服务搭建": "Privat tjenesteopsætning",
-  "粘贴的远端配置": "Indsat fjernkonfiguration",
+  "粘贴服务端配置": "Indsat fjernkonfiguration",
   "详情参考": "For detaljer, se",
   "说明": "Beskrivelse",
   "输入您的 API 访问令牌": "Indtast dit API-adgangstoken",
