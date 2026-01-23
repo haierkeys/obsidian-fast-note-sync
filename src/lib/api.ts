@@ -115,4 +115,41 @@ export class HttpApiService {
             throw e;
         }
     }
+
+    /**
+     * 恢复笔记到指定的历史版本
+     */
+    async restoreNoteVersion(historyId: number): Promise<boolean> {
+        const url = `${this.plugin.settings.api}/api/note/history/restore`;
+        console.log("restoreNoteVersion request:", url);
+
+        try {
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    historyId: historyId,
+                    vault: this.plugin.settings.vault
+                })
+            });
+
+            const json = await res.json();
+            console.log("restoreNoteVersion response:", res.status, json);
+
+            if (res.status !== 200 || !json.status) {
+                const msg = json?.message || "Failed to restore note version";
+                new Notice(msg);
+                return false;
+            }
+
+            return true;
+        } catch (e) {
+            console.error("restoreNoteVersion error:", e);
+            new Notice("恢复版本请求失败");
+            return false;
+        }
+    }
 }

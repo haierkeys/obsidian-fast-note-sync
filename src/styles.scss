@@ -265,6 +265,29 @@
         }
       }
 
+      .restore-btn {
+        padding: 4px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        color: var(--text-accent);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &:hover {
+          color: var(--text-accent-hover);
+          opacity: 0.8;
+        }
+      }
+
+      .history-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
       .state {
         text-align: center;
         padding: 40px;

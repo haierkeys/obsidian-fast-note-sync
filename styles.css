@@ -80,13 +80,6 @@
 .fast-note-sync-settings table tfoot td {
   padding: 8px 10px;
 }
-.fast-note-sync-settings-strategy-notice {
-  font-size: var(--font-ui-smaller);
-  color: var(--text-muted);
-  margin-top: -10px;
-  margin-bottom: 20px;
-  padding: 0 4px;
-}
 
 .fast-note-sync-status-bar-progress {
   display: flex;
@@ -228,6 +221,26 @@
 }
 .note-history-view .history-list-section .history-table .view-btn:hover {
   color: var(--text-normal);
+}
+.note-history-view .history-list-section .history-table .restore-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.note-history-view .history-list-section .history-table .restore-btn:hover {
+  color: var(--text-accent-hover);
+  opacity: 0.8;
+}
+.note-history-view .history-list-section .history-table .history-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .note-history-view .history-list-section .history-table .state {
   text-align: center;
@@ -434,35 +447,19 @@
   user-select: text;
   -webkit-user-select: text;
 }
-.note-history-view .history-detail-container .history-detail-line.has-change {
-  background-color: var(--background-modifier-border-faint);
-}
-.note-history-view .history-detail-container .history-detail-line .line-content {
-  white-space: pre-wrap;
-  word-break: break-all;
-  padding-left: 2px;
-  user-select: text;
-  -webkit-user-select: text;
-  flex: 1;
-}
-.note-history-view .history-detail-container .history-detail-line .diff-seg.type-add {
-  background-color: rgba(0, 255, 0, 0.2);
+.note-history-view .history-detail-container .history-detail-line.type-add {
+  background-color: rgba(0, 255, 0, 0.1);
   color: var(--text-success);
-  padding: 0 2px;
-  border-radius: 2px;
 }
-.note-history-view .history-detail-container .history-detail-line .diff-seg.type-delete {
-  background-color: rgba(255, 0, 0, 0.15);
+.note-history-view .history-detail-container .history-detail-line.type-delete {
+  background-color: rgba(255, 0, 0, 0.1);
   color: var(--text-error);
   text-decoration: line-through;
-  padding: 0 2px;
-  border-radius: 2px;
 }
-.note-history-view .history-detail-container .history-detail-line.is-deleted-line {
-  background-color: rgba(255, 0, 0, 0.05);
-}
-.note-history-view .history-detail-container .history-detail-line.is-deleted-line .line-number {
-  border-right-color: rgba(255, 0, 0, 0.2);
+.note-history-view .history-detail-container .history-detail-line.is-original-view.type-delete {
+  background-color: transparent;
+  text-decoration: none;
+  color: var(--text-normal);
 }
 
 /*# sourceMappingURL=styles.css.map */

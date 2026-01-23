@@ -1,3 +1,4 @@
+import { Notice } from "obsidian";
 import * as React from "react";
 
 import { NoteHistoryItem, HttpApiService, NoteHistoryDetail as NoteHistoryDetailData } from "../../lib/api";
@@ -59,6 +60,24 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
         }
     };
 
+    const handleRestore = async (id: number) => {
+        const confirm = window.confirm($("确认要恢复到此版本吗？"));
+        if (!confirm) return;
+
+        try {
+            setLoading(true);
+            const success = await service.restoreNoteVersion(id);
+            if (success) {
+                new Notice($("恢复成功"));
+                loadHistory(page);
+            }
+        } catch (e) {
+            console.error("handleRestore error:", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const getClientIcon = (clientName: string) => {
         const name = (clientName || "Unknown").toLowerCase();
         if (name.includes("web")) return "globe";
@@ -79,7 +98,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                 <th>{$("版本")}</th>
                                 <th>{$("客户端")}</th>
                                 <th>{$("更新时间")}</th>
-                                <th>{$("查看")}</th>
+                                <th>{$("操作")}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -105,10 +124,16 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                         </td>
                                         <td>{item.createdAt}</td>
                                         <td>
-                                            <button className="view-btn" onClick={() => handleView(item.id)}>
-                                                <LucideIcon icon="eye" size={14} />
-                                                {$("查看")}
-                                            </button>
+                                            <div className="history-actions">
+                                                <button className="view-btn" onClick={() => handleView(item.id)}>
+                                                    <LucideIcon icon="eye" size={14} />
+                                                    {$("查看")}
+                                                </button>
+                                                <button className="restore-btn" onClick={() => handleRestore(item.id)}>
+                                                    <LucideIcon icon="rotate-ccw" size={14} />
+                                                    {$("恢复")}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
