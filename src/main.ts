@@ -9,6 +9,7 @@ import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
 import { dump, setLogEnabled } from "./lib/helps";
 import { MenuManager } from "./lib/menu_manager";
+import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { $ } from "./lang/lang";
 
 
@@ -22,6 +23,7 @@ export default class FastSync extends Plugin {
   menuManager: MenuManager // 菜单管理器
   fileHashManager: FileHashManager // 文件哈希管理器
   localStorageManager: LocalStorageManager // 本地存储管理器
+  fileCloudPreview: FileCloudPreview // 云端文件预览管理器
 
   clipboardReadTip: string = "" // 剪贴板读取提示信息
 
@@ -151,6 +153,9 @@ export default class FastSync extends Plugin {
     this.menuManager = new MenuManager(this)
     this.menuManager.init()
 
+    // 初始化云端文件预览功能
+    this.fileCloudPreview = new FileCloudPreview(this)
+
     // 初始化文件哈希管理器(必须在事件管理器之前)
     this.fileHashManager = new FileHashManager(this)
 
@@ -169,6 +174,7 @@ export default class FastSync extends Plugin {
     this.configManager = new ConfigManager(this)
     this.localStorageManager = new LocalStorageManager(this)
     this.localStorageManager.startWatch()
+
     this.refreshRuntime()
   }
 

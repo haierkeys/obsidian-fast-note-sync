@@ -33,6 +33,7 @@ export interface PluginSettings {
   syncExcludeFolders: string
   syncExcludeExtensions: string
   pdfSyncEnabled: boolean
+  assetsUrls: string
 }
 
 /**
@@ -66,6 +67,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   syncExcludeFolders: "",
   syncExcludeExtensions: "",
   pdfSyncEnabled: true,
+  assetsUrls: "",
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -163,6 +165,21 @@ export class SettingTab extends PluginSettingTab {
       )
 
     new Setting(set)
+      .setName($("云端文件预览"))
+      .setDesc($("云端文件预览描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder(".jpg,.jpeg,.png: https://example/image/")
+          .setValue(this.plugin.settings.assetsUrls)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.assetsUrls) {
+              this.plugin.settings.assetsUrls = value;
+              await this.plugin.saveSettings();
+            }
+          }),
+      )
+
+    new Setting(set)
       .setName($("开启 PDF 状态同步"))
       .setDesc($("开启 PDF 状态同步描述"))
       .addToggle((toggle) =>
@@ -173,6 +190,7 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
+
     new Setting(set)
       .setName("| " + $("远端"))
       .setHeading()
