@@ -98,7 +98,8 @@ const en: Partial<LangMap> = {
   "开启 PDF 状态同步描述": "Synchronize PDF viewer reading status (requires configuration sync to be enabled)",
   "恢复": "Restore",
   "恢复成功": "Restored successfully",
-  "确认要恢复到此版本吗？": "Are you sure you want to restore to this version? This will overwrite the current note content."
+  "确认要恢复到此版本吗？": "Are you sure you want to restore to this version? This will overwrite the current note content。",
+  "反馈问题&新建议": "Feedback & Suggestions"
 }
 
 

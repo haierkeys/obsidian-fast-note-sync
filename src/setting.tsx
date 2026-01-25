@@ -374,6 +374,12 @@ export class SettingTab extends PluginSettingTab {
       new Notice($("将调试信息复制到剪贴板, 可能包含敏感信!"))
     }
 
+    const feedbackButton = debugDiv.createEl("button")
+    feedbackButton.setText($("反馈问题&新建议"))
+    feedbackButton.onclick = () => {
+      window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
+    }
+
     if (Platform.isDesktopApp) {
       const info = debugDiv.createDiv()
       info.setText($("通过快捷键打开控制台，你可以看到这个插件和其他插件的日志"))
