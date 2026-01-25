@@ -187,6 +187,9 @@ export default class FastSync extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+    if (!this.settings.vault) {
+      this.settings.vault = this.app.vault.getName()
+    }
   }
 
   async onExternalSettingsChange() {

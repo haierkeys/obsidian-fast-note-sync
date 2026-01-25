@@ -61,7 +61,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastNoteSyncTime: 0,
   lastFileSyncTime: 0,
   lastConfigSyncTime: 0,
-  vault: "defaultVault",
+  vault: "",
   apiVersion: "",
   configExclude: "",
   clientName: "",

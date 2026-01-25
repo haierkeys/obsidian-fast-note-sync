@@ -1,7 +1,7 @@
 ﻿import { TFolder, Notice, normalizePath } from "obsidian";
 
+import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, configIsPathExcluded } from "./config_operator";
-import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd } from "./file_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd } from "./note_operator";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
 import { SyncMode, SnapFile, ReceiveMessage, SyncEndData } from "./types";
@@ -83,7 +83,13 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
       plugin.saveSettings();
     }
 
-    setTimeout(() => plugin.updateStatusBar(""), 5000);
+    // 如果开启了云预览，在首次同步后检查所有附件在服务端的状态
+    if (plugin.settings.cloudPreviewEnabled) {
+      console.log("Cloud Preview: Starting attachment check...");
+      checkAndUploadAttachments(plugin);
+    }
+
+    setTimeout(() => plugin.updateStatusBar(""), 3000);
   } else {
     // 实时计算加权进度，防止由于任务总数突增导致的百分比回跳
     let totalProgressSum = 0;
@@ -264,7 +270,13 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
   let expectedCount = 0;
-  if (plugin.settings.syncEnabled && shouldSyncNotes) expectedCount += 2;
+  if (plugin.settings.syncEnabled && shouldSyncNotes) {
+    expectedCount += 1; // NoteSync
+    // 如果启用了云预览，FileSync 请求不发送，因此不计入预期计数
+    if (!plugin.settings.cloudPreviewEnabled) {
+      expectedCount += 1; // FileSync
+    }
+  }
   if (plugin.settings.configSyncEnabled && shouldSyncConfigs) expectedCount += 1;
   plugin.expectedSyncCount = expectedCount;
 

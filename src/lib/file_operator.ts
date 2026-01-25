@@ -1,4 +1,4 @@
-import { TFile, TAbstractFile, Notice, normalizePath } from "obsidian";
+import { TFile, TAbstractFile, Notice, normalizePath, Platform } from "obsidian";
 
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded } from "./helps";
@@ -8,10 +8,14 @@ import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
 
-// 上传并发控制
-const MAX_CONCURRENT_UPLOADS = 100
+// 上传并发控制 - 手机端严格限制，电脑端适度放开
+const MAX_CONCURRENT_UPLOADS = Platform.isMobile ? 2 : 20
 let activeUploads = 0
 const uploadQueue: (() => Promise<void>)[] = []
+
+// 下载内存缓冲控制 (20MB 阈值防止 OOM)
+let currentDownloadBufferBytes = 0
+const MAX_DOWNLOAD_BUFFER_BYTES = 20 * 1024 * 1024
 
 /**
  * 清理上传队列
@@ -125,8 +129,10 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   const chunkSize = data.chunkSize || 1024 * 1024
 
   const runUpload = async () => {
-    // 先读取文件内容,获取实际大小
-    const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+    // 延迟到任务排到时才读取文件内容, 减少内存积压
+    let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file)
+    if (!content) return;
+
     const actualTotalChunks = Math.ceil(content.byteLength / chunkSize)
 
     // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
@@ -146,10 +152,15 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       },
     ])
 
+    const sleepTime = Platform.isMobile ? 10 : 2;
+
     for (let i = 0; i < actualTotalChunks; i++) {
       const start = i * chunkSize
       const end = Math.min(start + chunkSize, content.byteLength)
-      const chunk = content.slice(start, end)
+      const length = end - start;
+
+      // 使用 Uint8Array 视图代替 slice 拷贝，减少内存翻倍
+      const chunk = new Uint8Array(content, start, length)
 
       const sessionIdBytes = new TextEncoder().encode(data.sessionId)
       const chunkIndexBytes = new Uint8Array(4)
@@ -159,15 +170,18 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       const frame = new Uint8Array(36 + 4 + chunk.byteLength)
       frame.set(sessionIdBytes, 0)
       frame.set(chunkIndexBytes, 36)
-      frame.set(new Uint8Array(chunk), 40)
+      frame.set(chunk, 40)
 
       plugin.websocket.SendBinary(frame, BINARY_PREFIX_FILE_SYNC, () => {
         plugin.uploadedChunksCount++
       })
 
-      // 每发送一个分块，让出主线程，防止阻塞 WebSocket 心跳 (Ping/Pong)
-      await sleep(2)
+      // 让出主线程，手机端给更多呼吸时间
+      await sleep(sleepTime)
     }
+
+    // 手动置空辅助 GC
+    content = null;
 
     // 上传完成后，如果开启了附件云预览 - 上传后删除，则删除本地附件
     if (plugin.settings.cloudPreviewEnabled && plugin.settings.cloudPreviewAutoDeleteLocal) {
@@ -192,8 +206,13 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
               serverInfo.size === file.stat.size &&
               serverInfo.mtime === file.stat.mtime) {
               dump(`Cloud Preview: Auto delete verified file: ${file.path}`);
-              await plugin.app.vault.delete(file);
-              plugin.fileHashManager.removeFileHash(file.path);
+              plugin.addIgnoredFile(file.path);
+              try {
+                await plugin.app.vault.delete(file);
+                plugin.fileHashManager.removeFileHash(file.path);
+              } finally {
+                plugin.removeIgnoredFile(file.path);
+              }
             } else {
               dump(`Cloud Preview: Auto delete skip, info mismatch for ${file.path}`, { server: serverInfo, local: file.stat });
             }
@@ -236,6 +255,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
 
+  // 如果开启了云预览，且是初始化同步阶段，由于云预览可以按需加载，跳过所有附件下载
   if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
       // 开启了类型限制：仅跳过受限类型 (图片、视频、音频、PDF)
@@ -251,6 +271,11 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
       plugin.fileSyncTasks.completed++;
       return;
     }
+  }
+
+  // 下载内存缓冲控制：如果当前内存中待写盘的分块过多，由于下载是异步触发的，此处等待
+  while (currentDownloadBufferBytes > MAX_DOWNLOAD_BUFFER_BYTES) {
+    await sleep(200);
   }
 
   dump(`Receive file sync update(download): `, data.path)
@@ -437,6 +462,47 @@ const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
 }
 
 /**
+ * 检查并上传附件 (用于开启云预览后的首次同步后)
+ */
+export const checkAndUploadAttachments = async function (plugin: FastSync) {
+  if (!plugin.settings.cloudPreviewEnabled) return;
+
+  const apiService = new HttpApiService(plugin);
+  const files = plugin.app.vault.getFiles();
+
+  dump(`Cloud Preview: Start checking ${files.length} files for server status...`);
+
+  let checkedCount = 0;
+  let uploadCount = 0;
+
+  for (const file of files) {
+    if (file.extension === "md") continue;
+    if (isPathExcluded(file.path, plugin)) continue;
+
+    checkedCount++;
+    try {
+      const res = await apiService.getFileInfo(file.path);
+
+      // 如果服务端返回状态为 false，或者没有数据，说明服务端不存在
+      if (!res || !res.status || !res.data) {
+        dump(`Cloud Preview: File missing on server, starting upload: ${file.path}`);
+        await fileModify(file, plugin, false);
+        uploadCount++;
+      }
+    } catch (e) {
+      dump(`Cloud Preview: Failed to check file status for ${file.path}`, e);
+    }
+
+    // 适当延迟，避免接口频率过高
+    if (checkedCount % 10 === 0) {
+      await sleep(50);
+    }
+  }
+
+  dump(`Cloud Preview: Check complete. Total attachment files: ${checkedCount}, Uploaded: ${uploadCount}`);
+}
+
+/**
  * 处理接收到的二进制文件分片
  */
 export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, plugin: FastSync) {
@@ -455,6 +521,7 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
   if (!session) return
 
   session.chunks.set(chunkIndex, chunkData)
+  currentDownloadBufferBytes += chunkData.byteLength // 增加内存缓冲区计数
   plugin.downloadedChunksCount++
 
   if (session.chunks.size === session.totalChunks) {
@@ -510,9 +577,15 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
       await plugin.saveData(plugin.settings)
     }
 
+    // 释放内存计数
+    const sessionSize = Array.from(session.chunks.values()).reduce((sum, c) => sum + c.byteLength, 0)
+    currentDownloadBufferBytes -= sessionSize
+
     plugin.fileDownloadSessions.delete(session.sessionId)
     plugin.downloadedFilesCount++
   } catch (e) {
+    const sessionSize = Array.from(session.chunks.values()).reduce((sum, c) => sum + c.byteLength, 0)
+    currentDownloadBufferBytes -= sessionSize
     plugin.fileDownloadSessions.delete(session.sessionId)
   }
 }
