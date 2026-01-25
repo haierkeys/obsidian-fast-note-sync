@@ -2,6 +2,8 @@ import { TFile, TAbstractFile, Notice, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded } from "./helps";
+import { FileCloudPreview } from "./file_cloud_preview";
+import { HttpApiService } from "./api";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
@@ -166,6 +168,41 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       // 每发送一个分块，让出主线程，防止阻塞 WebSocket 心跳 (Ping/Pong)
       await sleep(2)
     }
+
+    // 上传完成后，如果开启了附件云预览 - 上传后删除，则删除本地附件
+    if (plugin.settings.cloudPreviewEnabled && plugin.settings.cloudPreviewAutoDeleteLocal) {
+      const ext = file.path.substring(file.path.lastIndexOf(".")).toLowerCase();
+      const isRestricted = FileCloudPreview.isRestrictedType(ext);
+
+      // 如果开启了类型限制，则仅删除受限类型 (图片/音频/视频/PDF)
+      // 如果未开启类型限制，则全部删除
+      if (plugin.settings.cloudPreviewTypeRestricted && !isRestricted) {
+        return;
+      }
+
+      setTimeout(async () => {
+        try {
+          const apiService = new HttpApiService(plugin);
+          const res = await apiService.getFileInfo(file.path);
+
+          if (res && res.status && res.data) {
+            const serverInfo = res.data;
+            // 核对 path、size、mtime 是否一致
+            if (serverInfo.path === file.path &&
+              serverInfo.size === file.stat.size &&
+              serverInfo.mtime === file.stat.mtime) {
+              dump(`Cloud Preview: Auto delete verified file: ${file.path}`);
+              await plugin.app.vault.delete(file);
+              plugin.fileHashManager.removeFileHash(file.path);
+            } else {
+              dump(`Cloud Preview: Auto delete skip, info mismatch for ${file.path}`, { server: serverInfo, local: file.stat });
+            }
+          }
+        } catch (e) {
+          dump(`Cloud Preview: Auto delete failed to fetch info for ${file.path}`, e);
+        }
+      }, 2000);
+    }
   }
 
   // 并发控制逻辑
@@ -198,6 +235,24 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
 export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
+
+  if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
+    if (plugin.settings.cloudPreviewTypeRestricted) {
+      // 开启了类型限制：仅跳过受限类型 (图片、视频、音频、PDF)
+      const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
+      if (FileCloudPreview.isRestrictedType(ext)) {
+        dump(`Cloud Preview: Skipping restricted file download: ${data.path}`);
+        plugin.fileSyncTasks.completed++;
+        return;
+      }
+    } else {
+      // 未开启类型限制：由于启用了云预览，跳过所有附件下载
+      dump(`Cloud Preview: Skipping all file downloads: ${data.path}`);
+      plugin.fileSyncTasks.completed++;
+      return;
+    }
+  }
+
   dump(`Receive file sync update(download): `, data.path)
   const tempKey = `temp_${data.path} `
   const tempSession = {
@@ -232,6 +287,22 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
 export const receiveFileSyncDelete = async function (data: ReceivePathMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
+
+  if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
+    if (plugin.settings.cloudPreviewTypeRestricted) {
+      const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
+      if (FileCloudPreview.isRestrictedType(ext)) {
+        dump(`Cloud Preview: Skipping restricted file delete: ${data.path}`);
+        plugin.fileSyncTasks.completed++;
+        return;
+      }
+    } else {
+      dump(`Cloud Preview: Skipping all file deletes: ${data.path}`);
+      plugin.fileSyncTasks.completed++;
+      return;
+    }
+  }
+
   dump(`Receive file delete: `, data.path)
   const normalizedPath = normalizePath(data.path)
   const file = plugin.app.vault.getFileByPath(normalizedPath)
@@ -253,6 +324,22 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
 export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
+
+  if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
+    if (plugin.settings.cloudPreviewTypeRestricted) {
+      const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
+      if (FileCloudPreview.isRestrictedType(ext)) {
+        dump(`Cloud Preview: Skipping restricted file mtime update: ${data.path}`);
+        plugin.fileSyncTasks.completed++;
+        return;
+      }
+    } else {
+      dump(`Cloud Preview: Skipping all file mtime updates: ${data.path}`);
+      plugin.fileSyncTasks.completed++;
+      return;
+    }
+  }
+
   dump(`Receive file sync mtime: `, data.path, data.mtime)
   const normalizedPath = normalizePath(data.path)
   const file = plugin.app.vault.getFileByPath(normalizedPath)

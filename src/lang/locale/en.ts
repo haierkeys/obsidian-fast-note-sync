@@ -96,6 +96,12 @@ const en: Partial<LangMap> = {
   "同步冲突": "Sync conflict detected, forced merge performed. Manual check required for ${path}.",
   "开启 PDF 状态同步": "Enable PDF status sync",
   "开启 PDF 状态同步描述": "Synchronize PDF viewer reading status (requires configuration sync to be enabled)",
+  "附件云预览": "Cloud Attachment Preview",
+  "附件云预览描述": "When enabled, attachments like images, videos, and audio will be stored in the cloud, and local synchronization will be disabled.",
+  "附件云预览远端源": "Cloud Preview - Remote Source",
+  "附件云预览远端源描述": "Defaults to API file view address. If set, this address is used. Supports variables: {path}, {vault}, {pathHash}, {type}(image/video/audio/pdf). Example: https://example.com/{path}?TOKEN=XXXX",
+  "附件云预览上传后删除": "Cloud Preview - Delete after upload",
+  "附件云预览上传后删除描述": "Automatically delete local files after successful upload to save space. Note: Cloud Attachment Preview must be enabled to view these files.",
   "恢复": "Restore",
   "恢复成功": "Restored successfully",
   "确认要恢复到此版本吗？": "Are you sure you want to restore to this version? This will overwrite the current note content."

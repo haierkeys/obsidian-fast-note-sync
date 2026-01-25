@@ -10,9 +10,10 @@ import type FastSync from "../main";
  * 处理本地不存在但云端存在的附件预览
  */
 export class FileCloudPreview {
-  private static IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
-  private static VIDEO_EXTS = [".mp4", ".webm", ".ogg", ".mov", ".avi"];
-  private static AUDIO_EXTS = [".mp3", ".wav", ".ogg", ".m4a", ".flac"];
+  public static IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
+  public static VIDEO_EXTS = [".mp4", ".webm", ".ogg", ".mov", ".avi"];
+  public static AUDIO_EXTS = [".mp3", ".wav", ".ogg", ".m4a", ".flac"];
+  public static PDF_EXTS = [".pdf"];
 
   private plugin: FastSync;
 
@@ -22,6 +23,19 @@ export class FileCloudPreview {
 
     this.registerMarkdownPostProcessor();
     this.registerLivePreviewProcessor();
+  }
+
+  /**
+   * 检查是否为受限预览类型 (图片、视频、音频、PDF)
+   */
+  public static isRestrictedType(ext: string): boolean {
+    const e = ext.toLowerCase();
+    return (
+      this.IMAGE_EXTS.includes(e) ||
+      this.VIDEO_EXTS.includes(e) ||
+      this.AUDIO_EXTS.includes(e) ||
+      this.PDF_EXTS.includes(e)
+    );
   }
 
   /**
@@ -46,10 +60,13 @@ export class FileCloudPreview {
     const self = this;
     this.plugin.registerEditorExtension([
       ViewPlugin.fromClass(class {
+        constructor(view: EditorView) {
+          // 初始加载时也尝试处理一次，解决单行笔记或初次打开不触发 update 的问题
+          self.handleLivePreviewUpdate(view);
+        }
         update(update: ViewUpdate) {
-          if (update.docChanged || update.viewportChanged) {
-            // 在 Live Preview 中查找嵌入元素
-            // 由于 CM6 的渲染机制，我们需要在更新后处理
+          // 只要文档变化、视口变化或插件状态变化，都尝试更新
+          if (update.docChanged || update.viewportChanged || update.geometryChanged) {
             self.handleLivePreviewUpdate(update.view);
           }
         }
@@ -85,6 +102,8 @@ export class FileCloudPreview {
     embed: HTMLElement,
     context: MarkdownPostProcessorContext,
   ) {
+
+
     const src = embed.getAttribute("src");
     if (!src || embed.dataset.cloudProcessed === "true") return;
 
@@ -102,6 +121,7 @@ export class FileCloudPreview {
 
     // 尝试获取云端 URL
     const cloudUrl = this.getCloudUrl(resolvedPath);
+    console.log("FastSync: Cloud URL", cloudUrl);
     if (!cloudUrl) return;
 
     // 标记已处理，防止循环
@@ -132,9 +152,6 @@ export class FileCloudPreview {
 
       embed.appendChild(previewElement);
 
-      // if (previewElement.hasClass("file-embed-title")) {
-      //   embed.addClass("mod-generic");
-      // }
     }
   }
 
@@ -142,11 +159,11 @@ export class FileCloudPreview {
    * 根据扩展名获取嵌入容器的类名
    */
   private getEmbedClass(ext: string): string {
-    if (FileCloudPreview.IMAGE_EXTS.includes(ext)) return "media-embed image-embed";
-    if (FileCloudPreview.VIDEO_EXTS.includes(ext)) return "media-embed video-embed";
-    if (FileCloudPreview.AUDIO_EXTS.includes(ext)) return "media-embed audio-embed";
-    if (ext === ".pdf") return "pdf-embed";
-    return "file-embed mod-generic";
+    if (FileCloudPreview.IMAGE_EXTS.includes(ext)) return "media-embed image-embed file-cloud-preview";
+    if (FileCloudPreview.VIDEO_EXTS.includes(ext)) return "media-embed video-embed file-cloud-preview";
+    if (FileCloudPreview.AUDIO_EXTS.includes(ext)) return "media-embed audio-embed file-cloud-preview";
+    if (FileCloudPreview.PDF_EXTS.includes(ext)) return "pdf-embed file-cloud-preview";
+    return "file-embed mod-generic file-cloud-preview";
   }
 
   /**
@@ -170,7 +187,7 @@ export class FileCloudPreview {
       return this.createAudioPreview(cloudUrl, subpath);
     }
 
-    if (ext === ".pdf") {
+    if (FileCloudPreview.PDF_EXTS.includes(ext)) {
       return this.createPdfPreview(filePath, cloudUrl, subpath);
     }
 
@@ -280,15 +297,56 @@ export class FileCloudPreview {
     return null;
   }
 
-  /**
-   * 根据文件路径获取云端 URL
-   */
   private getCloudUrl(filePath: string): string | null {
-    const { api, vault, apiToken, cloudPreviewEnabled } = this.plugin.settings;
+    const { api, vault, apiToken, cloudPreviewEnabled, cloudPreviewTypeRestricted, cloudPreviewRemoteUrl } = this.plugin.settings;
     if (!cloudPreviewEnabled || !api || !apiToken) return null;
 
     const ext = this.getFileExtension(filePath);
     if (!ext) return null;
+
+    let type = "other";
+    if (FileCloudPreview.IMAGE_EXTS.includes(ext)) type = "image";
+    else if (FileCloudPreview.VIDEO_EXTS.includes(ext)) type = "video";
+    else if (FileCloudPreview.AUDIO_EXTS.includes(ext)) type = "audio";
+    else if (FileCloudPreview.PDF_EXTS.includes(ext)) type = "pdf";
+
+    // 如果开启了类型限制，检查扩展名是否在允许列表中 (图片、视频、音频、PDF)
+    if (cloudPreviewTypeRestricted) {
+      if (type === "other") return null;
+    }
+
+    const pathHash = hashContent(filePath);
+    let matchedUrl: string | null = null;
+
+    if (cloudPreviewRemoteUrl) {
+      const lines = cloudPreviewRemoteUrl.split("\n");
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+
+        const colonIndex = trimmedLine.indexOf(":");
+        if (colonIndex === -1) continue;
+
+        const extsPart = trimmedLine.substring(0, colonIndex);
+        const urlPart = trimmedLine.substring(colonIndex + 1).trim();
+
+        if (!extsPart || !urlPart) continue;
+
+        const exts = extsPart.split(";").map(e => e.trim().toLowerCase());
+        if (exts.includes(ext)) {
+          matchedUrl = urlPart;
+          break;
+        }
+      }
+    }
+
+    if (matchedUrl) {
+      return matchedUrl
+        .replace(/{path}/g, filePath)
+        .replace(/{vault}/g, vault)
+        .replace(/{pathHash}/g, pathHash)
+        .replace(/{type}/g, type);
+    }
 
     const params = new URLSearchParams({
       vault,

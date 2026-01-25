@@ -185,6 +185,8 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
     for (const msg of syncData.messages) {
       if (msg.action === "FileSyncUpdate") {
         const d = msg.data;
+        // 如果开启了云端预览并且是受限类型，不需要下载它，但在计算总量时暂不排除
+        // 因为 receiveFileSyncUpdate 会根据 setting 处理下载动作
         const totalChunks = Math.ceil(d.size / (d.chunkSize || 1024 * 1024));
         plugin.totalChunksToDownload += totalChunks;
       } else if (msg.action === "FileUpload") {
@@ -366,7 +368,10 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
       lastTime: fileLastTime,
       files: files,
     };
-    plugin.websocket.MsgSend("FileSync", fileSyncData);
+    // 如果启用了云预览，则不发送 FileSync 请求，从而关闭启动时的 file 同步
+    if (!plugin.settings.cloudPreviewEnabled) {
+      plugin.websocket.MsgSend("FileSync", fileSyncData);
+    }
   }
 
   if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {

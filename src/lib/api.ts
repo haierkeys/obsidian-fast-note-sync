@@ -152,4 +152,42 @@ export class HttpApiService {
             return false;
         }
     }
+
+    /**
+     * 获取服务端文件信息
+     * 用于在删除本地文件前核对状态
+     */
+    async getFileInfo(path: string): Promise<any> {
+        const baseUrl = `${this.plugin.settings.api}/api/file/info`;
+        const params = new URLSearchParams({
+            vault: this.plugin.settings.vault,
+            path: path,
+            pathHash: hashContent(path).toString(),
+            isRecycle: "false"
+        });
+
+        const url = addRandomParam(`${baseUrl}?${params.toString()}`);
+        console.log("getFileInfo request:", url);
+
+        try {
+            const res = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "token": this.plugin.settings.apiToken
+                }
+            });
+
+            if (!res.ok) {
+                const msg = `HTTP ${res.status}: Failed to fetch file info`;
+                throw new Error(msg);
+            }
+
+            const json = await res.json();
+            console.log("getFileInfo response:", res.status, json);
+            return json;
+        } catch (e) {
+            console.log("getFileInfo error:", e);
+            throw e;
+        }
+    }
 }

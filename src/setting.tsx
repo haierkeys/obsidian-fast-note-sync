@@ -34,6 +34,9 @@ export interface PluginSettings {
   syncExcludeExtensions: string
   pdfSyncEnabled: boolean
   cloudPreviewEnabled: boolean
+  cloudPreviewTypeRestricted: boolean
+  cloudPreviewRemoteUrl: string
+  cloudPreviewAutoDeleteLocal: boolean
 }
 
 /**
@@ -68,6 +71,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   syncExcludeExtensions: "",
   pdfSyncEnabled: true,
   cloudPreviewEnabled: true,
+  cloudPreviewTypeRestricted: true,
+  cloudPreviewRemoteUrl: "",
+  cloudPreviewAutoDeleteLocal: false,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -165,18 +171,6 @@ export class SettingTab extends PluginSettingTab {
       )
 
     new Setting(set)
-      .setName($("云端文件预览"))
-      .setDesc($("云端文件预览描述"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.cloudPreviewEnabled) {
-            this.plugin.settings.cloudPreviewEnabled = value;
-            await this.plugin.saveSettings();
-          }
-        })
-      )
-
-    new Setting(set)
       .setName($("开启 PDF 状态同步"))
       .setDesc($("开启 PDF 状态同步描述"))
       .addToggle((toggle) =>
@@ -187,6 +181,68 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
+
+    new Setting(set)
+      .setName("| " + $("附件云预览"))
+      .setHeading()
+      .setClass("fast-note-sync-settings-tag")
+
+    new Setting(set)
+      .setName($("附件云预览"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.cloudPreviewEnabled) {
+            this.plugin.settings.cloudPreviewEnabled = value;
+            await this.plugin.saveSettings();
+            this.display(); // 刷新以显示/隐藏子项
+          }
+        })
+      )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览描述"))
+
+    if (this.plugin.settings.cloudPreviewEnabled) {
+      new Setting(set)
+        .setName($("附件云预览类型限制"))
+        .addToggle((toggle) =>
+          toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
+            if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
+              this.plugin.settings.cloudPreviewTypeRestricted = value;
+              await this.plugin.saveSettings();
+            }
+          })
+        )
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览类型限制描述"))
+
+      new Setting(set)
+        .setName($("附件云预览远端源"))
+        .addTextArea((text) =>
+          text
+            .setPlaceholder(".jpg;.png:http://domain.com/{path}")
+            .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
+            .onChange(async (value) => {
+              if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
+                this.plugin.settings.cloudPreviewRemoteUrl = value;
+                await this.plugin.saveSettings();
+              }
+            })
+            .inputEl.addClass("fast-note-sync-remote-url-area")
+        )
+      const remoteUrlSetting = set.lastElementChild as HTMLElement;
+      remoteUrlSetting.addClass("fast-note-sync-remote-url-setting");
+      this.setDescWithBreaks(remoteUrlSetting, $("附件云预览远端源描述"))
+
+      new Setting(set)
+        .setName($("附件云预览上传后删除"))
+        .addToggle((toggle) =>
+          toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
+            if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
+              this.plugin.settings.cloudPreviewAutoDeleteLocal = value;
+              await this.plugin.saveSettings();
+            }
+          })
+        )
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览上传后删除描述"))
+    }
 
     new Setting(set)
       .setName("| " + $("远端"))
@@ -264,7 +320,6 @@ export class SettingTab extends PluginSettingTab {
 
     new Setting(set)
       .setName($("启动延迟"))
-      .setDesc($("启动延迟描述"))
       .addText((text) =>
         text
           .setPlaceholder($("输入延迟毫秒数"))
@@ -277,10 +332,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启动延迟描述"))
 
     new Setting(set)
       .setName($("离线编辑合并策略"))
-      .setDesc($("离线编辑合并策略描述"))
       .addDropdown((dropdown) =>
         dropdown
           .addOption("", $("策略选项_默认"))
@@ -294,6 +349,7 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.websocket.sendClientInfo()
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("离线编辑合并策略描述"))
 
     const strategyDesc = set.createDiv({ cls: "fast-note-sync-settings-strategy-desc fast-note-sync-settings" })
     const table = strategyDesc.createEl("table")
@@ -400,6 +456,56 @@ export class SettingTab extends PluginSettingTab {
       } else {
         keys.createEl("kbd", { text: $("console_win") })
       }
+    }
+  }
+
+  private setDescWithBreaks(el: HTMLElement, desc: string) {
+    const descEl = el.querySelector(".setting-item-description")
+    if (descEl) {
+      descEl.empty()
+      const fragment = document.createDocumentFragment()
+      const lines = desc.split("\n")
+
+      let inTable = false
+      let table: HTMLTableElement | null = null
+      let tbody: HTMLTableSectionElement | null = null
+
+      lines.forEach((line) => {
+        const trimmedLine = line.trim()
+        if (trimmedLine.startsWith("|") && trimmedLine.endsWith("|")) {
+          // 处理表格行
+          const parts = trimmedLine
+            .split("|")
+            .filter((p, i, arr) => i > 0 && i < arr.length - 1)
+            .map((p) => p.trim())
+
+          if (!inTable) {
+            inTable = true
+            table = document.createElement("table")
+            table.addClass("fast-note-sync-desc-table")
+            const thead = table.createEl("thead")
+            const tr = thead.createEl("tr")
+            parts.forEach((p) => tr.createEl("th", { text: p }))
+            tbody = table.createEl("tbody")
+            fragment.appendChild(table)
+          } else {
+            // 检查是否为对齐行 (如 | --- | --- |)
+            if (parts.every((p) => p.match(/^-+$/))) {
+              return
+            }
+            if (tbody) {
+              const tr = tbody.createEl("tr")
+              parts.forEach((p) => tr.createEl("td", { text: p }))
+            }
+          }
+        } else {
+          // 退出表格模式
+          inTable = false
+          fragment.appendChild(document.createTextNode(line))
+          fragment.appendChild(document.createElement("br"))
+        }
+      })
+      descEl.appendChild(fragment)
     }
   }
 }
