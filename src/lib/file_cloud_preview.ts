@@ -1,9 +1,9 @@
+import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView } from "obsidian";
+import { ViewPlugin, ViewUpdate } from "@codemirror/view";
+
+import { hashContent } from "./helps";
 import type FastSync from "../main";
-import {
-  MarkdownPostProcessorContext,
-  parseLinktext,
-  loadPdfJs,
-} from "obsidian";
+
 
 export class FileCloudPreview {
   private plugin: FastSync;
@@ -11,7 +11,9 @@ export class FileCloudPreview {
 
   constructor(plugin: FastSync) {
     this.plugin = plugin;
+    if (!this.plugin.settings.cloudPreviewEnabled) return;
     this.registerMarkdownPostProcessor();
+    this.registerLivePreviewProcessor();
   }
 
   /**
@@ -20,6 +22,7 @@ export class FileCloudPreview {
   private registerMarkdownPostProcessor() {
     this.plugin.registerMarkdownPostProcessor(
       async (element: HTMLElement, context: MarkdownPostProcessorContext) => {
+
         // 查找所有内部链接嵌入元素
         const embeds = element.querySelectorAll(".internal-embed");
 
@@ -29,6 +32,38 @@ export class FileCloudPreview {
       },
       0, // 低优先级，确保在其他处理器之后运行
     );
+  }
+
+  /**
+   * 注册 Live Preview 处理器
+   */
+  private registerLivePreviewProcessor() {
+    const self = this;
+    this.plugin.registerEditorExtension([
+      ViewPlugin.fromClass(class {
+        constructor() { }
+        update(update: ViewUpdate) {
+          if (update.docChanged || update.viewportChanged) {
+            // 在 Live Preview 中查找嵌入元素
+            // 由于 CM6 的渲染机制，我们需要在 DOM 更新后进行处理
+            setTimeout(() => {
+              const embeds = update.view.dom.querySelectorAll(".internal-embed");
+              for (const embed of Array.from(embeds)) {
+                // Live Preview 的 context 处理逻辑稍有不同
+                // 我们通过 activeView 获取当前文件路径
+                const activeView = self.plugin.app.workspace.getActiveViewOfType(MarkdownView);
+                const sourcePath = activeView?.file?.path || "";
+
+                self.processEmbed(embed as HTMLElement, {
+                  sourcePath,
+                  frontmatter: {}
+                } as MarkdownPostProcessorContext);
+              }
+            }, 50);
+          }
+        }
+      })
+    ]);
   }
 
   /**
@@ -45,22 +80,28 @@ export class FileCloudPreview {
     // 解析链接中的路径和子路径（如 #t=30）
     const { path: filePath, subpath } = parseLinktext(src);
 
-    // 文件已存在本地，不使用云端预览
-    const isFileExists = !!this.plugin.app.metadataCache.getFirstLinkpathDest(
+    // 检查文件是否在本地存在
+    const file = this.plugin.app.metadataCache.getFirstLinkpathDest(
       filePath,
       context.sourcePath,
     );
-    if (isFileExists) return;
+
+    // 如果文件已存在本地，不使用云端预览
+    if (file) return;
+
+    // 文件不存在本地，尝试获取其在库中的预期路径
+    // 使用 getAvailablePathForAttachment 获取附件应该存放的路径
+    const resolvedPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(filePath, context.sourcePath);
 
     // 尝试使用云端预览
-    const cloudUrl = this.getCloudUrl(filePath);
+    const cloudUrl = this.getCloudUrl(resolvedPath);
     if (!cloudUrl) return;
 
     // 根据文件类型创建预览元素
     const previewElement = await this.createPreviewElement(
-      filePath,
+      resolvedPath,
       cloudUrl,
-      this.getFileExtension(filePath),
+      this.getFileExtension(resolvedPath),
       subpath,
     );
     if (previewElement) {
@@ -71,49 +112,41 @@ export class FileCloudPreview {
   }
 
   /**
-   * 根据文件路径和扩展名配置获取云端URL
+   * 根据文件路径获取云端URL
    */
   private getCloudUrl(filePath: string): string | null {
-    const assetsUrls = this.plugin.settings.assetsUrls;
-    if (!assetsUrls || !assetsUrls.trim()) return null;
+    if (!this.plugin.settings.cloudPreviewEnabled) return null;
 
-    // 解析 assetsUrls 配置
-    // 格式：.jpg,.jpeg,.png: https://example.com/images/
-    //      prefix,suffix: https://example.com/docs/?token=xxx
-    const lines = assetsUrls.split("\n");
+    const { api, vault, apiToken } = this.plugin.settings;
+    if (!api || !apiToken) return null;
+
     // 附件才进行处理
-    const fileExt = this.getFileExtension(filePath);
-    const fileName = filePath.replace(fileExt, "").split("/").pop();
-    if (!fileExt || !fileName) return null;
+    const ext = this.getFileExtension(filePath);
+    if (!ext) return null;
 
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) continue;
+    // 支持的文件类型
+    const supportedExts = [
+      // 图片
+      ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp",
+      // 视频
+      ".mp4", ".webm", ".ogg", ".mov", ".avi",
+      // 音频
+      ".mp3", ".wav", ".m4a", ".flac",
+      // PDF
+      ".pdf"
+    ];
 
-      const parts = trimmedLine.split(":");
-      if (parts.length < 2) continue;
+    if (!supportedExts.includes(ext)) return null;
 
-      const extensions = parts[0]
-        .split(",")
-        .map((ext) => ext.trim().toLowerCase());
-      const baseUrl = parts.slice(1).join(":").trim();
+    // 构建完整URL: api/file?vault=xxx&path=xxx&token=xxx&pathHash=xxx
+    const params = new URLSearchParams({
+      vault: vault,
+      path: filePath,
+      token: apiToken,
+      pathHash: hashContent(filePath)
+    });
 
-      // 检查文件扩展名是否匹配
-      if (extensions.includes(fileExt)) {
-        // 构建完整URL
-        return this.buildUrl(baseUrl, filePath);
-      }
-      // 检查文件名前缀和后缀匹配
-      else if (
-        extensions.some(
-          (ext) => fileName.startsWith(ext) || fileName.endsWith(ext),
-        )
-      ) {
-        return this.buildUrl(baseUrl, filePath);
-      }
-    }
-
-    return null;
+    return `${api}/api/file?${params.toString()}`;
   }
 
   /**
@@ -125,27 +158,6 @@ export class FileCloudPreview {
     return filePath.substring(lastDot).toLowerCase();
   }
 
-  /**
-   * 构建完整的云端URL，保留原路径中的查询参数
-   * 使用 URL 对象修改 pathname，确保保留查询参数
-   */
-  private buildUrl(baseUrl: string, filePath: string): string {
-    try {
-      const url = new URL(baseUrl);
-      const fileName = filePath.split("/").pop() || filePath;
-
-      // 直接修改 pathname，添加文件名
-      // 这样可以保留原有的查询参数（如 token）
-      url.pathname = url.pathname + encodeURIComponent(fileName);
-
-      return url.toString();
-    } catch (error) {
-      // URL 解析失败，返回简单拼接
-      let result = baseUrl.replace(/\/+$/, "");
-      const fileName = filePath.split("/").pop() || filePath;
-      return `${result}/${encodeURIComponent(fileName)}`;
-    }
-  }
 
   /**
    * 根据文件类型创建预览元素

@@ -3,13 +3,13 @@ import { Plugin } from "obsidian";
 import { startupSync, startupFullSync, resetSettingSyncTime, handleSync } from "./lib/operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { LocalStorageManager } from "./lib/local_storage_manager";
+import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
 import { dump, setLogEnabled } from "./lib/helps";
 import { MenuManager } from "./lib/menu_manager";
-import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { $ } from "./lang/lang";
 
 

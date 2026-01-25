@@ -33,7 +33,7 @@ export interface PluginSettings {
   syncExcludeFolders: string
   syncExcludeExtensions: string
   pdfSyncEnabled: boolean
-  assetsUrls: string
+  cloudPreviewEnabled: boolean
 }
 
 /**
@@ -67,7 +67,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   syncExcludeFolders: "",
   syncExcludeExtensions: "",
   pdfSyncEnabled: true,
-  assetsUrls: "",
+  cloudPreviewEnabled: true,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -167,16 +167,13 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set)
       .setName($("云端文件预览"))
       .setDesc($("云端文件预览描述"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder(".jpg,.jpeg: https://example/image/\nprefix,suffix: https://example/docs/?token=xxx")
-          .setValue(this.plugin.settings.assetsUrls)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.assetsUrls) {
-              this.plugin.settings.assetsUrls = value;
-              await this.plugin.saveSettings();
-            }
-          }),
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.cloudPreviewEnabled) {
+            this.plugin.settings.cloudPreviewEnabled = value;
+            await this.plugin.saveSettings();
+          }
+        })
       )
 
     new Setting(set)
