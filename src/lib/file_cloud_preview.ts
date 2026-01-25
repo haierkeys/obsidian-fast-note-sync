@@ -126,6 +126,10 @@ export class FileCloudPreview {
         });
       }
 
+      // 修复双滚动条问题：确保 embed 容器本身不滚动，并消除底部空白
+      embed.style.overflow = "hidden";
+      embed.style.verticalAlign = "middle";
+
       embed.appendChild(previewElement);
 
       // if (previewElement.hasClass("file-embed-title")) {
@@ -167,7 +171,7 @@ export class FileCloudPreview {
     }
 
     if (ext === ".pdf") {
-      return this.createPdfPreview(filePath, cloudUrl);
+      return this.createPdfPreview(filePath, cloudUrl, subpath);
     }
 
     return this.createGenericPreview(filePath, cloudUrl);
@@ -204,19 +208,44 @@ export class FileCloudPreview {
     return audio;
   }
 
-  private async createPdfPreview(filePath: string, cloudUrl: string): Promise<HTMLElement> {
+  private async createPdfPreview(filePath: string, cloudUrl: string, subpath?: string): Promise<HTMLElement> {
     // 异步加载 PDF.js 库，但不阻塞主 UI
     loadPdfJs().catch(err => console.error("FastSync: Failed to load PDF.js", err));
 
+    // 解析 subpath (例如 page=5, height=500)
+    const params = new URLSearchParams(subpath || "");
+    const page = params.get("page") || params.get("p");
+    const height = params.get("height") || "600";
+
+    // 构建带分页信息的 URL 片段
+    const hashParams: string[] = [];
+    if (page) hashParams.push(`page=${page}`);
+    // 支持官方的其他参数，如 view=FitH
+    const view = params.get("view");
+    if (view) hashParams.push(`view=${view}`);
+
+    let finalUrl = cloudUrl;
+    if (hashParams.length > 0) {
+      finalUrl += `#${hashParams.join("&")}`;
+    }
+
     const container = document.createElement("div");
-    container.addClass("cloud-preview-pdf");
-    container.style.cssText = "width: 100%; height: 600px; border: 1px solid var(--background-secondary); border-radius: 5px; overflow: auto;";
+    container.addClass("pdf-container");
+    // 确保容器高度严格受控，移除冗余的 display: block
+    container.style.cssText = `width: 100%; height: ${height}px; border: 1px solid var(--background-secondary); border-radius: 4px; overflow: hidden;`;
+
+    const viewerContainer = document.createElement("div");
+    viewerContainer.addClass("pdf-viewer-container");
+    viewerContainer.style.cssText = "width: 100%; height: 100%;";
 
     const iframe = document.createElement("iframe");
-    iframe.src = cloudUrl;
-    iframe.style.cssText = "width: 100%; height: 100%; border: none;";
+    iframe.src = finalUrl;
+    iframe.style.cssText = "width: 100%; height: 100%; border: none; display: block;";
     iframe.title = `PDF Preview: ${filePath}`;
-    container.appendChild(iframe);
+    iframe.setAttribute("allowfullscreen", "true");
+
+    viewerContainer.appendChild(iframe);
+    container.appendChild(viewerContainer);
 
     return container;
   }
