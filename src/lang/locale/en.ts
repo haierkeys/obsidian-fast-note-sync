@@ -104,7 +104,8 @@ const en: Partial<LangMap> = {
   "附件云预览上传后删除描述": "Automatically delete local files after successful upload to save space. Note: Cloud Attachment Preview must be enabled to view these files.",
   "恢复": "Restore",
   "恢复成功": "Restored successfully",
-  "确认要恢复到此版本吗？": "Are you sure you want to restore to this version? This will overwrite the current note content."
+  "确认要恢复到此版本吗？": "Are you sure you want to restore to this version? This will overwrite the current note content。",
+  "反馈问题&新建议": "Feedback & Suggestions"
 }
 
 
