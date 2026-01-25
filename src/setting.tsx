@@ -169,7 +169,7 @@ export class SettingTab extends PluginSettingTab {
       .setDesc($("云端文件预览描述"))
       .addTextArea((text) =>
         text
-          .setPlaceholder(".jpg,.jpeg,.png: https://example/image/")
+          .setPlaceholder(".jpg,.jpeg: https://example/image/\nprefix,suffix: https://example/docs/?token=xxx")
           .setValue(this.plugin.settings.assetsUrls)
           .onChange(async (value) => {
             if (value != this.plugin.settings.assetsUrls) {

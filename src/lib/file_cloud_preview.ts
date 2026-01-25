@@ -46,22 +46,21 @@ export class FileCloudPreview {
     const { path: filePath, subpath } = parseLinktext(src);
 
     // 文件已存在本地，不使用云端预览
-    // todo
-    // const file = this.plugin.app.vault.getAbstractFileByPath(filePath);
-    // if (file) return;
+    const isFileExists = !!this.plugin.app.metadataCache.getFirstLinkpathDest(
+      filePath,
+      context.sourcePath,
+    );
+    if (isFileExists) return;
 
     // 尝试使用云端预览
     const cloudUrl = this.getCloudUrl(filePath);
     if (!cloudUrl) return;
 
-    // 获取文件类型和扩展名
-    const fileExtension = filePath.split(".").pop()?.toLowerCase();
-
     // 根据文件类型创建预览元素
     const previewElement = await this.createPreviewElement(
       filePath,
       cloudUrl,
-      fileExtension,
+      this.getFileExtension(filePath),
       subpath,
     );
     if (previewElement) {
@@ -80,9 +79,12 @@ export class FileCloudPreview {
 
     // 解析 assetsUrls 配置
     // 格式：.jpg,.jpeg,.png: https://example.com/images/
-    //      .pdf: https://example.com/docs/?token=xxx
+    //      prefix,suffix: https://example.com/docs/?token=xxx
     const lines = assetsUrls.split("\n");
+    // 附件才进行处理
     const fileExt = this.getFileExtension(filePath);
+    const fileName = filePath.replace(fileExt, "").split("/").pop();
+    if (!fileExt || !fileName) return null;
 
     for (const line of lines) {
       const trimmedLine = line.trim();
@@ -99,6 +101,14 @@ export class FileCloudPreview {
       // 检查文件扩展名是否匹配
       if (extensions.includes(fileExt)) {
         // 构建完整URL
+        return this.buildUrl(baseUrl, filePath);
+      }
+      // 检查文件名前缀和后缀匹配
+      else if (
+        extensions.some(
+          (ext) => fileName.startsWith(ext) || fileName.endsWith(ext),
+        )
+      ) {
         return this.buildUrl(baseUrl, filePath);
       }
     }
@@ -143,13 +153,9 @@ export class FileCloudPreview {
   private async createPreviewElement(
     filePath: string,
     cloudUrl: string,
-    fileExtension?: string,
+    ext: string,
     subpath?: string,
   ): Promise<HTMLElement | null> {
-    const ext = fileExtension
-      ? "." + fileExtension.toLowerCase()
-      : this.getFileExtension(filePath);
-
     // 图片类型
     const imageExts = [
       ".jpg",
