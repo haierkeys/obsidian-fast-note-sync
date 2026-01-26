@@ -24,7 +24,7 @@ export class MenuManager {
 
   init() {
     // 初始化 Ribbon 图标
-    this.ribbonIcon = this.plugin.addRibbonIcon("wifi", "Fast Note Sync:" + $("同步全部笔记"), (event: MouseEvent) => {
+    this.ribbonIcon = this.plugin.addRibbonIcon("wifi", "Fast Note Sync:" + $("手动同步"), (event: MouseEvent) => {
       this.showRibbonMenu(event);
     });
     setIcon(this.ribbonIcon, "wifi-off");
@@ -46,16 +46,9 @@ export class MenuManager {
       }
     });
 
-    // 注册命令
-    this.plugin.addCommand({
-      id: "start-sync",
-      name: $("同步全部笔记"),
-      callback: () => startupSync(this.plugin),
-    });
-
     this.plugin.addCommand({
       id: "start-full-sync",
-      name: $("同步全部笔记(完整比对)"),
+      name: $("完整同步"),
       callback: () => startupFullSync(this.plugin),
     });
 
@@ -79,10 +72,10 @@ export class MenuManager {
     if (!this.ribbonIcon) return;
     if (status) {
       setIcon(this.ribbonIcon, "wifi");
-      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已连接") + ")");
+      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("手动同步") + " (" + $("服务已连接") + ")");
     } else {
       setIcon(this.ribbonIcon, "wifi-off");
-      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("同步全部笔记") + " (" + $("服务已断开") + ")");
+      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("手动同步") + " (" + $("服务已断开") + ")");
     }
   }
 
@@ -128,47 +121,38 @@ export class MenuManager {
   showRibbonMenu(event: MouseEvent) {
     const menu = new Menu();
 
-    if (this.plugin.settings.syncEnabled) {
+    if (this.plugin.websocket.isRegister) {
       menu.addItem((item: MenuItem) => {
         item
           .setIcon("pause")
-          .setTitle($("关闭自动同步"))
+          .setTitle($("关闭同步"))
           .onClick(async () => {
-            this.plugin.settings.syncEnabled = false;
-            await this.plugin.saveSettings();
-            new Notice($("启用笔记自动同步描述"));
+            this.plugin.websocket.unRegister();
+            new Notice($("关闭同步描述"));
           });
+        (item as any).dom.setAttribute("aria-label", $("关闭同步描述"));
       });
     } else {
       menu.addItem((item: MenuItem) => {
         item
           .setIcon("play")
-          .setTitle($("启动自动同步"))
+          .setTitle($("开启同步"))
           .onClick(async () => {
-            this.plugin.settings.syncEnabled = true;
-            await this.plugin.saveSettings();
-            new Notice($("启动自动同步"));
+            this.plugin.websocket.register((status) => this.updateRibbonIcon(status));
+            new Notice($("开启同步描述"));
           });
+        (item as any).dom.setAttribute("aria-label", $("开启同步描述"));
       });
     }
-    menu.addSeparator();
-
-    menu.addItem((item: MenuItem) => {
-      item
-        .setIcon("cloud")
-        .setTitle($("同步全部笔记"))
-        .onClick(async () => {
-          startupSync(this.plugin);
-        });
-    });
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
         .setIcon("cloudy")
-        .setTitle($("同步全部笔记(完整比对)"))
+        .setTitle($("完整同步"))
         .onClick(async () => {
           startupFullSync(this.plugin);
         });
+      (item as any).dom.setAttribute("aria-label", $("完整同步描述"));
     });
 
     // menu.addSeparator();
@@ -195,15 +179,70 @@ export class MenuManager {
     // });
 
 
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      const title = $("插件版本") + ": v" + this.plugin.manifest.version;
+      item.setTitle(title);
+
+      if (this.plugin.settings.pluginVersionIsNew) {
+        item.onClick(() => {
+          if (this.plugin.settings.pluginVersionNewLink) {
+            window.open(this.plugin.settings.pluginVersionNewLink);
+          }
+        });
+        const ariaLabel = $("发现新版本提示", { version: this.plugin.settings.pluginVersionNewName || "" });
+        (item as any).dom.setAttribute("aria-label", ariaLabel);
+
+        const itemDom = (item as any).dom as HTMLElement;
+        const titleEl = itemDom.querySelector(".menu-item-title");
+        if (titleEl) {
+          const iconSpan = titleEl.createSpan({ cls: "fast-note-sync-update-icon" });
+          setIcon(iconSpan, "circle-arrow-up");
+          iconSpan.style.color = "var(--text-success)";
+          iconSpan.style.marginLeft = "4px";
+          iconSpan.style.width = "14px";
+          iconSpan.style.height = "14px";
+          iconSpan.style.display = "inline-flex";
+          iconSpan.style.verticalAlign = "top";
+        }
+      } else {
+        item.setDisabled(true);
+        (item as any).dom.setAttribute("aria-label", $("插件版本描述"));
+      }
+    });
 
 
-
-    if (this.plugin.settings.apiVersion) {
+    if (this.plugin.settings.serverVersion) {
       menu.addSeparator();
       menu.addItem((item: MenuItem) => {
-        item
-          .setTitle($("服务端版本") + ": v" + this.plugin.settings.apiVersion)
-          .setDisabled(true);
+        const title = $("服务端版本") + ": v" + this.plugin.settings.serverVersion;
+        item.setTitle(title);
+
+        if (this.plugin.settings.serverVersionIsNew) {
+          item.onClick(() => {
+            if (this.plugin.settings.serverVersionNewLink) {
+              window.open(this.plugin.settings.serverVersionNewLink);
+            }
+          });
+          const ariaLabel = $("发现新版本提示", { version: this.plugin.settings.serverVersionNewName || "" });
+          (item as any).dom.setAttribute("aria-label", ariaLabel);
+
+          const itemDom = (item as any).dom as HTMLElement;
+          const titleEl = itemDom.querySelector(".menu-item-title");
+          if (titleEl) {
+            const iconSpan = titleEl.createSpan({ cls: "fast-note-sync-update-icon" });
+            setIcon(iconSpan, "circle-arrow-up");
+            iconSpan.style.color = "var(--text-success)";
+            iconSpan.style.marginLeft = "4px";
+            iconSpan.style.width = "12px";
+            iconSpan.style.height = "12px";
+            iconSpan.style.display = "inline-flex";
+            iconSpan.style.verticalAlign = "top";
+          }
+        } else {
+          item.setDisabled(true);
+          (item as any).dom.setAttribute("aria-label", $("服务端版本描述"));
+        }
       });
     }
 

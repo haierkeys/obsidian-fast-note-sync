@@ -192,14 +192,35 @@ export class WebSocketClient {
             return
           } else {
             this.isAuth = true
-            this.plugin.settings.apiVersion = data.data.version
-            this.plugin.saveSettings()
+            if (data.data) {
+              this.plugin.settings.serverVersion = data.data.version ?? this.plugin.settings.serverVersion
+              this.plugin.saveSettings()
+            }
             dump("Service authorization success")
 
             this.sendClientInfo()
             this.StartHandle()
           }
         }
+
+        if (msgAction == "ClientInfo") {
+          if (data.code == 0 || data.code > 200) {
+
+            return
+          } else {
+            if (data.data) {
+              this.plugin.settings.serverVersionIsNew = data.data.versionIsNew ?? this.plugin.settings.serverVersionIsNew
+              this.plugin.settings.serverVersionNewName = data.data.versionNewName ?? this.plugin.settings.serverVersionNewName
+              this.plugin.settings.serverVersionNewLink = data.data.versionNewLink ?? this.plugin.settings.serverVersionNewLink
+              this.plugin.settings.pluginVersionIsNew = data.data.pluginVersionIsNew ?? this.plugin.settings.pluginVersionIsNew
+              this.plugin.settings.pluginVersionNewName = data.data.pluginVersionNewName ?? this.plugin.settings.pluginVersionNewName
+              this.plugin.settings.pluginVersionNewLink = data.data.pluginVersionNewLink ?? this.plugin.settings.pluginVersionNewLink
+              this.plugin.saveSettings()
+            }
+          }
+          return
+        }
+
         if (data.code == 0 || data.code > 200) {
           // 处理冲突相关错误码
           if (data.code === ERROR_SYNC_CONFLICT) {
@@ -374,10 +395,13 @@ export class WebSocketClient {
 
     this.Send("ClientInfo", JSON.stringify({
       name: clientName,
-      version: this.plugin.settings.apiVersion,
+      version: this.plugin.manifest.version,
+      type: "obsidianPlugin",
       offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy
     }))
   }
+
+
 
   public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, defer?: () => void) {
     if (this.ws.readyState !== WebSocket.OPEN) {

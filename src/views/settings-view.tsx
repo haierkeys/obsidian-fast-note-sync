@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { KofiImage, WXImage } from "src/lib/icons";
 import { dump } from "src/lib/helps";
 import { setIcon } from "obsidian";
 import FastSync from "src/main";
@@ -96,57 +97,121 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
     }
   }, [isConnected]);
 
+  // 简单的 Markdown 表格渲染函数
+  const renderMarkdownTable = (content: string) => {
+    const lines = content.split('\n');
+    const tableData = lines.filter(line => line.trim().startsWith('|') && line.trim().endsWith('|'));
+    if (tableData.length < 2) return null;
+
+    const parseRow = (row: string) => row.split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1).map(s => s.trim());
+    const headerRow = parseRow(tableData[0]);
+    const bodyRows = tableData.slice(2).map(parseRow);
+
+    return (
+      <table className="fast-note-sync-settings-openapi">
+        <thead>
+          <tr>
+            {headerRow.map((h, i) => <th key={i}>{h}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {bodyRows.map((row, i) => (
+            <tr key={i}>
+              {row.map((cell, j) => {
+                if (cell.startsWith('http')) {
+                  return <td key={j}><a href={cell} target="_blank" rel="noreferrer">{cell}</a></td>;
+                }
+                return <td key={j}>{cell}</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
   return (
     <>
-      <div className="setting-item">
+      <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <div className="setting-item-info">
           <div className="setting-item-name">{$("远端服务搭建与选择")}</div>
           <div className="setting-item-description">{$("选择一个适合自己的远端")}</div>
         </div>
-      </div>
-      <div>
-        <table className="fast-note-sync-settings-openapi">
-          <thead>
-            <tr>
-              <th>{$("方式")}</th>
-              <th>{$("说明")}</th>
-              <th>{$("详情参考")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{$("私有服务搭建")}</td>
-              <td>{$("速度好, 自由配置, 无隐私风险")}</td>
-              <td>
-                <a href="https://github.com/haierkeys/obsidian-fast-note-sync-service">https://github.com/haierkeys/obsidian-fast-note-sync-service</a>
-              </td>
-            </tr>
-
-          </tbody>
-        </table>
-      </div>
-      <div className="clipboard-read">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
-            {$("粘贴服务端配置")}
-          </button>
-          <div className="connection-status-container" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-            <span
-              ref={iconRef}
-              className="connection-status-icon"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                color: isConnected ? '#4caf50' : '#f44336'
-              }}
-            />
-            <span style={{ color: 'var(--text-muted)' }}>
-              {isConnected ? $("服务已连接") : $("服务已断开")}
-            </span>
+        <div style={{ width: '100%', marginTop: '0px' }}>
+          {renderMarkdownTable($("远端服务搭建与选择表格" as any))}
+          <div className="clipboard-read">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
+                {$("粘贴服务端配置")}
+              </button>
+              <div className="connection-status-container" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                <span
+                  ref={iconRef}
+                  className="connection-status-icon"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: isConnected ? '#4caf50' : '#f44336'
+                  }}
+                />
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {isConnected ? $("服务已连接") : $("服务已断开")}
+                </span>
+              </div>
+            </div>
+            <div className="clipboard-read-description">{plugin.clipboardReadTip}</div>
           </div>
         </div>
-        <div className="clipboard-read-description">{plugin.clipboardReadTip}</div>
       </div>
+
     </>
+  )
+}
+
+
+
+export const SupportView = ({ plugin }: { plugin: FastSync }) => {
+  return (
+    <div className="setting-item">
+      <div className="setting-item-info">
+        <div className="setting-item-description">
+          {$("支持描述")}
+          <table className="fast-note-sync-support-table">
+            <thead>
+              <tr>
+                <th>{$("非中国地区")}</th>
+                <th style={{ width: '40px' }}></th>
+                <th>{$("中国地区")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a href="https://ko-fi.com/haierkeys" target="_blank" rel="noreferrer">
+                    <img src={KofiImage} className="ko-fi-logo-large" alt="Ko-fi" />
+                  </a>
+                </td>
+                <td className="support-separator">{$("或")}</td>
+                <td>
+                  <img src={WXImage} className="wx-pay-logo-large" alt="WeChat Pay" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="supporters-list-section">
+            <div className="supporters-list-title">
+              {$("已支持名单")}
+            </div>
+            <div className="supporters-list-subtitle"></div>
+            <div className="supporters-list-content">
+              <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md" target="_blank" rel="noreferrer">
+                https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

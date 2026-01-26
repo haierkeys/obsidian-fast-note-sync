@@ -1,8 +1,8 @@
 import { App, PluginSettingTab, Notice, Setting, Platform } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
-import { SettingsView } from "./views/settings-view";
-import { KofiImage } from "./lib/icons";
+import { SettingsView, SupportView } from "./views/settings-view";
+import { KofiImage, WXImage } from "./lib/icons";
 import { $ } from "./lang/lang";
 import FastSync from "./main";
 
@@ -25,7 +25,17 @@ export interface PluginSettings {
   lastFileSyncTime: number
   lastConfigSyncTime: number
   //  [propName: string]: any;
-  apiVersion: string
+
+
+  serverVersion: string
+  serverVersionIsNew: boolean
+  serverVersionNewName: string
+  serverVersionNewLink: string
+
+  pluginVersionIsNew: boolean
+  pluginVersionNewName: string
+  pluginVersionNewLink: string
+
   configExclude: string
   clientName: string
   startupDelay: number
@@ -62,7 +72,15 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastFileSyncTime: 0,
   lastConfigSyncTime: 0,
   vault: "",
-  apiVersion: "",
+  serverVersion: "",
+  serverVersionIsNew: false,
+  serverVersionNewName: "",
+  serverVersionNewLink: "",
+
+  pluginVersionIsNew: false,
+  pluginVersionNewName: "",
+  pluginVersionNewLink: "",
+
   configExclude: "",
   clientName: "",
   startupDelay: 500,
@@ -70,7 +88,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   syncExcludeFolders: "",
   syncExcludeExtensions: "",
   pdfSyncEnabled: true,
-  cloudPreviewEnabled: true,
+  cloudPreviewEnabled: false,
   cloudPreviewTypeRestricted: true,
   cloudPreviewRemoteUrl: "",
   cloudPreviewAutoDeleteLocal: false,
@@ -97,152 +115,6 @@ export class SettingTab extends PluginSettingTab {
 
     set.empty()
 
-    // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
-
-    new Setting(set)
-      .setName($("启用笔记自动同步"))
-      .setDesc($("启用笔记自动同步描述"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.syncEnabled) {
-            this.plugin.wsSettingChange = true
-            this.plugin.settings.syncEnabled = value
-            this.display()
-            await this.plugin.saveSettings("syncEnabled")
-          }
-        })
-      )
-
-    new Setting(set)
-      .setName($("启用配置项同步"))
-      .setDesc($("启用配置项同步描述"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.configSyncEnabled) {
-            this.plugin.settings.configSyncEnabled = value
-            await this.plugin.saveSettings("configSyncEnabled")
-          }
-        })
-      )
-
-    new Setting(set)
-      .setName($("同步排除目录"))
-      .setDesc($("同步排除目录描述"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder("Folder1\nFolder2")
-          .setValue(this.plugin.settings.syncExcludeFolders)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.syncExcludeFolders) {
-              this.plugin.settings.syncExcludeFolders = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
-
-    new Setting(set)
-      .setName($("同步排除扩展名"))
-      .setDesc($("同步排除扩展名描述"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder(".tmp\n.log")
-          .setValue(this.plugin.settings.syncExcludeExtensions)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.syncExcludeExtensions) {
-              this.plugin.settings.syncExcludeExtensions = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
-
-    new Setting(set)
-      .setName($("配置同步排除"))
-      .setDesc($("配置同步排除描述"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder($("配置同步排除输入"))
-          .setValue(this.plugin.settings.configExclude)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.configExclude) {
-              this.plugin.settings.configExclude = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
-
-    new Setting(set)
-      .setName($("开启 PDF 状态同步"))
-      .setDesc($("开启 PDF 状态同步描述"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.pdfSyncEnabled) {
-            this.plugin.settings.pdfSyncEnabled = value
-            await this.plugin.saveSettings()
-          }
-        })
-      )
-
-    new Setting(set)
-      .setName("| " + $("附件云预览"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
-
-    new Setting(set)
-      .setName($("附件云预览"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.cloudPreviewEnabled) {
-            this.plugin.settings.cloudPreviewEnabled = value;
-            await this.plugin.saveSettings();
-            this.display(); // 刷新以显示/隐藏子项
-          }
-        })
-      )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览描述"))
-
-    if (this.plugin.settings.cloudPreviewEnabled) {
-      new Setting(set)
-        .setName($("附件云预览类型限制"))
-        .addToggle((toggle) =>
-          toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
-            if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
-              this.plugin.settings.cloudPreviewTypeRestricted = value;
-              await this.plugin.saveSettings();
-            }
-          })
-        )
-      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览类型限制描述"))
-
-      new Setting(set)
-        .setName($("附件云预览远端源"))
-        .addTextArea((text) =>
-          text
-            .setPlaceholder(".jpg;.png:http://domain.com/{path}")
-            .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
-            .onChange(async (value) => {
-              if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
-                this.plugin.settings.cloudPreviewRemoteUrl = value;
-                await this.plugin.saveSettings();
-              }
-            })
-            .inputEl.addClass("fast-note-sync-remote-url-area")
-        )
-      const remoteUrlSetting = set.lastElementChild as HTMLElement;
-      remoteUrlSetting.addClass("fast-note-sync-remote-url-setting");
-      this.setDescWithBreaks(remoteUrlSetting, $("附件云预览远端源描述"))
-
-      new Setting(set)
-        .setName($("附件云预览上传后删除"))
-        .addToggle((toggle) =>
-          toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
-            if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
-              this.plugin.settings.cloudPreviewAutoDeleteLocal = value;
-              await this.plugin.saveSettings();
-            }
-          })
-        )
-      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览上传后删除描述"))
-    }
 
     new Setting(set)
       .setName("| " + $("远端"))
@@ -319,20 +191,52 @@ export class SettingTab extends PluginSettingTab {
       )
 
     new Setting(set)
-      .setName($("启动延迟"))
-      .addText((text) =>
-        text
-          .setPlaceholder($("输入延迟毫秒数"))
-          .setValue(this.plugin.settings.startupDelay.toString())
-          .onChange(async (value) => {
-            const numValue = parseInt(value)
-            if (!isNaN(numValue) && numValue >= 0) {
-              this.plugin.settings.startupDelay = numValue
-              await this.plugin.saveSettings()
-            }
-          })
+      .setName("| " + $("同步设置"))
+      .setHeading()
+      .setClass("fast-note-sync-settings-tag")
+    // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
+
+    new Setting(set)
+      .setName($("启用笔记自动同步"))
+      .setDesc($("启用笔记自动同步描述"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.syncEnabled) {
+            this.plugin.wsSettingChange = true
+            this.plugin.settings.syncEnabled = value
+            this.display()
+            await this.plugin.saveSettings("syncEnabled")
+          }
+        })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启动延迟描述"))
+
+    new Setting(set)
+      .setName($("启用配置项同步"))
+      .setDesc($("启用配置项同步描述"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.configSyncEnabled) {
+            this.plugin.settings.configSyncEnabled = value
+            await this.plugin.saveSettings("configSyncEnabled")
+          }
+        })
+      )
+
+
+
+
+    new Setting(set)
+      .setName($("开启 PDF 状态同步"))
+      .setDesc($("开启 PDF 状态同步描述"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.pdfSyncEnabled) {
+            this.plugin.settings.pdfSyncEnabled = value
+            await this.plugin.saveSettings()
+          }
+        })
+      )
+
 
     new Setting(set)
       .setName($("离线编辑合并策略"))
@@ -350,41 +254,140 @@ export class SettingTab extends PluginSettingTab {
           })
       )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("离线编辑合并策略描述"))
+    new Setting(set)
+      .setName($("同步排除目录"))
+      .setDesc($("同步排除目录描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder("Folder1\nFolder2")
+          .setValue(this.plugin.settings.syncExcludeFolders)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.syncExcludeFolders) {
+              this.plugin.settings.syncExcludeFolders = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
 
-    const strategyDesc = set.createDiv({ cls: "fast-note-sync-settings-strategy-desc fast-note-sync-settings" })
-    const table = strategyDesc.createEl("table")
-    const thead = table.createEl("thead")
-    const headerRow = thead.createEl("tr")
-    headerRow.createEl("th", { text: $("策略") })
-    headerRow.createEl("th", { text: $("策略说明") })
+    new Setting(set)
+      .setName($("同步排除扩展名"))
+      .setDesc($("同步排除扩展名描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder(".tmp\n.log")
+          .setValue(this.plugin.settings.syncExcludeExtensions)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.syncExcludeExtensions) {
+              this.plugin.settings.syncExcludeExtensions = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
 
-    const tbody = table.createEl("tbody")
+    new Setting(set)
+      .setName($("配置同步排除"))
+      .setDesc($("配置同步排除描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder($("配置同步排除输入"))
+          .setValue(this.plugin.settings.configExclude)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.configExclude) {
+              this.plugin.settings.configExclude = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
 
-    const addRow = (strategy: string, desc: string) => {
-      const row = tbody.createEl("tr")
-      row.createEl("td", { text: strategy })
-      row.createEl("td", { text: desc })
+    new Setting(set)
+      .setName($("启动延迟"))
+      .addText((text) =>
+        text
+          .setPlaceholder($("输入延迟毫秒数"))
+          .setValue(this.plugin.settings.startupDelay.toString())
+          .onChange(async (value) => {
+            const numValue = parseInt(value)
+            if (!isNaN(numValue) && numValue >= 0) {
+              this.plugin.settings.startupDelay = numValue
+              await this.plugin.saveSettings()
+            }
+          })
+      )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启动延迟描述"))
+
+    new Setting(set)
+      .setName("| " + $("附件云预览"))
+      .setHeading()
+      .setClass("fast-note-sync-settings-tag")
+
+    new Setting(set)
+      .setName($("附件云预览"))
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
+          if (value != this.plugin.settings.cloudPreviewEnabled) {
+            this.plugin.settings.cloudPreviewEnabled = value;
+            await this.plugin.saveSettings();
+            this.display(); // 刷新以显示/隐藏子项
+          }
+        })
+      )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览描述"))
+
+    if (this.plugin.settings.cloudPreviewEnabled) {
+      new Setting(set)
+        .setName($("附件云预览类型限制"))
+        .addToggle((toggle) =>
+          toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
+            if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
+              this.plugin.settings.cloudPreviewTypeRestricted = value;
+              await this.plugin.saveSettings();
+            }
+          })
+        )
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览类型限制描述"))
+
+      new Setting(set)
+        .setName($("附件云预览远端源"))
+        .addTextArea((text) =>
+          text
+            .setPlaceholder(".jpg;.png:http://domain.com/{path}")
+            .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
+            .onChange(async (value) => {
+              if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
+                this.plugin.settings.cloudPreviewRemoteUrl = value;
+                await this.plugin.saveSettings();
+              }
+            })
+            .inputEl.addClass("fast-note-sync-remote-url-area")
+        )
+      const remoteUrlSetting = set.lastElementChild as HTMLElement;
+      remoteUrlSetting.addClass("fast-note-sync-remote-url-setting");
+      this.setDescWithBreaks(remoteUrlSetting, $("附件云预览远端源描述"))
+
+      new Setting(set)
+        .setName($("附件云预览上传后删除"))
+        .addToggle((toggle) =>
+          toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
+            if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
+              this.plugin.settings.cloudPreviewAutoDeleteLocal = value;
+              await this.plugin.saveSettings();
+            }
+          })
+        )
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览上传后删除描述"))
     }
 
-    addRow($("策略选项_默认"), $("不合并_描述"))
-    addRow($("策略选项_newTimeMerge"), $("newTimeMerge_描述"))
-    addRow($("策略选项_ignoreTimeMerge"), $("ignoreTimeMerge_描述"))
-
-    strategyDesc.createEl("div", { text: $("策略注意"), cls: "fast-note-sync-settings-strategy-notice" })
 
 
     new Setting(set)
       .setName("| " + $("支持"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
-    new Setting(set)
-      .setName($("捐赠"))
-      .setDesc($("如果您喜欢这个插件，请考虑捐赠以支持继续开发。"))
-      .setClass("fast-note-sync-settings-support")
-      .settingEl.createEl("a", { href: "https://ko-fi.com/haierkeys" })
-      .createEl("img", {
-        attr: { src: KofiImage, height: "36", border: "0", alt: "Buy me a coffee at ko-fi.com", class: "ko-fi-logo" },
-      })
+
+
+    const supportSet = set.createDiv()
+    const supportRoot = createRoot(supportSet)
+    supportRoot.render(<SupportView plugin={this.plugin} />)
     new Setting(set)
       .setName($("开启日志"))
       .setDesc($("开启后将在控制台打印日志"))
@@ -449,6 +452,12 @@ export class SettingTab extends PluginSettingTab {
     feedbackButton.setText($("反馈问题&新建议"))
     feedbackButton.onclick = () => {
       window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
+    }
+
+    const telegramButton = debugDiv.createEl("button")
+    telegramButton.setText($("电报讨论群"))
+    telegramButton.onclick = () => {
+      window.open("https://t.me/obsidian_users", "_blank")
     }
 
     if (Platform.isDesktopApp) {

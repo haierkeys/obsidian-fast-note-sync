@@ -20,10 +20,96 @@
   }
 }
 
-.fast-note-sync-settings-support {
-  .ko-fi-logo {
-    height: 36px !important;
-    border: 0px !important;
+.fast-note-sync-support-info {
+  margin: 1em 0;
+  ul {
+    margin: 0;
+    padding-left: 1.5em;
+  }
+}
+
+.fast-note-sync-support-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+
+  th, td {
+    border: 1px solid var(--background-modifier-border) !important;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: var(--font-ui-smaller);
+  }
+
+
+
+  .support-separator {
+    width: 40px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+  }
+
+  .ko-fi-logo-large {
+    width: 200px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .wx-pay-logo-large {
+    width: 80px;
+    height: auto;
+    border-radius: 4px;
+    display: block;
+    margin: 0 auto;
+  }
+}
+
+.supporters-list-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--background-modifier-border);
+
+  .supporters-list-title {
+    font-weight: bold;
+    font-size: var(--font-ui-medium);
+    margin-bottom: 4px;
+
+    a {
+      color: var(--text-accent);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .supporters-list-subtitle {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-faint);
+    margin-bottom: 10px;
+  }
+
+  .supporters-list-content {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 15px;
+    word-break: break-all;
+
+    a {
+      color: var(--text-accent);
+      text-decoration: underline;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
   }
 }
 
@@ -37,12 +123,12 @@
 
 .fast-note-sync-settings {
   padding: 0.75em 0;
-  border-top: 1px solid var(--background-modifier-border);
 
   table {
     width: 100%;
-    border: 1px solid var(--background-modifier-border);
+    border-collapse: collapse;
     margin-bottom: 20px;
+    border: 1px solid var(--background-modifier-border);
 
     a {
       color: var(--color-blue);
@@ -55,12 +141,12 @@
 
     th,
     td {
-      border: 0 !important;
+      border: 1px solid var(--background-modifier-border) !important;
+      padding: 8px 10px;
     }
 
     th {
       text-align: center;
-      padding: 8px 10px;
       font-size: var(--font-ui-smaller);
       background-color: var(--background-secondary);
     }
@@ -77,7 +163,7 @@
     }
 
     thead {
-      border-bottom: 1px solid var(--color-base-40) !important;
+      border-bottom: 2px solid var(--background-modifier-border) !important;
     }
 
     tbody {
@@ -90,7 +176,6 @@
       }
 
       td {
-        padding: 4px 8px;
         font-size: var(--font-ui-small);
       }
     }
@@ -98,6 +183,34 @@
     tfoot td {
       padding: 8px 10px;
     }
+  }
+}
+
+.fast-note-sync-desc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  border: 1px solid var(--background-modifier-border);
+
+  th, td {
+    border: 1px solid var(--background-modifier-border) !important;
+    padding: 6px 10px;
+    text-align: left;
+  }
+
+  th {
+    background-color: var(--background-secondary);
+    font-weight: bold;
+    font-size: var(--font-ui-smaller);
+  }
+
+  td {
+    font-size: var(--font-ui-small);
+    background-color: var(--background-primary);
+  }
+
+  tbody tr:nth-child(even) td {
+    background-color: var(--background-secondary-alt);
   }
 }
 
@@ -127,10 +240,24 @@
   }
 }
 
-.fast-note-sync-progress-text {
-  font-size: 0.9em;
-  min-width: 40px;
-  text-align: right;
+/* 附件云预览远端源布局优化 */
+.fast-note-sync-remote-url-setting {
+  flex-direction: column;
+  align-items: flex-start;
+
+  .setting-item-info {
+    margin-bottom: var(--size-4-2);
+  }
+
+  .setting-item-control {
+    width: 100%;
+
+    textarea.fast-note-sync-remote-url-area {
+      width: 100%;
+      height: 60px;
+      resize: vertical;
+    }
+  }
 }
 .note-history-modal {
   .modal {

@@ -10,7 +10,7 @@ import type FastSync from "../main";
  * 处理本地不存在但云端存在的附件预览
  */
 export class FileCloudPreview {
-  public static IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"];
+  public static IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp", ".wximage"];
   public static VIDEO_EXTS = [".mp4", ".webm", ".ogg", ".mov", ".avi"];
   public static AUDIO_EXTS = [".mp3", ".wav", ".ogg", ".m4a", ".flac"];
   public static PDF_EXTS = [".pdf"];

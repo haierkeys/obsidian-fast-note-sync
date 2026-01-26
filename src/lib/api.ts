@@ -167,7 +167,6 @@ export class HttpApiService {
         });
 
         const url = addRandomParam(`${baseUrl}?${params.toString()}`);
-        console.log("getFileInfo request:", url);
 
         try {
             const res = await fetch(url, {
@@ -183,7 +182,6 @@ export class HttpApiService {
             }
 
             const json = await res.json();
-            console.log("getFileInfo response:", res.status, json);
             return json;
         } catch (e) {
             console.log("getFileInfo error:", e);

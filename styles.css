@@ -16,9 +16,84 @@
   color: var(--interactive-accent);
 }
 
-.fast-note-sync-settings-support .ko-fi-logo {
-  height: 36px !important;
-  border: 0px !important;
+.fast-note-sync-support-info {
+  margin: 1em 0;
+}
+.fast-note-sync-support-info ul {
+  margin: 0;
+  padding-left: 1.5em;
+}
+
+.fast-note-sync-support-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+.fast-note-sync-support-table th, .fast-note-sync-support-table td {
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 10px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: var(--font-ui-smaller);
+}
+.fast-note-sync-support-table .support-separator {
+  width: 40px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+.fast-note-sync-support-table .ko-fi-logo-large {
+  width: 200px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+.fast-note-sync-support-table .wx-pay-logo-large {
+  width: 80px;
+  height: auto;
+  border-radius: 4px;
+  display: block;
+  margin: 0 auto;
+}
+
+.supporters-list-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--background-modifier-border);
+}
+.supporters-list-section .supporters-list-title {
+  font-weight: bold;
+  font-size: var(--font-ui-medium);
+  margin-bottom: 4px;
+}
+.supporters-list-section .supporters-list-title a {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+.supporters-list-section .supporters-list-title a:hover {
+  text-decoration: underline;
+}
+.supporters-list-section .supporters-list-subtitle {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  margin-bottom: 10px;
+}
+.supporters-list-section .supporters-list-content {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  word-break: break-all;
+}
+.supporters-list-section .supporters-list-content a {
+  color: var(--text-accent);
+  text-decoration: underline;
+}
+.supporters-list-section .supporters-list-content a:hover {
+  opacity: 0.8;
 }
 
 .fast-note-sync-settings-debug {
@@ -29,47 +104,14 @@
   margin: var(--size-4-2);
 }
 
-.fast-note-sync-remote-url-setting {
-  flex-direction: column;
-  align-items: flex-start;
-}
-.fast-note-sync-remote-url-setting .setting-item-control {
-  width: 100%;
-  margin-top: 8px;
-}
-.fast-note-sync-remote-url-area {
-  width: 100% !important;
-  height: 120px !important;
-  min-height: 120px;
-  font-family: var(--font-monospace);
-}
-
-.fast-note-sync-desc-table {
-  width: 100% !important;
-  margin: 10px 0 !important;
-  border-collapse: collapse !important;
-  font-size: 0.9em !important;
-}
-.fast-note-sync-desc-table th {
-  background-color: var(--background-secondary-alt) !important;
-  font-weight: bold !important;
-  text-align: left !important;
-  padding: 4px 8px !important;
-  border: 1px solid var(--background-modifier-border) !important;
-}
-.fast-note-sync-desc-table td {
-  padding: 4px 8px !important;
-  border: 1px solid var(--background-modifier-border) !important;
-}
-
 .fast-note-sync-settings {
   padding: 0.75em 0;
-  border-top: 1px solid var(--background-modifier-border);
 }
 .fast-note-sync-settings table {
   width: 100%;
-  border: 1px solid var(--background-modifier-border);
+  border-collapse: collapse;
   margin-bottom: 20px;
+  border: 1px solid var(--background-modifier-border);
 }
 .fast-note-sync-settings table a {
   color: var(--color-blue);
@@ -80,11 +122,11 @@
 }
 .fast-note-sync-settings table th,
 .fast-note-sync-settings table td {
-  border: 0 !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 8px 10px;
 }
 .fast-note-sync-settings table th {
   text-align: center;
-  padding: 8px 10px;
   font-size: var(--font-ui-smaller);
   background-color: var(--background-secondary);
 }
@@ -98,7 +140,7 @@
   font-size: 10px;
 }
 .fast-note-sync-settings table thead {
-  border-bottom: 1px solid var(--color-base-40) !important;
+  border-bottom: 2px solid var(--background-modifier-border) !important;
 }
 .fast-note-sync-settings table tbody tr {
   background-color: var(--background-secondary);
@@ -107,11 +149,34 @@
   background-color: var(--background-secondary-alt);
 }
 .fast-note-sync-settings table tbody td {
-  padding: 4px 8px;
   font-size: var(--font-ui-small);
 }
 .fast-note-sync-settings table tfoot td {
   padding: 8px 10px;
+}
+
+.fast-note-sync-desc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  border: 1px solid var(--background-modifier-border);
+}
+.fast-note-sync-desc-table th, .fast-note-sync-desc-table td {
+  border: 1px solid var(--background-modifier-border) !important;
+  padding: 6px 10px;
+  text-align: left;
+}
+.fast-note-sync-desc-table th {
+  background-color: var(--background-secondary);
+  font-weight: bold;
+  font-size: var(--font-ui-smaller);
+}
+.fast-note-sync-desc-table td {
+  font-size: var(--font-ui-small);
+  background-color: var(--background-primary);
+}
+.fast-note-sync-desc-table tbody tr:nth-child(even) td {
+  background-color: var(--background-secondary-alt);
 }
 
 .fast-note-sync-status-bar-progress {
@@ -139,10 +204,21 @@
   transition: width 0.05s linear;
 }
 
-.fast-note-sync-progress-text {
-  font-size: 0.9em;
-  min-width: 40px;
-  text-align: right;
+/* 附件云预览远端源布局优化 */
+.fast-note-sync-remote-url-setting {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.fast-note-sync-remote-url-setting .setting-item-info {
+  margin-bottom: var(--size-4-2);
+}
+.fast-note-sync-remote-url-setting .setting-item-control {
+  width: 100%;
+}
+.fast-note-sync-remote-url-setting .setting-item-control textarea.fast-note-sync-remote-url-area {
+  width: 100%;
+  height: 60px;
+  resize: vertical;
 }
 
 .note-history-modal .modal {

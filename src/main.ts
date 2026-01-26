@@ -141,9 +141,16 @@ export default class FastSync extends Plugin {
   }
 
   async onload() {
+
+
     this.manifest.description = $("fast-note-sync-desc")
     this.wsSettingChange = false
     await this.loadSettings()
+    this.settings.serverVersionIsNew = false
+    this.settings.serverVersionNewLink = ""
+    this.settings.pluginVersionIsNew = false
+    this.settings.pluginVersionNewLink = ""
+
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
     this.addSettingTab(this.settingTab)
@@ -174,6 +181,7 @@ export default class FastSync extends Plugin {
     this.configManager = new ConfigManager(this)
     this.localStorageManager = new LocalStorageManager(this)
     this.localStorageManager.startWatch()
+
 
     this.refreshRuntime()
   }
