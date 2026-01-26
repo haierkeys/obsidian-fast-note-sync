@@ -8,7 +8,7 @@ import type FastSync from "../main";
 /**
  * 排除监听文件的常量
  */
-export const CONFIG_ROOT_FILES_TO_WATCH = ["app.json", "appearance.json", "backlink.json", "bookmarks.json", "command-palette.json", "community-plugins.json", "core-plugins.json", "core-plugins-migration.json", "graph.json", "hotkeys.json", "page-preview.json", "starred.json", "webviewer.json", "types.json"]
+export const CONFIG_ROOT_FILES_TO_WATCH = ["app.json", "appearance.json", "backlink.json", "bookmarks.json", "command-palette.json", "community-plugins.json", "core-plugins.json", "core-plugins-migration.json", "graph.json", "hotkeys.json", "page-preview.json", "starred.json", "webviewer.json", "types.json", "daily-notes.json"]
 export const CONFIG_PLUGIN_FILES_TO_WATCH = ["data.json", "manifest.json", "main.js", "styles.css"]
 export const CONFIG_THEME_FILES_TO_WATCH = ["theme.css", "manifest.json"]
 
