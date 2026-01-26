@@ -45,7 +45,7 @@ const fr: Partial<LangMap> = {
   "远端服务搭建与选择": "Installation et choix du service distant",
   "选择一个 Fast note sync service 服务地址": "Choisissez une adresse pour le service Fast note sync",
   "选择一个适合自己的远端": "Choisissez un serveur distant adapté à vos besoins",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Ouvrez la console via un raccourci clavier pour voir les journaux de cette extension et des autres.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Ouvrez la console via un raccourci clavier pour voir les journaux de cette extension et des autres.",
   "速度好, 自由配置, 无隐私风险": "Rapide, configurable librement, sans risque pour la vie privée",
   "Buy me a coffee at ko-fi.com": "Achetez-moi un café sur ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -96,9 +96,19 @@ const fr: Partial<LangMap> = {
   "同步冲突": "Conflit de synchronisation détecté, fusion forcée effectuée. Vérification manuelle requise pour ${path}.",
   "开启 PDF 状态同步": "Activer la sync d'état PDF",
   "开启 PDF 状态同步描述": "Synchroniser l'état de lecture du lecteur PDF (nécessite l'activation de la synchronisation des configurations)",
+  "附件云预览": "Aperçu cloud des pièces jointes",
+  "附件云预览描述": "Une fois activé, les pièces jointes (images, vidéos, sons, PDF) seront prévisualisées en ligne.\nL'extension ne synchronisera plus l'état des pièces jointes et ne recevra plus de synchronisation depuis d'autres appareils.",
+  "附件云预览类型限制": "Restrictions de type pour l'aperçu cloud",
+  "附件云预览类型限制描述": "Une fois activé, seuls les images, sons, vidéos et PDF utiliseront l'aperçu cloud. Les autres types de fichiers seront synchronisés normalement.\nAttention : Désactiver cette option peut affecter les fonctionnalités liées aux pièces jointes.",
+  "附件云预览远端源": "Aperçu cloud - Source distante personnalisée par extension",
+  "附件云预览远端源描述": "Utilise l'adresse du serveur par défaut. Prend en charge des règles multi-lignes : extension:adresse_distante. Les extensions peuvent être séparées par des points-virgules. En l'absence de correspondance, l'adresse serveur par défaut est utilisée.\nVariables supportées :\n| Variable | Description |\n| --- | --- |\n| {path} | Chemin du fichier |\n| {pathHash} | Hash du chemin |\n| {vault} | Nom du coffre |\n| {type} | Type (image/video/audio/pdf/other) |\nExemple : .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Aperçu cloud - Supprimer après téléchargement",
+  "附件云预览上传后删除描述": "Les fichiers locaux seront automatiquement supprimés après l'envoi réussi vers le serveur pour économiser de l'espace.\n(Nécessite l'activation de l'aperçu cloud)",
   "恢复": "Restaurer",
   "恢复成功": "Restauration réussie",
-  "确认要恢复到此版本吗？": "Voulez-vous restaurer cette version ? Le contenu actuel de la note sera écrasé."
+  "确认要恢复到此版本吗？": "Voulez-vous restaurer cette version ? Le contenu actuel de la note sera écrasé.",
+  "反馈问题&新建议": "Commentaires et suggestions"
+
 }
 
 

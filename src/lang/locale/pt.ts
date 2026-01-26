@@ -14,7 +14,7 @@ const pt: Partial<LangMap> = {
   "启用配置项同步": "Ativar sincronização de configurações",
   "启用配置项同步描述": "Quando ativado, as configurações principais, plugins e temas no diretório .obsidian serão sincronizados. A primeira ativação substituirá as configurações locais pelas do servidor",
   "复制 Debug 信息": "Copiar informações de depuração",
-  "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "Se você gosta deste plugin, considere fazer uma doação para apoiar o seu desenvolvimento contínuo.",
+  "如果您喜欢这个插件，请 consider捐赠以支持继续开发。": "Se você gosta deste plugin, considere fazer uma doação para apoiar o seu desenvolvimento contínuo.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copia informações de depuração para a área de transferência. Pode conter informações sensíveis!",
   "开启后将在控制台打印日志": "Exibe logs no console quando ativado",
   "开启日志": "Ativar logs",
@@ -28,7 +28,7 @@ const pt: Partial<LangMap> = {
   "服务端版本": "Versão do servidor",
   "测试连接": "Testar conexão",
   "连接正常": "Conexão normal",
-  "连接异常": "Conexão anormal",
+  "连接 anormal": "Conexão anormal",
   "测试中...": "Testando...",
   "未检测到配置信息!": "Nenhuma informação de configuração detetada!",
   "用于远端服务的访问授权令牌": "Token de autorização para o serviço remoto",
@@ -45,7 +45,7 @@ const pt: Partial<LangMap> = {
   "远端服务搭建与选择": "Configuração e seleção do serviço remoto",
   "选择一个 Fast note sync service 服务地址": "Escolha um endereço Fast note sync service",
   "选择一个适合自己的远端": "Escolha um servidor remoto adequado às suas necessidades",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Abra a consola através de atalhos para ver os logs deste e de outros plugins.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Abra a consola através de atalhos para ver os logs deste e de outros plugins.",
   "速度好, 自由配置, 无隐私风险": "Alta velocidade, configuração livre, sem riscos de privacidade",
   "Buy me a coffee at ko-fi.com": "Pague-me um café em ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -55,7 +55,7 @@ const pt: Partial<LangMap> = {
   "配置同步排除输入": "Introduza os caminhos dos ficheiros de configuração, um por linha",
   "清理本地同步时间": "Limpar hora de sincronização local",
   "客户端名称": "Nome do cliente",
-  "客户端名称描述": "Defina um nome personalizado para este cliente para identificar o dispositivo durante a sincronização.",
+  "客户端名称描述": "Defina um nome personalizado para este cliente para identificar o dispositivo durante la sincronização.",
   "输入客户端名称": "Introduzir nome do cliente",
   "笔记历史": "Histórico de notas",
   "版本": "Versão",
@@ -96,9 +96,19 @@ const pt: Partial<LangMap> = {
   "同步冲突": "Conflito de sincronização detetado, fusão forçada realizada. Revisão manual necessária para ${path}.",
   "开启 PDF 状态同步": "Ativar sync de estado PDF",
   "开启 PDF 状态同步描述": "Sincroniza o estado de leitura do visualizador PDF (requer ativação da sincronização de configurações)",
+  "附件云预览": "Pré-visualização de anexos na nuvem",
+  "附件云预览描述": "Quando ativado, anexos como imagens, vídeos, áudio e PDFs serão pré-visualizados online através da rede.\nO plugin deixará de sincronizar o estado dos anexos e deixará de receber sincronização de outros dispositivos.",
+  "附件云预览类型限制": "Restrições de tipo para pré-visualização na nuvem",
+  "附件云预览类型限制描述": "Quando ativado, apenas imagens, áudio, vídeo e PDFs usam a pré-visualização na nuvem. Outros anexos são sincronizados normalmente.\nNota: Tenha cuidado ao desativar; isso pode afetar funcionalidades relacionadas com anexos.",
+  "附件云预览远端源": "Pré-visualização na nuvem - Fonte remota personalizada por extensão",
+  "附件云预览远端源描述": "Utiliza o endereço do servidor por predefinição. Suporta regras multilinhas: extensão:url_remota. As extensões podem ser separadas por pontos e vírgulas. Se não houver correspondência, o endereço predefinido do servidor será usado.\nVariáveis suportadas:\n| Variável | Descrição |\n| --- | --- |\n| {path} | Caminho do anexo |\n| {pathHash} | Hash do caminho |\n| {vault} | Nome do cofre |\n| {type} | Tipo (image/video/audio/pdf/other) |\nExemplo : .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Pré-visualização na nuvem - Eliminar após o envio",
+  "附件云预览上传后删除描述": "Os ficheiros locais serão eliminados automaticamente após o envio com sucesso para o servidor para poupar espaço.\n(Requer a ativação da pré-visualização na nuvem)",
   "恢复": "Restaurar",
   "恢复成功": "Restaurado com sucesso",
-  "确认要恢复到此版本吗？": "Tem a certeza que deseja restaurar para esta versão? O conteúdo atual da nota será sobrescrito."
+  "确认要恢复到此版本吗？": "Tem a certeza que deseja restaurar para esta versão? O conteúdo atual da nota será sobrescrito.",
+  "反馈问题&新建议": "Feedback e sugestões"
+
 }
 
 

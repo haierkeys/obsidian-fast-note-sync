@@ -14,7 +14,7 @@ const da: Partial<LangMap> = {
   "启用配置项同步": "Aktiver konfigurationssynkronisering",
   "启用配置项同步描述": "Når aktiveret, vil kernekonfigurationer, plugins og temaindstillinger i .obsidian-mappen blive synkroniseret. Første gang det aktiveres, overskrives lokale indstillinger med serverindstillinger",
   "复制 Debug 信息": "Kopier fejlfindingsinfo",
-  "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "Hvis du kan lide dette plugin, overvej venligst at donere for at støtte den fortsatte udvikling.",
+  "如果您喜欢这个插件，请 consider捐赠以支持继续开发。": "Hvis du kan lide dette plugin, overvej venligst at donere for at støtte den fortsatte udvikling.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopierer fejlfindingsoplysninger til udklipsholderen. Kan indeholde følsomme oplysninger!",
   "开启后将在控制台打印日志": "Vis logfiler i konsollen, når aktiveret",
   "开启日志": "Aktiver logfiler",
@@ -28,7 +28,7 @@ const da: Partial<LangMap> = {
   "服务端版本": "Serverversion",
   "测试连接": "Test forbindelse",
   "连接正常": "Forbindelse normal",
-  "连接异常": "Forbindelse unormal",
+  "连接 anormal": "Forbindelse unormal",
   "测试中...": "Tester...",
   "未检测到配置信息!": "Ingen konfigurationsoplysninger fundet!",
   "用于远端服务的访问授权令牌": "Adgangstoken til fjerntjeneste",
@@ -45,7 +45,7 @@ const da: Partial<LangMap> = {
   "远端服务搭建与选择": "Fjerntjeneste opsætning og valg",
   "选择一个 Fast note sync service 服务地址": "Vælg en Fast note sync service adresse",
   "选择一个适合自己的远端": "Vælg en fjernserver, der passer dig",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Åbn konsollen via genvejstaster for at se logs for dette og andre plugins.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Åbn konsollen via genvejstaster for at se logs for dette og andre plugins.",
   "速度好, 自由配置, 无隐私风险": "God hastighed, fri konfiguration, ingen privatlivsrisiko",
   "Buy me a coffee at ko-fi.com": "Køb mig en kaffe på ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -75,7 +75,7 @@ const da: Partial<LangMap> = {
   "已复制": "Kopieret",
   "加载中...": "Indlæser...",
   "加载失败，请重试": "Indlæsning mislykkedes, prøv igen",
-  "无法连接到服务器，请检查网络连接": "Kunne ikke oprette forbindelse til serveren, tjek netværksforbindelsen",
+  "无法连接到服务器，请检查 network 连接": "Kunne ikke oprette forbindelse til serveren, tjek netværksforbindelsen",
   "启动延迟": "Opstarts延迟 (ms)",
   "启动延迟描述": "Ventetid efter succesfuld forbindelse før første tjek for opdateringer. Nyttigt hvis Obsidian hakker ved opstart pga. andre plugins. Standard 500 ms.",
   "离线编辑合并策略": "Offline-redigering sammenfletningsstrategi",
@@ -96,9 +96,19 @@ const da: Partial<LangMap> = {
   "同步冲突": "Synkroniseringskonflikt registreret, gennemtvinget sammenfletning udført. Manuel kontrol påkrævet for ${path}.",
   "开启 PDF 状态同步": "Aktiver PDF-statussynkronisering",
   "开启 PDF 状态同步描述": "Synkroniser læsestatus for PDF-fremviser (kræver at konfigurationssynkronisering er aktiveret)",
+  "附件云预览": "Cloudoverblik over vedhæftede filer",
+  "附件云预览描述": "Når aktiveret, vil vedhæftede filer (billeder, videoer, lyd, PDF) blive forhåndsvist online via netværket.\nPluginet vil ikke længere synkronisere vedhæftede filers status eller modtage synkronisering af vedhæftede filer fra andre enheder.",
+  "附件云预览类型限制": "Filtypebegrænsninger for cloudoverblik",
+  "附件云预览类型限制描述": "Når aktiveret, vil kun billeder, lyd, video og PDF-filer bruge cloudoverbliksfunktionen. Andre vedhæftede filer synkroniseres normalt.\nBemærk: Vær forsigtig med at deaktivere; det kan ødelægge funktionalitet relateret til vedhæftede filer.",
+  "附件云预览远端源": "Cloudoverblik - Brugerdefineret fjernkilde pr. filtype",
+  "附件云预览远端源描述": "Bruger som standard serveradressen. Understøtter regler på flere linjer: filtype:fjern_url. Filtyper kan adskilles med semikolon. Hvis der ikke er noget match, bruges standardserveradressen.\nUnderstøttede variabler:\n| Variabel | Beskrivelse |\n| --- | --- |\n| {path} | Sti til vedhæftet fil |\n| {pathHash} | Hash af stien |\n| {vault} | Boksens navn |\n| {type} | Type (image/video/audio/pdf/other) |\nEksempel : .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Cloudoverblik - Slet efter upload",
+  "附件云预览上传后删除描述": "Lokale filer slettes automatisk efter vellykket upload for at spare plads.\n(Kræver at cloudoverblik er aktiveret)",
   "恢复": "Gendan",
   "恢复成功": "Gendannelse lykkedes",
-  "确认要恢复到此版本吗？": "Er du sikker på, at du vil gendanne til denne version? Det nuværende indhold af noten vil blive overskrevet."
+  "确认要恢复到此版本吗？": "Er du sikker på, at du vil gendanne til denne version? Det nuværende indhold af noten vil blive overskrevet.",
+  "反馈问题&新建议": "Feedback og forslag"
+
 }
 
 

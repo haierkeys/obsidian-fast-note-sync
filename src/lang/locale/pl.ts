@@ -14,7 +14,7 @@ const pl: Partial<LangMap> = {
   "启用配置项同步": "Włącz synchronizację konfiguracji",
   "启用配置项同步描述": "Po włączeniu podstawowe konfiguracje, wtyczki i ustawienia motywów w katalogu .obsidian będą synchronizowane. Pierwsze włączenie nadpisze lokalne ustawienia ustawieniami z serwera",
   "复制 Debug 信息": "Kopiuj informacje debugowania",
-  "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "Jeśli podoba Ci się ta wtyczka, rozważ darowiznę, aby wesprzeć dalszy rozwój.",
+  "如果您喜欢这个插件，请 consider捐赠以支持继续开发。": "Jeśli podoba Ci się ta wtyczka, rozważ darowiznę, aby wesprzeć dalszy rozwój.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopiuje informacje debugowania do schowka. Może zawierać wrażliwe dane!",
   "开启后将在控制台打印日志": "Wyświetlaj logi w konsoli po włączeniu",
   "开启日志": "Włącz logi",
@@ -28,7 +28,7 @@ const pl: Partial<LangMap> = {
   "服务端版本": "Wersja serwera",
   "测试连接": "Testuj połączenie",
   "连接正常": "Połączenie prawidłowe",
-  "连接异常": "Błąd połączenia",
+  "连接 anormal": "Błąd połączenia",
   "测试中...": "Testowanie...",
   "未检测到配置信息!": "Nie wykryto informacji o konfiguracji!",
   "用于远端服务的访问授权令牌": "Token autoryzacji dostępu do usługi zdalnej",
@@ -45,7 +45,7 @@ const pl: Partial<LangMap> = {
   "远端服务搭建与选择": "Konfiguracja i wybór usługi zdalnej",
   "选择一个 Fast note sync service 服务地址": "Wybierz adres usługi Fast note sync",
   "选择一个适合自己的远端": "Wybierz odpowiedni serwer zdalny dla siebie",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件의日志": "Otwórz konsolę skrótem klawiszowym, aby zobaczyć logi tej i innych wtyczek.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Otwórz konsolę skrótem klawiszowym, aby zobaczyć logi tej i innych wtyczek.",
   "速度好, 自由配置, 无隐私风险": "Dobra prędkość, wolna konfiguracja, brak ryzyka dla prywatności",
   "Buy me a coffee at ko-fi.com": "Kup mi kawę na ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -75,7 +75,7 @@ const pl: Partial<LangMap> = {
   "已复制": "Skopiowano",
   "加载中...": "Ładowanie...",
   "加载失败，请重试": "Ładowanie nie powiodło się, spróbuj ponownie",
-  "无法连接到服务器，请检查网络连接": "Nie można połączyć się z serwerem, sprawdź połączenie internetowe",
+  "无法连接到服务器，请检查 network 连接": "Nie można połączyć się z serwerem, sprawdź połączenie internetowe",
   "启动延迟": "Opóźnienie startu (ms)",
   "启动延迟描述": "Czas oczekiwania po pomyślnym połączeniu przed pierwszym sprawdzeniem aktualizacji. Przydatne, jeśli Obsidian zacina się przy starcie z powodu innych wtyczek. Domyślnie 500 ms.",
   "离线编辑合并策略": "Strategia łączenia po edycji offline",
@@ -96,9 +96,19 @@ const pl: Partial<LangMap> = {
   "同步冲突": "Wykryto konflikt synchronizacji, wykonano wymuszone scalenie. Wymagana ręczna weryfikacja dla ${path}.",
   "开启 PDF 状态同步": "Włącz synchro statusu PDF",
   "开启 PDF 状态同步描述": "Synchronizuj status czytania przeglądarki PDF (wymaga włączenia synchronizacji konfiguracji)",
+  "附件云预览": "Podgląd załączników w chmurze",
+  "附件云预览描述": "Po włączeniu załączniki (obrazy, filmy, dźwięki, PDF) będą podglądane online przez sieć.\nWtyczka nie będzie już synchronizować stanu załączników ani otrzymywać synchronizacji załączników z innych urządzeń.",
+  "附件云预览类型限制": "Ograniczenia typów dla podglądu w chmurze",
+  "附件云预览类型限制描述": "Po włączeniu tylko obrazy, dźwięki, filmy i pliki PDF będą korzystać z funkcji podglądu w chmurze. Inne załączniki będą synchronizowane normalnie.\nUwaga: Zachowaj ostrożność przy wyłączaniu; może to zakłócić funkcje powiązane z załącznikami.",
+  "附件云预览远端源": "Podgląd w chmurze - Niestandardowe źródło zdalne według rozszerzenia",
+  "附件云预览远端源描述": "Domyślnie używa adresu serwera. Obsługuje reguły wieloliniowe: rozszerzenie:zdalny_url. Rozszerzenia można oddzielać średnikami. Jeśli brak dopasowania, używany jest domyślny adres serwera.\nObsługiwane zmienne:\n| Zmienna | Opis |\n| --- | --- |\n| {path} | Ścieżka załącznika |\n| {pathHash} | Hash ścieżki |\n| {vault} | Nazwa magazynu |\n| {type} | Typ (image/video/audio/pdf/other) |\nPrzykład : .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Podgląd w chmurze - Usuń po wysłaniu",
+  "附件云预览上传后删除描述": "Pliki lokalne będą automatycznie usuwane po pomyślnym wysłaniu na serwer, aby zaoszczędzić miejsce.\n(Wymaga włączonego podglądu w chmurze)",
   "恢复": "Przywróć",
   "恢复成功": "Przywrócono pomyślnie",
-  "确认要恢复到此版本吗？": "Czy na pewno chcesz przywrócić tę wersję? Bieżąca treść notatki zostanie nadpisana."
+  "确认要恢复到此版本吗？": "Czy na pewno chcesz przywrócić tę wersję? Bieżąca treść notatki zostanie nadpisana.",
+  "反馈问题&新建议": "Opinie i sugestie"
+
 }
 
 

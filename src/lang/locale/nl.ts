@@ -14,7 +14,7 @@ const nl: Partial<LangMap> = {
   "启用配置项同步": "Configuratie-synchronisatie inschakelen",
   "启用配置项同步描述": "Indien ingeschakeld, worden kernconfiguraties, plugins en thema-instellingen in de .obsidian-map gesynchroniseerd. De eerste keer inschakelen zal de lokale instellingen overschrijven met serverinstellingen",
   "复制 Debug 信息": "Foutopsporingsinfo kopiëren",
-  "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "Als je deze plugin leuk vindt, overweeg dan een donatie om de verdere ontwikkeling te ondersteunen.",
+  "如果您喜欢这个插件，请 consider捐赠以支持继续开发。": "Als je deze plugin leuk vindt, overweeg dan een donatie om de verdere ontwikkeling te ondersteunen.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Kopieert foutopsporingsinformatie naar het klembord. Kan gevoelige informatie bevatten!",
   "开启后将在控制台打印日志": "Toon logs in de console indien ingeschakeld",
   "开启日志": "Logs inschakelen",
@@ -28,7 +28,7 @@ const nl: Partial<LangMap> = {
   "服务端版本": "Serverversie",
   "测试连接": "Verbinding testen",
   "连接正常": "Verbinding normaal",
-  "连接异常": "Verbinding abnormaal",
+  "连接 anormal": "Verbinding abnormaal",
   "测试中...": "Testen...",
   "未检测到配置信息!": "Geen configuratie-informatie gevonden!",
   "用于远端服务的访问授权令牌": "Autorisatietoken voor toegang tot de externe service",
@@ -45,7 +45,7 @@ const nl: Partial<LangMap> = {
   "远端服务搭建与选择": "Externe service setup en selectie",
   "选择一个 Fast note sync service 服务地址": "Kies een Fast note sync service adres",
   "选择一个适合自己的远端": "Kies een externe server die bij u past",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Open de console via sneltoetsen om logs van deze en andere plugins te bekijken.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Open de console via sneltoetsen om logs van deze en andere plugins te bekijken.",
   "速度好, 自由配置, 无隐私风险": "Goede snelheid, vrije configuratie, geen privacyrisico",
   "Buy me a coffee at ko-fi.com": "Koop een kop koffie voor me op ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -75,7 +75,7 @@ const nl: Partial<LangMap> = {
   "已复制": "Gekopieerd",
   "加载中...": "Laden...",
   "加载失败，请重试": "Laden mislukt, probeer het opnieuw",
-  "无法连接到服务器，请检查网络连接": "Kan geen verbinding maken met de server, controleer de netwerkverbinding",
+  "无法连接到服务器，请检查 network 连接": "Kan geen verbinding maken met de server, controleer de netwerkverbinding",
   "启动延迟": "Opstartvertraging (ms)",
   "启动延迟描述": "Wachttijd na succesvolle verbinding voor de eerste controle op updates. Handig als Obsidian traag opstart door andere plugins. Standaard 500 ms.",
   "离线编辑合并策略": "Offline bewerking samenvoegstrategie",
@@ -96,9 +96,19 @@ const nl: Partial<LangMap> = {
   "同步冲突": "Synchronisatieconflict gedetecteerd, geforceerde samenvoeging uitgevoerd. Handmatige controle vereist voor ${path}.",
   "开启 PDF 状态同步": "PDF-statussynchronisatie inschakelen",
   "开启 PDF 状态同步描述": "Synchroniseer leesstatus van PDF-viewer (vereist configuratie-synchronisatie)",
+  "附件云预览": "Cloud-voorvertoning van bijlagen",
+  "附件云预览描述": "Indien ingeschakeld, worden bijlagen (afbeeldingen, video's, audio, PDF) online bekeken via het netwerk.\nDe plugin synchroniseert de status van bijlagen niet meer en ontvangt geen synchronisatie van bijlagen van andere apparaten meer.",
+  "附件云预览类型限制": "Bestandstype-beperkingen voor cloud-voorvertoning",
+  "附件云预览类型限制描述": "Indien ingeschakeld, maken alleen afbeeldingen, audio, video en PDF's gebruik van de cloud-voorvertoning. Andere bijlagen worden normaal gesynchroniseerd.\nLet op: Wees voorzichtig bij het uitschakelen; dit kan de functionaliteit van bijlagen verstoren.",
+  "附件云预览远端源": "Cloud-voorvertoning - Aangepaste externe bron per extensie",
+  "附件云预览远端源描述": "Gebruikt standaard het serveradres. Ondersteunt regels op meerdere regels: extensie:externe_url. Extensies kunnen worden gescheiden door puntkomma's. Als er geen overeenkomst is, wordt het standaard serveradres gebruikt.\nOndersteunde variabelen:\n| Variabele | Beschrijving |\n| --- | --- |\n| {path} | Pad naar bijlage |\n| {pathHash} | Hash van het pad |\n| {vault} | Naam van de kluis |\n| {type} | Type (image/video/audio/pdf/other) |\nVoorbeeld : .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Cloud-voorvertoning - Verwijderen na upload",
+  "附件云预览上传后删除描述": "Lokale bestanden worden automatisch verwijderd na een succesvolle upload om ruimte te besparen.\n(Vereist dat cloud-voorvertoning is ingeschakeld)",
   "恢复": "Herstellen",
   "恢复成功": "Herstel geslaagd",
-  "确认要恢复到此版本吗？": "Weet u zeker dat u deze versie wilt herstellen? De huidige inhoud van de notitie wordt overschreven."
+  "确认要恢复到此版本吗？": "Weet u zeker dat u deze versie wilt herstellen? De huidige inhoud van de notitie wordt overschreven.",
+  "反馈问题&新建议": "Feedback en suggesties"
+
 }
 
 

@@ -45,7 +45,7 @@ const de: Partial<LangMap> = {
   "远端服务搭建与选择": "Remote-Service einrichten und auswählen",
   "选择一个 Fast note sync service 服务地址": "Wählen Sie eine Fast note sync service Adresse aus",
   "选择一个适合自己的远端": "Wählen Sie einen für Sie passenden Remote-Dienst",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Öffnen Sie die Konsole über Tastenkombinationen, um Protokolle dieses und anderer Plugins zu sehen.",
+  "通过快捷键打开控制台，你可以看到这个插件和其他插件의 로근": "Öffnen Sie die Konsole über Tastenkombinationen, um Protokolle dieses und anderer Plugins zu sehen.",
   "速度好, 自由配置, 无隐私风险": "Gute Geschwindigkeit, freie Konfiguration, kein Datenschutzrisiko",
   "Buy me a coffee at ko-fi.com": "Kauf mir einen Kaffee auf ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -96,9 +96,19 @@ const de: Partial<LangMap> = {
   "同步冲突": "Synchronisierungskonflikt erkannt, erzwungene Zusammenführung durchgeführt. Manuelle Prüfung für ${path} erforderlich.",
   "开启 PDF 状态同步": "PDF-Status-Sync aktivieren",
   "开启 PDF 状态同步描述": "Lesestatus des PDF-Viewers synchronisieren (erfordert aktivierte Konfigurations-Synchronisierung)",
+  "附件云预览": "Anhang-Cloud-Vorschau",
+  "附件云预览描述": "Nach dem Aktivieren werden Anhänge wie Bilder, Videos, Audio und PDFs über das Netzwerk online vorschaut.\nDas Plugin synchronisiert den Anhang-Status nicht mehr und empfängt keine Anhangs-Synchronisierung von anderen Geräten mehr.",
+  "附件云预览类型限制": "Dateityp-Einschränkungen für Cloud-Vorschau",
+  "附件云预览类型限制描述": "Wenn aktiviert, nutzen nur Bilder, Audio, Video und PDFs die Cloud-Vorschau. Andere Anhänge werden normal synchronisiert.\nHinweis: Deaktivieren Sie diese Option vorsichtig, da dies anhangsbezogene Funktionen beeinträchtigen kann.",
+  "附件云预览远端源": "Cloud-Vorschau - Benutzerdefinierte Remote-Quelle pro Endung",
+  "附件云预览远端源描述": "Verwendet standardmäßig die Serveradresse. Unterstützt mehrzeilige Regeln: Endung:Remote_URL. Endungen können durch Semikolons getrennt werden. Bei keiner Übereinstimmung wird die Standard-Serveradresse verwendet.\nUnterstützte Variablen:\n| Variable | Beschreibung |\n| --- | --- |\n| {path} | Pfad des Anhangs |\n| {pathHash} | Hash des Pfads |\n| {vault} | Tresor-Name |\n| {type} | Typ (image/video/audio/pdf/other) |\nBeispiel: .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Cloud-Vorschau - Nach Upload löschen",
+  "附件云预览上传后删除描述": "Lokale Dateien werden nach erfolgreichem Hochladen automatisch gelöscht, um Speicherplatz zu sparen.\n(Erfordert aktivierte Cloud-Vorschau)",
   "恢复": "Wiederherstellen",
   "恢复成功": "Erfolgreich wiederhergestellt",
-  "确认要恢复到此版本吗？": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten? Der aktuelle Inhalt der Notiz wird überschrieben."
+  "确认要恢复到此版本吗？": "Sind Sie sicher, dass Sie diese Version wiederherstellen möchten? Der aktuelle Inhalt der Notiz wird überschrieben.",
+  "反馈问题&新建议": "Feedback & Vorschläge"
+
 }
 
 

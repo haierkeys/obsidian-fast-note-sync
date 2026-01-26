@@ -45,7 +45,7 @@ const es: Partial<LangMap> = {
   "远端服务搭建与选择": "Configuración y selección del servicio remoto",
   "选择一个 Fast note sync service 服务地址": "Elija una dirección de Fast note sync service",
   "选择一个适合自己的远端": "Elija un servidor remoto adecuado",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Abre la consola con teclas de acceso rápido para ver los registros de este y otros complementos.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Abre la consola con teclas de acceso rápido para ver los registros de este y otros complementos.",
   "速度好, 自由配置, 无隐私风险": "Buena velocidad, configuración libre, sin riesgos de privacidad",
   "Buy me a coffee at ko-fi.com": "Cómprame un café en ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const es: Partial<LangMap> = {
   "策略": "Estrategia",
   "策略说明": "Descripción de la estrategia",
   "策略注意": "Nota: El proceso de fusión compara con una versión base común, lo que podría hacer que aparezca contenido eliminado.",
-  "不合并_描述": "No fusionar, conservar solo la versión editada más recientemente. Si la hora local es anterior, se descartarán los cambios locales.",
+  "不合并_描述": "No fusionar, conservar solo la version editada más recientemente. Si la hora local es anterior, se descartarán los cambios locales.",
   "newTimeMerge_描述": "Fusionar contenido si la hora local es más reciente; de lo contrario, seguir al servidor y descartar cambios locales.",
   "ignoreTimeMerge_描述": "Ignorar el orden cronológico, forzar la fusión entre el contenido local y el remoto.",
   "策略选项_默认": "No fusionar, conservar lo más reciente",
@@ -96,9 +96,19 @@ const es: Partial<LangMap> = {
   "同步冲突": "Conflicto de sincronización detectado, fusión forzada realizada. Se requiere revisión manual para ${path}.",
   "开启 PDF 状态同步": "Activar sync de estado PDF",
   "开启 PDF 状态同步描述": "Sincroniza el estado de lectura del visor de PDF (requiere activar la sincronización de configuraciones)",
+  "附件云预览": "Vista previa de adjuntos en la nube",
+  "附件云预览描述": "Al activar esta opción, los archivos adjuntos (imágenes, videos, audio, PDF) se previsualizarán en línea a través de la red.\nEl complemento ya no sincronizará el estado de los archivos adjuntos ni recibirá sincronizaciones de otros dispositivos.",
+  "附件云预览类型限制": "Restricciones de tipo de archivo para vista previa en la nube",
+  "附件云预览类型限制描述": "Cuando está activado, solo las imágenes, el audio, el video y los PDF utilizan la función de vista previa en la nube. Otros archivos adjuntos se sincronizan normalmente.\nNota: Tenga cuidado al desactivar esta opción; puede afectar las funciones relacionadas con los archivos adjuntos.",
+  "附件云预览远端源": "Vista previa en la nube - Fuente remota personalizada por extensión",
+  "附件云预览远端源描述": "Por defecto usa la dirección del servidor. Admite reglas de varias líneas: extensión:url_remota. Las extensiones se pueden separar por puntos y comas. Si no hay coincidencia, se usa la dirección predeterminada del servidor.\nVariables admitidas:\n| Variable | Descripción |\n| --- | --- |\n| {path} | Ruta del adjunto |\n| {pathHash} | Hash de la ruta |\n| {vault} | Nombre del almacén |\n| {type} | Tipo (image/video/audio/pdf/other) |\nEjemplo: .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Vista previa en la nube - Eliminar tras subir",
+  "附件云预览上传后删除描述": "Los archivos locales se eliminarán automáticamente tras subirse con éxito para ahorrar espacio.\n(Requiere tener activada la vista previa en la nube)",
   "恢复": "Restaurar",
   "恢复成功": "Restaurado con éxito",
-  "确认要恢复到此版本吗？": "¿Seguro que deseas restaurar esta versión? Se sobrescribirá el contenido actual de la nota."
+  "确认要恢复到此版本吗？": "¿Seguro que deseas restaurar esta versión? Se sobrescribirá el contenido actual de la nota.",
+  "反馈问题&新建议": "Comentarios y sugerencias"
+
 }
 
 

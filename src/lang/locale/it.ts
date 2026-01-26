@@ -12,9 +12,9 @@ const it: Partial<LangMap> = {
   "启用笔记自动同步": "Abilita sincronizzazione automatica note",
   "启用笔记自动同步描述": "Una volta attivato, verranno sincronizzati note, immagini e vari allegati nella cassaforte delle note.",
   "启用配置项同步": "Abilita sincronizzazione configurazioni",
-  "启用配置项同步描述": "Una vez attivato, verranno sincronizzate le configurazioni principali, i plugin e i temi nella directory .obsidian. La prima attivazione sovrascriverà le impostazioni locali con quelle del server.",
+  "启用配置项同步描述": "Una volta attivato, verranno sincronizzate le configurazioni principali, i plugin e i temi nella directory .obsidian. La prima attivazione sovrascriverà le impostazioni locali con quelle del server.",
   "复制 Debug 信息": "Copia informazioni di debug",
-  "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "Se ti piace questo plugin, considera una donazione per sostenerne lo sviluppo continuo.",
+  "如果您喜欢这个插件，请 consider捐赠以支持继续开发。": "Se ti piace questo plugin, considera una donazione per sostenerne lo sviluppo continuo.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copia le informazioni di debug negli appunti. Potrebbe contenere informazioni sensibili!",
   "开启后将在控制台打印日志": "Mostra i log nella console quando attivato",
   "开启日志": "Abilita log",
@@ -45,7 +45,7 @@ const it: Partial<LangMap> = {
   "远端服务搭建与选择": "Configurazione e selezione servizio remoto",
   "选择一个 Fast note sync service 服务地址": "Scegli un indirizzo Fast note sync service",
   "选择一个适合自己的远端": "Scegli un server remoto adatto alle tue esigenze",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Apri la console tramite scorciatoia per vedere i log di questo e altri plugin.",
+  "通过快捷键打开控制台，你可以看到このプラグインと他のプラグイン의 로근": "Apri la console tramite scorciatoia per vedere i log di questo e altri plugin.",
   "速度好, 自由配置, 无隐私风险": "Velocità elevata, configurazione libera, nessun rischio per la privacy",
   "Buy me a coffee at ko-fi.com": "Offrimi un caffè su ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -96,9 +96,19 @@ const it: Partial<LangMap> = {
   "同步冲突": "Rilevato conflitto di sincronizzazione, eseguita fusione forzata. Revisione manuale richiesta per ${path}.",
   "开启 PDF 状态同步": "Attiva sync stato PDF",
   "开启 PDF 状态同步描述": "Sincronizza lo stato di lettura del visualizzatore PDF (richiede l'attivazione della sincronizzazione configurazioni)",
+  "附件云预览": "Anteprima cloud degli allegati",
+  "附件云预览描述": "Una volta attivato, gli allegati (immagini, video, audio, PDF) verranno visualizzati in anteprima online tramite la rete.\nIl plugin non sincronizzerà più lo stato degli allegati e non riceverà più la sincronizzazione da altri dispositivi.",
+  "附件云预览类型限制": "Restrizioni tipo di file per anteprima cloud",
+  "附件云预览类型限制描述": "Una volta attivato, solo immagini, audio, video e PDF utilizzeranno l'anteprima cloud. Gli altri allegati verranno sincronizzati normalmente.\nNota: Fai attenzione quando disattivi questa opzione; potrebbe influire sulle funzionalità relative agli allegati.",
+  "附件云预览远端源": "Anteprima cloud - Fonte remota personalizzata per estensione",
+  "附件云预览远端源描述": "Utilizza l'indirizzo del server per impostazione predefinita. Supporta regole multiriga: estensione:url_remoto. Le estensioni possono essere separate da punti e virgola. In assenza di corrispondenza, viene utilizzato l'indirizzo predefinito del server.\nVariabili supportate :\n| Variabile | Descrizione |\n| --- | --- |\n| {path} | Percorso allegato |\n| {pathHash} | Hash del percorso |\n| {vault} | Nome cassaforte |\n| {type} | Tipo (image/video/audio/pdf/other) |\nEsempio : .jpg;.png:http://domain.com/{path}",
+  "附件云预览上传后删除": "Anteprima cloud - Elimina dopo il caricamento",
+  "附件云预览上传后删除描述": "I file locali verranno eliminati automaticamente dopo il caricamento riuscito per risparmiare spazio.\n(Richiede l'attivazione dell'anteprima cloud)",
   "恢复": "Ripristina",
   "恢复成功": "Ripristino completato",
-  "确认要恢复到此版本吗？": "Sei sicuro di voler ripristinare questa versione? Il contenuto attuale della nota sarà sovrascritto."
+  "确认要恢复到此版本吗？": "Sei sicuro di voler ripristinare questa versione? Il contenuto attuale della nota sarà sovrascritto.",
+  "反馈问题&新建议": "Feedback e suggerimenti"
+
 }
 
 
