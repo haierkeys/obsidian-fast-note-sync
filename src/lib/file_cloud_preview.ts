@@ -169,9 +169,12 @@ export class FileCloudPreview {
     ext: string,
     subpath?: string,
   ): Promise<HTMLElement | null> {
+
+
     if (FileCloudPreview.IMAGE_EXTS.includes(ext)) {
       return this.createImagePreview(cloudUrl, filePath);
     }
+
 
     if (FileCloudPreview.VIDEO_EXTS.includes(ext)) {
       return this.createVideoPreview(cloudUrl, subpath);
@@ -284,8 +287,8 @@ export class FileCloudPreview {
    * 解析时间戳子路径 (如 #t=30)
    */
   private parseTimeSubpath(subpath?: string): number | null {
-    if (subpath?.startsWith("t=")) {
-      const time = parseFloat(subpath.substring(2));
+    if (subpath?.startsWith("#t=")) {
+      const time = parseFloat(subpath.substring(3));
       return isNaN(time) ? null : time;
     }
     return null;
@@ -349,9 +352,6 @@ export class FileCloudPreview {
         }
       }
     }
-
-    console.log("matchedUrl", matchedUrl, filePath);
-
     if (matchedUrl) {
       return matchedUrl
         .replace(/{path}/g, filePath)

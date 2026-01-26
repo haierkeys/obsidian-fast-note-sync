@@ -247,6 +247,10 @@
 
   .setting-item-info {
     margin-bottom: var(--size-4-2);
+    b{
+      font-weight: bold;
+      color: var(--color-green);
+    }
   }
 
   .setting-item-control {

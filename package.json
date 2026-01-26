@@ -1,6 +1,6 @@
 {
   "name": "Fast Note Sync",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
   "main": "main.js",
   "scripts": {
