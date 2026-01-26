@@ -335,7 +335,7 @@ export class FileCloudPreview {
           extsPart = parts[1].trim();
         }
 
-        const exts = extsPart.split(";").map(e => e.trim().toLowerCase());
+        const exts = extsPart.split("$").map(e => e.trim().toLowerCase());
 
         // 获取不带后缀的路径进行前缀匹配 (从 filePath 尾部去除 ext 的长度)
         const pathWithoutExt = filePath.toLowerCase().substring(0, filePath.length - ext.length);
@@ -363,9 +363,9 @@ export class FileCloudPreview {
 
     const params = new URLSearchParams({
       vault,
-      path: filePath,
+      path: vaultPath,
       token: apiToken,
-      pathHash: hashContent(filePath)
+      pathHash: hashContent(vaultPath)
     });
 
     return `${api}/api/file?${params.toString()}`;

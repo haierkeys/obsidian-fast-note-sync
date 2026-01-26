@@ -350,7 +350,7 @@ export class SettingTab extends PluginSettingTab {
         .setName($("附件云预览远端源"))
         .addTextArea((text) =>
           text
-            .setPlaceholder("prefix@.jpg;.png#http://domain.com/{path}")
+            .setPlaceholder("prefix@.jpg$.png#http://domain.com/{path}")
             .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
             .onChange(async (value) => {
               if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
@@ -500,7 +500,10 @@ export class SettingTab extends PluginSettingTab {
             table.addClass("fast-note-sync-desc-table")
             const thead = table.createEl("thead")
             const tr = thead.createEl("tr")
-            parts.forEach((p) => tr.createEl("th", { text: p }))
+            parts.forEach((p) => {
+              const th = tr.createEl("th");
+              th.innerHTML = p;
+            })
             tbody = table.createEl("tbody")
             fragment.appendChild(table)
           } else {
@@ -510,13 +513,18 @@ export class SettingTab extends PluginSettingTab {
             }
             if (tbody) {
               const tr = tbody.createEl("tr")
-              parts.forEach((p) => tr.createEl("td", { text: p }))
+              parts.forEach((p) => {
+                const td = tr.createEl("td");
+                td.innerHTML = p;
+              })
             }
           }
         } else {
           // 退出表格模式
           inTable = false
-          fragment.appendChild(document.createTextNode(line))
+          const lineSpan = document.createElement("span");
+          lineSpan.innerHTML = line;
+          fragment.appendChild(lineSpan)
           fragment.appendChild(document.createElement("br"))
         }
       })
