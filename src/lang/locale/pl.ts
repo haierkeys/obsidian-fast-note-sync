@@ -51,7 +51,7 @@ const pl: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Metoda | Opis | Szczegóły |\n| --- | --- | --- |\n| Usługa prywatna | Dobra prędkość, dowolna konfiguracja, brak ryzyka prywatności | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Wybierz adres usługi Fast note sync",
   "选择一个适合自己的远端": "Wybierz zdalny serwer pasujący do Ciebie",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Otwórz konsolę skrótami klawiszowymi, aby zobaczyć logi tej i innych wtyczek",
+  "通过快捷键打开控制台，你可以看到 هذا البرنامج المساعد وغيره من سجلات البرامج المساعدة": "Otwórz konsolę skrótami klawiszowymi, aby zobaczyć logi tej i innych wtyczek",
   "速度好, 自由配置, 无隐私风险": "Dobra prędkość, dowolna konfiguracja, brak ryzyka prywatności",
   "Buy me a coffee at ko-fi.com": "Postaw mi kawę na ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const pl: Partial<LangMap> = {
   "已复制": "Skopiowano",
   "加载中...": "Ładowanie...",
   "加载失败，请重试": "Błąd ładowania, spróbuj ponownie",
-  "无法连接到服务器，请检查网络连接": "Nie można połączyć się z serwerem, sprawdź połączenie internetowe",
+  "无法连接到服务器, يرجى التحقق من اتصال الشبكة": "Nie można połączyć się z serwerem, sprawdź połączenie internetowe",
   "同步中": "Synchronizacja...",
   "重建文件哈希映射": "Przebuduj mapę hashy plików",
   "启动延迟": "Opóźnienie startu (ms)",
@@ -104,8 +104,8 @@ const pl: Partial<LangMap> = {
   "附件云预览描述": "Po włączeniu obrazy/wideo/audio/PDF będą przeglądane online przez sieć.\nWtyczka przestaje synchronizować stan załączników i nie odbiera ich z innych urządzeń.",
   "附件云预览类型限制": "Ograniczenie typów podglądu",
   "附件云预览类型限制描述": "Tylko obrazy/audio/wideo/PDF używają podglądu chmurowego, inne synchronizują się normalnie.\nUwaga: Wyłączaj ostrożnie; może to zakłócić pracę wtyczek powiązanych z załącznikami.",
-  "附件云预览远端源": "Podgląd chmurowy - Mapowanie rozszerzeń",
-  "附件云预览远端源描述": "Niestandardowe adresy podglądu dla konkretnych rozszerzeń. Obsługuje reguły wieloliniowe.\nFormat: rozszerzenie:adres_url. Jeśli brak dopasowania, używa domyślnego serwera. Wiele rozszerzeń po średniku.\nWsparcie zmiennych:\n| Zmienna | Opis |\n| --- | --- |\n| {path} | Ścieżka załącznika |\n| {pathHash} | Hash ścieżki |\n| {vault} | Nazwa sejfu |\n| {type} | Typ (image/video/audio/pdf/other) |\nPrzykład: .jpg;.png:http://domain.com/{path}\nUwaga: Upewnij się, że źródło obsługuje CORS i uwierzytelnianie (jeśli wymagane).",
+  "附件云预览远端源": "Chmurowy podgląd załączników - Mapowanie prefiksów/sufiksów zdalnych źródeł",
+  "附件云预览远端源描述": "To ustawienie służy do określania zdalnych źródeł dla załączników pasujących do prefiksów/sufiksów i obsługuje reguły wieloliniowe.\nFormat: prefiks@sufiks#zdalne_źródło. Prefiks można pominąć. W przypadku braku dopasowania zostanie użyty domyślny adres serwera. Wiele nazw sufiksów można oddzielić średnikiem.\nWsparcie dla zastępowania zmiennych:\n| Zmienna | Opis |\n| --- | --- |\n| {path} | Ścieżka załącznika w notatce |\n| {vaultPath} | Ścieżka relatywna sejfu odpowiadająca załącznikowi |\n| {vault} | Nazwa sejfu |\n| {type} | Typ załącznika (image/video/audio/pdf/other) |\nNa przykład: prefix@.jpg;.png#http://domain.com/{path}\nUwaga: Jeśli używasz niestandardowego zdalnego źródła, upewnij się, że obsługuje ono podgląd między źródłami (CORS) oraz niezbędne uwierzytelnianie (jeśli jest wymagane).",
   "附件云预览上传后删除": "Podgląd chmurowy - Usuń po przesłaniu",
   "附件云预览上传后删除描述": "Pliki lokalne będą usuwane automatycznie po przesłaniu w celu oszczędności miejsca.\n(Wymaga włączonego podglądu chmurowego)\nUwaga: Wyłączaj ostrożnie; może to zakłócić pracę wtyczek powiązanych z załącznikami.",
   "恢复": "Przywróć",
@@ -120,6 +120,7 @@ const pl: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Dziękujemy za wsparcie i uznanie!",
   "反馈问题&新建议": "Zgłoś błąd / Sugestie",
   "电报讨论群": "Grupa Telegram",
+
 }
 
 

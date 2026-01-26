@@ -51,7 +51,7 @@ const hu: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Mód | Leírás | Referencia részletei |\n| --- | --- | --- |\n| Saját szolgáltatás | Jó sebesség, szabad konfiguráció, nincs adatvédelmi kockázat | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Válassz egy Fast Note Sync szolgáltatási címet",
   "选择一个适合自己的远端": "Válassz egy számodra megfelelő távoli szolgáltatást",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Nyisd meg a konzolt a gyorsbillentyűkkel a bővítmények naplóinak megtekintéséhez",
+  "通过快捷键打开控制台，你可以看到 هذا البرنامج المساعد وغيره من سجلات البرامج المساعدة": "Nyisd meg a konzolt a gyorsbillentyűkkel a bővítmények naplóinak megtekintéséhez",
   "速度好, 自由配置, 无隐私风险": "Jó sebesség, szabad konfiguráció, nincs adatvédelmi kockázat",
   "Buy me a coffee at ko-fi.com": "Hívj meg egy kávéra a ko-fi.com-on",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const hu: Partial<LangMap> = {
   "已复制": "Másolva",
   "加载中...": "Betöltés...",
   "加载失败，请重试": "Betöltési hiba, próbáld újra",
-  "无法连接到服务器，请检查网络连接": "Nem sikerült kapcsolódni a szerverhez, ellenőrizd a hálózati kapcsolatot",
+  "无法连接到服务器, يرجى التحقق من اتصال الشبكة": "Nem sikerült kapcsolódni a szerverhez, ellenőrizd a hálózati kapcsolatot",
   "同步中": "Szinkronizálás folyamatban",
   "重建文件哈希映射": "Fájl hash térkép újraépítése",
   "启动延迟": "Indítási késleltetés (ms)",
@@ -104,8 +104,8 @@ const hu: Partial<LangMap> = {
   "附件云预览描述": "Bekapcsolás után a képek/videók/hangok/PDF mellékletek online érhetők el a hálózaton keresztül.\nA bővítmény nem szinkronizálja többé a mellékletek állapotát, és nem fogad melléklet-szinkronizálást más eszközökről.",
   "附件云预览类型限制": "Felhőalapú előnézet típuskorlátozása",
   "附件云预览类型限制描述": "Bekapcsolás után csak képek/hangok/videók/PDF fájloknál működik; egyéb mellékletek normálisan szinkronizálódnak.\nMegjegyzés: Óvatosan kapcsold ki; megzavarhatja a mellékletekkel kapcsolatos bővítmények működését.",
-  "附件云预览远端源": "Felhőalapú előnézet - Kiterjesztés alapú távoli forrás",
-  "附件云预览远端源描述": "Egyedi távoli előnézeti címek megadása konkrét kiterjesztésekhez, több soros szabályok támogatásával.\nFormátum: kiterjesztés:távoli_cím. Ha nincs egyezés, az alapértelmezett szervercímet használja. Több kiterjesztés pontosvesszővel elválasztható.\nVáltozóbehelyettesítés támogatása:\n| Változó | Leírás |\n| --- | --- |\n| {path} | Melléklet útvonala |\n| {pathHash} | Útvonal hash értéke |\n| {vault} | Széf neve |\n| {type} | Melléklet típusa (image/video/audio/pdf/other) |\nPélda: .jpg;.png:http://domain.com/{path}\nMegjegyzés: Győződj meg róla, hogy a távoli forrás támogatja a CORS-t és a szükséges hitelesítést.",
+  "附件云预览远端源": "Melléklet felhőalapú előnézete - Távoli forrás előtag/utótag leképezés beállítása",
+  "附件云预览远端源描述": "Ez a beállítás az előtagoknak/utótagoknak megfelelő mellékletek távoli forrásainak megadására szolgál, és támogatja a több soros szabályokat.\nFormátum: előtag@utótag#távoli_forrás, az előtag elhagyható. Ha nincs találat, az alapértelmezett kiszolgálócímet használja. Több utótagnév pontosvesszővel választható el.\nVáltozóhelyettesítés támogatása:\n| Változó | Leírás |\n| --- | --- |\n| {path} | A melléklet elérési útja a jegyzetben |\n| {vaultPath} | A mellékletnek megfelelő lerakat relatív elérési útja |\n| {vault} | Lerakat neve |\n| {type} | Melléklet típusa (image/video/audio/pdf/other) |\nPéldául: prefix@.jpg;.png#http://domain.com/{path}\nMegjegyzés: Ha egyéni távoli forrást használ, győződjön meg arról, hogy az támogatja a forrásközi előnézetet (CORS) és a szükséges hitelesítést (ha szükséges).",
   "附件云预览上传后删除": "Felhőalapú előnézet - Törlés feltöltés után",
   "附件云预览上传后删除描述": "A sikeres feltöltés után a helyi fájlok automatikusan törlődnek a helytakarékosság érdekében.\n(Felhőalapú előnézet engedélyezése szükséges)\nMegjegyzés: Óvatosan kapcsold ki; megzavarhatja a mellékletekkel kapcsolatos bővítmények működését.",
   "恢复": "Helyreállítás",
@@ -120,6 +120,7 @@ const hu: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Köszönjük a támogatást és az elismerést!",
   "反馈问题&新建议": "Hiba jelentése és javaslatok",
   "电报讨论群": "Telegram csoport",
+
 }
 
 

@@ -83,7 +83,7 @@ const es: Partial<LangMap> = {
   "已复制": "Copiado",
   "加载中...": "Cargando...",
   "加载失败，请重试": "Error al cargar, por favor inténtalo de nuevo",
-  "无法连接到服务器，请检查网络连接": "No se puede conectar al servidor, comprueba la conexión de red",
+  "无法连接到服务器, 请检查网络连接": "No se puede conectar al servidor, comprueba la conexión de red",
   "同步中": "Sincronizando",
   "重建文件哈希映射": "Reconstruir mapa de hashes de archivos",
   "启动延迟": "Retraso de inicio (ms)",
@@ -104,8 +104,8 @@ const es: Partial<LangMap> = {
   "附件云预览描述": "Al activarse, los adjuntos como imágenes/videos/audio/PDF se previsualizarán en línea vía red.\nEl complemento ya no sincroniza el estado de los adjuntos ni recibe sincronización de otros dispositivos.",
   "附件云预览类型限制": "Restricción de tipo de vista previa en la nube",
   "附件云预览类型限制描述": "Al activarse, solo imágenes/audio/video/PDF usarán la vista previa en la nube; otros se sincronizan normalmente.\nNota: Desactívalo con precaución; puede afectar a complementos relacionados con adjuntos.",
-  "附件云预览远端源": "Vista previa en la nube - Origen remoto por extensión",
-  "附件云预览远端源描述": "Especifica direcciones de vista previa personalizadas para extensiones específicas, admite reglas multilínea.\nFormato: extensión:url_remota. Si no coincide, usa la del servidor por defecto. Separa extensiones con punto y coma.\nSoporte de variables:\n| Variable | Descripción |\n| --- | --- |\n| {path} | Ruta del archivo |\n| {pathHash} | Hash de la ruta |\n| {vault} | Nombre de la bóveda |\n| {type} | Tipo (image/video/audio/pdf/other) |\nEj: .jpg;.png:http://domain.com/{path}\nNota: Asegúrate de que el origen remoto admita CORS y autenticación si es necesario.",
+  "附件云预览远端源": "Vista previa de adjuntos en la nube - Fuente remota de mapeo de prefijo/sufijo",
+  "附件云预览远端源描述": "Esta opción de configuración se utiliza para especificar la fuente remota para los archivos adjuntos que coincidan con el prefijo/sufijo y admite reglas de varias líneas.\nFormato: nombre-prefijo@nombre-sufijo#fuente-remota. El prefijo se puede omitir. Si no hay coincidencia, se utilizará la dirección del servidor predeterminada. Se pueden separar varios sufijos con un punto y coma.\nSoporte para reemplazo de variables:\n| Variable | Descripción |\n| --- | --- |\n| {path} | Ruta del archivo adjunto en la nota |\n| {vaultPath} | Ruta relativa del almacén correspondiente al archivo adjunto |\n| {vault} | Nombre del almacén |\n| {type} | Tipo de archivo adjunto (image/video/audio/pdf/other) |\nPor ejemplo: prefix@.jpg;.png#http://domain.com/{path}\nNota: Si utiliza una fuente remota personalizada, asegúrese de que admita la vista previa de origen cruzado (CORS) y la autenticación necesaria (si es necesario).",
   "附件云预览上传后删除": "Vista previa en la nube - Borrar tras subir",
   "附件云预览上传后删除描述": "Los archivos locales se borrarán automáticamente tras subirse correctamente para ahorrar espacio.\n(Requiere activar Vista previa de archivos en la nube)\nNota: Desactívalo con precaución; puede afectar a complementos relacionados con adjuntos.",
   "恢复": "Restaurar",
@@ -120,6 +120,7 @@ const es: Partial<LangMap> = {
   "感谢你们的支持与认可!": "¡Gracias por vuestro apoyo y reconocimiento!",
   "反馈问题&新建议": "Informar problemas y sugerencias",
   "电报讨论群": "Grupo de Telegram",
+
 }
 
 

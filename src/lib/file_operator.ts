@@ -95,7 +95,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (plugin.ignoredFiles.has(file.path) && eventEnter) return
   if (isPathExcluded(file.path, plugin)) return
   if (!(file instanceof TFile)) return
-
+``
   plugin.addIgnoredFile(file.path)
   await fileModify(file, plugin, false)
   dump(`File rename modify send`, file.path)

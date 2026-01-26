@@ -350,7 +350,7 @@ export class SettingTab extends PluginSettingTab {
         .setName($("附件云预览远端源"))
         .addTextArea((text) =>
           text
-            .setPlaceholder(".jpg;.png:http://domain.com/{path}")
+            .setPlaceholder("prefix@.jpg;.png#http://domain.com/{path}")
             .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
             .onChange(async (value) => {
               if (value != this.plugin.settings.cloudPreviewRemoteUrl) {

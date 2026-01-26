@@ -51,7 +51,7 @@ const en: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Method | Description | Reference Details |\n| --- | --- | --- |\n| Private Service Setup | Good speed, flexible configuration, no privacy risk | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Select a Fast note sync service address",
   "选择一个适合自己的远端": "Choose a remote that suits you",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Open the console via shortcut keys; you can see logs for this and other plugins",
+  "通过快捷键打开控制台，你可以看到 this 插件和其他插件的日志": "Open the console via shortcut keys; you can see logs for this and other plugins",
   "速度好, 自由配置, 无隐私风险": "Good speed, flexible configuration, no privacy risk",
   "Buy me a coffee at ko-fi.com": "Buy me a coffee at ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -104,8 +104,8 @@ const en: Partial<LangMap> = {
   "附件云预览描述": "When enabled, attachments like images/videos/audio/PDFs will be previewed online through the network.\nThe plugin no longer syncs attachment states or receives attachment synchronization from other devices.",
   "附件云预览类型限制": "Cloud Preview Type Limit",
   "附件云预览类型限制描述": "When enabled, cloud preview is limited to images/audio/video/PDFs. Others sync normally.\nNote: Disable with caution; it may break attachment-related plugins.",
-  "附件云预览远端源": "Cloud Preview - Extension Mapping Remote Source",
-  "附件云预览远端源描述": "Specify custom remote preview addresses for specific extensions, supporting multi-line rules.\nFormat: extension:remote_url. Default server address used if no match. Separate multiple extensions with semicolons.\nVariable substitution support:\n| Variable | Description |\n| --- | --- |\n| {path} | Attachment path |\n| {pathHash} | Attachment path hash |\n| {vault} | Vault name |\n| {type} | Attachment type (image/video/audio/pdf/other) |\nExample: .jpg;.png:http://domain.com/{path}\nNote: Ensure custom remote sources support CORS and necessary authentication (if needed).",
+  "附件云预览远端源": "Cloud Preview - Prefix/Suffix Mapping Remote Source",
+  "附件云预览远端源描述": "Specify custom remote preview addresses for specific prefixes and extensions, supporting multi-line rules.\nFormat: prefix@suffix#remote_url. Default server address used if no match. Prefix is optional.\nVariable substitution support:\n| Variable | Description |\n| --- | --- |\n| {path} | Attachment path in note |\n| {vaultPath} | Relative path to attachment vault |\n| {vault} | Vault name |\n| {type} | Attachment type (image/video/audio/pdf/other) |\nExample: prefix@.jpg;.png#http://domain.com/{path}\nNote: Ensure custom remote sources support CORS and necessary authentication (if needed).",
   "附件云预览上传后删除": "Cloud Preview - Delete after upload",
   "附件云预览上传后删除描述": "Local files will be automatically deleted after successful upload to save space.\n(Requires Cloud Attachment Preview to be enabled)\nNote: Disable with caution; it may break attachment-related plugins.",
   "恢复": "Restore",
@@ -120,6 +120,7 @@ const en: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Thank you for your support and recognition!",
   "反馈问题&新建议": "Feedback & Suggestions",
   "电报讨论群": "Telegram Group",
+
 }
 
 

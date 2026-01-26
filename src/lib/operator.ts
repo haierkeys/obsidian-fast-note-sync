@@ -85,7 +85,6 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
 
     // 如果开启了云预览，在首次同步后检查所有附件在服务端的状态
     if (plugin.settings.cloudPreviewEnabled) {
-      console.log("Cloud Preview: Starting attachment check...");
       checkAndUploadAttachments(plugin);
     }
 

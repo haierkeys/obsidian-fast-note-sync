@@ -83,7 +83,7 @@ const de: Partial<LangMap> = {
   "已复制": "Kopiert",
   "加载中...": "Wird geladen...",
   "加载失败，请重试": "Laden fehlgeschlagen, bitte erneut versuchen",
-  "无法连接到服务器，请检查网络连接": "Verbindung zum Server nicht möglich, bitte Netzwerkverbindung prüfen",
+  "无法连接到服务器, 请检查网络连接": "Verbindung zum Server nicht möglich, bitte Netzwerkverbindung prüfen",
   "同步中": "Synchronisierung läuft",
   "重建文件哈希映射": "Datei-Hash-Map neu erstellen",
   "启动延迟": "Startverzögerung (ms)",
@@ -104,8 +104,8 @@ const de: Partial<LangMap> = {
   "附件云预览描述": "Wenn aktiviert, werden Anhänge wie Bilder/Videos/Audio/PDFs online über das Netzwerk in der Vorschau angezeigt.\nDas Plugin synchronisiert den Status der Anhänge nicht mehr und empfängt keine Anhänge mehr von anderen Geräten.",
   "附件云预览类型限制": "Cloud-Vorschau-Typbeschränkung",
   "附件云预览类型限制描述": "Wenn aktiviert, ist die Cloud-Vorschau auf Bilder/Audio/Video/PDFs beschränkt. Andere Anhänge werden normal synchronisiert.\nHinweis: Deaktivieren Sie dies mit Vorsicht; es könnte anhängselbezogene Plugins beeinträchtigen.",
-  "附件云预览远端源": "Cloud-Vorschau - Erweiterungs-Mapping Remote-Quelle",
-  "附件云预览远端源描述": "Gibt benutzerdefinierte Remote-Vorschauadressen für bestimmte Erweiterungen an, unterstützt mehrzeilige Regeln.\nFormat: Erweiterung:Remote-URL. Bei fehlender Übereinstimmung wird die Standard-Serveradresse verwendet. Mehrere Erweiterungen durch Semikolon trennen.\nUnterstützung für Variablenersetzung:\n| Variable | Beschreibung |\n| --- | --- |\n| {path} | Pfad des Anhangs |\n| {pathHash} | Hash des Pfades |\n| {vault} | Tresorname |\n| {type} | Anhangstyp (image/video/audio/pdf/other) |\nBeispiel: .jpg;.png:http://domain.com/{path}\nHinweis: Stellen Sie sicher, dass benutzerdefinierte Remote-Quellen CORS und die erforderliche Authentifizierung (falls erforderlich) unterstützen.",
+  "附件云预览远端源": "Anhang-Cloud-Vorschau - Präfix/Suffix-Mapping Remote-Quelle",
+  "附件云预览远端源描述": "Diese Einstellung wird verwendet, um Remote-Quellen für Anhänge anzugeben, die mit den Präfixen/Suffixen übereinstimmen, und unterstützt mehrzeilige Regeln.\nFormat: Präfix@Suffix#Remote-Quelle. Das Präfix kann weggelassen werden. Falls keine Übereinstimmung vorliegt, wird die Standard-Serveradresse verwendet. Mehrere Suffixe können durch ein Semikolon getrennt werden.\nUnterstützung für Variablenersetzung:\n| Variable | Beschreibung |\n| --- | --- |\n| {path} | Pfad der Anhänge in der Notiz |\n| {vaultPath} | Relativer Pfad zum Tresor des Anhangs |\n| {vault} | Tresorname |\n| {type} | Anhangstyp (image/video/audio/pdf/other) |\nBeispiel: prefix@.jpg;.png#http://domain.com/{path}\nHinweis: Wenn Sie eine benutzerdefinierte Remote-Quelle verwenden, stellen Sie sicher, dass diese CORS (Cross-Origin-Preview) und notwendige Authentifizierung (falls erforderlich) unterstützt.",
   "附件云预览上传后删除": "Cloud-Vorschau - Nach Upload löschen",
   "附件云预览上传后删除描述": "Lokale Dateien werden nach erfolgreichem Upload automatisch gelöscht, um Platz zu sparen.\n(Erfordert aktivierte Anhang-Cloud-Vorschau)\nHinweis: Deaktivieren Sie dies mit Vorsicht; es könnte anhängselbezogene Plugins beeinträchtigen.",
   "恢复": "Wiederherstellen",
@@ -120,6 +120,7 @@ const de: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Vielen Dank für Ihre Unterstützung und Anerkennung!",
   "反馈问题&新建议": "Feedback & Vorschläge",
   "电报讨论群": "Telegram-Gruppe",
+
 }
 
 

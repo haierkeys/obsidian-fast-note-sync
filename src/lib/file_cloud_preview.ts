@@ -116,21 +116,15 @@ export class FileCloudPreview {
     );
     if (file) return;
 
-    // 文件不存在本地，尝试获取预期路径
-    const resolvedPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(filePath, context.sourcePath);
-
     // 尝试获取云端 URL
-    const cloudUrl = this.getCloudUrl(resolvedPath);
-    console.log("FastSync: Cloud URL", cloudUrl);
+    const cloudUrl = await this.getCloudUrl(filePath, context.sourcePath, subpath);
     if (!cloudUrl) return;
 
     // 标记已处理，防止循环
     embed.dataset.cloudProcessed = "true";
 
-    const ext = this.getFileExtension(resolvedPath);
-    const previewElement = await this.createPreviewElement(resolvedPath, cloudUrl, ext, subpath);
-
-    console.log("FastSync: Preview element created", previewElement);
+    const ext = this.getFileExtension(filePath);
+    const previewElement = await this.createPreviewElement(filePath, cloudUrl, ext, subpath);
 
     if (previewElement) {
       embed.innerHTML = "";
@@ -176,7 +170,7 @@ export class FileCloudPreview {
     subpath?: string,
   ): Promise<HTMLElement | null> {
     if (FileCloudPreview.IMAGE_EXTS.includes(ext)) {
-      return this.createImagePreview(filePath, cloudUrl);
+      return this.createImagePreview(cloudUrl, filePath);
     }
 
     if (FileCloudPreview.VIDEO_EXTS.includes(ext)) {
@@ -194,7 +188,7 @@ export class FileCloudPreview {
     return this.createGenericPreview(filePath, cloudUrl);
   }
 
-  private createImagePreview(filePath: string, cloudUrl: string): HTMLElement {
+  private createImagePreview(cloudUrl: string, filePath: string): HTMLElement {
     const img = document.createElement("img");
     img.src = cloudUrl;
     img.alt = filePath;
@@ -297,11 +291,12 @@ export class FileCloudPreview {
     return null;
   }
 
-  private getCloudUrl(filePath: string): string | null {
+  private async getCloudUrl(filePath: string, sourcePath: string, subpath: string): Promise<string | null> {
     const { api, vault, apiToken, cloudPreviewEnabled, cloudPreviewTypeRestricted, cloudPreviewRemoteUrl } = this.plugin.settings;
     if (!cloudPreviewEnabled || !api || !apiToken) return null;
 
-    const ext = this.getFileExtension(filePath);
+    const vaultPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(filePath, sourcePath);
+    const ext = this.getFileExtension(vaultPath);
     if (!ext) return null;
 
     let type = "other";
@@ -315,7 +310,6 @@ export class FileCloudPreview {
       if (type === "other") return null;
     }
 
-    const pathHash = hashContent(filePath);
     let matchedUrl: string | null = null;
 
     if (cloudPreviewRemoteUrl) {
@@ -324,27 +318,46 @@ export class FileCloudPreview {
         const trimmedLine = line.trim();
         if (!trimmedLine) continue;
 
-        const colonIndex = trimmedLine.indexOf(":");
-        if (colonIndex === -1) continue;
+        const separatorIndex = trimmedLine.indexOf("#");
+        if (separatorIndex === -1) continue;
 
-        const extsPart = trimmedLine.substring(0, colonIndex);
-        const urlPart = trimmedLine.substring(colonIndex + 1).trim();
+        const rulePart = trimmedLine.substring(0, separatorIndex);
+        const urlPart = trimmedLine.substring(separatorIndex + 1).trim();
 
-        if (!extsPart || !urlPart) continue;
+        if (!rulePart || !urlPart) continue;
+
+        let prefix = "";
+        let extsPart = rulePart;
+
+        if (rulePart.includes("@")) {
+          const parts = rulePart.split("@");
+          prefix = parts[0].trim().toLowerCase();
+          extsPart = parts[1].trim();
+        }
 
         const exts = extsPart.split(";").map(e => e.trim().toLowerCase());
-        if (exts.includes(ext)) {
+
+        // 获取不带后缀的路径进行前缀匹配 (从 filePath 尾部去除 ext 的长度)
+        const pathWithoutExt = filePath.toLowerCase().substring(0, filePath.length - ext.length);
+
+        const matchesExt = exts.includes(ext);
+        const matchesPrefix = !prefix || pathWithoutExt.startsWith(prefix);
+
+        if (matchesExt && matchesPrefix) {
           matchedUrl = urlPart;
           break;
         }
       }
     }
 
+    console.log("matchedUrl", matchedUrl, filePath);
+
     if (matchedUrl) {
       return matchedUrl
         .replace(/{path}/g, filePath)
+        .replace(/{vaultPath}/g, vaultPath)
+        .replace(/{subpath}/g, subpath)
         .replace(/{vault}/g, vault)
-        .replace(/{pathHash}/g, pathHash)
         .replace(/{type}/g, type);
     }
 
@@ -366,3 +379,4 @@ export class FileCloudPreview {
     return lastDot === -1 ? "" : filePath.substring(lastDot).toLowerCase();
   }
 }
+

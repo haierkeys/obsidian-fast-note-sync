@@ -194,9 +194,14 @@ export default class FastSync extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+    const data = await this.loadData()
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data)
     if (!this.settings.vault) {
       this.settings.vault = this.app.vault.getName()
+    }
+    // 仅在首次运行或该设置项不存在时才设置默认值
+    if (!data || data.configExclude === undefined) {
+      this.settings.configExclude = `plugins/${this.manifest.id}`
     }
   }
 

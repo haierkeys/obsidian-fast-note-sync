@@ -46,7 +46,6 @@ export class HttpApiService {
         });
 
         const url = addRandomParam(`${baseUrl}?${params.toString()}`);
-        console.log("getNoteHistoryList request:", url);
 
         try {
             const res = await fetch(url, {
@@ -62,7 +61,7 @@ export class HttpApiService {
             }
 
             const json = await res.json();
-            console.log("getNoteHistoryList response:", res.status, json);
+
 
             if (!json.status) {
                 const msg = json?.message || "Failed to fetch history list";
@@ -74,8 +73,6 @@ export class HttpApiService {
                 totalRows: json.data?.pager?.totalRows || 0
             };
         } catch (e) {
-            console.log("getNoteHistoryList error:", e);
-
             // Handle network errors specifically
             if (e instanceof TypeError && e.message.includes('fetch')) {
                 throw new Error("无法连接到服务器，请检查网络连接");
@@ -90,7 +87,6 @@ export class HttpApiService {
      */
     async getNoteHistoryDetail(id: number): Promise<NoteHistoryDetail> {
         const url = addRandomParam(`${this.plugin.settings.api}/api/note/history?id=${id}`);
-        console.log("getNoteHistoryDetail request:", url);
 
         try {
             const res = await fetch(url, {
@@ -100,7 +96,6 @@ export class HttpApiService {
                 }
             });
             const json = await res.json();
-            console.log("getNoteHistoryDetail response:", res.status, json);
 
             if (res.status !== 200 || !json.status) {
                 const msg = json?.message || "Failed to fetch history detail";
@@ -110,7 +105,6 @@ export class HttpApiService {
 
             return json.data;
         } catch (e) {
-            console.log("getNoteHistoryDetail error:", e);
             //  new Notice("Failed to fetch history detail");
             throw e;
         }
@@ -121,7 +115,6 @@ export class HttpApiService {
      */
     async restoreNoteVersion(historyId: number): Promise<boolean> {
         const url = `${this.plugin.settings.api}/api/note/history/restore`;
-        console.log("restoreNoteVersion request:", url);
 
         try {
             const res = await fetch(url, {
@@ -137,7 +130,6 @@ export class HttpApiService {
             });
 
             const json = await res.json();
-            console.log("restoreNoteVersion response:", res.status, json);
 
             if (res.status !== 200 || !json.status) {
                 const msg = json?.message || "Failed to restore note version";
@@ -184,7 +176,6 @@ export class HttpApiService {
             const json = await res.json();
             return json;
         } catch (e) {
-            console.log("getFileInfo error:", e);
             throw e;
         }
     }

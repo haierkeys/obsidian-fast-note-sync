@@ -83,7 +83,7 @@ const fr: Partial<LangMap> = {
   "已复制": "Copié",
   "加载中...": "Chargement...",
   "加载失败，请重试": "Échec du chargement, veuillez réessayer",
-  "无法连接到服务器，请检查网络连接": "Impossible de se connecter au serveur, vérifiez votre connexion réseau",
+  "无法连接到服务器, 请检查网络连接": "Impossible de se connecter au serveur, vérifiez votre connexion réseau",
   "同步中": "Synchronisation en cours",
   "重建文件哈希映射": "Reconstruire la table de hachage des fichiers",
   "启动延迟": "Délai de démarrage (ms)",
@@ -104,8 +104,8 @@ const fr: Partial<LangMap> = {
   "附件云预览描述": "Une fois activé, les images/vidéos/audio/PDF sont prévisualisés en ligne via le réseau.\nLe plugin ne synchronise plus l'état des pièces jointes et ne reçoit plus les sync d'autres terminaux.",
   "附件云预览类型限制": "Limitation du type d'aperçu cloud",
   "附件云预览类型限制描述": "Une fois activé, seuls images/audio/vidéo/PDF utilisent l'aperçu cloud, les autres se synchronisent normalement.\nNote : Désactivez avec prudence, cela peut casser certains plugins liés aux pièces jointes.",
-  "附件云预览远端源": "Aperçu cloud - Source distante par extension",
-  "附件云预览远端源描述": "Définit des adresses d'aperçu distantes personnalisées pour des extensions spécifiques, supporte plusieurs règles.\nFormat : extension:adresse_distante. Utilise l'adresse par défaut si pas de correspondance. Séparez les extensions par des point-virgules.\nSupport des variables :\n| Variable | Description |\n| --- | --- |\n| {path} | Chemin de la pièce jointe |\n| {pathHash} | Hash du chemin |\n| {vault} | Nom du coffre |\n| {type} | Type (image/video/audio/pdf/other) |\nEx : .jpg;.png:http://domain.com/{path}\nNote : Assurez-vous que la source supporte CORS et l'authentification si nécessaire.",
+  "附件云预览远端源": "Aperçu des pièces jointes dans le cloud - Source distante de mappage préfixe/suffixe",
+  "附件云预览远端源描述": "Ce paramètre est utilisé pour spécifier la source distante pour les pièces jointes correspondant au préfixe/suffixe, et prend en charge les règles multi-lignes.\nFormat : nom_préfixe@nom_suffixe#source_distante, le préfixe peut être omis. S'il n'y a pas de correspondance, l'adresse par défaut du serveur sera utilisée. Plusieurs suffixes peuvent être séparés par des points-virgules.\nPrise en charge du remplacement de variables :\n| Variable | Description |\n| --- | --- |\n| {path} | Chemin de la pièce jointe dans la note |\n| {vaultPath} | Chemin relatif de l'entrepôt correspondant à la pièce jointe |\n| {vault} | Nom de l'entrepôt |\n| {type} | Type de pièce jointe (image/video/audio/pdf/other) |\nPar exemple : prefix@.jpg;.png#http://domain.com/{path}\nRemarque : Si vous utilisez une source distante personnalisée, assurez-vous qu'elle prend en charge l'aperçu multi-origine (CORS) et l'authentification nécessaire (si nécessaire).",
   "附件云预览上传后删除": "Aperçu cloud - Supprimer après envoi",
   "附件云预览上传后删除描述": "Les fichiers locaux seront supprimés automatiquement après envoi réussi pour gagner de l'espace.\n(Nécessite l'activation de l'aperçu cloud)\nNote : Désactivez avec prudence, cela peut casser certains plugins liés aux pièces jointes.",
   "恢复": "Restaurer",
@@ -120,6 +120,7 @@ const fr: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Merci pour votre soutien et votre reconnaissance !",
   "反馈问题&新建议": "Signaler un bug & Suggestions",
   "电报讨论群": "Groupe Telegram",
+
 }
 
 

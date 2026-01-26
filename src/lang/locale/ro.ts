@@ -51,7 +51,7 @@ const ro: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Metodă | Descriere | Detalii Referință |\n| --- | --- | --- |\n| Serviciu Privat | Viteză bună, configurare liberă, fără riscuri de confidențialitate | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Selectați o adresă a serviciului Fast note sync",
   "选择一个适合自己的远端": "Alegeți un server la distanță care vi se potrivește",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Deschideți consola prin taste rapide, puteți vedea jurnalele pentru acesta și alte plugin-uri",
+  "通过快捷键打开控制台，你可以看到 هذا البرنامج المساعد وغيره من سجلات البرامج المساعدة": "Deschideți consola prin taste rapide, puteți vedea jurnalele pentru acesta și alte plugin-uri",
   "速度好, 自由配置, 无隐私风险": "Viteză bună, configurare liberă, fără riscuri de confidențialitate",
   "Buy me a coffee at ko-fi.com": "Cumpără-mi o cafea pe ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const ro: Partial<LangMap> = {
   "已复制": "Copiat",
   "加载中...": "Se încarcă...",
   "加载失败，请重试": "Încărcare eșuată, vă rugăm să reîncercați",
-  "无法连接到服务器，请检查网络连接": "Imposibil de conectat la server, verificați conexiunea la rețea",
+  "无法连接到服务器, يرجى التحقق من اتصال الشبكة": "Imposibil de conectat la server, verificați conexiunea la rețea",
   "同步中": "Sincronizare în curs",
   "重建文件哈希映射": "Reconstruire Hartă Hash Fișiere",
   "启动延迟": "Întârziere Pornire (ms)",
@@ -104,8 +104,8 @@ const ro: Partial<LangMap> = {
   "附件云预览描述": "Când este activat, atașamentele precum imagini/video/audio/PDF vor fi previzualizate online prin rețea.\nPlugin-ul nu mai sincronizează starea atașamentelor și nici nu mai primește sincronizări de la alte dispozitive.",
   "附件云预览类型限制": "Limita Tip Previzualizare Cloud",
   "附件云预览类型限制描述": "Când este activat, previzualizarea în cloud este limitată la imagini/audio/video/PDF. Celelalte atașamente se sincronizează normal.\nNotă: Dezactivați cu prudență; poate întrerupe plugin-urile legate de atașamente.",
-  "附件云预览远端源": "Previzualizare Cloud - Mapare Extensie Sursă la Distanță",
-  "附件云预览远端源描述": "Specificați adrese personalizate de previzualizare la distanță pentru extensii specifice, suportând reguli pe mai multe rânduri.\nFormat: extensie:url_la_distanta. Adresa implicită a serverului este utilizată dacă nu există nicio potrivire. Separați mai multe extensii prin punct și virgulă.\nSuport înlocuire variabile:\n| Variabilă | Descriere |\n| --- | --- |\n| {path} | Cale atașament |\n| {pathHash} | Hash cale atașament |\n| {vault} | Nume seif |\n| {type} | Tip atașament (image/video/audio/pdf/other) |\nExemplu: .jpg;.png:http://domain.com/{path}\nNotă: Asigurați-vă că sursele la distanță personalizate suportă CORS și autentificarea necesară (dacă este cazul).",
+  "附件云预览远端源": "Previzualizarea în cloud a atașamentelor - Setarea prefisului/sufisului sursei la distanță",
+  "附件云预览远端源描述": "Această setare este utilizată pentru a specifica surse la distanță pentru atașamentele care se potrivesc cu prefixe/sufixe și acceptă reguli pe mai multe linii.\nFormat: prefix@sufix#sursă_la_distanță, prefixul poate fi omis. În cazul în care nu există nicio potrivire, se va utiliza adresa implicită a serverului. Mai multe nume de sufixe pot fi separate prin punct și virgulă.\nSuport pentru înlocuirea variabilelor:\n| Variabilă | Descriere |\n| --- | --- |\n| {path} | Calea atașamentului în notă |\n| {vaultPath} | Calea relativă a depozitului corespunzătoare atașamentului |\n| {vault} | Numele depozitului |\n| {type} | Tipul atașamentului (image/video/audio/pdf/other) |\nDe exemplu: prefix@.jpg;.png#http://domain.com/{path}\nNotă: Dacă utilizați o sursă la distanță personalizată, asigurați-vă că aceasta acceptă previzualizarea cross-origin (CORS) și autentificarea necesară (dacă este necesar).",
   "附件云预览上传后删除": "Previzualizare Cloud - Șterge după încărcare",
   "附件云预览上传后删除描述": "Fișierele locale vor fi șterse automat după încărcarea reușită pentru a economisi spațiu.\n(Necesită Activare Previzualizare Atașamente în Cloud)\nNotă: Dezactivați cu prudență; poate întrerupe plugin-urile legate de atașamente.",
   "恢复": "Restaurare",
@@ -120,6 +120,7 @@ const ro: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Vă mulțumim pentru susținere și pentru recunoaștere!",
   "反馈问题&新建议": "Feedback Probleme și Sugestii Noi",
   "电报讨论群": "Grup de Discuție Telegram",
+
 }
 
 

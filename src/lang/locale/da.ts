@@ -51,7 +51,7 @@ const da: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Metode | Beskrivelse | Referencedetaljer |\n| --- | --- | --- |\n| Privat opsætning | God hastighed, fri konfiguration, ingen privatlivsrisiko | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Vælg en Fast Note Sync-serviceadresse",
   "选择一个适合自己的远端": "Vælg en fjernserver, der passer dig",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Åbn konsollen via genvejstaster for at se logs for dette og andre plugins",
+  "通过快捷键打开控制台，你可以看到 هذا البرنامج المساعد وغيره من سجلات البرامج المساعدة": "Åbn konsollen via genvejstaster for at se logs for dette og andre plugins",
   "速度好, 自由配置, 无隐私风险": "God hastighed, fri konfiguration, ingen privatlivsrisiko",
   "Buy me a coffee at ko-fi.com": "Køb mig en kaffe på ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const da: Partial<LangMap> = {
   "已复制": "Kopieret",
   "加载中...": "Indlæser...",
   "加载失败，请重试": "Indlæsning mislykkedes, prøv igen",
-  "无法连接到服务器，请检查网络连接": "Kan ikke forbinde til serveren, tjek venligst netværksforbindelsen",
+  "无法连接到服务器, يرجى التحقق من اتصال الشبكة": "Kan ikke forbinde til serveren, tjek venligst netværksforbindelsen",
   "同步中": "Synkroniserer",
   "重建文件哈希映射": "Genoppyg fil-hash-kort",
   "启动延迟": "Opstartsforsinkelse (ms)",
@@ -99,13 +99,13 @@ const da: Partial<LangMap> = {
   "同步排除扩展名描述": "Filtyper der skal ekskluderes fra synkronisering, én pr. linje, med punktum. F.eks.: .tmp",
   "同步冲突": "Synkroniseringskonflikt opdaget, gennemtvunget fletning udført. Manuel kontrol påkrævet for ${path}.",
   "开启 PDF 状态同步": "Aktiver PDF-statussynkronisering",
-  "开启 PDF 状态同步描述": "Aktiverer synkronisering af PDF-fremviserens læsetilstand (kræver at konfigurationssynkronisering er aktiveret)",
+  "开启 PDF 状态同步描述": "Aktiverers synkronisering af PDF-fremviserens læsetilstand (kræver at konfigurationssynkronisering er aktiveret)",
   "附件云预览": "Sky-eksempel på vedhæftning",
   "附件云预览描述": "Når aktiveret, vises vedhæftede filer som billeder/videoer/lyd/PDF online via netværket.\nPluginet synkroniserer ikke længere statussen for vedhæftede filer og modtager ikke længere vedhæftninger fra andre enheder.",
   "附件云预览类型限制": "Typebegrænsning for sky-eksempel",
   "附件云预览类型限制描述": "Når aktiveret, er sky-eksemplet begrænset til billeder/lyd/video/PDF. Andre vedhæftninger synkroniseres normalt.\nBemærk: Deaktiver med forsigtighed; det kan ødelægge plugins relateret til vedhæftninger.",
-  "附件云预览远端源": "Sky-eksempel - Fjernressource for udvidelse af mapping",
-  "附件云预览远端源描述": "Angiv brugerdefinerede fjernvisningsadresser for specifikke udvidelser, understøtter multilinjeregler.\nFormat: udvidelse:fjern_url. Standard serveradresse bruges, hvis der ikke er nogen match. Adskil flere udvidelser med semikolon.\nUnderstøttelse af variabel erstatning:\n| Variabel | Beskrivelse |\n| --- | --- |\n| {path} | Sti til vedhæftning |\n| {pathHash} | Hash af stien |\n| {vault} | Boksens navn |\n| {type} | Vedhæftningstype (image/video/audio/pdf/other) |\nEksempel: .jpg;.png:http://domain.com/{path}\nBemærk: Sørg for, at brugerdefinerede fjernkilder understøtter CORS og nødvendig godkendelse (hvis påkrævet).",
+  "附件云预览远端源": "Sky-eksempel på vedhæftet fil - Fjernkilde for præfiks/suffiks-mappning",
+  "附件云预览远端源描述": "Denne indstilling bruges til at specificere fjernkilder for vedhæftninger, der matcher præfikser/suffikser, og understøtter flersidige regler.\nFormat: præfiks@suffiks#fjernkilde, præfiks kan udelades. I tilfælde af intet match bruges standard serveradressen. Flere suffiksnavne kan adskilles med semikolon.\nUnderstøttelse af variabeludskiftning:\n| Variabel | Beskrivelse |\n| --- | --- |\n| {path} | Stien til den vedhæftede fil i noten |\n| {vaultPath} | Relativ sti til depotet svarende til vedhæftningen |\n| {vault} | Depotnavn |\n| {type} | Vedhæftningstype (image/video/audio/pdf/other) |\nFor eksempel: prefix@.jpg;.png#http://domain.com/{path}\nBemærk: Hvis du bruger en brugerdefineret fjernkilde, skal du sørge for, at den understøtter cross-origin-preview (CORS) og nødvendig godkendelse (hvis påkrævet).",
   "附件云预览上传后删除": "Sky-eksempel - Slet efter upload",
   "附件云预览上传后删除描述": "Lokale filer vil blive slettet automatiek efter vellykket upload for at spare plads.\n(Kræver at Sky-eksempel på vedhæftning er aktiveret)\nBemærk: Deaktiver med forsigtighed; det kan ødelægge plugins relateret til vedhæftninger.",
   "恢复": "Gendan",
@@ -120,6 +120,7 @@ const da: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Tak for jeres støtte og anerkendelse!",
   "反馈问题&新建议": "Feedback og forslag",
   "电报讨论群": "Telegram-gruppe",
+
 }
 
 

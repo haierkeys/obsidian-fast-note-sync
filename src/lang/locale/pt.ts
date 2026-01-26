@@ -51,7 +51,7 @@ const pt: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Método | Descrição | Detalhes de Referência |\n| --- | --- | --- |\n| Serviço Privado | Boa velocidade, configuração livre, sem riscos de privacidade | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Selecione um endereço de serviço Fast note sync",
   "选择一个适合自己的远端": "Escolha um servidor remoto que se adapte a você",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Abra o console via teclas de atalho para ver os logs deste e de outros plugins",
+  "通过快捷键打开控制台，你可以看到这个插件和其他插件의日志": "Abra o console via teclas de atalho para ver os logs deste e de outros plugins",
   "速度好, 自由配置, 无隐私风险": "Boa velocidade, configuração livre, sem riscos de privacidade",
   "Buy me a coffee at ko-fi.com": "Pague-me um café no ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const pt: Partial<LangMap> = {
   "已复制": "Copiado",
   "加载中...": "Carregando...",
   "加载失败，请重试": "Falha no carregamento, tente novamente",
-  "无法连接到服务器，请检查网络连接": "Não foi possível conectar ao servidor, verifique a conexão de rede",
+  "无法连接到服务器, 请检查 network connection": "Não foi possível conectar ao servidor, verifique a conexão de rede",
   "同步中": "Sincronizando",
   "重建文件哈希映射": "Reconstruir Mapa de Hash de Arquivos",
   "启动延迟": "Atraso na Inicialização (ms)",
@@ -103,9 +103,9 @@ const pt: Partial<LangMap> = {
   "附件云预览": "Pré-visualização de Anexos na Nuvem",
   "附件云预览描述": "Quando ativado, anexos como imagens/vídeos/áudio/PDFs serão pré-visualizados online através da rede.\nO plugin não sincroniza mais o estado dos anexos nem recebe sincronização de anexos de outros dispositivos.",
   "附件云预览类型限制": "Limite de Tipo de Pré-visualização na Nuvem",
-  "附件云预览类型限制描述": "Quando ativado, a pré-visualização na nuvem limita-se a imagens/áudio/vídeo/PDFs. Outros anexos sincronizam normalmente.\nNota: Desative com cautela; pode interromper plugins relacionados a anexos.",
-  "附件云预览远端源": "Pré-visualização na Nuvem - Mapeamento de Extensão para Fonte Remota",
-  "附件云预览远端源描述": "Especifique endereços de pré-visualização remotos personalizados para extensões específicas, suportando regras multilinhas.\nFormato: extensão:url_remota. O endereço do servidor padrão é usado se não houver correspondência. Separe várias extensões com ponto e vírgula.\nSuporte para substituição de variáveis:\n| Variável | Descrição |\n| --- | --- |\n| {path} | Caminho do anexo |\n| {pathHash} | Hash do caminho do anexo |\n| {vault} | Nome do cofre |\n| {type} | Tipo de anexo (image/video/audio/pdf/other) |\nExemplo: .jpg;.png:http://domain.com/{path}\nNota: Certifique-se de que as fontes remotas personalizadas suportam CORS e autenticação necessária (se necessário).",
+  "附件云预览类型限制描述": "Quando ativado, a pré-visualização na nuvem limita-se a imagens/áudio/video/PDFs. Outros anexos sincronizam normalmente.\nNota: Desative com cautela; pode interromper plugins relacionados a anexos.",
+  "附件云预览远端源": "Pré-visualização de anexos na nuvem - Mapeamento de prefixo/sufixo para fonte remota",
+  "附件云预览远端源描述": "Esta configuração é usada para especificar a fonte remota para anexos que correspondem ao prefixo/sufixo e suporta regras de várias linhas.\nFormato: nome-prefixo@nome-sufixo#fonte-remota, o prefixo pode ser omitido. Se não houver correspondência, o endereço do servidor padrão será usado. Vários nomes de sufixo podem ser separados por um ponto e vírgula.\nSuporte para substituição de variáveis:\n| Variável | Descrição |\n| --- | --- |\n| {path} | Caminho do anexo na nota |\n| {vaultPath} | Caminho relativo do armazém correspondente ao anexo |\n| {vault} | Nome do armazém |\n| {type} | Tipo de anexo (image/video/audio/pdf/other) |\nPor exemplo: prefix@.jpg;.png#http://domain.com/{path}\nNota: Se você usar uma fonte remota personalizada, certifique-se de que ela suporte visualização de origem cruzada (CORS) e autenticação necessária (se necessário).",
   "附件云预览上传后删除": "Pré-visualização na Nuvem - Excluir após o upload",
   "附件云预览上传后删除描述": "Os arquivos locais serão excluídos automaticamente após o upload bem-sucedido para economizar espaço.\n(Requer Pré-visualização de Anexos na Nuvem ativada)\nNota: Desative com cautela; pode interromper plugins relacionados a anexos.",
   "恢复": "Restaurar",
@@ -119,7 +119,8 @@ const pt: Partial<LangMap> = {
   "已支持名单": "Lista de Apoiadores",
   "感谢你们的支持与认可!": "Obrigado pelo seu apoio e reconhecimento!",
   "反馈问题&新建议": "Feedback e Sugestões",
-  "电报讨论群": "Grupo do Telegram",
+  "电报讨论群": "Groupe Telegram",
+
 }
 
 

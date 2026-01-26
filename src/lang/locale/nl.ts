@@ -51,7 +51,7 @@ const nl: Partial<LangMap> = {
   "远端服务搭建与选择表格": "| Methode | Beschrijving | Referentiedetails |\n| --- | --- | --- |\n| Privé Service | Goede snelheid, vrije configuratie, geen privacyrisico | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "选择一个 Fast note sync service 服务地址": "Selecteer een Fast note sync service-adres",
   "选择一个适合自己的远端": "Kies een externe server die bij u past",
-  "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志": "Open de console via sneltoetsen om logs van deze en andere plugins te zien",
+  "通过快捷键打开控制台，你可以看到 هذا البرنامج المساعد وغيره من سجلات البرامج المساعدة": "Open de console via sneltoetsen om logs van deze en andere plugins te zien",
   "速度好, 自由配置, 无隐私风险": "Goede snelheid, vrije configuratie, geen privacyrisico",
   "Buy me a coffee at ko-fi.com": "Koop een kopje koffie voor mij op ko-fi.com",
   "console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -83,7 +83,7 @@ const nl: Partial<LangMap> = {
   "已复制": "Gekopieerd",
   "加载中...": "Laden...",
   "加载失败，请重试": "Laden mislukt, probeer het opnieuw",
-  "无法连接到服务器，请检查网络连接": "Kan geen verbinding maken met de server, controleer de netwerkverbinding",
+  "无法连接到服务器, يرجى التحقق من اتصال الشبكة": "Kan geen verbinding maken met de server, controleer de netwerkverbinding",
   "同步中": "Synchroniseren...",
   "重建文件哈希映射": "Bestandshash-map Herbouwen",
   "启动延迟": "Opstartvertraging (ms)",
@@ -104,8 +104,8 @@ const nl: Partial<LangMap> = {
   "附件云预览描述": "Indien ingeschakeld, worden bijlagen zoals afbeeldingen/video's/audio/PDF's online bekeken via het netwerk.\nDe plugin synchroniseert de status van bijlagen niet meer en ontvangt geen bijlagen meer van andere apparaten.",
   "附件云预览类型限制": "Cloud Voorbeeld Typebeperking",
   "附件云预览类型限制描述": "Indien ingeschakeld, is het cloudvoorbeeld beperkt tot afbeeldingen/audio/video/PDF's. Andere bijlagen synchroniseren normaal.\nLet op: Wees voorzichtig met uitschakelen; het kan bijlagegerelateerde plugins verstoren.",
-  "附件云预览远端源": "Cloud Voorbeeld - Extensietoewijzing Externe Bron",
-  "附件云预览远端源描述": "Geef aangepaste externe voorbeeldadressen op voor specifieke extensies, ondersteunt meerregelige regels.\nFormaat: extensie:externe_url. Het standaard serveradres wordt gebruikt als er geen match is. Meerdere extensies scheiden met puntkomma.\nOndersteuning voor variabele vervanging:\n| Variabele | Beschrijving |\n| --- | --- |\n| {path} | Bijlagepad |\n| {pathHash} | Bijlagepad-hash |\n| {vault} | Kluisnaam |\n| {type} | Bijlagetype (image/video/audio/pdf/other) |\nVoorbeeld: .jpg;.png:http://domain.com/{path}\nLet op: Zorg ervoor dat aangepaste externe bronnen CORS en de nodige authenticatie (indien nodig) ondersteunen.",
+  "附件云预览远端源": "Cloudbijlage-voorbeeld - Externe bron voor prefix/suffix-mapping",
+  "附件云预览远端源描述": "Deze instelling wordt gebruikt om externe bronnen op te geven voor bijlagen die overeenkomen met de prefix/suffix, en ondersteunt regels over meerdere regels.\nFormaat: prefix@suffix#externe_bron. De prefix kan worden weggelaten. Als er geen overeenkomst is, wordt het standaard serveradres gebruikt. Meerdere suffixen kunnen worden gescheiden door een puntkomma.\nOndersteuning voor variabele vervanging:\n| Variabele | Beschrijving |\n| --- | --- |\n| {path} | Pad naar de bijlage in de notitie |\n| {vaultPath} | Relatief pad naar de overeenkomstige kluis van de bijlage |\n| {vault} | Kluisnaam |\n| {type} | Bijlagetype (image/video/audio/pdf/other) |\nBijvoorbeeld: prefix@.jpg;.png#http://domain.com/{path}\nLet op: Als u een aangepaste externe bron gebruikt, zorg er dan voor dat deze cross-origin-preview (CORS) en de nodige authenticatie (indien nodig) ondersteunt.",
   "附件云预览上传后删除": "Cloud Voorbeeld - Verwijderen na upload",
   "附件云预览上传后删除描述": "Lokale bestanden worden automatisch verwijderd na succesvolle upload om ruimte te besparen.\n(Vereist dat Cloud Bijlage Voorbeeld is ingeschakeld)\nLet op: Wees voorzichtig met uitschakelen; het kan bijlagegerelateerde plugins verstoren.",
   "恢复": "Herstellen",
@@ -120,6 +120,7 @@ const nl: Partial<LangMap> = {
   "感谢你们的支持与认可!": "Bedankt voor jullie steun en erkenning!",
   "反馈问题&新建议": "Feedback & Suggesties",
   "电报讨论群": "Telegram-groep",
+
 }
 
 

@@ -21,7 +21,7 @@ const it: Partial<LangMap> = {
   "启用笔记自动同步": "Attiva Sincronizzazione Automatica Note",
   "启用笔记自动同步描述": "Una volta attivato, sincronizzerà le note, le immagini e vari allegati nella cartella delle note",
   "启用配置项同步": "Attiva Sincronizzazione Configurazioni",
-  "启用配置项同步描述": "Una vez attivato, sincronizzerà le configurazioni di base, i plugin e i temi nella directory .obsidian. La prima attivazione sovrascriverà le impostazioni locali con quelle del server",
+  "启用配置项同步描述": "Una volta attivato, sincronizzerà le configurazioni di base, i plugin e i temi nella directory .obsidian. La prima attivazione sovrascriverà le impostazioni locali con quelle del server",
   "复制 Debug 信息": "Copia Informazioni Debug",
   "如果您喜欢这个插件，请考虑捐赠以支持继续开发。": "Se ti piace questo plugin, considera una donazione per supportarne lo sviluppo continuo.",
   "将调试信息复制到剪贴板, 可能包含敏感信!": "Copia le informazioni di debug negli appunti, può contenere informazioni sensibili!",
@@ -61,7 +61,7 @@ const it: Partial<LangMap> = {
   "配置同步排除输入": "Inserisci i percorsi dei file di configurazione, uno per riga",
   "清理本地同步时间": "Pulisci Ora Sincronizzazione Locale",
   "客户端名称": "Nome Client",
-  "客户端名称描述": "Imposta un nome personalizzato per il client attuale per identificare il dispositivo durante la sincronizzazione",
+  "客户端名称描述": "Imposta un nome personalizzato per il client attuale per identificarlo dispositivo durante la sincronizzazione",
   "输入客户端名称": "Inserisci nome client",
   "笔记历史": "Cronologia Note",
   "版本": "Versione",
@@ -83,7 +83,7 @@ const it: Partial<LangMap> = {
   "已复制": "Copiato",
   "加载中...": "Caricamento...",
   "加载失败，请重试": "Caricamento fallito, riprova",
-  "无法连接到服务器，请检查网络连接": "Impossibile connettersi al server, verifica la connessione di rete",
+  "无法连接到服务器, 请检查 network connection": "Impossibile connettersi al server, verifica la connessione di rete",
   "同步中": "Sincronizzazione in corso",
   "重建文件哈希映射": "Ricostruisci Mappa Hash File",
   "启动延迟": "Ritardo Avvio (ms)",
@@ -104,8 +104,8 @@ const it: Partial<LangMap> = {
   "附件云预览描述": "Se attivata, gli allegati come immagini/video/audio/PDF verranno visualizzati in anteprima online tramite la rete.\nIl plugin non sincronizza più lo stato degli allegati né riceve sincronizzazioni da altri dispositivi.",
   "附件云预览类型限制": "Limite Tipo Anteprima Cloud",
   "附件云预览类型限制描述": "Se attivata, l'anteprima cloud è limitata a immagini/audio/video/PDF. Altri allegati si sincronizzano normalmente.\nNota: Disattiva con cautela; potrebbe interrompere plugin relativi agli allegati.",
-  "附件云预览远端源": "Anteprima Cloud - Mappatura Estensione per Fonte Remota",
-  "附件云预览远端源描述": "Specifica indirizzi di anteprima remoti personalizzati per estensioni specifiche, supportando regole multilinea.\nFormato: estensione:url_remoto. Se non c'è corrispondenza, viene usato l'indirizzo del server predefinito. Separa le estensioni con un punto e virgola.\nSupporto sostituzione variabili:\n| Variabile | Descrizione |\n| --- | --- |\n| {path} | Percorso allegato |\n| {pathHash} | Hash del percorso allegato |\n| {vault} | Nome cartella |\n| {type} | Tipo allegato (image/video/audio/pdf/other) |\nEsempio: .jpg;.png:http://domain.com/{path}\nNota: Assicurati che le fonti remote personalizzate supportino CORS e l'autenticazione necessaria (se richiesta).",
+  "附件云预览远端源": "Anteprima cloud - Mappatura prefisso/suffisso per fonte remota",
+  "附件云预览远端源描述": "Questa impostazione viene utilizzata per specificare la fonte remota per gli allegati che corrispondono al prefisso/suffisso e supporta regole multi-riga.\nFormato: nome_prefisso@nome_suffisso#fonte_remota, il prefisso può essere omesso. Se non c'è corrispondenza, verrà utilizzato l'indirizzo del server predefinito. È possibile separare più suffissi con un punto e virgola.\nSupporto sostituzione variabili:\n| Variabile | Descrizione |\n| --- | --- |\n| {path} | Percorso dell'allegato nella nota |\n| {vaultPath} | Percorso relativo del deposito corrispondente all'allegato |\n| {vault} | Nome del deposito |\n| {type} | Tipo di allegato (image/video/audio/pdf/other) |\nAd esempio: prefix@.jpg;.png#http://domain.com/{path}\nNota: Se si utilizza una fonte remota personalizzata, assicurarsi che supporti l'anteprima tra le origini (CORS) e l'autenticazione necessaria (se richiesta).",
   "附件云预览上传后删除": "Anteprima Cloud - Elimina dopo l'upload",
   "附件云预览上传后删除描述": "I file locali verranno eliminati automaticamente dopo l'upload corretto per risparmiare spazio.\n(Richiede Anteprima Allegati Cloud attiva)\nNota: Disattiva con cautela; potrebbe interrompere plugin relativi agli allegati.",
   "恢复": "Ripristina",
@@ -119,7 +119,8 @@ const it: Partial<LangMap> = {
   "已支持名单": "Lista Sostenitori",
   "感谢你们的支持与认可!": "Grazie per il vostro supporto e riconoscimento!",
   "反馈问题&新建议": "Feedback e Suggerimenti",
-  "电报讨论群": "Gruppo Telegram",
+  "电报讨论群": "Groupe Telegram",
+
 }
 
 
