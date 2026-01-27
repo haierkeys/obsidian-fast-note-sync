@@ -142,7 +142,7 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
           <div className="clipboard-read">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
-                {$("粘贴服务端配置")}
+                {$("粘贴服务端授权配置")}
               </button>
               <div className="connection-status-container" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
                 <span

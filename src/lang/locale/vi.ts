@@ -38,7 +38,7 @@ const vi: Partial<LangMap> = {
   "未检测到配置信息!": "Không phát hiện thấy cấu hình!",
   "用于远端服务的访问授权令牌": "Mã xác thực truy cập cho dịch vụ từ xa",
   "私有服务搭建": "Thiết lập Dịch vụ Riêng",
-  "粘贴服务端配置": "Dán Cấu hình Máy chủ",
+  "粘贴服务端授权配置": "Dán Cấu hình Máy chủ",
   "详情参考": "Tham khảo Chi tiết",
   "说明": "Mô tả",
   "输入您的 API 访问令牌": "Nhập mã xác thực API của bạn",

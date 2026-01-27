@@ -1,6 +1,6 @@
 import { Plugin } from "obsidian";
+import { Notice } from "obsidian";
 
-import { startupSync, startupFullSync, resetSettingSyncTime, handleSync } from "./lib/operator";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { LocalStorageManager } from "./lib/local_storage_manager";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
@@ -10,6 +10,7 @@ import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
 import { dump, setLogEnabled } from "./lib/helps";
 import { MenuManager } from "./lib/menu_manager";
+import { handleSync } from "./lib/operator";
 import { $ } from "./lang/lang";
 
 
@@ -150,6 +151,20 @@ export default class FastSync extends Plugin {
     this.settings.serverVersionNewLink = ""
     this.settings.pluginVersionIsNew = false
     this.settings.pluginVersionNewLink = ""
+
+    this.registerObsidianProtocolHandler('fast-note-sync/sso', async (data) => {
+      if (data?.pushApi) {
+        this.settings.api = data.pushApi
+        this.settings.apiToken = data.pushApiToken
+        if (data?.pushVault) {
+          this.settings.vault = data.pushVault
+        }
+        this.wsSettingChange = true
+        this.settings.isInitSync = false
+        await this.saveSettings()
+        new Notice($('已导入授权配置'), 5000)
+      }
+    })
 
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
