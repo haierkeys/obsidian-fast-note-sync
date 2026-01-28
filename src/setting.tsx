@@ -133,7 +133,6 @@ export class SettingTab extends PluginSettingTab {
 
     new Setting(set)
       .setName($("远端服务地址"))
-      .setDesc($("选择一个 Fast note sync service 服务地址"))
       .addText((text) =>
         text
           .setPlaceholder($("输入您的 Fast note sync service 服务地址"))
@@ -147,10 +146,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("选择一个 Fast note sync service 服务地址"))
 
     new Setting(set)
       .setName($("远端服务令牌"))
-      .setDesc($("用于远端服务的访问授权令牌"))
       .addText((text) =>
         text
           .setPlaceholder($("输入您的 API 访问令牌"))
@@ -164,10 +163,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("用于远端服务的访问授权令牌"))
 
     new Setting(set)
       .setName($("远端仓库名"))
-      .setDesc($("远端仓库名"))
       .addText((text) =>
         text
           .setPlaceholder($("远端仓库名"))
@@ -177,10 +176,10 @@ export class SettingTab extends PluginSettingTab {
             await this.plugin.saveSettings()
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("远端仓库名"))
 
     new Setting(set)
       .setName($("客户端名称"))
-      .setDesc($("客户端名称描述"))
       .addText((text) =>
         text
           .setPlaceholder($("输入客户端名称"))
@@ -193,6 +192,7 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("客户端名称描述"))
 
     new Setting(set)
       .setName("| " + $("同步设置"))
@@ -202,7 +202,6 @@ export class SettingTab extends PluginSettingTab {
 
     new Setting(set)
       .setName($("启用笔记自动同步"))
-      .setDesc($("启用笔记自动同步描述"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.syncEnabled) {
@@ -213,10 +212,10 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启用笔记自动同步描述"))
 
     new Setting(set)
       .setName($("启用配置项同步"))
-      .setDesc($("启用配置项同步描述"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.configSyncEnabled) {
@@ -225,13 +224,13 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启用配置项同步描述"))
 
 
 
 
     new Setting(set)
       .setName($("开启 PDF 状态同步"))
-      .setDesc($("开启 PDF 状态同步描述"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.pdfSyncEnabled) {
@@ -240,6 +239,7 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("开启 PDF 状态同步描述"))
 
 
     new Setting(set)
@@ -260,7 +260,6 @@ export class SettingTab extends PluginSettingTab {
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("离线编辑合并策略描述"))
     new Setting(set)
       .setName($("同步排除"))
-      .setDesc($("同步排除描述"))
       .addTextArea((text) =>
         text
           .setPlaceholder("Folder1\nFolder2")
@@ -272,10 +271,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("同步排除描述"))
 
     new Setting(set)
       .setName($("同步排除扩展名"))
-      .setDesc($("同步排除扩展名描述"))
       .addTextArea((text) =>
         text
           .setPlaceholder(".tmp\n.log")
@@ -287,10 +286,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("同步排除扩展名描述"))
 
     new Setting(set)
       .setName($("同步排除白名单"))
-      .setDesc($("同步排除白名单描述"))
       .addTextArea((text) =>
         text
           .setPlaceholder($("输入您的笔记或附件路径，每行一个"))
@@ -302,10 +301,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("同步排除白名单描述"))
 
     new Setting(set)
       .setName($("配置同步排除"))
-      .setDesc($("配置同步排除描述"))
       .addTextArea((text) =>
         text
           .setPlaceholder($("配置同步排除输入"))
@@ -317,10 +316,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("配置同步排除描述"))
 
     new Setting(set)
       .setName($("配置同步排除白名单"))
-      .setDesc($("配置同步排除白名单描述"))
       .addTextArea((text) =>
         text
           .setPlaceholder($("配置同步排除输入"))
@@ -332,6 +331,7 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("配置同步排除白名单描述"))
 
     new Setting(set)
       .setName($("启动延迟"))
@@ -424,13 +424,13 @@ export class SettingTab extends PluginSettingTab {
     supportRoot.render(<SupportView plugin={this.plugin} />)
     new Setting(set)
       .setName($("开启日志"))
-      .setDesc($("开启后将在控制台打印日志"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
           this.plugin.settings.logEnabled = value
           await this.plugin.saveSettings()
         })
       )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("开启后将在控制台打印日志"))
     const debugDiv = set.createDiv()
     debugDiv.addClass("fast-note-sync-settings-debug")
 

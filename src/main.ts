@@ -144,7 +144,7 @@ export default class FastSync extends Plugin {
   async onload() {
 
 
-    this.manifest.description = $("fast-note-sync-desc")
+    this.manifest.description = $("fns.desc")
     this.wsSettingChange = false
     await this.loadSettings()
     this.settings.serverVersionIsNew = false
