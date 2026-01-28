@@ -24,7 +24,7 @@ export class MenuManager {
 
   init() {
     // 初始化 Ribbon 图标
-    this.ribbonIcon = this.plugin.addRibbonIcon("wifi", "Fast Note Sync:" + $("手动同步"), (event: MouseEvent) => {
+    this.ribbonIcon = this.plugin.addRibbonIcon("wifi", $("ui.menu.ribbon_title"), (event: MouseEvent) => {
       this.showRibbonMenu(event);
     });
     setIcon(this.ribbonIcon, "wifi-off");
@@ -36,31 +36,31 @@ export class MenuManager {
     this.historyStatusBarItem = this.plugin.addStatusBarItem();
     this.historyStatusBarItem.addClass("mod-clickable");
     setIcon(this.historyStatusBarItem, "history");
-    this.historyStatusBarItem.setAttribute("aria-label", $("笔记历史"));
+    this.historyStatusBarItem.setAttribute("aria-label", $("ui.history.title"));
     this.historyStatusBarItem.addEventListener("click", () => {
       const activeFile = this.plugin.app.workspace.getActiveFile();
       if (activeFile && activeFile.extension === "md") {
         new NoteHistoryModal(this.plugin.app, this.plugin, activeFile.path).open();
       } else {
-        new Notice($("仅支持 Markdown 文件"));
+        new Notice($("ui.history.md_only"));
       }
     });
 
     this.plugin.addCommand({
       id: "start-full-sync",
-      name: $("完整同步"),
+      name: $("ui.menu.full_sync"),
       callback: () => startupFullSync(this.plugin),
     });
 
     this.plugin.addCommand({
       id: "clean-local-sync-time",
-      name: $("清理本地同步时间"),
+      name: $("ui.menu.clear_time"),
       callback: () => resetSettingSyncTime(this.plugin),
     });
 
     this.plugin.addCommand({
       id: "rebuild-file-hash-map",
-      name: $("重建文件哈希映射"),
+      name: $("ui.menu.rebuild_hash"),
       callback: async () => {
         await this.plugin.fileHashManager.rebuildHashMap();
       },
@@ -72,10 +72,10 @@ export class MenuManager {
     if (!this.ribbonIcon) return;
     if (status) {
       setIcon(this.ribbonIcon, "wifi");
-      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("手动同步") + " (" + $("服务已连接") + ")");
+      this.ribbonIcon.setAttribute("aria-label", $("ui.menu.ribbon_title") + " (" + $("setting.remote.connected") + ")");
     } else {
       setIcon(this.ribbonIcon, "wifi-off");
-      this.ribbonIcon.setAttribute("aria-label", "Fast Note Sync: " + $("手动同步") + " (" + $("服务已断开") + ")");
+      this.ribbonIcon.setAttribute("aria-label", $("ui.menu.ribbon_title") + " (" + $("setting.remote.disconnected") + ")");
     }
   }
 
@@ -125,34 +125,34 @@ export class MenuManager {
       menu.addItem((item: MenuItem) => {
         item
           .setIcon("pause")
-          .setTitle($("关闭同步"))
+          .setTitle($("ui.menu.disable_sync"))
           .onClick(async () => {
             this.plugin.websocket.unRegister();
-            new Notice($("关闭同步描述"));
+            new Notice($("ui.menu.disable_sync_desc"));
           });
-        (item as any).dom.setAttribute("aria-label", $("关闭同步描述"));
+        (item as any).dom.setAttribute("aria-label", $("ui.menu.disable_sync_desc"));
       });
     } else {
       menu.addItem((item: MenuItem) => {
         item
           .setIcon("play")
-          .setTitle($("开启同步"))
+          .setTitle($("ui.menu.enable_sync"))
           .onClick(async () => {
             this.plugin.websocket.register((status) => this.updateRibbonIcon(status));
-            new Notice($("开启同步描述"));
+            new Notice($("ui.menu.enable_sync_desc"));
           });
-        (item as any).dom.setAttribute("aria-label", $("开启同步描述"));
+        (item as any).dom.setAttribute("aria-label", $("ui.menu.enable_sync_desc"));
       });
     }
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
         .setIcon("cloudy")
-        .setTitle($("完整同步"))
+        .setTitle($("ui.menu.full_sync"))
         .onClick(async () => {
           startupFullSync(this.plugin);
         });
-      (item as any).dom.setAttribute("aria-label", $("完整同步描述"));
+      (item as any).dom.setAttribute("aria-label", $("ui.menu.full_sync_desc"));
     });
 
     // menu.addSeparator();
@@ -181,7 +181,7 @@ export class MenuManager {
 
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
-      const title = $("插件版本") + ": v" + this.plugin.manifest.version;
+      const title = $("ui.menu.plugin") + ": v" + this.plugin.manifest.version;
       item.setTitle(title);
 
       if (this.plugin.settings.pluginVersionIsNew) {
@@ -190,7 +190,7 @@ export class MenuManager {
             window.open(this.plugin.settings.pluginVersionNewLink);
           }
         });
-        const ariaLabel = $("发现新版本提示", { version: this.plugin.settings.pluginVersionNewName || "" });
+        const ariaLabel = $("ui.status.new_version", { version: this.plugin.settings.pluginVersionNewName || "" });
         (item as any).dom.setAttribute("aria-label", ariaLabel);
 
         const itemDom = (item as any).dom as HTMLElement;
@@ -207,7 +207,7 @@ export class MenuManager {
         }
       } else {
         item.setDisabled(true);
-        (item as any).dom.setAttribute("aria-label", $("插件版本描述"));
+        (item as any).dom.setAttribute("aria-label", $("ui.menu.plugin_desc"));
       }
     });
 
@@ -215,7 +215,7 @@ export class MenuManager {
     if (this.plugin.settings.serverVersion) {
       menu.addSeparator();
       menu.addItem((item: MenuItem) => {
-        const title = $("服务端版本") + ": v" + this.plugin.settings.serverVersion;
+        const title = $("ui.menu.server") + ": v" + this.plugin.settings.serverVersion;
         item.setTitle(title);
 
         if (this.plugin.settings.serverVersionIsNew) {
@@ -224,7 +224,7 @@ export class MenuManager {
               window.open(this.plugin.settings.serverVersionNewLink);
             }
           });
-          const ariaLabel = $("发现新版本提示", { version: this.plugin.settings.serverVersionNewName || "" });
+          const ariaLabel = $("ui.status.new_version", { version: this.plugin.settings.serverVersionNewName || "" });
           (item as any).dom.setAttribute("aria-label", ariaLabel);
 
           const itemDom = (item as any).dom as HTMLElement;
@@ -241,7 +241,7 @@ export class MenuManager {
           }
         } else {
           item.setDisabled(true);
-          (item as any).dom.setAttribute("aria-label", $("服务端版本描述"));
+          (item as any).dom.setAttribute("aria-label", $("ui.menu.server_desc"));
         }
       });
     }

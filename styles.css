@@ -204,17 +204,18 @@
   transition: width 0.05s linear;
 }
 
+.setting-item-info {
+  margin-bottom: var(--size-4-2);
+}
+.setting-item-info b {
+  font-weight: bold;
+  color: var(--color-green);
+}
+
 /* 附件云预览远端源布局优化 */
 .fast-note-sync-remote-url-setting {
   flex-direction: column;
   align-items: flex-start;
-}
-.fast-note-sync-remote-url-setting .setting-item-info {
-  margin-bottom: var(--size-4-2);
-}
-.fast-note-sync-remote-url-setting .setting-item-info b {
-  font-weight: bold;
-  color: var(--color-green);
 }
 .fast-note-sync-remote-url-setting .setting-item-control {
   width: 100%;

@@ -42,7 +42,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
             setPage(targetPage);
         } catch (e) {
             console.error("loadHistory error:", e);
-            const errorMessage = e instanceof Error ? e.message : $("加载失败，请重试");
+            const errorMessage = e instanceof Error ? e.message : $("ui.history.load_failed");
             setError(errorMessage);
         } finally {
             setLoading(false);
@@ -61,14 +61,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
     };
 
     const handleRestore = async (id: number) => {
-        const confirm = window.confirm($("确认要恢复到此版本吗？"));
+        const confirm = window.confirm($("ui.history.restore_confirm"));
         if (!confirm) return;
 
         try {
             setLoading(true);
             const success = await service.restoreNoteVersion(id);
             if (success) {
-                new Notice($("恢复成功"));
+                new Notice($("ui.history.restore_success"));
                 loadHistory(page);
             }
         } catch (e) {
@@ -95,10 +95,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                     <table className="history-table">
                         <thead>
                             <tr>
-                                <th>{$("版本")}</th>
-                                <th>{$("客户端")}</th>
-                                <th>{$("更新时间")}</th>
-                                <th>{$("操作")}</th>
+                                <th>{$("ui.history.version")}</th>
+                                <th>{$("ui.history.client")}</th>
+                                <th>{$("ui.history.time")}</th>
+                                <th>{$("ui.history.action")}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -110,7 +110,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                 </tr>
                             ) : loading ? (
                                 <tr>
-                                    <td colSpan={4} className="state">{$("加载中...")}</td>
+                                    <td colSpan={4} className="state">{$("ui.history.loading")}</td>
                                 </tr>
                             ) : historyList.length > 0 ? (
                                 historyList.map(item => (
@@ -127,11 +127,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                             <div className="history-actions">
                                                 <button className="view-btn" onClick={() => handleView(item.id)}>
                                                     <LucideIcon icon="eye" size={14} />
-                                                    {$("查看")}
+                                                    {$("ui.history.view")}
                                                 </button>
                                                 <button className="restore-btn" onClick={() => handleRestore(item.id)}>
                                                     <LucideIcon icon="rotate-ccw" size={14} />
-                                                    {$("恢复")}
+                                                    {$("ui.history.restore")}
                                                 </button>
                                             </div>
                                         </td>
@@ -139,7 +139,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="state">{$("暂无历史记录")}</td>
+                                    <td colSpan={4} className="state">{$("ui.history.no_history")}</td>
                                 </tr>
                             )}
                         </tbody>
@@ -151,12 +151,12 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                         className="pagination-btn"
                         disabled={page <= 1 || loading}
                         onClick={() => loadHistory(page - 1)}
-                        title={$("上一页")}
+                        title={$("ui.history.page_prev")}
                     >
                         <LucideIcon icon="chevron-left" size={14} />
                     </button>
                     <span className="pagination-info">
-                        {$("第 {page} 页 / 共 {total} 页")
+                        {$("ui.history.page_info")
                             .replace("{page}", page.toString())
                             .replace("{total}", totalPages.toString())}
                     </span>
@@ -164,7 +164,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                         className="pagination-btn"
                         disabled={page >= totalPages || loading}
                         onClick={() => loadHistory(page + 1)}
-                        title={$("下一页")}
+                        title={$("ui.history.page_next")}
                     >
                         <LucideIcon icon="chevron-right" size={14} />
                     </button>
@@ -176,9 +176,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                     <div className="detail-controls">
                         <div className="detail-title">
                             <LucideIcon icon="file-diff" size={16} className="title-icon" />
-                            {$("版本")} v{selectedHistory.version} {$("差异详情")}
-                            <span className="type-badge badge-add">{$("新增")}</span>
-                            <span className="type-badge badge-delete">{$("删除")}</span>
+                            {$("ui.history.version")} v{selectedHistory.version} {$("ui.history.diff")}
+                            <span className="type-badge badge-add">{$("ui.history.added")}</span>
+                            <span className="type-badge badge-delete">{$("ui.history.deleted")}</span>
                         </div>
                         <div className="detail-toggles">
                             <label className="detail-toggle-item">
@@ -190,7 +190,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                         if (e.target.checked) setShowOriginal(false);
                                     }}
                                 />
-                                {$("只看差异")}
+                                {$("ui.history.diff_only")}
                             </label>
                             <label className="detail-toggle-item">
                                 <input
@@ -201,7 +201,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                         if (e.target.checked) setShowOnlyDiff(false);
                                     }}
                                 />
-                                {$("完整内容")}
+                                {$("ui.history.content_pre")}
                             </label>
                         </div>
                     </div>

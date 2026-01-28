@@ -121,7 +121,7 @@ export class SettingTab extends PluginSettingTab {
 
 
     new Setting(set)
-      .setName("| " + $("远端"))
+      .setName("| " + $("setting.remote.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
 
@@ -132,10 +132,10 @@ export class SettingTab extends PluginSettingTab {
     this.root.render(<SettingsView plugin={this.plugin} />)
 
     new Setting(set)
-      .setName($("远端服务地址"))
+      .setName($("setting.remote.api_url"))
       .addText((text) =>
         text
-          .setPlaceholder($("输入您的 Fast note sync service 服务地址"))
+          .setPlaceholder($("setting.remote.api_url_placeholder"))
           .setValue(this.plugin.settings.api)
           .onChange(async (value) => {
             if (value != this.plugin.settings.api) {
@@ -146,13 +146,13 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("选择一个 Fast note sync service 服务地址"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.api_url_desc"))
 
     new Setting(set)
-      .setName($("远端服务令牌"))
+      .setName($("setting.remote.api_token"))
       .addText((text) =>
         text
-          .setPlaceholder($("输入您的 API 访问令牌"))
+          .setPlaceholder($("setting.remote.api_token_placeholder"))
           .setValue(this.plugin.settings.apiToken)
           .onChange(async (value) => {
             if (value != this.plugin.settings.apiToken) {
@@ -163,26 +163,26 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("用于远端服务的访问授权令牌"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.api_token_desc"))
 
     new Setting(set)
-      .setName($("远端仓库名"))
+      .setName($("setting.remote.vault_name"))
       .addText((text) =>
         text
-          .setPlaceholder($("远端仓库名"))
+          .setPlaceholder($("setting.remote.vault_name"))
           .setValue(this.plugin.settings.vault)
           .onChange(async (value) => {
             this.plugin.settings.vault = value
             await this.plugin.saveSettings()
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("远端仓库名"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.vault_name"))
 
     new Setting(set)
-      .setName($("客户端名称"))
+      .setName($("setting.remote.client_name"))
       .addText((text) =>
         text
-          .setPlaceholder($("输入客户端名称"))
+          .setPlaceholder($("setting.remote.client_name_placeholder"))
           .setValue(this.plugin.settings.clientName)
           .onChange(async (value) => {
             const trimmedValue = value.trim()
@@ -192,16 +192,16 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("客户端名称描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.client_name_desc"))
 
     new Setting(set)
-      .setName("| " + $("同步设置"))
+      .setName("| " + $("setting.sync.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
     // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
 
     new Setting(set)
-      .setName($("启用笔记自动同步"))
+      .setName($("setting.sync.auto_note"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.syncEnabled) {
@@ -212,10 +212,10 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启用笔记自动同步描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_note_desc"))
 
     new Setting(set)
-      .setName($("启用配置项同步"))
+      .setName($("setting.sync.auto_config"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.configSyncEnabled) {
@@ -224,13 +224,13 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启用配置项同步描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_config_desc"))
 
 
 
 
     new Setting(set)
-      .setName($("开启 PDF 状态同步"))
+      .setName($("setting.sync.pdf_state"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.pdfSyncEnabled) {
@@ -239,16 +239,16 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("开启 PDF 状态同步描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.pdf_state_desc"))
 
 
     new Setting(set)
-      .setName($("离线编辑合并策略"))
+      .setName($("setting.sync.merge_strategy"))
       .addDropdown((dropdown) =>
         dropdown
-          .addOption("", $("策略选项_默认"))
-          .addOption("newTimeMerge", $("策略选项_newTimeMerge"))
-          .addOption("ignoreTimeMerge", $("策略选项_ignoreTimeMerge"))
+          .addOption("", $("setting.sync.strategy_default"))
+          .addOption("newTimeMerge", $("setting.sync.strategy_new"))
+          .addOption("ignoreTimeMerge", $("setting.sync.strategy_force"))
           .setValue(this.plugin.settings.offlineSyncStrategy || "")
           .onChange(async (value) => {
             this.plugin.settings.offlineSyncStrategy = value
@@ -257,9 +257,9 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.websocket.sendClientInfo()
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("离线编辑合并策略描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.merge_strategy_desc"))
     new Setting(set)
-      .setName($("同步排除"))
+      .setName($("setting.sync.exclude_folders"))
       .addTextArea((text) =>
         text
           .setPlaceholder("Folder1\nFolder2")
@@ -271,10 +271,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("同步排除描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_folders_desc"))
 
     new Setting(set)
-      .setName($("同步排除扩展名"))
+      .setName($("setting.sync.exclude_extensions"))
       .addTextArea((text) =>
         text
           .setPlaceholder(".tmp\n.log")
@@ -286,10 +286,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("同步排除扩展名描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_extensions_desc"))
 
     new Setting(set)
-      .setName($("同步排除白名单"))
+      .setName($("setting.sync.exclude_whitelist"))
       .addTextArea((text) =>
         text
           .setPlaceholder($("输入您的笔记或附件路径，每行一个"))
@@ -301,13 +301,13 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("同步排除白名单描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_whitelist_desc"))
 
     new Setting(set)
-      .setName($("配置同步排除"))
+      .setName($("setting.sync.config_exclude"))
       .addTextArea((text) =>
         text
-          .setPlaceholder($("配置同步排除输入"))
+          .setPlaceholder($("setting.sync.config_exclude_placeholder"))
           .setValue(this.plugin.settings.configExclude)
           .onChange(async (value) => {
             if (value != this.plugin.settings.configExclude) {
@@ -316,13 +316,13 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("配置同步排除描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_desc"))
 
     new Setting(set)
-      .setName($("配置同步排除白名单"))
+      .setName($("setting.sync.config_exclude_whitelist"))
       .addTextArea((text) =>
         text
-          .setPlaceholder($("配置同步排除输入"))
+          .setPlaceholder($("setting.sync.config_exclude_placeholder"))
           .setValue(this.plugin.settings.configExcludeWhitelist)
           .onChange(async (value) => {
             if (value != this.plugin.settings.configExcludeWhitelist) {
@@ -331,10 +331,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("配置同步排除白名单描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_whitelist_desc"))
 
     new Setting(set)
-      .setName($("启动延迟"))
+      .setName($("setting.sync.startup_delay"))
       .addText((text) =>
         text
           .setPlaceholder($("输入延迟毫秒数"))
@@ -347,15 +347,15 @@ export class SettingTab extends PluginSettingTab {
             }
           })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("启动延迟描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.startup_delay_desc"))
 
     new Setting(set)
-      .setName("| " + $("附件云预览"))
+      .setName("| " + $("setting.cloud.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
 
     new Setting(set)
-      .setName($("附件云预览"))
+      .setName($("setting.cloud.title"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
           if (value != this.plugin.settings.cloudPreviewEnabled) {
@@ -365,11 +365,11 @@ export class SettingTab extends PluginSettingTab {
           }
         })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览描述"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.desc"))
 
     if (this.plugin.settings.cloudPreviewEnabled) {
       new Setting(set)
-        .setName($("附件云预览类型限制"))
+        .setName($("setting.cloud.type_limit"))
         .addToggle((toggle) =>
           toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
             if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
@@ -378,10 +378,10 @@ export class SettingTab extends PluginSettingTab {
             }
           })
         )
-      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览类型限制描述"))
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.type_limit_desc"))
 
       new Setting(set)
-        .setName($("附件云预览远端源"))
+        .setName($("setting.cloud.remote_source"))
         .addTextArea((text) =>
           text
             .setPlaceholder("prefix@.jpg$.png#http://domain.com/{path}")
@@ -396,10 +396,10 @@ export class SettingTab extends PluginSettingTab {
         )
       const remoteUrlSetting = set.lastElementChild as HTMLElement;
       remoteUrlSetting.addClass("fast-note-sync-remote-url-setting");
-      this.setDescWithBreaks(remoteUrlSetting, $("附件云预览远端源描述"))
+      this.setDescWithBreaks(remoteUrlSetting, $("setting.cloud.remote_source_desc"))
 
       new Setting(set)
-        .setName($("附件云预览上传后删除"))
+        .setName($("setting.cloud.delete_after_upload"))
         .addToggle((toggle) =>
           toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
             if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
@@ -408,13 +408,13 @@ export class SettingTab extends PluginSettingTab {
             }
           })
         )
-      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("附件云预览上传后删除描述"))
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.delete_after_upload_desc"))
     }
 
 
 
     new Setting(set)
-      .setName("| " + $("支持"))
+      .setName("| " + $("setting.support.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
 
@@ -423,20 +423,20 @@ export class SettingTab extends PluginSettingTab {
     const supportRoot = createRoot(supportSet)
     supportRoot.render(<SupportView plugin={this.plugin} />)
     new Setting(set)
-      .setName($("开启日志"))
+      .setName($("setting.support.log"))
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
           this.plugin.settings.logEnabled = value
           await this.plugin.saveSettings()
         })
       )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("开启后将在控制台打印日志"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
     const debugDiv = set.createDiv()
     debugDiv.addClass("fast-note-sync-settings-debug")
 
     const debugButton = debugDiv.createEl("button")
 
-    debugButton.setText($("复制 Debug 信息"))
+    debugButton.setText($("setting.support.debug_copy"))
     debugButton.onclick = async () => {
       const maskValue = (val: string) => {
         if (!val) return ""
@@ -479,31 +479,31 @@ export class SettingTab extends PluginSettingTab {
           4
         )
       )
-      new Notice($("将调试信息复制到剪贴板, 可能包含敏感信!"))
+      new Notice($("setting.support.debug_desc"))
     }
 
     const feedbackButton = debugDiv.createEl("button")
-    feedbackButton.setText($("反馈问题&新建议"))
+    feedbackButton.setText($("setting.support.feedback"))
     feedbackButton.onclick = () => {
       window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
     }
 
     const telegramButton = debugDiv.createEl("button")
-    telegramButton.setText($("电报讨论群"))
+    telegramButton.setText($("setting.support.telegram"))
     telegramButton.onclick = () => {
       window.open("https://t.me/obsidian_users", "_blank")
     }
 
     if (Platform.isDesktopApp) {
       const info = debugDiv.createDiv()
-      info.setText($("通过快捷键打开控制台，你可以看到这个插件和其他插件的日志"))
+      info.setText($("setting.support.console_tip"))
 
       const keys = debugDiv.createDiv()
       keys.addClass("custom-shortcuts")
       if (Platform.isMacOS === true) {
-        keys.createEl("kbd", { text: $("console_mac") })
+        keys.createEl("kbd", { text: $("setting.support.console_mac") })
       } else {
-        keys.createEl("kbd", { text: $("console_win") })
+        keys.createEl("kbd", { text: $("setting.support.console_win") })
       }
     }
   }

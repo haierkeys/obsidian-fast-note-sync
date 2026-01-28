@@ -1,6 +1,6 @@
 import { TFile, Notice } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump } from "./helps";
+import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 
@@ -48,10 +48,6 @@ export class FileHashManager {
     return this.isInitialized;
   }
 
-  /**
-   * 遍历所有文件并生成哈希映射
-   * 显示进度提示
-   */
   private async buildFileHashMap(): Promise<void> {
     const notice = new Notice("正在初始化文件哈希映射...", 0);
 
@@ -64,6 +60,12 @@ export class FileHashManager {
       dump(`FileHashManager: 开始遍历 ${totalFiles} 个文件`);
 
       for (const file of files) {
+        // 跳过已排除的文件
+        if (isPathExcluded(file.path, this.plugin)) {
+          processedFiles++;
+          continue;
+        }
+
         let contentHash: string;
 
         // 根据文件类型选择不同的哈希计算方式
@@ -169,6 +171,25 @@ export class FileHashManager {
     dump("FileHashManager: 手动重建哈希映射");
     this.hashMap.clear();
     await this.buildFileHashMap();
+  }
+
+  /**
+   * 清清理已排除文件的哈希
+   * 当同步排除设置变更时调用
+   */
+  cleanupExcludedHashes(): void {
+    let deletedCount = 0;
+    for (const path of this.hashMap.keys()) {
+      if (isPathExcluded(path, this.plugin)) {
+        this.hashMap.delete(path);
+        deletedCount++;
+      }
+    }
+
+    if (deletedCount > 0) {
+      dump(`FileHashManager: 清理了 ${deletedCount} 个已排除文件的哈希`);
+      this.saveToStorage();
+    }
   }
 
   /**

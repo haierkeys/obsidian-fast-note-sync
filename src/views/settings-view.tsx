@@ -58,15 +58,15 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
       const vault = "vault" in parsedData
 
       if (hasApi && hasApiToken && vault) {
-        void clipboardReadTipSave(parsedData.api, parsedData.apiToken, parsedData.vault, $("接口配置信息已经粘贴到设置中!"))
+        void clipboardReadTipSave(parsedData.api, parsedData.apiToken, parsedData.vault, $("setting.remote.paste_success"))
         return
       }
     }
-    void clipboardReadTipTipSave($("未检测到配置信息!"))
+    void clipboardReadTipTipSave($("setting.remote.no_config"))
     return
   } catch (err) {
     dump(err)
-    void clipboardReadTipTipSave($("未检测到配置信息!"))
+    void clipboardReadTipTipSave($("setting.remote.no_config"))
     return
   }
 }
@@ -134,15 +134,15 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
     <>
       <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <div className="setting-item-info">
-          <div className="setting-item-name">{$("远端服务搭建与选择")}</div>
-          <div className="setting-item-description">{$("选择一个适合自己的远端")}</div>
+          <div className="setting-item-name">{$("setting.remote.setup_title")}</div>
+          <div className="setting-item-description">{$("setting.remote.setup_desc")}</div>
         </div>
         <div style={{ width: '100%', marginTop: '0px' }}>
-          {renderMarkdownTable($("远端服务搭建与选择表格" as any))}
+          {renderMarkdownTable($("setting.remote.setup_table"))}
           <div className="clipboard-read">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
-                {$("粘贴服务端授权配置")}
+                {$("setting.remote.paste_config")}
               </button>
               <div className="connection-status-container" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
                 <span
@@ -155,7 +155,7 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
                   }}
                 />
                 <span style={{ color: 'var(--text-muted)' }}>
-                  {isConnected ? $("服务已连接") : $("服务已断开")}
+                  {isConnected ? $("setting.remote.connected") : $("setting.remote.disconnected")}
                 </span>
               </div>
             </div>
@@ -175,13 +175,13 @@ export const SupportView = ({ plugin }: { plugin: FastSync }) => {
     <div className="setting-item">
       <div className="setting-item-info">
         <div className="setting-item-description">
-          {$("支持描述")}
+          {$("setting.support.desc")}
           <table className="fast-note-sync-support-table">
             <thead>
               <tr>
-                <th>{$("非中国地区")}</th>
+                <th>{$("setting.support.kofi")}</th>
                 <th style={{ width: '40px' }}></th>
-                <th>{$("中国地区")}</th>
+                <th>{$("setting.support.wechat")}</th>
               </tr>
             </thead>
             <tbody>
@@ -191,7 +191,7 @@ export const SupportView = ({ plugin }: { plugin: FastSync }) => {
                     <img src={KofiImage} className="ko-fi-logo-large" alt="Ko-fi" />
                   </a>
                 </td>
-                <td className="support-separator">{$("或")}</td>
+                <td className="support-separator">{$("setting.support.or")}</td>
                 <td>
                   <img src={WXImage} className="wx-pay-logo-large" alt="WeChat Pay" />
                 </td>
@@ -201,7 +201,7 @@ export const SupportView = ({ plugin }: { plugin: FastSync }) => {
 
           <div className="supporters-list-section">
             <div className="supporters-list-title">
-              {$("已支持名单")}
+              {$("setting.support.list")}
             </div>
             <div className="supporters-list-subtitle"></div>
             <div className="supporters-list-content">

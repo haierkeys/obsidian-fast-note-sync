@@ -96,12 +96,12 @@ export const HistoryDetail: React.FC<HistoryDetailProps> = ({ content, diffs, sh
             <div className="history-detail-header">
                 <div className="header-title">
                     <LucideIcon icon="file-text" size={16} className="icon" />
-                    {showOriginal ? $("修改前内容") : $("差异详情")}
+                    {showOriginal ? $("修改前内容") : $("ui.history.diff")}
                 </div>
                 {!showOriginal && (
                     <div className="header-tags">
-                        <span className="tag-add">{$("新增")}</span>
-                        <span className="tag-delete">{$("删除")}</span>
+                        <span className="tag-add">{$("ui.history.added")}</span>
+                        <span className="tag-delete">{$("ui.history.deleted")}</span>
                     </div>
                 )}
             </div>
@@ -113,10 +113,10 @@ export const HistoryDetail: React.FC<HistoryDetailProps> = ({ content, diffs, sh
                     <button
                         className={`content-copy-btn ${copied ? 'is-copied' : ''}`}
                         onClick={handleCopy}
-                        title={$("复制")}
+                        title={$("ui.history.copy")}
                     >
                         <LucideIcon icon={copied ? "check" : "copy"} size={14} />
-                        {copied ? $("已复制") : $("复制")}
+                        {copied ? $("ui.history.copied") : $("ui.history.copy")}
                     </button>
                 )}
                 {renderLines()}

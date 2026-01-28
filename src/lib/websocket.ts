@@ -445,7 +445,7 @@ export class WebSocketClient {
 
     if (data.code === ERROR_SYNC_CONFLICT && path) {
       // 冲突文件已创建，显示详细通知
-      new Notice($("同步冲突", { path: path }), 10000)
+      new Notice($("ui.status.conflict", { path: path }), 10000)
     }
   }
 }

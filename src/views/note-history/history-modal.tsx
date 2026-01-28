@@ -21,7 +21,7 @@ export class NoteHistoryModal extends Modal {
         titleEl.empty();
         const iconSpan = titleEl.createSpan({ cls: "title-prefix" });
         setIcon(iconSpan, "history");
-        iconSpan.createSpan({ text: ` ${$("笔记历史")}：` });
+        iconSpan.createSpan({ text: ` ${$("ui.history.title")}：` });
         titleEl.createEl("span", { text: this.filePath, cls: "title-path" });
 
         this.root = createRoot(contentEl);

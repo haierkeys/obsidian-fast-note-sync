@@ -144,7 +144,7 @@ export class EventManager {
 
     menu.addItem((item: MenuItem) => {
       item
-        .setTitle($("笔记历史"))
+        .setTitle($("ui.history.title"))
         .setIcon("history")
         .onClick(() => {
           new NoteHistoryModal(this.plugin.app, this.plugin, file.path).open()

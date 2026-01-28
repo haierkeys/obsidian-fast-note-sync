@@ -75,8 +75,8 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
     plugin.totalChunksToUpload = 0;
     plugin.uploadedChunksCount = 0;
 
-    new Notice($("同步完成"));
-    plugin.updateStatusBar($("同步完成"));
+    new Notice($("ui.status.completed"));
+    plugin.updateStatusBar($("ui.status.completed"));
 
     if (plugin.expectedSyncCount > 0 && !plugin.settings.isInitSync) {
       plugin.settings.isInitSync = true;
@@ -137,10 +137,10 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
 
     const overallPercentage = (totalProgressSum / expectedCount) * 100;
 
-    let statusText = $("同步中");
+    let statusText = $("ui.status.syncing");
     if (bufferedAmount > 0) {
       const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
-      statusText = `${$("同步中")} (缓冲区: ${bufferMB}MB)`;
+      statusText = `${$("ui.status.syncing")} (缓冲区: ${bufferMB}MB)`;
     }
 
     // 使用 100 做分母，overallPercentage 做分子
@@ -243,7 +243,7 @@ async function processSyncMessages(messages: any[], plugin: FastSync) {
  */
 export const handleSync = async function (plugin: FastSync, isLoadLastTime: boolean = false, syncMode: SyncMode = "auto") {
   if (!plugin.menuManager.ribbonIconStatus) {
-    new Notice($("服务已断开"));
+    new Notice($("setting.remote.disconnected"));
     return;
   }
   if (!plugin.getWatchEnabled()) {
@@ -261,8 +261,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.uploadedChunksCount = 0;
   plugin.disableWatch();
 
-  new Notice($("开始同步"));
-  plugin.updateStatusBar($("同步中"), 0, 1);
+  new Notice($("ui.status.starting"));
+  plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
   const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [];
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";

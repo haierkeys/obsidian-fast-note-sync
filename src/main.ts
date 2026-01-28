@@ -152,19 +152,7 @@ export default class FastSync extends Plugin {
     this.settings.pluginVersionIsNew = false
     this.settings.pluginVersionNewLink = ""
 
-    this.registerObsidianProtocolHandler('fast-note-sync/sso', async (data) => {
-      if (data?.pushApi) {
-        this.settings.api = data.pushApi
-        this.settings.apiToken = data.pushApiToken
-        if (data?.pushVault) {
-          this.settings.vault = data.pushVault
-        }
-        this.wsSettingChange = true
-        this.settings.isInitSync = false
-        await this.saveSettings()
-        new Notice($('已导入授权配置'), 5000)
-      }
-    })
+
 
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
@@ -180,6 +168,21 @@ export default class FastSync extends Plugin {
 
     // 初始化文件哈希管理器(必须在事件管理器之前)
     this.fileHashManager = new FileHashManager(this)
+
+
+    this.registerObsidianProtocolHandler('fast-note-sync/sso', async (data) => {
+      if (data?.pushApi) {
+        this.settings.api = data.pushApi
+        this.settings.apiToken = data.pushApiToken
+        if (data?.pushVault) {
+          this.settings.vault = data.pushVault
+        }
+        this.wsSettingChange = true
+        this.settings.isInitSync = false
+        await this.saveSettings()
+        new Notice($('ui.status.config_imported'), 5000)
+      }
+    })
 
     // 等待 workspace 布局准备就绪后再初始化文件哈希映射
     // 这样可以确保 vault 文件索引已经完全加载
@@ -232,6 +235,7 @@ export default class FastSync extends Plugin {
       this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
     }
     this.refreshRuntime(true, setItem)
+    this.fileHashManager.cleanupExcludedHashes()
     await this.saveData(this.settings)
   }
 
