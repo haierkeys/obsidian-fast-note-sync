@@ -36,7 +36,15 @@ export const getDirNameOrEmpty = function (path: string): string {
  * 检查路径是否被排除
  */
 export const isPathExcluded = function (path: string, plugin: FastSync): boolean {
-  const { syncExcludeFolders, syncExcludeExtensions } = plugin.settings;
+  const { syncExcludeFolders, syncExcludeExtensions, syncExcludeWhitelist } = plugin.settings;
+
+  // 0. 检查白名单 (优先级最高)
+  if (syncExcludeWhitelist) {
+    const whitelist = syncExcludeWhitelist.split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
+    if (whitelist.some(p => path === p)) {
+      return false;
+    }
+  }
 
   // 1. 检查扩展名排除
   if (syncExcludeExtensions) {

@@ -208,9 +208,11 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
 export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
-  dump(`Receive note delete:`, data.action, data.path, data.mtime, data.pathHash)
+  dump(`Receive note delete:`, data.path, data.mtime, data.pathHash)
   const normalizedPath = normalizePath(data.path)
+
   const file = plugin.app.vault.getFileByPath(normalizedPath)
+  console.table({ normalizedPath, file })
   if (file instanceof TFile) {
     plugin.addIgnoredFile(normalizedPath)
     await plugin.app.vault.delete(file)

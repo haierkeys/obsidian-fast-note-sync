@@ -42,6 +42,8 @@ export interface PluginSettings {
   offlineSyncStrategy: string
   syncExcludeFolders: string
   syncExcludeExtensions: string
+  syncExcludeWhitelist: string
+  configExcludeWhitelist: string
   pdfSyncEnabled: boolean
   cloudPreviewEnabled: boolean
   cloudPreviewTypeRestricted: boolean
@@ -87,6 +89,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   offlineSyncStrategy: "",
   syncExcludeFolders: "",
   syncExcludeExtensions: "",
+  syncExcludeWhitelist: "",
+  configExcludeWhitelist: "",
   pdfSyncEnabled: true,
   cloudPreviewEnabled: false,
   cloudPreviewTypeRestricted: true,
@@ -255,8 +259,8 @@ export class SettingTab extends PluginSettingTab {
       )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("离线编辑合并策略描述"))
     new Setting(set)
-      .setName($("同步排除目录"))
-      .setDesc($("同步排除目录描述"))
+      .setName($("同步排除"))
+      .setDesc($("同步排除描述"))
       .addTextArea((text) =>
         text
           .setPlaceholder("Folder1\nFolder2")
@@ -285,6 +289,21 @@ export class SettingTab extends PluginSettingTab {
       )
 
     new Setting(set)
+      .setName($("同步排除白名单"))
+      .setDesc($("同步排除白名单描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder($("输入您的笔记或附件路径，每行一个"))
+          .setValue(this.plugin.settings.syncExcludeWhitelist)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.syncExcludeWhitelist) {
+              this.plugin.settings.syncExcludeWhitelist = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
+
+    new Setting(set)
       .setName($("配置同步排除"))
       .setDesc($("配置同步排除描述"))
       .addTextArea((text) =>
@@ -294,6 +313,21 @@ export class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             if (value != this.plugin.settings.configExclude) {
               this.plugin.settings.configExclude = value
+              await this.plugin.saveSettings()
+            }
+          })
+      )
+
+    new Setting(set)
+      .setName($("配置同步排除白名单"))
+      .setDesc($("配置同步排除白名单描述"))
+      .addTextArea((text) =>
+        text
+          .setPlaceholder($("配置同步排除输入"))
+          .setValue(this.plugin.settings.configExcludeWhitelist)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.configExcludeWhitelist) {
+              this.plugin.settings.configExcludeWhitelist = value
               await this.plugin.saveSettings()
             }
           })

@@ -407,6 +407,14 @@ export const configReload = async function (path: string, plugin: FastSync, even
  */
 
 export const configIsPathExcluded = function (relativePath: string, plugin: FastSync): boolean {
+    // 0. 检查白名单 (优先级最高)
+    const whitelistSetting = plugin.settings.configExcludeWhitelist || ""
+    if (whitelistSetting.trim()) {
+        const whitelist = whitelistSetting.split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
+        if (whitelist.some((p) => relativePath === p || relativePath.startsWith(p + "/"))) {
+            return false
+        }
+    }
 
     if (CONFIG_EXCLUDE_SET.has(relativePath)) return true
     const setting = plugin.settings.configExclude || ""
