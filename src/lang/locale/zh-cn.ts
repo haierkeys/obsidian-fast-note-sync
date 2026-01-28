@@ -39,18 +39,23 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.strategy_default": "不合并，保留最新",
   "setting.sync.strategy_force": "强制合并",
   "setting.sync.strategy_new": "最新才合并",
-  "setting.sync.exclude_folders": "同步排除",
-  "setting.sync.exclude_folders_desc": "笔记和附件同步需要排除的目录 or 文件，每行一个。例如：Folder1/important.md",
+  "setting.sync.offline_delete": "离线删除同步",
+  "setting.sync.offline_delete_desc": "开启后，离线期间笔记与附件的删除操作，下次连接时将自动同步到服务端。",
+
+  "setting.sync.exclude": "同步排除",
+  "setting.sync.exclude_placeholder": "输入文件或目录的相对路径，每行一个",
+  "setting.sync.exclude_desc": "笔记和附件同步需要排除的目录 or 文件，每行一个。例如：Folder1/important.md",
   "setting.sync.exclude_extensions": "同步排除扩展名",
   "setting.sync.exclude_extensions_desc": "笔记和附件同步需要排除的文件类型，每行一个(带点)。例如：.tmp",
   "setting.sync.exclude_whitelist": "同步排除白名单",
   "setting.sync.exclude_whitelist_desc": "即使匹配了排除目录或扩展名规则，也强制同步的笔记或附件路径，每行一个。例如：Folder1/important.md",
   "setting.sync.config_exclude": "配置同步排除",
-  "setting.sync.config_exclude_desc": "文件路径相对于 <b>.obsidian</b> 目录，每行一个文件（例如：plugins/obsidian-fast-note-sync/data.json）",
-  "setting.sync.config_exclude_placeholder": "输入您的配置文件路径，每行一个",
+  "setting.sync.config_exclude_desc": "文件路径相对于 <b>.obsidian</b> 目录，每行一个目录或文件（例如：plugins/obsidian-fast-note-sync/data.json）",
+  "setting.sync.config_exclude_placeholder": "输入配置文件或目录的相对路径，每行一个",
   "setting.sync.config_exclude_whitelist": "配置同步排除白名单",
   "setting.sync.config_exclude_whitelist_desc": "即使匹配了配置排除规则，也强制同步的配置文件路径，每行一个。例如：plugins/obsidian-fast-note-sync/data.json",
   "setting.sync.startup_delay": "启动延迟 (毫秒)",
+  "setting.sync.startup_delay_placeholder": "输入延迟毫秒数",
   "setting.sync.startup_delay_desc": "配置连接成功后延迟执行首次检查更新的时间。如果你打开 Obsidian 时因为其他插件加载导致卡顿，可以尝试设置此项。默认 500 毫秒",
 
   // --- setting.cloud ---
@@ -128,6 +133,7 @@ const zh_cn: Partial<LangMap> = {
   "ui.status.conflict": "检测到同步冲突，已强制合并，需要手动处理 ${path}。",
   "ui.status.no_connection": "无法连接到服务器，请检查网络连接",
   "ui.status.config_imported": "已导入授权配置",
+  "ui.status.last_sync_not_completed": "上一次的全部同步尚未完成，请耐心等待或检查服务端状态",
 
 }
 

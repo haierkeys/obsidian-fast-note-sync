@@ -113,6 +113,13 @@ export class FileHashManager {
   }
 
   /**
+   * 获取哈希表中存储的所有文件路径
+   */
+  getAllPaths(): string[] {
+    return Array.from(this.hashMap.keys());
+  }
+
+  /**
    * 添加或更新单个文件的哈希
    */
   setFileHash(path: string, hash: string): void {

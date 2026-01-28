@@ -3,8 +3,8 @@
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, configIsPathExcluded } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd } from "./note_operator";
+import { SyncMode, SnapFile, ReceiveMessage, SyncEndData, DeletedFile } from "./types";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
-import { SyncMode, SnapFile, ReceiveMessage, SyncEndData } from "./types";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
@@ -247,7 +247,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     return;
   }
   if (!plugin.getWatchEnabled()) {
-    new Notice("上一次的全部同步尚未完成，请耐心等待或检查服务端状态");
+    new Notice($("ui.status.last_sync_not_completed"));
     return;
   }
 
@@ -265,6 +265,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
   const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [];
+  const delNotes: DeletedFile[] = [], delFiles: DeletedFile[] = [];
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
@@ -314,6 +315,23 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         files.push(item);
       }
     }
+
+    // 检测被删除的文件 (对比哈希表和本地 Vault)
+    if (plugin.settings.offlineDeleteSyncEnabled) {
+      const trackedPaths = plugin.fileHashManager.getAllPaths();
+      const localPathsSet = new Set(list.map(f => f.path)); // 优化：使用 Set 提高查找效率
+      for (const path of trackedPaths) {
+        if (isPathExcluded(path, plugin)) continue;
+        if (!localPathsSet.has(path)) {
+          const item = { path: path, pathHash: hashContent(path) };
+          if (path.endsWith(".md")) {
+            delNotes.push(item);
+          } else {
+            delFiles.push(item);
+          }
+        }
+      }
+    }
   }
 
   const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths(plugin.app.vault.configDir, plugin) : [];
@@ -349,7 +367,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     noteTime = Number(plugin.settings.lastNoteSyncTime);
     configTime = Number(plugin.settings.lastConfigSyncTime);
   }
-  handleRequestSend(plugin, noteTime, fileTime, configTime, notes, files, configs, syncMode);
+  handleRequestSend(plugin, noteTime, fileTime, configTime, notes, files, configs, syncMode, delNotes, delFiles);
 
   // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
   const progressCheckInterval = setInterval(() => {
@@ -362,7 +380,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 /**
  * 发送同步请求
  */
-export const handleRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, configLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], syncMode: SyncMode = "auto") {
+export const handleRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, configLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], syncMode: SyncMode = "auto", delNotes: DeletedFile[] = [], delFiles: DeletedFile[] = []) {
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
@@ -371,6 +389,7 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
       vault: plugin.settings.vault,
       lastTime: noteLastTime,
       notes: notes,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delNotes: delNotes } : {}),
     };
     plugin.websocket.MsgSend("NoteSync", noteSyncData);
 
@@ -378,10 +397,17 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
       vault: plugin.settings.vault,
       lastTime: fileLastTime,
       files: files,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delFiles: delFiles } : {}),
     };
     // 如果启用了云预览，则不发送 FileSync 请求，从而关闭启动时的 file 同步
     if (!plugin.settings.cloudPreviewEnabled) {
       plugin.websocket.MsgSend("FileSync", fileSyncData);
+    }
+
+    // 清理已删除文件的本地哈希数据，防止重复检测
+    if (plugin.settings.offlineDeleteSyncEnabled) {
+      for (const item of delNotes) plugin.fileHashManager.removeFileHash(item.path);
+      for (const item of delFiles) plugin.fileHashManager.removeFileHash(item.path);
     }
   }
 

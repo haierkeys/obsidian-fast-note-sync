@@ -26,7 +26,6 @@ export interface PluginSettings {
   lastConfigSyncTime: number
   //  [propName: string]: any;
 
-
   serverVersion: string
   serverVersionIsNew: boolean
   serverVersionNewName: string
@@ -49,6 +48,7 @@ export interface PluginSettings {
   cloudPreviewTypeRestricted: boolean
   cloudPreviewRemoteUrl: string
   cloudPreviewAutoDeleteLocal: boolean
+  offlineDeleteSyncEnabled: boolean
 }
 
 /**
@@ -96,6 +96,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   cloudPreviewTypeRestricted: true,
   cloudPreviewRemoteUrl: "",
   cloudPreviewAutoDeleteLocal: false,
+  offlineDeleteSyncEnabled: false,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -119,7 +120,6 @@ export class SettingTab extends PluginSettingTab {
 
     set.empty()
 
-
     new Setting(set)
       .setName("| " + $("setting.remote.title"))
       .setHeading()
@@ -131,67 +131,59 @@ export class SettingTab extends PluginSettingTab {
     this.root = createRoot(apiSet)
     this.root.render(<SettingsView plugin={this.plugin} />)
 
-    new Setting(set)
-      .setName($("setting.remote.api_url"))
-      .addText((text) =>
-        text
-          .setPlaceholder($("setting.remote.api_url_placeholder"))
-          .setValue(this.plugin.settings.api)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.api) {
-              this.plugin.wsSettingChange = true
-              this.plugin.settings.api = value
-              this.plugin.settings.isInitSync = false
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.remote.api_url")).addText((text) =>
+      text
+        .setPlaceholder($("setting.remote.api_url_placeholder"))
+        .setValue(this.plugin.settings.api)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.api) {
+            this.plugin.wsSettingChange = true
+            this.plugin.settings.api = value
+            this.plugin.settings.isInitSync = false
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.api_url_desc"))
 
-    new Setting(set)
-      .setName($("setting.remote.api_token"))
-      .addText((text) =>
-        text
-          .setPlaceholder($("setting.remote.api_token_placeholder"))
-          .setValue(this.plugin.settings.apiToken)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.apiToken) {
-              this.plugin.wsSettingChange = true
-              this.plugin.settings.apiToken = value
-              this.plugin.settings.isInitSync = false
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.remote.api_token")).addText((text) =>
+      text
+        .setPlaceholder($("setting.remote.api_token_placeholder"))
+        .setValue(this.plugin.settings.apiToken)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.apiToken) {
+            this.plugin.wsSettingChange = true
+            this.plugin.settings.apiToken = value
+            this.plugin.settings.isInitSync = false
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.api_token_desc"))
 
-    new Setting(set)
-      .setName($("setting.remote.vault_name"))
-      .addText((text) =>
-        text
-          .setPlaceholder($("setting.remote.vault_name"))
-          .setValue(this.plugin.settings.vault)
-          .onChange(async (value) => {
-            this.plugin.settings.vault = value
-            await this.plugin.saveSettings()
-          })
-      )
+    new Setting(set).setName($("setting.remote.vault_name")).addText((text) =>
+      text
+        .setPlaceholder($("setting.remote.vault_name"))
+        .setValue(this.plugin.settings.vault)
+        .onChange(async (value) => {
+          this.plugin.settings.vault = value
+          await this.plugin.saveSettings()
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.vault_name"))
 
-    new Setting(set)
-      .setName($("setting.remote.client_name"))
-      .addText((text) =>
-        text
-          .setPlaceholder($("setting.remote.client_name_placeholder"))
-          .setValue(this.plugin.settings.clientName)
-          .onChange(async (value) => {
-            const trimmedValue = value.trim()
-            if (trimmedValue != this.plugin.settings.clientName) {
-              this.plugin.settings.clientName = trimmedValue
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.remote.client_name")).addText((text) =>
+      text
+        .setPlaceholder($("setting.remote.client_name_placeholder"))
+        .setValue(this.plugin.settings.clientName)
+        .onChange(async (value) => {
+          const trimmedValue = value.trim()
+          if (trimmedValue != this.plugin.settings.clientName) {
+            this.plugin.settings.clientName = trimmedValue
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.client_name_desc"))
 
     new Setting(set)
@@ -200,236 +192,212 @@ export class SettingTab extends PluginSettingTab {
       .setClass("fast-note-sync-settings-tag")
     // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
 
-    new Setting(set)
-      .setName($("setting.sync.auto_note"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.syncEnabled) {
-            this.plugin.wsSettingChange = true
-            this.plugin.settings.syncEnabled = value
-            this.display()
-            await this.plugin.saveSettings("syncEnabled")
-          }
-        })
-      )
+    new Setting(set).setName($("setting.sync.auto_note")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.syncEnabled) {
+          this.plugin.wsSettingChange = true
+          this.plugin.settings.syncEnabled = value
+          this.display()
+          await this.plugin.saveSettings("syncEnabled")
+        }
+      }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_note_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.auto_config"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.configSyncEnabled) {
-            this.plugin.settings.configSyncEnabled = value
-            await this.plugin.saveSettings("configSyncEnabled")
-          }
-        })
-      )
+    new Setting(set).setName($("setting.sync.auto_config")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.configSyncEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.configSyncEnabled) {
+          this.plugin.settings.configSyncEnabled = value
+          await this.plugin.saveSettings("configSyncEnabled")
+        }
+      }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_config_desc"))
 
-
-
-
-    new Setting(set)
-      .setName($("setting.sync.pdf_state"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.pdfSyncEnabled) {
-            this.plugin.settings.pdfSyncEnabled = value
-            await this.plugin.saveSettings()
-          }
-        })
-      )
+    new Setting(set).setName($("setting.sync.pdf_state")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.pdfSyncEnabled) {
+          this.plugin.settings.pdfSyncEnabled = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.pdf_state_desc"))
 
+    new Setting(set).setName($("setting.sync.offline_delete")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.offlineDeleteSyncEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.offlineDeleteSyncEnabled) {
+          this.plugin.settings.offlineDeleteSyncEnabled = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.offline_delete_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.merge_strategy"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("", $("setting.sync.strategy_default"))
-          .addOption("newTimeMerge", $("setting.sync.strategy_new"))
-          .addOption("ignoreTimeMerge", $("setting.sync.strategy_force"))
-          .setValue(this.plugin.settings.offlineSyncStrategy || "")
-          .onChange(async (value) => {
-            this.plugin.settings.offlineSyncStrategy = value
-            await this.plugin.saveSettings("offlineSyncStrategy")
-            // 立即发送 ClientInfo 到服务端，使设置立即生效
-            this.plugin.websocket.sendClientInfo()
-          })
-      )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.merge_strategy_desc"))
-    new Setting(set)
-      .setName($("setting.sync.exclude_folders"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder("Folder1\nFolder2")
-          .setValue(this.plugin.settings.syncExcludeFolders)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.syncExcludeFolders) {
-              this.plugin.settings.syncExcludeFolders = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_folders_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.exclude_extensions"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder(".tmp\n.log")
-          .setValue(this.plugin.settings.syncExcludeExtensions)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.syncExcludeExtensions) {
-              this.plugin.settings.syncExcludeExtensions = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.sync.exclude")).addTextArea((text) =>
+      text
+        .setPlaceholder($("setting.sync.exclude_placeholder"))
+        .setValue(this.plugin.settings.syncExcludeFolders)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.syncExcludeFolders) {
+            this.plugin.settings.syncExcludeFolders = value
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_desc"))
+
+    new Setting(set).setName($("setting.sync.exclude_extensions")).addTextArea((text) =>
+      text
+        .setPlaceholder(".tmp\n.log")
+        .setValue(this.plugin.settings.syncExcludeExtensions)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.syncExcludeExtensions) {
+            this.plugin.settings.syncExcludeExtensions = value
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_extensions_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.exclude_whitelist"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder($("输入您的笔记或附件路径，每行一个"))
-          .setValue(this.plugin.settings.syncExcludeWhitelist)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.syncExcludeWhitelist) {
-              this.plugin.settings.syncExcludeWhitelist = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.sync.exclude_whitelist")).addTextArea((text) =>
+      text
+        .setPlaceholder($("setting.sync.exclude_placeholder"))
+        .setValue(this.plugin.settings.syncExcludeWhitelist)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.syncExcludeWhitelist) {
+            this.plugin.settings.syncExcludeWhitelist = value
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_whitelist_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.config_exclude"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder($("setting.sync.config_exclude_placeholder"))
-          .setValue(this.plugin.settings.configExclude)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.configExclude) {
-              this.plugin.settings.configExclude = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.sync.config_exclude")).addTextArea((text) =>
+      text
+        .setPlaceholder($("setting.sync.config_exclude_placeholder"))
+        .setValue(this.plugin.settings.configExclude)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.configExclude) {
+            this.plugin.settings.configExclude = value
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.config_exclude_whitelist"))
-      .addTextArea((text) =>
-        text
-          .setPlaceholder($("setting.sync.config_exclude_placeholder"))
-          .setValue(this.plugin.settings.configExcludeWhitelist)
-          .onChange(async (value) => {
-            if (value != this.plugin.settings.configExcludeWhitelist) {
-              this.plugin.settings.configExcludeWhitelist = value
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.sync.config_exclude_whitelist")).addTextArea((text) =>
+      text
+        .setPlaceholder($("setting.sync.config_exclude_placeholder"))
+        .setValue(this.plugin.settings.configExcludeWhitelist)
+        .onChange(async (value) => {
+          if (value != this.plugin.settings.configExcludeWhitelist) {
+            this.plugin.settings.configExcludeWhitelist = value
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_whitelist_desc"))
 
-    new Setting(set)
-      .setName($("setting.sync.startup_delay"))
-      .addText((text) =>
-        text
-          .setPlaceholder($("输入延迟毫秒数"))
-          .setValue(this.plugin.settings.startupDelay.toString())
-          .onChange(async (value) => {
-            const numValue = parseInt(value)
-            if (!isNaN(numValue) && numValue >= 0) {
-              this.plugin.settings.startupDelay = numValue
-              await this.plugin.saveSettings()
-            }
-          })
-      )
+    new Setting(set).setName($("setting.sync.startup_delay")).addText((text) =>
+      text
+        .setPlaceholder($("setting.sync.startup_delay_placeholder"))
+        .setValue(this.plugin.settings.startupDelay.toString())
+        .onChange(async (value) => {
+          const numValue = parseInt(value)
+          if (!isNaN(numValue) && numValue >= 0) {
+            this.plugin.settings.startupDelay = numValue
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.startup_delay_desc"))
+
+
+    new Setting(set).setName($("setting.sync.merge_strategy")).addDropdown((dropdown) =>
+      dropdown
+        .addOption("", $("setting.sync.strategy_default"))
+        .addOption("newTimeMerge", $("setting.sync.strategy_new"))
+        .addOption("ignoreTimeMerge", $("setting.sync.strategy_force"))
+        .setValue(this.plugin.settings.offlineSyncStrategy || "")
+        .onChange(async (value) => {
+          this.plugin.settings.offlineSyncStrategy = value
+          await this.plugin.saveSettings("offlineSyncStrategy")
+          // 立即发送 ClientInfo 到服务端，使设置立即生效
+          this.plugin.websocket.sendClientInfo()
+        }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.merge_strategy_desc"))
 
     new Setting(set)
       .setName("| " + $("setting.cloud.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
 
-    new Setting(set)
-      .setName($("setting.cloud.title"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
-          if (value != this.plugin.settings.cloudPreviewEnabled) {
-            this.plugin.settings.cloudPreviewEnabled = value;
-            await this.plugin.saveSettings();
-            this.display(); // 刷新以显示/隐藏子项
-          }
-        })
-      )
+    new Setting(set).setName($("setting.cloud.title")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.cloudPreviewEnabled) {
+          this.plugin.settings.cloudPreviewEnabled = value
+          await this.plugin.saveSettings()
+          this.display()
+        }
+      }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.desc"))
 
     if (this.plugin.settings.cloudPreviewEnabled) {
-      new Setting(set)
-        .setName($("setting.cloud.type_limit"))
-        .addToggle((toggle) =>
-          toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
-            if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
-              this.plugin.settings.cloudPreviewTypeRestricted = value;
-              await this.plugin.saveSettings();
-            }
-          })
-        )
+      new Setting(set).setName($("setting.cloud.type_limit")).addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.cloudPreviewTypeRestricted).onChange(async (value) => {
+          if (value != this.plugin.settings.cloudPreviewTypeRestricted) {
+            this.plugin.settings.cloudPreviewTypeRestricted = value
+            await this.plugin.saveSettings()
+          }
+        }),
+      )
       this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.type_limit_desc"))
 
-      new Setting(set)
-        .setName($("setting.cloud.remote_source"))
-        .addTextArea((text) =>
-          text
-            .setPlaceholder("prefix@.jpg$.png#http://domain.com/{path}")
-            .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
-            .onChange(async (value) => {
-              if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
-                this.plugin.settings.cloudPreviewRemoteUrl = value;
-                await this.plugin.saveSettings();
-              }
-            })
-            .inputEl.addClass("fast-note-sync-remote-url-area")
-        )
-      const remoteUrlSetting = set.lastElementChild as HTMLElement;
-      remoteUrlSetting.addClass("fast-note-sync-remote-url-setting");
-      this.setDescWithBreaks(remoteUrlSetting, $("setting.cloud.remote_source_desc"))
-
-      new Setting(set)
-        .setName($("setting.cloud.delete_after_upload"))
-        .addToggle((toggle) =>
-          toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
-            if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
-              this.plugin.settings.cloudPreviewAutoDeleteLocal = value;
-              await this.plugin.saveSettings();
+      new Setting(set).setName($("setting.cloud.remote_source")).addTextArea((text) =>
+        text
+          .setPlaceholder("prefix@.jpg$.png#http://domain.com/{path}")
+          .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.cloudPreviewRemoteUrl) {
+              this.plugin.settings.cloudPreviewRemoteUrl = value
+              await this.plugin.saveSettings()
             }
           })
-        )
+          .inputEl.addClass("fast-note-sync-remote-url-area"),
+      )
+      const remoteUrlSetting = set.lastElementChild as HTMLElement
+      remoteUrlSetting.addClass("fast-note-sync-remote-url-setting")
+      this.setDescWithBreaks(remoteUrlSetting, $("setting.cloud.remote_source_desc"))
+
+      new Setting(set).setName($("setting.cloud.delete_after_upload")).addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.cloudPreviewAutoDeleteLocal).onChange(async (value) => {
+          if (value != this.plugin.settings.cloudPreviewAutoDeleteLocal) {
+            this.plugin.settings.cloudPreviewAutoDeleteLocal = value
+            await this.plugin.saveSettings()
+          }
+        }),
+      )
       this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.delete_after_upload_desc"))
     }
-
-
 
     new Setting(set)
       .setName("| " + $("setting.support.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
 
-
     const supportSet = set.createDiv()
     const supportRoot = createRoot(supportSet)
     supportRoot.render(<SupportView plugin={this.plugin} />)
-    new Setting(set)
-      .setName($("setting.support.log"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
-          this.plugin.settings.logEnabled = value
-          await this.plugin.saveSettings()
-        })
-      )
+    new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
+        this.plugin.settings.logEnabled = value
+        await this.plugin.saveSettings()
+      }),
+    )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
     const debugDiv = set.createDiv()
     debugDiv.addClass("fast-note-sync-settings-debug")
@@ -476,8 +444,8 @@ export class SettingTab extends PluginSettingTab {
             pluginVersion: this.plugin.manifest.version,
           },
           null,
-          4
-        )
+          4,
+        ),
       )
       new Notice($("setting.support.debug_desc"))
     }
@@ -535,8 +503,8 @@ export class SettingTab extends PluginSettingTab {
             const thead = table.createEl("thead")
             const tr = thead.createEl("tr")
             parts.forEach((p) => {
-              const th = tr.createEl("th");
-              th.innerHTML = p;
+              const th = tr.createEl("th")
+              th.innerHTML = p
             })
             tbody = table.createEl("tbody")
             fragment.appendChild(table)
@@ -548,16 +516,16 @@ export class SettingTab extends PluginSettingTab {
             if (tbody) {
               const tr = tbody.createEl("tr")
               parts.forEach((p) => {
-                const td = tr.createEl("td");
-                td.innerHTML = p;
+                const td = tr.createEl("td")
+                td.innerHTML = p
               })
             }
           }
         } else {
           // 退出表格模式
           inTable = false
-          const lineSpan = document.createElement("span");
-          lineSpan.innerHTML = line;
+          const lineSpan = document.createElement("span")
+          lineSpan.innerHTML = line
           fragment.appendChild(lineSpan)
           fragment.appendChild(document.createElement("br"))
         }

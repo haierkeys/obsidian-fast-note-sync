@@ -9,6 +9,11 @@ export interface SnapFile {
     baseHash?: string | null;
 }
 
+export interface DeletedFile {
+    path: string;
+    pathHash: string;
+}
+
 export interface ReceiveMessage {
     vault: string;
     path: string;
