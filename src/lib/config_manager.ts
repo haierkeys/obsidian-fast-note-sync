@@ -23,8 +23,6 @@ export class ConfigManager {
     this.pluginRealDir = this.plugin.manifest.dir ?? ""
     this.pluginDir = this.pluginRealDir.replace(this.plugin.app.vault.configDir + "/", "")
 
-    const relativePath = this.pluginDir + "/data.json"
-    configAddPathExcluded(relativePath, this.plugin)
     configAddPathExcluded("plugins/hot-reload/data.json", this.plugin)
     configAddPathExcluded("plugins/hot-reload/main.js", this.plugin)
 

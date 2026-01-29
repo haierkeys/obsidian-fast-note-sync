@@ -9,7 +9,7 @@ export interface SnapFile {
     baseHash?: string | null;
 }
 
-export interface DeletedFile {
+export interface PathHashFile {
     path: string;
     pathHash: string;
 }
@@ -90,3 +90,25 @@ export interface SyncEndData {
     needSyncMtimeCount?: number;
     needDeleteCount?: number;
 }
+
+export interface NoteSyncData {
+    lastTime: number;
+    notes: SnapFile[];
+    delNotes: PathHashFile[];
+    missingNotes: PathHashFile[];
+}
+
+export interface FileSyncData {
+    lastTime: number;
+    files: SnapFile[];
+    delFiles: PathHashFile[];
+    missingFiles: PathHashFile[];
+}
+
+export interface ConfigSyncData {
+    lastTime: number;
+    configs: SnapFile[];
+    delConfigs: PathHashFile[];
+    missingConfigs: PathHashFile[];
+}
+

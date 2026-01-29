@@ -63,6 +63,7 @@ export class MenuManager {
       name: $("ui.menu.rebuild_hash"),
       callback: async () => {
         await this.plugin.fileHashManager.rebuildHashMap();
+        await this.plugin.configHashManager.rebuildHashMap();
       },
     });
   }

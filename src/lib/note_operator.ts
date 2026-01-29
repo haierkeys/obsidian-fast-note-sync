@@ -174,7 +174,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
     // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
-  plugin.websocket.SendMessage("NoteModify", sendData, function () {
+  plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
     plugin.fileHashManager.setFileHash(file.path, contentHash)
     plugin.removeIgnoredFile(file.path)
     plugin.noteSyncTasks.completed++

@@ -4,6 +4,7 @@ import { Notice } from "obsidian";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { LocalStorageManager } from "./lib/local_storage_manager";
+import { ConfigHashManager } from "./lib/config_hash_manager";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
 import { SyncLogManager } from "./lib/sync_log_manager";
@@ -25,6 +26,7 @@ export default class FastSync extends Plugin {
   eventManager: EventManager // 事件管理器
   menuManager: MenuManager // 菜单管理器
   fileHashManager: FileHashManager // 文件哈希管理器
+  configHashManager: ConfigHashManager // 配置哈希管理器
   localStorageManager: LocalStorageManager // 本地存储管理器
   fileCloudPreview: FileCloudPreview // 云端文件预览管理器
 
@@ -188,6 +190,9 @@ export default class FastSync extends Plugin {
     // 初始化文件哈希管理器(必须在事件管理器之前)
     this.fileHashManager = new FileHashManager(this)
 
+    // 初始化配置哈希管理器
+    this.configHashManager = new ConfigHashManager(this)
+
 
     this.registerObsidianProtocolHandler('fast-note-sync/sso', async (data) => {
       if (data?.pushApi) {
@@ -207,6 +212,11 @@ export default class FastSync extends Plugin {
     // 这样可以确保 vault 文件索引已经完全加载
     this.app.workspace.onLayoutReady(async () => {
       await this.fileHashManager.initialize()
+
+      // 如果启用了配置同步,初始化配置哈希管理器
+      if (this.settings.configSyncEnabled) {
+        await this.configHashManager.initialize()
+      }
 
       // 只有在哈希表初始化完成后才注册事件
       if (this.fileHashManager.isReady()) {
@@ -255,6 +265,7 @@ export default class FastSync extends Plugin {
     }
     this.refreshRuntime(true, setItem)
     this.fileHashManager.cleanupExcludedHashes()
+    this.configHashManager.cleanupExcludedHashes()
     await this.saveData(this.settings)
   }
 

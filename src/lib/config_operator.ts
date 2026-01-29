@@ -80,6 +80,12 @@ export const configModify = async function (path: string, plugin: FastSync, even
         ctime: ctime,
     }
     plugin.websocket.SendMessage("SettingModify", data)
+
+    // 更新配置哈希表
+    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+        plugin.configHashManager.setFileHash(path, contentHash)
+    }
+
     plugin.removeIgnoredConfigFile(path)
 }
 
@@ -139,6 +145,11 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
         plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
 
+    // 更新配置哈希表
+    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+        plugin.configHashManager.setFileHash(data.path, data.contentHash)
+    }
+
     plugin.configSyncTasks.completed++
 }
 
@@ -186,8 +197,14 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         mtime: mtime,
         ctime: ctime,
     };
-    plugin.websocket.SendMessage("SettingModify", sendData, function () {
+    plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
+
+        // 更新配置哈希表
+        if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+            plugin.configHashManager.setFileHash(data.path, sendData.contentHash);
+        }
+
         plugin.configSyncTasks.completed++;
     });
 };
@@ -220,6 +237,11 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
     const fullPath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
     if (await plugin.app.vault.adapter.exists(fullPath)) {
         await plugin.app.vault.adapter.remove(fullPath)
+    }
+
+    // 从配置哈希表中删除
+    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+        plugin.configHashManager.removeFileHash(data.path)
     }
 
     plugin.configSyncTasks.completed++

@@ -3,7 +3,7 @@
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, configIsPathExcluded } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd } from "./note_operator";
-import { SyncMode, SnapFile, ReceiveMessage, SyncEndData, DeletedFile } from "./types";
+import { SyncMode, SnapFile, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData } from "./types";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
@@ -265,7 +265,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
   const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [];
-  const delNotes: DeletedFile[] = [], delFiles: DeletedFile[] = [];
+  const delNotes: PathHashFile[] = [], delFiles: PathHashFile[] = [], delConfigs: PathHashFile[] = [];
+  const missingNotes: PathHashFile[] = [], missingFiles: PathHashFile[] = [], missingConfigs: PathHashFile[] = [];
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
@@ -331,6 +332,21 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           }
         }
       }
+    } else if (isLoadLastTime) {
+      // 增量同步且未开启离线删除同步：检测缺失的文件（哈希表中有但本地不存在）
+      const trackedPaths = plugin.fileHashManager.getAllPaths();
+      const localPathsSet = new Set(list.map(f => f.path));
+      for (const path of trackedPaths) {
+        if (isPathExcluded(path, plugin)) continue;
+        if (!localPathsSet.has(path)) {
+          const item = { path: path, pathHash: hashContent(path) };
+          if (path.endsWith(".md")) {
+            missingNotes.push(item);
+          } else {
+            missingFiles.push(item);
+          }
+        }
+      }
     }
   }
 
@@ -361,13 +377,58 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     }
   }
 
+  // 检测被删除的配置文件 (对比哈希表和本地配置)
+  if (plugin.settings.configSyncEnabled && shouldSyncConfigs && plugin.settings.offlineDeleteSyncEnabled) {
+    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+      const trackedConfigPaths = plugin.configHashManager.getAllPaths();
+      const localConfigPathsSet = new Set(configPaths);
+
+      // 添加 LocalStorage 虚拟路径
+      const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
+      for (const sc of storageConfigs) {
+        localConfigPathsSet.add(sc.path);
+      }
+
+      for (const path of trackedConfigPaths) {
+        if (configIsPathExcluded(path, plugin)) continue;
+        if (!localConfigPathsSet.has(path)) {
+          delConfigs.push({ path: path, pathHash: hashContent(path) });
+        }
+      }
+    }
+  } else if (plugin.settings.configSyncEnabled && shouldSyncConfigs && isLoadLastTime) {
+    // 增量同步且未开启离线删除同步：检测缺失的配置文件
+    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+      const trackedConfigPaths = plugin.configHashManager.getAllPaths();
+      const localConfigPathsSet = new Set(configPaths);
+
+      // 添加 LocalStorage 虚拟路径
+      const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
+      for (const sc of storageConfigs) {
+        localConfigPathsSet.add(sc.path);
+      }
+
+      for (const path of trackedConfigPaths) {
+        if (configIsPathExcluded(path, plugin)) continue;
+        if (!localConfigPathsSet.has(path)) {
+          missingConfigs.push({ path: path, pathHash: hashContent(path) });
+        }
+      }
+    }
+  }
+
   let fileTime = 0, noteTime = 0, configTime = 0;
   if (isLoadLastTime) {
     fileTime = Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"));
     noteTime = Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"));
     configTime = Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"));
   }
-  handleRequestSend(plugin, noteTime, fileTime, configTime, notes, files, configs, syncMode, delNotes, delFiles);
+
+  const noteData: NoteSyncData = { lastTime: noteTime, notes, delNotes, missingNotes };
+  const fileData: FileSyncData = { lastTime: fileTime, files, delFiles, missingFiles };
+  const configData: ConfigSyncData = { lastTime: configTime, configs, delConfigs, missingConfigs };
+
+  handleRequestSend(plugin, syncMode, noteData, fileData, configData);
 
   // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
   const progressCheckInterval = setInterval(() => {
@@ -380,44 +441,53 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 /**
  * 发送同步请求
  */
-export const handleRequestSend = function (plugin: FastSync, noteLastTime: number, fileLastTime: number, configLastTime: number, notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], syncMode: SyncMode = "auto", delNotes: DeletedFile[] = [], delFiles: DeletedFile[] = []) {
+export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode, noteData: NoteSyncData, fileData: FileSyncData, configData: ConfigSyncData) {
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     const noteSyncData = {
       vault: plugin.settings.vault,
-      lastTime: noteLastTime,
-      notes: notes,
-      ...(plugin.settings.offlineDeleteSyncEnabled ? { delNotes: delNotes } : {}),
+      lastTime: noteData.lastTime,
+      notes: noteData.notes,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delNotes: noteData.delNotes } : {}),
+      ...(noteData.missingNotes.length > 0 ? { missingNotes: noteData.missingNotes } : {}),
     };
     plugin.websocket.SendMessage("NoteSync", noteSyncData);
 
     const fileSyncData = {
       vault: plugin.settings.vault,
-      lastTime: fileLastTime,
-      files: files,
-      ...(plugin.settings.offlineDeleteSyncEnabled ? { delFiles: delFiles } : {}),
+      lastTime: fileData.lastTime,
+      files: fileData.files,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delFiles: fileData.delFiles } : {}),
+      ...(fileData.missingFiles.length > 0 ? { missingFiles: fileData.missingFiles } : {}),
     };
-    // 如果启用了云预览，则不发送 FileSync 请求，从而关闭启动时的 file 同步
+    // 如果启用了云预览,则不发送 FileSync 请求,从而关闭启动时的 file 同步
     if (!plugin.settings.cloudPreviewEnabled) {
       plugin.websocket.SendMessage("FileSync", fileSyncData);
     }
 
-    // 清理已删除文件的本地哈希数据，防止重复检测
+    // 清理已删除文件的本地哈希数据,防止重复检测
     if (plugin.settings.offlineDeleteSyncEnabled) {
-      for (const item of delNotes) plugin.fileHashManager.removeFileHash(item.path);
-      for (const item of delFiles) plugin.fileHashManager.removeFileHash(item.path);
+      for (const item of noteData.delNotes) plugin.fileHashManager.removeFileHash(item.path);
+      for (const item of fileData.delFiles) plugin.fileHashManager.removeFileHash(item.path);
     }
   }
 
   if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
     const configSyncData = {
       vault: plugin.settings.vault,
-      lastTime: configLastTime,
-      settings: configs,
+      lastTime: configData.lastTime,
+      settings: configData.configs,
       cover: Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) == 0,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delSettings: configData.delConfigs } : {}),
+      ...(configData.missingConfigs.length > 0 ? { missingSettings: configData.missingConfigs } : {}),
     };
     plugin.websocket.SendMessage("SettingSync", configSyncData);
+
+    // 清理已删除配置的本地哈希数据,防止重复检测
+    if (plugin.settings.offlineDeleteSyncEnabled && plugin.configHashManager && plugin.configHashManager.isReady()) {
+      for (const item of configData.delConfigs) plugin.configHashManager.removeFileHash(item.path);
+    }
   }
 };
