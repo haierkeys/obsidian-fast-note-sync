@@ -155,6 +155,17 @@ export class MenuManager {
       (item as any).dom.setAttribute("aria-label", $("ui.menu.full_sync_desc"));
     });
 
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      item
+        .setIcon("scroll-text")
+        .setTitle($("ui.log.title"))
+        .onClick(async () => {
+          this.plugin.activateLogView();
+        });
+      (item as any).dom.setAttribute("aria-label", $("ui.log.view_log"));
+    });
+
     // menu.addSeparator();
     // menu.addItem((item: MenuItem) => {
     //   item

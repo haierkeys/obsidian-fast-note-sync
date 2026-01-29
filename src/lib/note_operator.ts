@@ -33,7 +33,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
     // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
-  plugin.websocket.MsgSend("NoteModify", data)
+  plugin.websocket.SendMessage("NoteModify", data)
   dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
 
   // WebSocket 消息发送后更新哈希表(使用内容哈希)
@@ -62,7 +62,7 @@ export const noteDelete = function (file: TAbstractFile, plugin: FastSync, event
     path: file.path,
     pathHash: hashContent(file.path),
   }
-  plugin.websocket.MsgSend("NoteDelete", data)
+  plugin.websocket.SendMessage("NoteDelete", data)
 
   dump(`Note delete send`, file.path)
 
@@ -103,7 +103,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
 
-  plugin.websocket.MsgSend("NoteRename", data)
+  plugin.websocket.SendMessage("NoteRename", data)
   dump(`Note rename send`, data.path, data.contentHash, data.mtime, data.pathHash)
 
   // 删除旧路径,添加新路径(使用内容哈希)
@@ -174,7 +174,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
     // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
-  plugin.websocket.MsgSend("NoteModify", sendData, function () {
+  plugin.websocket.SendMessage("NoteModify", sendData, function () {
     plugin.fileHashManager.setFileHash(file.path, contentHash)
     plugin.removeIgnoredFile(file.path)
     plugin.noteSyncTasks.completed++

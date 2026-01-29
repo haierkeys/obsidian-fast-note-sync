@@ -3,6 +3,7 @@ import { Notice, moment, Platform } from "obsidian";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
 import { dump, isWsUrl, addRandomParam, isPathExcluded } from "./helps";
+import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
@@ -186,6 +187,13 @@ export class WebSocketClient {
           msgAction = event.data.slice(0, index)
         }
         const data = JSON.parse(msgData)
+
+        // 记录接收到的消息
+        if (msgAction) {
+          SyncLogManager.getInstance().logReceivedMessage(msgAction, data, this.plugin.currentSyncType);
+        }
+
+
         if (msgAction == "Authorization") {
           if (data.code == 0 || data.code > 200) {
             new Notice("Service Authorization Error: Code=" + data.code + " Msg=" + data.msg + data.details)
@@ -328,43 +336,7 @@ export class WebSocketClient {
     }, CONNECTION_CHECK_INTERVAL)
   }
 
-  /**
-   * 等待发送缓冲区清空
-   * @param maxBufferSize 最大缓冲区大小(字节),默认 1MB
-   */
-  private async waitForBufferDrain(maxBufferSize: number = 5 * 1024 * 1024): Promise<void> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return
-    }
 
-    while (this.ws.bufferedAmount > maxBufferSize) {
-      await new Promise(resolve => setTimeout(resolve, 400))
-    }
-  }
-
-  public async MsgSend(action: string, data: object | string, defer?: () => void) {
-    if (!this.isAuth || !this.plugin.isFirstSync) {
-      return
-    }
-
-    // 等待缓冲区有足够空间
-    await this.waitForBufferDrain()
-    this.Send(action, data)
-
-    defer?.()
-  }
-
-  public Send(action: string, data: object | string) {
-    if (this.ws.readyState !== WebSocket.OPEN) {
-      dump(`Service not connected, queuing message: ${action}`)
-      return
-    }
-    if (typeof data === "string") {
-      this.ws.send(action + "|" + data)
-    } else {
-      this.ws.send(action + "|" + JSON.stringify(data))
-    }
-  }
 
   /**
    * 发送客户端信息到服务端
@@ -401,17 +373,70 @@ export class WebSocketClient {
       offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy
     }))
   }
-
-
-
-  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, defer?: () => void) {
-    if (this.ws.readyState !== WebSocket.OPEN) {
+  /**
+    * 等待发送缓冲区清空
+    * @param maxBufferSize 最大缓冲区大小(字节),默认 1MB
+    */
+  private async waitForBufferDrain(maxBufferSize: number = 5 * 1024 * 1024): Promise<void> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return
     }
 
-    if (!prefix || prefix.length !== 2) {
-      return;
+    while (this.ws.bufferedAmount > maxBufferSize) {
+      await new Promise(resolve => setTimeout(resolve, 400))
     }
+  }
+
+  public async SendMessage(action: string, data: object | string, before?: () => boolean, after?: () => void) {
+    if (!this.isAuth || !this.plugin.isFirstSync) {
+      return
+    }
+
+    // 在发送前执行 before 回调,如果返回 true 则取消发送
+    if (before && before()) {
+      return true; // 返回 true 表示被取消
+    }
+
+    // 等待缓冲区有足够空间
+    await this.waitForBufferDrain()
+
+    this.Send(action, data, () => {
+      SyncLogManager.getInstance().logSentMessage(action, data, this.plugin.currentSyncType);
+      after?.()
+    })
+
+  }
+
+
+  public Send(action: string, data: object | string, after?: () => void) {
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      dump(`Service not connected, queuing message: ${action}`)
+      return
+    }
+    if (typeof data === "string") {
+      this.ws.send(action + "|" + data)
+    } else {
+      this.ws.send(action + "|" + JSON.stringify(data))
+    }
+    after?.()
+
+  }
+
+
+  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, before?: () => boolean, after?: () => void): Promise<boolean> {
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      return false
+    }
+
+    if (!prefix || prefix.length !== 2) {
+      return false;
+    }
+
+    // 在发送前执行 before 回调,如果返回 true 则取消发送
+    if (before && before()) {
+      return true; // 返回 true 表示被取消
+    }
+
     // 等待缓冲区有足够空间
     await this.waitForBufferDrain()
 
@@ -430,9 +455,13 @@ export class WebSocketClient {
       dataToSend.set(prefixBytes);
       dataToSend.set(dataView, prefixBytes.length);
     }
+
     this.ws.send(dataToSend)
-    defer?.()
+    after?.()
+    return false; // 返回 false 表示正常发送
   }
+
+
 
   /**
    * 处理冲突相关错误

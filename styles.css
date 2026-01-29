@@ -576,4 +576,161 @@
   color: var(--text-normal);
 }
 
+.fns-sync-log-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  background-color: var(--background-primary);
+}
+.fns-sync-log-container .fns-sync-log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.fns-sync-log-container .fns-sync-log-header h3 {
+  margin: 0;
+}
+.fns-sync-log-container .fns-sync-log-header .fns-sync-log-clear-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+.fns-sync-log-container .fns-sync-log-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.fns-sync-log-container .fns-sync-log-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-faint);
+}
+.fns-sync-log-container .fns-sync-log-item {
+  padding: 8px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  background-color: var(--background-secondary);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  width: 100%;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-time {
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-action {
+  font-weight: bold;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-type-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-type-tag::before {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-header-right .fns-sync-log-progress-percentage {
+  font-size: 10px;
+  color: #3b82f6;
+  font-weight: bold;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-header-right .fns-sync-log-status-tag {
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 16px;
+  text-align: center;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-header-right .fns-sync-log-status-tag.status-success {
+  color: var(--text-success);
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-header-right .fns-sync-log-status-tag.status-error {
+  color: var(--text-error);
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-item-header .fns-sync-log-header-right .fns-sync-log-status-tag.status-pending {
+  color: var(--text-warning);
+  animation: fns-loading-pulsate 1s infinite ease-in-out;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-path {
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--text-muted);
+  word-break: break-all;
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+.fns-sync-log-container .fns-sync-log-item .fns-sync-log-message {
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--text-normal);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-note {
+  border-left-color: var(--text-success);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-attachment {
+  border-left-color: #eab308;
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-config {
+  border-left-color: #3b82f6;
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-other {
+  border-left-color: var(--text-faint);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-status-error {
+  background-color: rgba(255, 0, 0, 0.05);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-send {
+  border-right-color: var(--interactive-accent);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-send .fns-sync-log-type-tag {
+  background-color: rgba(var(--interactive-accent-rgb), 0.1);
+  color: var(--interactive-accent);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-receive {
+  border-right-color: var(--text-success);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-receive .fns-sync-log-type-tag {
+  background-color: rgba(var(--text-success-rgb), 0.1);
+  color: var(--text-success);
+}
+
+@keyframes fns-loading-pulsate {
+  0% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
 /*# sourceMappingURL=styles.css.map */

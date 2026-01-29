@@ -3,6 +3,7 @@ import { TFile, TAbstractFile, Notice, normalizePath, Platform } from "obsidian"
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
+import { SyncLogManager } from "./sync_log_manager";
 import { HttpApiService } from "./api";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
@@ -16,6 +17,9 @@ const uploadQueue: (() => Promise<void>)[] = []
 // 下载内存缓冲控制 (20MB 阈值防止 OOM)
 let currentDownloadBufferBytes = 0
 const MAX_DOWNLOAD_BUFFER_BYTES = 20 * 1024 * 1024
+
+// 上传中的文件追踪，用于删除时取消上传
+const activeUploadsMap = new Map<string, { cancelled: boolean }>()
 
 /**
  * 清理上传队列
@@ -55,7 +59,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
     // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
-  plugin.websocket.MsgSend("FileUploadCheck", data)
+  plugin.websocket.SendMessage("FileUploadCheck", data)
   dump(`File modify check sent`, data.path, data.contentHash)
 
   // WebSocket 消息发送后更新哈希表(使用内容哈希)
@@ -74,6 +78,15 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.ignoredFiles.has(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
+
+  // 如果该文件正在上传或在队列中，则标记为取消，且不再发送服务端删除消息
+  if (activeUploadsMap.has(file.path)) {
+    activeUploadsMap.get(file.path)!.cancelled = true;
+    dump(`Upload cancelled due to file deletion: ${file.path}`);
+    // 仅清理本地状态
+    plugin.fileHashManager.removeFileHash(file.path)
+    return
+  }
 
   plugin.addIgnoredFile(file.path)
   handleFileDeleteByPath(file.path, plugin)
@@ -99,8 +112,15 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   plugin.addIgnoredFile(file.path)
   await fileModify(file, plugin, false)
   dump(`File rename modify send`, file.path)
-  handleFileDeleteByPath(oldfile, plugin)
-  dump(`File rename delete send`, oldfile)
+
+  // 如果旧文件正在上传，则取消上传且不发送删除消息
+  if (activeUploadsMap.has(oldfile)) {
+    activeUploadsMap.get(oldfile)!.cancelled = true;
+    dump(`Upload cancelled due to file rename: ${oldfile}`);
+  } else {
+    handleFileDeleteByPath(oldfile, plugin)
+    dump(`File rename delete send`, oldfile)
+  }
 
   // 删除旧路径,添加新路径(使用内容哈希)
   plugin.fileHashManager.removeFileHash(oldfile)
@@ -129,98 +149,134 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   const chunkSize = data.chunkSize || 1024 * 1024
 
   const runUpload = async () => {
-    // 延迟到任务排到时才读取文件内容, 减少内存积压
-    let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file)
-    if (!content) return;
+    // 标记该路径进入活跃上传状态
+    activeUploadsMap.set(data.path, { cancelled: false });
 
-    const actualTotalChunks = Math.ceil(content.byteLength / chunkSize)
+    try {
+      // 延迟到任务排到时才读取文件内容, 减少内存积压
+      let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file)
+      if (!content) return;
 
-    // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
-    if (plugin.getWatchEnabled()) {
-      plugin.totalChunksToUpload += actualTotalChunks
-    }
+      const actualTotalChunks = Math.ceil(content.byteLength / chunkSize)
 
-    // 打印上传信息表格
-    dumpTable([
-      {
-        操作: "文件上传",
-        路径: data.path,
-        文件大小: `${(content.byteLength / 1024 / 1024).toFixed(2)} MB`,
-        分片大小: `${(chunkSize / 1024).toFixed(0)} KB`,
-        分片数量: actualTotalChunks,
-        SessionID: data.sessionId.substring(0, 8) + "...",
-      },
-    ])
-
-    const sleepTime = Platform.isMobile ? 10 : 2;
-
-    for (let i = 0; i < actualTotalChunks; i++) {
-      const start = i * chunkSize
-      const end = Math.min(start + chunkSize, content.byteLength)
-      const length = end - start;
-
-      // 使用 Uint8Array 视图代替 slice 拷贝，减少内存翻倍
-      const chunk = new Uint8Array(content, start, length)
-
-      const sessionIdBytes = new TextEncoder().encode(data.sessionId)
-      const chunkIndexBytes = new Uint8Array(4)
-      const view = new DataView(chunkIndexBytes.buffer)
-      view.setUint32(0, i, false)
-
-      const frame = new Uint8Array(36 + 4 + chunk.byteLength)
-      frame.set(sessionIdBytes, 0)
-      frame.set(chunkIndexBytes, 36)
-      frame.set(chunk, 40)
-
-      plugin.websocket.SendBinary(frame, BINARY_PREFIX_FILE_SYNC, () => {
-        plugin.uploadedChunksCount++
-      })
-
-      // 让出主线程，手机端给更多呼吸时间
-      await sleep(sleepTime)
-    }
-
-    // 手动置空辅助 GC
-    content = null;
-
-    // 上传完成后，如果开启了附件云预览 - 上传后删除，则删除本地附件
-    if (plugin.settings.cloudPreviewEnabled && plugin.settings.cloudPreviewAutoDeleteLocal) {
-      const ext = file.path.substring(file.path.lastIndexOf(".")).toLowerCase();
-      const isRestricted = FileCloudPreview.isRestrictedType(ext);
-
-      // 如果开启了类型限制，则仅删除受限类型 (图片/音频/视频/PDF)
-      // 如果未开启类型限制，则全部删除
-      if (plugin.settings.cloudPreviewTypeRestricted && !isRestricted) {
-        return;
+      // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
+      if (plugin.getWatchEnabled()) {
+        plugin.totalChunksToUpload += actualTotalChunks
       }
 
-      setTimeout(async () => {
-        try {
-          const apiService = new HttpApiService(plugin);
-          const res = await apiService.getFileInfo(file.path);
+      // 打印上传信息表格
+      dumpTable([
+        {
+          操作: "文件上传",
+          路径: data.path,
+          文件大小: `${(content.byteLength / 1024 / 1024).toFixed(2)} MB`,
+          分片大小: `${(chunkSize / 1024).toFixed(0)} KB`,
+          分片数量: actualTotalChunks,
+          SessionID: data.sessionId.substring(0, 8) + "...",
+        },
+      ])
 
-          if (res && res.status && res.data) {
-            const serverInfo = res.data;
-            // 核对 path、size、mtime 是否一致
-            if (serverInfo.path === file.path &&
-              serverInfo.size === file.stat.size &&
-              serverInfo.mtime === file.stat.mtime) {
-              dump(`Cloud Preview: Auto delete verified file: ${file.path}`);
-              plugin.addIgnoredFile(file.path);
-              try {
-                await plugin.app.vault.delete(file);
-                plugin.fileHashManager.removeFileHash(file.path);
-              } finally {
-                plugin.removeIgnoredFile(file.path);
-              }
-            } else {
-              dump(`Cloud Preview: Auto delete skip, info mismatch for ${file.path}`, { server: serverInfo, local: file.stat });
+      const sleepTime = Platform.isMobile ? 10 : 2;
+
+      for (let i = 0; i < actualTotalChunks; i++) {
+        const start = i * chunkSize
+        const end = Math.min(start + chunkSize, content.byteLength)
+        const length = end - start;
+
+        // 使用 Uint8Array 视图代替 slice 拷贝，减少内存翻倍
+        const chunk = new Uint8Array(content, start, length)
+
+        const sessionIdBytes = new TextEncoder().encode(data.sessionId)
+        const chunkIndexBytes = new Uint8Array(4)
+        const view = new DataView(chunkIndexBytes.buffer)
+        view.setUint32(0, i, false)
+
+        const frame = new Uint8Array(36 + 4 + chunk.byteLength)
+        frame.set(sessionIdBytes, 0)
+        frame.set(chunkIndexBytes, 36)
+        frame.set(chunk, 40)
+
+        // 在 before 回调中检查是否已被取消,这样可以在数据真正进入 WebSocket 缓冲区之前拦截
+        const cancelled = await plugin.websocket.SendBinary(
+          frame,
+          BINARY_PREFIX_FILE_SYNC,
+          () => {
+            // before: 检查是否已被取消(例如由于文件在上传过程中被删除)
+            if (activeUploadsMap.get(data.path)?.cancelled) {
+              dump(`Upload aborted for ${data.path} (cancelled before send)`);
+              return true; // 返回 true 表示应该取消发送
             }
+            return false;
+          },
+          () => {
+            // after: 发送成功后更新计数和日志
+            plugin.uploadedChunksCount++
+            // 更新日志进度
+            SyncLogManager.getInstance().addOrUpdateLog({
+              id: data.sessionId,
+              type: 'send',
+              action: 'FileUpload',
+              path: data.path,
+              status: 'pending',
+              progress: Math.floor(((i + 1) / actualTotalChunks) * 100)
+            });
           }
-        } catch (e) {
-          dump(`Cloud Preview: Auto delete failed to fetch info for ${file.path}`, e);
+        )
+
+        // 如果被取消,立即退出循环
+        if (cancelled) {
+          return;
         }
-      }, 2000);
+
+        // 让出主线程，手机端给更多呼吸时间
+        await sleep(sleepTime)
+      }
+
+      // 手动置空辅助 GC
+      content = null;
+
+      // 上传完成后，如果开启了附件云预览 - 上传后删除，则删除本地附件
+      if (plugin.settings.cloudPreviewEnabled && plugin.settings.cloudPreviewAutoDeleteLocal) {
+        const ext = file.path.substring(file.path.lastIndexOf(".")).toLowerCase();
+        const isRestricted = FileCloudPreview.isRestrictedType(ext);
+
+        // 如果开启了类型限制，则仅删除受限类型 (图片/音频/视频/PDF)
+        // 如果未开启类型限制，则全部删除
+        if (plugin.settings.cloudPreviewTypeRestricted && !isRestricted) {
+          return;
+        }
+
+        setTimeout(async () => {
+          try {
+            const apiService = new HttpApiService(plugin);
+            const res = await apiService.getFileInfo(file.path);
+
+            if (res && res.status && res.data) {
+              const serverInfo = res.data;
+              // 核对 path、size、mtime 是否一致
+              if (serverInfo.path === file.path &&
+                serverInfo.size === file.stat.size &&
+                serverInfo.mtime === file.stat.mtime) {
+                dump(`Cloud Preview: Auto delete verified file: ${file.path}`);
+                plugin.addIgnoredFile(file.path);
+                try {
+                  await plugin.app.vault.delete(file);
+                  plugin.fileHashManager.removeFileHash(file.path);
+                } finally {
+                  plugin.removeIgnoredFile(file.path);
+                }
+              } else {
+                dump(`Cloud Preview: Auto delete skip, info mismatch for ${file.path}`, { server: serverInfo, local: file.stat });
+              }
+            }
+          } catch (e) {
+            dump(`Cloud Preview: Auto delete failed to fetch info for ${file.path}`, e);
+          }
+        }, 2000);
+      }
+    } finally {
+      // 任务结束（完成或取消/失败），移除活跃标记
+      activeUploadsMap.delete(data.path);
     }
   }
 
@@ -279,7 +335,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   }
 
   dump(`Receive file sync update(download): `, data.path)
-  const tempKey = `temp_${data.path} `
+  const tempKey = `temp_${data.path}`
   const tempSession = {
     path: data.path,
     ctime: data.ctime,
@@ -297,7 +353,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     path: data.path,
     pathHash: data.pathHash,
   }
-  plugin.websocket.MsgSend("FileChunkDownload", requestData)
+  plugin.websocket.SendMessage("FileChunkDownload", requestData)
   plugin.totalFilesToDownload++
 
   // 服务端推送文件更新,更新哈希表(使用内容哈希)
@@ -383,7 +439,7 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
  */
 export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkDownloadMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  dump(`Receive file chunk download: `, data.path, data.sessionId, `totalChunks: ${data.totalChunks} `)
+  dump(`Receive file chunk download: `, data.path, data.sessionId, `totalChunks: ${data.totalChunks}`)
 
   // 打印下载信息表格
   dumpTable([
@@ -397,7 +453,7 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
     },
   ])
 
-  const tempKey = `temp_${data.path} `
+  const tempKey = `temp_${data.path}`
   const tempSession = plugin.fileDownloadSessions.get(tempKey)
 
   if (tempSession) {
@@ -431,7 +487,19 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
   if (plugin.getWatchEnabled()) {
     plugin.totalChunksToDownload += data.totalChunks
   }
+
+  // 创建初始日志记录,状态为 pending,进度为 0
+  SyncLogManager.getInstance().addOrUpdateLog({
+    id: data.sessionId,
+    type: 'receive',
+    action: 'FileDownload',
+    path: data.path,
+    status: 'pending',
+    progress: 0
+  });
 }
+
+
 
 /**
  * 接收文件同步结束通知
@@ -458,7 +526,7 @@ const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
     path: path,
     pathHash: hashContent(path),
   }
-  plugin.websocket.MsgSend("FileDelete", data)
+  plugin.websocket.SendMessage("FileDelete", data)
 }
 
 /**
@@ -523,6 +591,17 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
   session.chunks.set(chunkIndex, chunkData)
   currentDownloadBufferBytes += chunkData.byteLength // 增加内存缓冲区计数
   plugin.downloadedChunksCount++
+
+  // 更新日志进度
+  SyncLogManager.getInstance().addOrUpdateLog({
+    id: sessionId,
+    type: 'receive',
+    action: 'FileDownload',
+    path: session.path,
+    status: session.chunks.size === session.totalChunks ? 'success' : 'pending',
+    progress: Math.floor((session.chunks.size / session.totalChunks) * 100)
+  });
+
 
   if (session.chunks.size === session.totalChunks) {
     await handleFileChunkDownloadComplete(session, plugin)

@@ -250,6 +250,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     return;
   }
 
+  plugin.currentSyncType = isLoadLastTime ? 'incremental' : 'full';
   plugin.syncTypeCompleteCount = 0;
   plugin.resetSyncTasks();
   plugin.totalFilesToDownload = 0;
@@ -390,7 +391,7 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
       notes: notes,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delNotes: delNotes } : {}),
     };
-    plugin.websocket.MsgSend("NoteSync", noteSyncData);
+    plugin.websocket.SendMessage("NoteSync", noteSyncData);
 
     const fileSyncData = {
       vault: plugin.settings.vault,
@@ -400,7 +401,7 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
     };
     // 如果启用了云预览，则不发送 FileSync 请求，从而关闭启动时的 file 同步
     if (!plugin.settings.cloudPreviewEnabled) {
-      plugin.websocket.MsgSend("FileSync", fileSyncData);
+      plugin.websocket.SendMessage("FileSync", fileSyncData);
     }
 
     // 清理已删除文件的本地哈希数据，防止重复检测
@@ -417,6 +418,6 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
       settings: configs,
       cover: Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) == 0,
     };
-    plugin.websocket.MsgSend("SettingSync", configSyncData);
+    plugin.websocket.SendMessage("SettingSync", configSyncData);
   }
 };

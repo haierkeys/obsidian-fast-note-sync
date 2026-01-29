@@ -1,0 +1,130 @@
+import { ItemView, WorkspaceLeaf, moment } from "obsidian";
+import { createRoot, Root } from "react-dom/client";
+import * as React from "react";
+
+import { SyncLogManager, SyncLog } from "../lib/sync_log_manager";
+import { $ } from "../lang/lang";
+import FastSync from "../main";
+
+
+export const SYNC_LOG_VIEW_TYPE = "fns-sync-log-view";
+
+export class SyncLogView extends ItemView {
+    root: Root | null = null;
+    plugin: FastSync;
+
+    constructor(leaf: WorkspaceLeaf, plugin: FastSync) {
+        super(leaf);
+        this.plugin = plugin;
+    }
+
+    getViewType(): string {
+        return SYNC_LOG_VIEW_TYPE;
+    }
+
+    getDisplayText(): string {
+        return $("ui.log.title");
+    }
+
+    getIcon(): string {
+        return "scroll-text";
+    }
+
+    async onOpen() {
+        this.root = createRoot(this.containerEl.children[1]);
+        this.root.render(
+            <SyncLogComponent />
+        );
+    }
+
+    async onClose() {
+        if (this.root) {
+            this.root.unmount();
+        }
+    }
+}
+
+const SyncLogComponent = () => {
+    const [logs, setLogs] = React.useState<SyncLog[]>([]);
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    const throttleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const pendingLogsRef = React.useRef<SyncLog[] | null>(null);
+
+    React.useEffect(() => {
+        const manager = SyncLogManager.getInstance();
+        const unsubscribe = manager.subscribe((newLogs) => {
+            // 节流更新:每100ms最多更新一次UI
+            pendingLogsRef.current = newLogs;
+
+            if (!throttleTimerRef.current) {
+                throttleTimerRef.current = setTimeout(() => {
+                    if (pendingLogsRef.current) {
+                        setLogs(pendingLogsRef.current);
+                        pendingLogsRef.current = null;
+                    }
+                    throttleTimerRef.current = null;
+                }, 100);
+            }
+        });
+
+        return () => {
+            unsubscribe();
+            if (throttleTimerRef.current) {
+                clearTimeout(throttleTimerRef.current);
+            }
+        };
+    }, []);
+
+    React.useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = 0; // 最新在顶部
+        }
+    }, [logs]);
+
+    const clearLogs = () => {
+        SyncLogManager.getInstance().clearLogs();
+    };
+
+    return (
+        <div className="fns-sync-log-container">
+            <div className="fns-sync-log-header">
+                <h3>{$("ui.log.title")}</h3>
+                <button onClick={clearLogs} className="fns-sync-log-clear-btn">
+                    {$("ui.log.clear")}
+                </button>
+            </div>
+            <div className="fns-sync-log-list" ref={scrollRef}>
+                {logs.length === 0 ? (
+                    <div className="fns-sync-log-empty">{$("ui.log.empty")}</div>
+                ) : (
+                    logs.map((log) => (
+                        <div key={log.id} className={`fns-sync-log-item fns-sync-log-category-${log.category} fns-sync-log-status-${log.status} fns-sync-log-type-${log.type}`}>
+                            <div className="fns-sync-log-item-header">
+                                <span className="fns-sync-log-time">{moment(log.timestamp).format("HH:mm:ss")}</span>
+                                <span className="fns-sync-log-action">{$(`ui.log.action.${log.action}` as any)}</span>
+                                <span className="fns-sync-log-type-tag">
+                                    {log.type === 'send' ? (
+                                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                                    ) : log.type === 'receive' ? (
+                                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                                    ) : null}
+                                    {$(`ui.log.type_${log.type}` as any)}
+                                </span>
+                                <div className="fns-sync-log-header-right">
+                                    {log.progress !== undefined && log.status === 'pending' && (
+                                        <span className="fns-sync-log-progress-percentage">{log.progress}%</span>
+                                    )}
+                                    <span className={`fns-sync-log-status-tag status-${log.status}`}>
+                                        {log.status === 'success' ? '✓' : log.status === 'error' ? '✗' : '...'}
+                                    </span>
+                                </div>
+                            </div>
+                            {log.path && <div className="fns-sync-log-path">{log.path}</div>}
+                            {log.message && !['成功', 'success'].includes(log.message) && <div className="fns-sync-log-message">{log.message}</div>}
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};

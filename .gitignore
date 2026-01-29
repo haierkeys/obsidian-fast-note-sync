@@ -1,5 +1,5 @@
 # vscode
-.vscode 
+.vscode
 
 # Intellij
 *.iml
@@ -17,7 +17,7 @@ main.js
 
 # obsidian
 data.json
-
+sync.log
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
 /src/dist

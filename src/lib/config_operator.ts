@@ -79,7 +79,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
         mtime: mtime,
         ctime: ctime,
     }
-    plugin.websocket.MsgSend("SettingModify", data)
+    plugin.websocket.SendMessage("SettingModify", data)
     plugin.removeIgnoredConfigFile(path)
 }
 
@@ -95,7 +95,7 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
         path: path,
         pathHash: hashContent(path),
     }
-    plugin.websocket.MsgSend("SettingDelete", data)
+    plugin.websocket.SendMessage("SettingDelete", data)
     plugin.removeIgnoredConfigFile(path)
 }
 
@@ -186,7 +186,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         mtime: mtime,
         ctime: ctime,
     };
-    plugin.websocket.MsgSend("SettingModify", sendData, function () {
+    plugin.websocket.SendMessage("SettingModify", sendData, function () {
         plugin.removeIgnoredConfigFile(data.path);
         plugin.configSyncTasks.completed++;
     });

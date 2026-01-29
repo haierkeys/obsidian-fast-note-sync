@@ -458,6 +458,12 @@ export class SettingTab extends PluginSettingTab {
       window.open("https://t.me/obsidian_users", "_blank")
     }
 
+    const logViewButton = debugDiv.createEl("button")
+    logViewButton.setText($("ui.log.view_log"))
+    logViewButton.onclick = () => {
+      this.plugin.activateLogView();
+    }
+
     if (Platform.isDesktopApp) {
       const info = debugDiv.createDiv()
       info.setText($("setting.support.console_tip"))

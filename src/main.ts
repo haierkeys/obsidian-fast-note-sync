@@ -1,10 +1,12 @@
-import { Plugin } from "obsidian";
+import { Plugin, WorkspaceLeaf } from "obsidian";
 import { Notice } from "obsidian";
 
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
+import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { LocalStorageManager } from "./lib/local_storage_manager";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
+import { SyncLogManager } from "./lib/sync_log_manager";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
@@ -48,7 +50,8 @@ export default class FastSync extends Plugin {
   fileDownloadSessions: Map<string, any> = new Map()
   syncTimer: NodeJS.Timeout | null = null // 同步定时器
 
-  lastStatusBarPercentage: number = 0 // 上次状态栏显示的百分比
+  public lastStatusBarPercentage: number = 0;
+  public currentSyncType: 'full' | 'incremental' = 'incremental';
   noteSyncEnd: boolean = false // 笔记同步是否完成
   fileSyncEnd: boolean = false // 文件同步是否完成
   configSyncEnd: boolean = false // 配置同步是否完成
@@ -158,6 +161,22 @@ export default class FastSync extends Plugin {
     // 注册设置选项
     this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
+
+    // 注册同步日志视图
+    SyncLogManager.getInstance().init(this);
+    this.registerView(
+      SYNC_LOG_VIEW_TYPE,
+      (leaf) => new SyncLogView(leaf, this)
+    );
+
+    // 注册命令
+    this.addCommand({
+      id: "open-sync-log",
+      name: $("ui.log.view_log"),
+      callback: () => {
+        this.activateLogView();
+      },
+    });
 
     // 初始化 菜单/状态栏/命令 等 UI 入口
     this.menuManager = new MenuManager(this)
@@ -274,5 +293,23 @@ export default class FastSync extends Plugin {
     }
 
     setLogEnabled(this.settings.logEnabled)
+  }
+
+  async activateLogView() {
+    const { workspace } = this.app;
+
+    let leaf: WorkspaceLeaf | null = null;
+    const leaves = workspace.getLeavesOfType(SYNC_LOG_VIEW_TYPE);
+
+    if (leaves.length > 0) {
+      leaf = leaves[0];
+    } else {
+      leaf = workspace.getRightLeaf(false);
+      await leaf?.setViewState({ type: SYNC_LOG_VIEW_TYPE, active: true });
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
   }
 }
