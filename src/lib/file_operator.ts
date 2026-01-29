@@ -211,14 +211,17 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
           () => {
             // after: 发送成功后更新计数和日志
             plugin.uploadedChunksCount++
+            const currentProgress = Math.floor(((i + 1) / actualTotalChunks) * 100);
+            const isLastChunk = (i + 1) === actualTotalChunks;
+
             // 更新日志进度
             SyncLogManager.getInstance().addOrUpdateLog({
               id: data.sessionId,
               type: 'send',
               action: 'FileUpload',
               path: data.path,
-              status: 'pending',
-              progress: Math.floor(((i + 1) / actualTotalChunks) * 100)
+              status: isLastChunk ? 'success' : 'pending',
+              progress: currentProgress
             });
           }
         )

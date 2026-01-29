@@ -111,7 +111,7 @@ const SyncLogComponent = () => {
                                     {$(`ui.log.type_${log.type}` as any)}
                                 </span>
                                 <div className="fns-sync-log-header-right">
-                                    {log.progress !== undefined && log.status === 'pending' && (
+                                    {log.progress !== undefined && (log.status === 'pending' || (log.status === 'success' && log.progress === 100)) && (
                                         <span className="fns-sync-log-progress-percentage">{log.progress}%</span>
                                     )}
                                     <span className={`fns-sync-log-status-tag status-${log.status}`}>
