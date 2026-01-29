@@ -391,7 +391,8 @@ export class WebSocketClient {
     } else if (Platform.isAndroidApp && Platform.isPhone) {
       clientName += "Android"
     }
-    clientName = this.plugin.settings.clientName + (this.plugin.settings.clientName != "" ? " " + clientName : clientName)
+    const clientMetadata = this.plugin.localStorageManager.getMetadata("clientName");
+    clientName = clientMetadata + (clientMetadata != "" ? " " + clientName : clientName)
 
     this.Send("ClientInfo", JSON.stringify({
       name: clientName,

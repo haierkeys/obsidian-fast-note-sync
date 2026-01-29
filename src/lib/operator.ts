@@ -10,7 +10,7 @@ import { $ } from "../lang/lang";
 
 
 export const startupSync = (plugin: FastSync): void => {
-  void handleSync(plugin, plugin.settings.isInitSync);
+  void handleSync(plugin, plugin.localStorageManager.getMetadata("isInitSync"));
 };
 export const startupFullSync = async (plugin: FastSync) => {
   void handleSync(plugin);
@@ -18,10 +18,10 @@ export const startupFullSync = async (plugin: FastSync) => {
 };
 
 export const resetSettingSyncTime = async (plugin: FastSync) => {
-  plugin.settings.lastFileSyncTime = 0;
-  plugin.settings.lastNoteSyncTime = 0;
-  plugin.settings.lastConfigSyncTime = 0;
-  plugin.settings.isInitSync = false;
+  plugin.localStorageManager.setMetadata("lastFileSyncTime", 0);
+  plugin.localStorageManager.setMetadata("lastNoteSyncTime", 0);
+  plugin.localStorageManager.setMetadata("lastConfigSyncTime", 0);
+  plugin.localStorageManager.setMetadata("isInitSync", false);
   plugin.saveSettings();
 };
 
@@ -78,9 +78,8 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
     new Notice($("ui.status.completed"));
     plugin.updateStatusBar($("ui.status.completed"));
 
-    if (plugin.expectedSyncCount > 0 && !plugin.settings.isInitSync) {
-      plugin.settings.isInitSync = true;
-      plugin.saveSettings();
+    if (plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
+      plugin.localStorageManager.setMetadata("isInitSync", true);
     }
 
     // 如果开启了云预览，在首次同步后检查所有附件在服务端的状态
@@ -285,7 +284,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     for (const file of list) {
       if (isPathExcluded(file.path, plugin)) continue;
       if (file.extension === "md") {
-        if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastNoteSyncTime)) continue;
+        if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) continue;
         const contentHash = hashContent(await plugin.app.vault.cachedRead(file));
         const baseHash = plugin.fileHashManager.getPathHash(file.path);
         let item = {
@@ -300,7 +299,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
         notes.push(item);
       } else {
-        if (isLoadLastTime && file.stat.mtime < Number(plugin.settings.lastFileSyncTime)) continue;
+        if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) continue;
         const contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
         const baseHash = plugin.fileHashManager.getPathHash(file.path);
         let item = {
@@ -340,7 +339,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     const fullPath = normalizePath(`${plugin.app.vault.configDir}/${path}`);
     const stat = await plugin.app.vault.adapter.stat(fullPath);
     if (!stat) continue;
-    if (isLoadLastTime && stat.mtime < Number(plugin.settings.lastConfigSyncTime)) continue;
+    if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
 
     if (path.endsWith(".json") || path.endsWith(".css") || path.endsWith(".js")) {
       configs.push({
@@ -363,9 +362,9 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
   let fileTime = 0, noteTime = 0, configTime = 0;
   if (isLoadLastTime) {
-    fileTime = Number(plugin.settings.lastFileSyncTime);
-    noteTime = Number(plugin.settings.lastNoteSyncTime);
-    configTime = Number(plugin.settings.lastConfigSyncTime);
+    fileTime = Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"));
+    noteTime = Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"));
+    configTime = Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"));
   }
   handleRequestSend(plugin, noteTime, fileTime, configTime, notes, files, configs, syncMode, delNotes, delFiles);
 
@@ -416,7 +415,7 @@ export const handleRequestSend = function (plugin: FastSync, noteLastTime: numbe
       vault: plugin.settings.vault,
       lastTime: configLastTime,
       settings: configs,
-      cover: plugin.settings.lastConfigSyncTime == 0,
+      cover: Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) == 0,
     };
     plugin.websocket.MsgSend("SettingSync", configSyncData);
   }

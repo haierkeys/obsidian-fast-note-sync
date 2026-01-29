@@ -9,9 +9,56 @@ import type FastSync from "../main";
  */
 export class LocalStorageManager {
     private plugin: FastSync;
-    public prefix: string = "_localStorage/";
+    /**
+     * 同步虚拟路径前缀
+     */
+    public syncPathPrefix: string = "_localStorage/";
     private lastHashes: Map<string, string> = new Map();
+    private lastMtimes: Map<string, number> = new Map();
     private watchTimer: number | null = null;
+
+    /**
+     * 底层读原子操作
+     */
+    private read(key: string): string | null {
+        return localStorage.getItem(key);
+    }
+
+    /**
+     * 底层写原子操作
+     */
+    private write(key: string, value: string): void {
+        localStorage.setItem(key, value);
+    }
+
+    /**
+     * 获取内部私有数据的完整键名（带插件和笔记库前缀）
+     */
+    private getInternalKey(field: string): string {
+        const vaultName = this.plugin.settings.vault || this.plugin.app.vault.getName();
+        return `fast-note-sync-${vaultName}-${field}`;
+    }
+
+    /**
+     * 获取元数据项
+     */
+    getMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'clientName' | 'isInitSync'): any {
+        const value = this.read(this.getInternalKey(field));
+        if (field.endsWith('Time')) {
+            return value ? Number(value) : 0;
+        }
+        if (field === 'isInitSync') {
+            return value === 'true';
+        }
+        return value || "";
+    }
+
+    /**
+     * 设置元数据项
+     */
+    setMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'clientName' | 'isInitSync', value: any): void {
+        this.write(this.getInternalKey(field), String(value));
+    }
 
     constructor(plugin: FastSync) {
         this.plugin = plugin;
@@ -23,8 +70,8 @@ export class LocalStorageManager {
     startWatch() {
         if (this.watchTimer) return;
 
-        // 尝试加载持久化的哈希表
-        this.loadHashes();
+        // 加载持久化的哈希和时间戳状态
+        this.loadState();
 
         this.watchTimer = window.setInterval(() => {
             this.checkChanges();
@@ -55,59 +102,61 @@ export class LocalStorageManager {
             if (val === null) continue;
 
             const currentHash = hashContent(val);
-
             const lastHash = this.lastHashes.get(key);
 
             if (currentHash !== lastHash) {
-                // 内容发生变化，通过配置操作器触发同步
+                // 内容发生变化，更新时间戳并触发同步
+                const mtime = Date.now();
+                this.lastHashes.set(key, currentHash);
+                this.lastMtimes.set(key, mtime);
+                this.saveState();
+
                 const path = this.keyToPath(key);
                 configModify(path, this.plugin, false, val);
-
-                this.lastHashes.set(key, currentHash);
-                this.saveHashes();
             }
         }
     }
 
     /**
-     * 获取当前笔记库专用的持久化键名
+     * 保存状态（哈希表和时间戳）到 localStorage
      */
-    private getHashStorageKey(): string {
-        const vaultName = this.plugin.app.vault.getName();
-        return `obsidian-fast-sync-local-storage-hashes-${vaultName}`;
-    }
-
-    /**
-     * 保存哈希表到 localStorage
-     */
-    private saveHashes() {
+    private saveState() {
         try {
-            const obj = Object.fromEntries(this.lastHashes);
-            localStorage.setItem(this.getHashStorageKey(), JSON.stringify(obj));
+            const state = {
+                hashes: Object.fromEntries(this.lastHashes),
+                mtimes: Object.fromEntries(this.lastMtimes)
+            };
+            this.write(this.getInternalKey("local-storage-state"), JSON.stringify(state));
         } catch (e) {
-            dump("保存 LocalStorage 哈希表失败:", e);
+            dump("保存 LocalStorage 状态失败:", e);
         }
     }
 
     /**
-     * 从 localStorage 加载哈希表
+     * 从 localStorage 加载状态
      */
-    private loadHashes() {
+    private loadState() {
         try {
-            const stored = localStorage.getItem(this.getHashStorageKey());
+            const stored = this.read(this.getInternalKey("local-storage-state"));
             if (stored) {
-                const obj = JSON.parse(stored);
-                this.lastHashes = new Map(Object.entries(obj));
+                const state = JSON.parse(stored);
+                if (state.hashes) this.lastHashes = new Map(Object.entries(state.hashes));
+                if (state.mtimes) this.lastMtimes = new Map(Object.entries(state.mtimes));
+            } else {
+                // 兼容旧版
+                const oldHashes = this.read(this.getInternalKey("local-storage-hashes"));
+                if (oldHashes) {
+                    this.lastHashes = new Map(Object.entries(JSON.parse(oldHashes)));
+                }
             }
         } catch (e) {
-            dump("加载 LocalStorage 哈希表失败:", e);
-            this.lastHashes = new Map();
+            dump("加载 LocalStorage 状态失败:", e);
         }
     }
 
     /**
-   * 获取需要同步的键列表
-   */
+    * 获取需要同步的键列表
+    */
     getKeys(): string[] {
         const keys: string[] = [];
         if (this.plugin.settings.pdfSyncEnabled) {
@@ -120,31 +169,31 @@ export class LocalStorageManager {
      * 将键转换为虚拟路径
      */
     keyToPath(key: string): string {
-        return `${this.prefix}${key}`;
+        return `${this.syncPathPrefix}${key}`;
     }
 
     /**
      * 将虚拟路径转换为键
      */
     pathToKey(path: string): string | null {
-        if (path.startsWith(this.prefix)) {
-            return path.substring(this.prefix.length);
+        if (path.startsWith(this.syncPathPrefix)) {
+            return path.substring(this.syncPathPrefix.length);
         }
         return null;
     }
 
     /**
-     * 读取 localStorage 项的内容
+     * 读取同步项内容
      */
     getItemValue(key: string): string | null {
-        return localStorage.getItem(key);
+        return this.read(key);
     }
 
     /**
-     * 写入 localStorage 项的内容
+     * 写入同步项内容
      */
     setItemValue(key: string, value: string): void {
-        localStorage.setItem(key, value);
+        this.write(key, value);
     }
 
     /**
@@ -161,13 +210,22 @@ export class LocalStorageManager {
             const contentHash = hashContent(value);
             const path = this.keyToPath(key);
 
+            // 优先使用持久化记录的 mtime，若无则使用当前时间并持久化
+            let mtime = this.lastMtimes.get(key);
+            if (!mtime) {
+                mtime = Date.now();
+                this.lastMtimes.set(key, mtime);
+                this.lastHashes.set(key, contentHash);
+                this.saveState();
+            }
+
             configs.push({
                 path: path,
                 pathHash: hashContent(path),
                 contentHash: contentHash,
-                mtime: Date.now(), // localStorage 没有 mtime，使用当前时间
+                mtime: mtime,
                 size: value.length,
-                isLocalStorage: true // 标记为 localStorage 项
+                isLocalStorage: true
             });
         }
 
@@ -175,15 +233,18 @@ export class LocalStorageManager {
     }
 
     /**
-     * 处理接收到的 localStorage 更新
+     * 处理接收到的同步项更新
      */
     async handleReceivedUpdate(path: string, content: string): Promise<boolean> {
         const key = this.pathToKey(path);
         if (key) {
+            const contentHash = hashContent(content);
             this.setItemValue(key, content);
-            // 同步更新哈希值，防止产生回环同步
-            this.lastHashes.set(key, hashContent(content));
-            this.saveHashes();
+
+            // 更新本地哈希和时间戳状态，防止产生回环同步
+            this.lastHashes.set(key, contentHash);
+            this.lastMtimes.set(key, Date.now()); // 远端同步过来视为一次修改
+            this.saveState();
             return true;
         }
         return false;

@@ -31,7 +31,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
     if (configIsPathExcluded(path, plugin)) return
 
     // 如果是文件系统事件（无 content），拦截 LocalStorage 虚拟路径
-    if (!content && path.startsWith(plugin.localStorageManager.prefix)) return
+    if (!content && path.startsWith(plugin.localStorageManager.syncPathPrefix)) return
 
     plugin.addIgnoredConfigFile(path)
 
@@ -107,12 +107,11 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
     plugin.addIgnoredConfigFile(data.path)
     try {
         // 拦截 LocalStorage 更新
-        if (data.path.startsWith(plugin.localStorageManager.prefix)) {
+        if (data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) {
             if (await plugin.localStorageManager.handleReceivedUpdate(data.path, data.content)) {
                 plugin.removeIgnoredConfigFile(data.path)
-                if (plugin.settings.lastConfigSyncTime < data.lastTime) {
-                    plugin.settings.lastConfigSyncTime = data.lastTime
-                    await plugin.saveData(plugin.settings)
+                if (Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) < data.lastTime) {
+                    plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
                 }
                 plugin.configSyncTasks.completed++
                 return
@@ -136,9 +135,8 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
     await configReload(data.path, plugin, false, data.content)
     plugin.removeIgnoredConfigFile(data.path)
 
-    if (plugin.settings.lastConfigSyncTime < data.lastTime) {
-        plugin.settings.lastConfigSyncTime = data.lastTime
-        await plugin.saveData(plugin.settings)
+    if (Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) < data.lastTime) {
+        plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
 
     plugin.configSyncTasks.completed++
@@ -147,7 +145,7 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
     if (configIsPathExcluded(data.path, plugin)) return;
-    if (data.path.startsWith(plugin.localStorageManager.prefix)) return;
+    if (data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return;
 
     plugin.addIgnoredConfigFile(data.path);
 
@@ -233,8 +231,7 @@ export const receiveConfigSyncEnd = async function (data: any, plugin: FastSync)
 
     // 从 data 对象中提取任务统计信息
     const syncData = data as SyncEndData
-    plugin.settings.lastConfigSyncTime = syncData.lastTime
-    await plugin.saveData(plugin.settings)
+    plugin.localStorageManager.setMetadata("lastConfigSyncTime", syncData.lastTime)
     plugin.syncTypeCompleteCount++
 }
 

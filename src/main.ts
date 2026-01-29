@@ -178,7 +178,7 @@ export default class FastSync extends Plugin {
           this.settings.vault = data.pushVault
         }
         this.wsSettingChange = true
-        this.settings.isInitSync = false
+        this.localStorageManager.setMetadata("isInitSync", false)
         await this.saveSettings()
         new Notice($('ui.status.config_imported'), 5000)
       }

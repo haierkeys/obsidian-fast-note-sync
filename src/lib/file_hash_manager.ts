@@ -18,7 +18,7 @@ export class FileHashManager {
     this.plugin = plugin;
     // 根据仓库名生成唯一的存储键
     const vaultName = this.plugin.app.vault.getName();
-    this.storageKey = `obsidian-fast-sync-file-hash-map-${vaultName}`;
+    this.storageKey = `fast-note-sync-file-hash-map-${vaultName}`;
   }
 
   /**

@@ -8,7 +8,6 @@ import FastSync from "./main";
 
 
 export interface PluginSettings {
-  isInitSync: boolean
   //是否自动上传
   syncEnabled: boolean
   // 是否开启配置项同步
@@ -21,9 +20,6 @@ export interface PluginSettings {
   //API Token
   apiToken: string
   vault: string
-  lastNoteSyncTime: number
-  lastFileSyncTime: number
-  lastConfigSyncTime: number
   //  [propName: string]: any;
 
   serverVersion: string
@@ -36,7 +32,6 @@ export interface PluginSettings {
   pluginVersionNewLink: string
 
   configExclude: string
-  clientName: string
   startupDelay: number
   offlineSyncStrategy: string
   syncExcludeFolders: string
@@ -60,7 +55,6 @@ export interface PluginSettings {
 
 // 默认插件设置
 export const DEFAULT_SETTINGS: PluginSettings = {
-  isInitSync: false,
   // 是否自动上传
   syncEnabled: true,
   configSyncEnabled: false,
@@ -70,9 +64,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   wsApi: "",
   // API 令牌
   apiToken: "",
-  lastNoteSyncTime: 0,
-  lastFileSyncTime: 0,
-  lastConfigSyncTime: 0,
   vault: "",
   serverVersion: "",
   serverVersionIsNew: false,
@@ -84,7 +75,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   pluginVersionNewLink: "",
 
   configExclude: "",
-  clientName: "",
   startupDelay: 500,
   offlineSyncStrategy: "",
   syncExcludeFolders: "",
@@ -139,7 +129,7 @@ export class SettingTab extends PluginSettingTab {
           if (value != this.plugin.settings.api) {
             this.plugin.wsSettingChange = true
             this.plugin.settings.api = value
-            this.plugin.settings.isInitSync = false
+            this.plugin.localStorageManager.setMetadata("isInitSync", false)
             await this.plugin.saveSettings()
           }
         }),
@@ -154,7 +144,7 @@ export class SettingTab extends PluginSettingTab {
           if (value != this.plugin.settings.apiToken) {
             this.plugin.wsSettingChange = true
             this.plugin.settings.apiToken = value
-            this.plugin.settings.isInitSync = false
+            this.plugin.localStorageManager.setMetadata("isInitSync", false)
             await this.plugin.saveSettings()
           }
         }),
@@ -166,7 +156,9 @@ export class SettingTab extends PluginSettingTab {
         .setPlaceholder($("setting.remote.vault_name"))
         .setValue(this.plugin.settings.vault)
         .onChange(async (value) => {
+          this.plugin.wsSettingChange = true
           this.plugin.settings.vault = value
+          this.plugin.localStorageManager.setMetadata("isInitSync", false)
           await this.plugin.saveSettings()
         }),
     )
@@ -175,12 +167,11 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set).setName($("setting.remote.client_name")).addText((text) =>
       text
         .setPlaceholder($("setting.remote.client_name_placeholder"))
-        .setValue(this.plugin.settings.clientName)
+        .setValue(this.plugin.localStorageManager.getMetadata("clientName"))
         .onChange(async (value) => {
           const trimmedValue = value.trim()
-          if (trimmedValue != this.plugin.settings.clientName) {
-            this.plugin.settings.clientName = trimmedValue
-            await this.plugin.saveSettings()
+          if (trimmedValue != this.plugin.localStorageManager.getMetadata("clientName")) {
+            this.plugin.localStorageManager.setMetadata("clientName", trimmedValue)
           }
         }),
     )
@@ -440,6 +431,11 @@ export class SettingTab extends PluginSettingTab {
               api: maskValue(this.plugin.settings.api),
               wsApi: maskValue(this.plugin.settings.wsApi),
               apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
+              lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
+              lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
+              lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
+              clientName: this.plugin.localStorageManager.getMetadata("clientName"),
+              isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
             },
             pluginVersion: this.plugin.manifest.version,
           },

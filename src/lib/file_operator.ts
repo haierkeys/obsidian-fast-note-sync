@@ -95,7 +95,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (plugin.ignoredFiles.has(file.path) && eventEnter) return
   if (isPathExcluded(file.path, plugin)) return
   if (!(file instanceof TFile)) return
-``
+
   plugin.addIgnoredFile(file.path)
   await fileModify(file, plugin, false)
   dump(`File rename modify send`, file.path)
@@ -256,7 +256,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   if (isPathExcluded(data.path, plugin)) return
 
   // 如果开启了云预览，且是初始化同步阶段，由于云预览可以按需加载，跳过所有附件下载
-  if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
+  if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
       // 开启了类型限制：仅跳过受限类型 (图片、视频、音频、PDF)
       const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
@@ -313,7 +313,7 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
 
-  if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
+  if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
       const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
       if (FileCloudPreview.isRestrictedType(ext)) {
@@ -350,7 +350,7 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
   if (plugin.settings.syncEnabled == false) return
   if (isPathExcluded(data.path, plugin)) return
 
-  if (plugin.settings.isInitSync && plugin.settings.cloudPreviewEnabled) {
+  if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
       const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
       if (FileCloudPreview.isRestrictedType(ext)) {
@@ -442,7 +442,7 @@ export const receiveFileSyncEnd = async function (data: any, plugin: FastSync) {
 
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
-  plugin.settings.lastFileSyncTime = syncData.lastTime
+  plugin.localStorageManager.setMetadata("lastFileSyncTime", syncData.lastTime)
   await plugin.saveData(plugin.settings)
   plugin.syncTypeCompleteCount++
 }
@@ -572,8 +572,8 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     }
     plugin.removeIgnoredFile(normalizedPath)
 
-    if (plugin.settings.lastFileSyncTime < session.lastTime) {
-      plugin.settings.lastFileSyncTime = session.lastTime
+    if (Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) < session.lastTime) {
+      plugin.localStorageManager.setMetadata("lastFileSyncTime", session.lastTime)
       await plugin.saveData(plugin.settings)
     }
 
