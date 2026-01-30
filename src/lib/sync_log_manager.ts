@@ -39,7 +39,6 @@ export class SyncLogManager {
 
     public init(plugin: FastSync) {
         this.plugin = plugin;
-        this.logFilePath = `${plugin.manifest.dir}/sync.log`;
     }
 
     private getCategory(action: string): LogCategory {

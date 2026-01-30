@@ -52,35 +52,35 @@ export default class FastSync extends Plugin {
   fileDownloadSessions: Map<string, any> = new Map()
   syncTimer: NodeJS.Timeout | null = null // 同步定时器
 
-  public lastStatusBarPercentage: number = 0;
-  public currentSyncType: 'full' | 'incremental' = 'incremental';
+  public lastStatusBarPercentage: number = 0
+  public currentSyncType: "full" | "incremental" = "incremental"
   noteSyncEnd: boolean = false // 笔记同步是否完成
   fileSyncEnd: boolean = false // 文件同步是否完成
   configSyncEnd: boolean = false // 配置同步是否完成
 
   // 任务统计
   noteSyncTasks = {
-    needUpload: 0,    // 需要上传
-    needModify: 0,    // 需要修改
+    needUpload: 0, // 需要上传
+    needModify: 0, // 需要修改
     needSyncMtime: 0, // 需要同步时间戳
-    needDelete: 0,    // 需要删除
-    completed: 0      // 已完成数量
+    needDelete: 0, // 需要删除
+    completed: 0, // 已完成数量
   }
 
   fileSyncTasks = {
-    needUpload: 0,    // 需要上传
-    needModify: 0,    // 需要修改
+    needUpload: 0, // 需要上传
+    needModify: 0, // 需要修改
     needSyncMtime: 0, // 需要同步时间戳
-    needDelete: 0,    // 需要删除
-    completed: 0      // 已完成数量
+    needDelete: 0, // 需要删除
+    completed: 0, // 已完成数量
   }
 
   configSyncTasks = {
-    needUpload: 0,    // 需要上传
-    needModify: 0,    // 需要修改
+    needUpload: 0, // 需要上传
+    needModify: 0, // 需要修改
     needSyncMtime: 0, // 需要同步时间戳
-    needDelete: 0,    // 需要删除
-    completed: 0      // 已完成数量
+    needDelete: 0, // 需要删除
+    completed: 0, // 已完成数量
   }
 
   // 重置所有任务统计
@@ -96,12 +96,9 @@ export default class FastSync extends Plugin {
 
   // 计算总任务数
   getTotalTasks() {
-    const noteTotal = this.noteSyncTasks.needUpload + this.noteSyncTasks.needModify +
-      this.noteSyncTasks.needSyncMtime + this.noteSyncTasks.needDelete
-    const fileTotal = this.fileSyncTasks.needUpload + this.fileSyncTasks.needModify +
-      this.fileSyncTasks.needSyncMtime + this.fileSyncTasks.needDelete
-    const configTotal = this.configSyncTasks.needUpload + this.configSyncTasks.needModify +
-      this.configSyncTasks.needSyncMtime + this.configSyncTasks.needDelete
+    const noteTotal = this.noteSyncTasks.needUpload + this.noteSyncTasks.needModify + this.noteSyncTasks.needSyncMtime + this.noteSyncTasks.needDelete
+    const fileTotal = this.fileSyncTasks.needUpload + this.fileSyncTasks.needModify + this.fileSyncTasks.needSyncMtime + this.fileSyncTasks.needDelete
+    const configTotal = this.configSyncTasks.needUpload + this.configSyncTasks.needModify + this.configSyncTasks.needSyncMtime + this.configSyncTasks.needDelete
     return noteTotal + fileTotal + configTotal
   }
 
@@ -147,8 +144,6 @@ export default class FastSync extends Plugin {
   }
 
   async onload() {
-
-
     this.manifest.description = $("fns.desc")
     this.wsSettingChange = false
     await this.loadSettings()
@@ -157,28 +152,16 @@ export default class FastSync extends Plugin {
     this.settings.pluginVersionIsNew = false
     this.settings.pluginVersionNewLink = ""
 
-
-
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
     this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
 
     // 注册同步日志视图
-    SyncLogManager.getInstance().init(this);
-    this.registerView(
-      SYNC_LOG_VIEW_TYPE,
-      (leaf) => new SyncLogView(leaf, this)
-    );
+    SyncLogManager.getInstance().init(this)
+    this.registerView(SYNC_LOG_VIEW_TYPE, (leaf) => new SyncLogView(leaf, this))
 
-    // 注册命令
-    this.addCommand({
-      id: "open-sync-log",
-      name: $("ui.log.view_log"),
-      callback: () => {
-        this.activateLogView();
-      },
-    });
+
 
     // 初始化 菜单/状态栏/命令 等 UI 入口
     this.menuManager = new MenuManager(this)
@@ -193,8 +176,7 @@ export default class FastSync extends Plugin {
     // 初始化配置哈希管理器
     this.configHashManager = new ConfigHashManager(this)
 
-
-    this.registerObsidianProtocolHandler('fast-note-sync/sso', async (data) => {
+    this.registerObsidianProtocolHandler("fast-note-sync/sso", async (data) => {
       if (data?.pushApi) {
         this.settings.api = data.pushApi
         this.settings.apiToken = data.pushApiToken
@@ -204,7 +186,7 @@ export default class FastSync extends Plugin {
         this.wsSettingChange = true
         this.localStorageManager.setMetadata("isInitSync", false)
         await this.saveSettings()
-        new Notice($('ui.status.config_imported'), 5000)
+        new Notice($("ui.status.config_imported"), 5000)
       }
     })
 
@@ -228,7 +210,6 @@ export default class FastSync extends Plugin {
     this.configManager = new ConfigManager(this)
     this.localStorageManager = new LocalStorageManager(this)
     this.localStorageManager.startWatch()
-
 
     this.refreshRuntime()
   }
@@ -307,20 +288,20 @@ export default class FastSync extends Plugin {
   }
 
   async activateLogView() {
-    const { workspace } = this.app;
+    const { workspace } = this.app
 
-    let leaf: WorkspaceLeaf | null = null;
-    const leaves = workspace.getLeavesOfType(SYNC_LOG_VIEW_TYPE);
+    let leaf: WorkspaceLeaf | null = null
+    const leaves = workspace.getLeavesOfType(SYNC_LOG_VIEW_TYPE)
 
     if (leaves.length > 0) {
-      leaf = leaves[0];
+      leaf = leaves[0]
     } else {
-      leaf = workspace.getRightLeaf(false);
-      await leaf?.setViewState({ type: SYNC_LOG_VIEW_TYPE, active: true });
+      leaf = workspace.getRightLeaf(false)
+      await leaf?.setViewState({ type: SYNC_LOG_VIEW_TYPE, active: true })
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      workspace.revealLeaf(leaf)
     }
   }
 }

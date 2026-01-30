@@ -44,6 +44,7 @@ export interface PluginSettings {
   cloudPreviewRemoteUrl: string
   cloudPreviewAutoDeleteLocal: boolean
   offlineDeleteSyncEnabled: boolean
+  syncUpdateDelay: number
 }
 
 /**
@@ -87,6 +88,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   cloudPreviewRemoteUrl: "",
   cloudPreviewAutoDeleteLocal: false,
   offlineDeleteSyncEnabled: false,
+  syncUpdateDelay: 0,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -304,6 +306,20 @@ export class SettingTab extends PluginSettingTab {
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.startup_delay_desc"))
+
+    new Setting(set).setName($("setting.sync.sync_delay")).addText((text) =>
+      text
+        .setPlaceholder("0")
+        .setValue(this.plugin.settings.syncUpdateDelay.toString())
+        .onChange(async (value) => {
+          const numValue = parseInt(value)
+          if (!isNaN(numValue) && numValue >= 0) {
+            this.plugin.settings.syncUpdateDelay = numValue
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.sync_delay_desc"))
 
 
     new Setting(set).setName($("setting.sync.merge_strategy")).addDropdown((dropdown) =>

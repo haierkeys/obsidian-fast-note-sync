@@ -43,7 +43,7 @@ export class EventManager {
 
     // 注册插件卸载时的清理逻辑
     this.plugin.register(() => {
-     dump("EventManager: removing window event listeners")
+      dump("EventManager: removing window event listeners")
       window.removeEventListener("focus", this.onWindowFocus)
       window.removeEventListener("blur", this.onWindowBlur)
       window.removeEventListener("visibilitychange", this.onVisibilityChange)
@@ -80,11 +80,13 @@ export class EventManager {
       return
     }
 
-    if (file.path.endsWith(".md")) {
-      noteModify(file, this.plugin, true)
-    } else {
-      fileModify(file, this.plugin, true)
-    }
+    this.runWithDelay(file.path, () => {
+      if (file.path.endsWith(".md")) {
+        noteModify(file, this.plugin, true)
+      } else {
+        fileModify(file, this.plugin, true)
+      }
+    })
   }
 
   private watchDelete = (file: TAbstractFile, ctx?: any) => {
@@ -93,11 +95,13 @@ export class EventManager {
       return
     }
 
-    if (file.path.endsWith(".md")) {
-      noteDelete(file, this.plugin, true)
-    } else {
-      fileDelete(file, this.plugin, true)
-    }
+    this.runWithDelay(file.path, () => {
+      if (file.path.endsWith(".md")) {
+        noteDelete(file, this.plugin, true)
+      } else {
+        fileDelete(file, this.plugin, true)
+      }
+    })
   }
 
   private watchRename = (file: TAbstractFile, oldFile: string, ctx?: any) => {
@@ -106,11 +110,14 @@ export class EventManager {
       return
     }
 
-    if (file.path.endsWith(".md")) {
-      noteRename(file, oldFile, this.plugin, true)
-    } else {
-      fileRename(file, oldFile, this.plugin, true)
-    }
+    // 重命名操作可能涉及两个路径，我们为新路径设置延迟
+    this.runWithDelay(file.path, () => {
+      if (file.path.endsWith(".md")) {
+        noteRename(file, oldFile, this.plugin, true)
+      } else {
+        fileRename(file, oldFile, this.plugin, true)
+      }
+    })
   }
 
   private watchRaw = (path: string, ctx?: any) => {
@@ -121,22 +128,46 @@ export class EventManager {
       return
     }
 
-    // 清除该路径之前的定时器，确保只处理最后一次触发
-    if (this.rawEventTimers.has(path)) {
-      clearTimeout(this.rawEventTimers.get(path))
+    // 仅处理配置目录下的原始事件
+    if (path.startsWith(this.plugin.app.vault.configDir + "/")) {
+      return
     }
 
-    // 设置 200ms 的延迟执行
-    const timer = setTimeout(() => {
-      this.rawEventTimers.delete(path)
-
-      // 仅处理配置目录下的原始事件
-      if (path.startsWith(this.plugin.app.vault.configDir + "/")) {
+    this.runWithDelay(
+      path,
+      () => {
         this.plugin.configManager.handleRawEvent(normalizePath(path), true)
-      }
-    }, 300)
+      },
+      300,
+    )
+  }
 
-    this.rawEventTimers.set(path, timer)
+  /**
+   * 延迟执行同步任务
+   * @param key 任务唯一标识（通常是文件路径）
+   * @param task 待执行的任务
+   */
+  private runWithDelay(key: string, task: () => void, delayset: number = 0) {
+    // 如果已有定时器，先清除
+    if (this.rawEventTimers.has(key)) {
+      clearTimeout(this.rawEventTimers.get(key))
+    }
+
+    let delay = this.plugin.settings.syncUpdateDelay || 0
+    delay = delay + delayset
+
+    if (delay <= 0) {
+      task()
+      this.rawEventTimers.delete(key)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      this.rawEventTimers.delete(key)
+      task()
+    }, delay)
+
+    this.rawEventTimers.set(key, timer)
   }
 
   private watchFileMenu = (menu: Menu, file: TAbstractFile) => {

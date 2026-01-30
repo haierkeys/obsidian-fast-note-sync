@@ -57,6 +57,8 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.startup_delay": "启动延迟 (毫秒)",
   "setting.sync.startup_delay_placeholder": "输入延迟毫秒数",
   "setting.sync.startup_delay_desc": "配置连接成功后延迟执行首次检查更新的时间。\n如果你打开 Obsidian 时因为其他插件加载导致卡顿，可以尝试设置此项。默认 500 毫秒",
+  "setting.sync.sync_delay": "延迟更新同步 (毫秒)",
+  "setting.sync.sync_delay_desc": "笔记、附件、配置修改后延迟执行同步的时间。默认 0 毫秒 (即时同步)",
 
   // --- setting.cloud ---
   "setting.cloud.title": "附件云预览",

@@ -66,6 +66,15 @@ export class MenuManager {
         await this.plugin.configHashManager.rebuildHashMap();
       },
     });
+
+    // 注册命令
+    this.plugin.addCommand({
+      id: "open-sync-log",
+      name: $("ui.log.view_log"),
+      callback: () => {
+        this.plugin.activateLogView()
+      },
+    })
   }
 
   updateRibbonIcon(status: boolean) {
