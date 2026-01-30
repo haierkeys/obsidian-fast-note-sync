@@ -68,18 +68,30 @@ export const HistoryDetail: React.FC<HistoryDetailProps> = ({ content, diffs, sh
             ? lines.filter(line => line.hasChange)
             : lines;
 
-        return filteredLines.map((line, index) => (
-            <div key={index} className={`history-detail-line ${line.hasChange ? 'has-change' : 'type-normal'} ${!line.lineNumber ? 'is-deleted-line' : ''}`}>
-                <div className="line-number">{line.lineNumber || ""}</div>
-                <div className="line-content">
-                    {line.segments.map((seg, i) => (
-                        <span key={i} className={`diff-seg type-${seg.type}`}>
-                            {seg.text}
-                        </span>
-                    ))}
+        return filteredLines.map((line, index) => {
+            const isPureDelete = !line.lineNumber && line.hasChange;
+            const hasAdd = line.segments.some(seg => seg.type === 'add');
+
+            const lineClasses = [
+                'history-detail-line',
+                line.hasChange ? 'has-change' : 'type-normal',
+                isPureDelete ? 'is-deleted-line type-delete' : '',
+                hasAdd ? 'type-add' : '',
+            ].filter(Boolean).join(' ');
+
+            return (
+                <div key={index} className={lineClasses}>
+                    <div className="line-number">{line.lineNumber || ""}</div>
+                    <div className="line-content">
+                        {line.segments.map((seg, i) => (
+                            <span key={i} className={`diff-seg type-${seg.type}`}>
+                                {seg.text}
+                            </span>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        ));
+            );
+        });
     };
 
     const [copied, setCopied] = React.useState(false);

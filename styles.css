@@ -561,9 +561,28 @@
   user-select: text;
   -webkit-user-select: text;
 }
-.note-history-view .history-detail-container .history-detail-line.type-add {
-  background-color: rgba(0, 255, 0, 0.1);
+.note-history-view .history-detail-container .history-detail-line.has-change.is-deleted-line {
+  background-color: rgba(255, 0, 0, 0.05);
+}
+.note-history-view .history-detail-container .history-detail-line.has-change.is-deleted-line .line-content {
+  text-decoration: line-through;
+  color: var(--text-error);
+}
+.note-history-view .history-detail-container .history-detail-line .diff-seg.type-add {
+  background-color: rgba(0, 255, 0, 0.18);
   color: var(--text-success);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.note-history-view .history-detail-container .history-detail-line .diff-seg.type-delete {
+  background-color: rgba(255, 0, 0, 0.18);
+  color: var(--text-error);
+  text-decoration: line-through;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.note-history-view .history-detail-container .history-detail-line.type-add {
+  background-color: rgba(0, 255, 0, 0.06);
 }
 .note-history-view .history-detail-container .history-detail-line.type-delete {
   background-color: rgba(255, 0, 0, 0.1);

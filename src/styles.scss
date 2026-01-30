@@ -655,9 +655,35 @@
         -webkit-user-select: text;
       }
 
+      &.has-change {
+        &.is-deleted-line {
+          background-color: rgba(255, 0, 0, 0.05);
+          .line-content {
+            text-decoration: line-through;
+            color: var(--text-error);
+          }
+        }
+      }
+
+      .diff-seg {
+        &.type-add {
+          background-color: rgba(0, 255, 0, 0.18);
+          color: var(--text-success);
+          border-radius: 2px;
+          padding: 0 1px;
+        }
+
+        &.type-delete {
+          background-color: rgba(255, 0, 0, 0.18);
+          color: var(--text-error);
+          text-decoration: line-through;
+          border-radius: 2px;
+          padding: 0 1px;
+        }
+      }
+
       &.type-add {
-        background-color: rgba(0, 255, 0, 0.1);
-        color: var(--text-success);
+        background-color: rgba(0, 255, 0, 0.06);
       }
 
       &.type-delete {
