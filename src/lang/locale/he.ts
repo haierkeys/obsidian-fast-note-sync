@@ -10,8 +10,6 @@ const he: Partial<LangMap> = {
   "setting.remote.connected": "השירות מחובר",
   "setting.remote.disconnected": "השירות מנותק",
   "setting.remote.setup_title": "הגדרה ובחירת שירות מרוחק",
-  "setting.remote.setup_desc": "בחר שירות מרוחק שמתאים לך",
-  "setting.remote.setup_table": "| שיטה | תיאור | פרטי ייחוס |\n| --- | --- | --- |\n| הגדרת שירות פרטי | מהירות טובה, הגדרה חופשית, ללא סיכוני פרטיות | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "הדבק הגדרות הרשאת שרת",
   "setting.remote.paste_success": "פרטי הגדרות ה-API הודבקו בהגדרות!",
   "setting.remote.no_config": "לא זוהו פרטי הגדרה!",

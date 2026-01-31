@@ -10,8 +10,6 @@ const ko: Partial<LangMap> = {
   "setting.remote.connected": "서비스 연결됨",
   "setting.remote.disconnected": "서비스 연결 끊김",
   "setting.remote.setup_title": "원격 서비스 설정 및 선택",
-  "setting.remote.setup_desc": "자신에게 적합한 원격을 선택하세요",
-  "setting.remote.setup_table": "| 방식 | 설명 | 상세 참조 |\n| --- | --- | --- |\n| 사설 서비스 구축 | 좋은 속도, 자유로운 설정, 프라이버시 위험 없음 | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "서버 인증 설정 붙여넣기",
   "setting.remote.paste_success": "API 설정 정보가 설정에 붙여넣어졌습니다!",
   "setting.remote.no_config": "설정 정보가 감지되지 않았습니다!",

@@ -10,8 +10,6 @@ const ca: Partial<LangMap> = {
   "setting.remote.connected": "Servei connectat",
   "setting.remote.disconnected": "Servei desconnectat",
   "setting.remote.setup_title": "Configuració i selecció del servei remot",
-  "setting.remote.setup_desc": "Trieu un servei remot que us convingui",
-  "setting.remote.setup_table": "| Mètode | Descripció | Detalls de referència |\n| --- | --- | --- |\n| Desplegament propi | Bona velocitat, configuració lliure, sense riscos de privadesa | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Enganxa la configuració de l'autorització del servidor",
   "setting.remote.paste_success": "S'ha enganxat la informació de configuració de l'API a la configuració!",
   "setting.remote.no_config": "No s'ha detectat informació de configuració!",

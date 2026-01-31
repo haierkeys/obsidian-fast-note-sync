@@ -10,8 +10,6 @@ const ru: Partial<LangMap> = {
   "setting.remote.connected": "Служба подключена",
   "setting.remote.disconnected": "Служба отключена",
   "setting.remote.setup_title": "Настройка и выбор удаленной службы",
-  "setting.remote.setup_desc": "Выберите подходящий удаленный сервер",
-  "setting.remote.setup_table": "| Метод | Описание | Подробности |\n| --- | --- | --- |\n| Частный сервер | Высокая скорость, полная настройка, отсутствие рисков для конфиденциальности | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Вставить конфигурацию авторизации сервера",
   "setting.remote.paste_success": "Конфигурация API вставлена в настройки!",
   "setting.remote.no_config": "Конфигурация не обнаружена!",

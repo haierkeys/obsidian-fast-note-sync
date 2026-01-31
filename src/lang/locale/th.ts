@@ -10,8 +10,6 @@ const th: Partial<LangMap> = {
   "setting.remote.connected": "เชื่อมต่อบริการแล้ว",
   "setting.remote.disconnected": "ตัดการเชื่อมต่อบริการแล้ว",
   "setting.remote.setup_title": "การตั้งค่าและการเลือกบริการปลายทาง",
-  "setting.remote.setup_desc": "เลือกบริการปลายทางที่เหมาะกับคุณ",
-  "setting.remote.setup_table": "| รูปแบบ | คำอธิบาย | รายละเอียดอ้างอิง |\n| --- | --- | --- |\n| ติดตั้งบริการส่วนตัว | ความเร็วดี, ตั้งค่าได้อิสระ, ไม่มีใจความเสี่ยงด้านความเป็นส่วนตัว | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "วางการตั้งค่าการอนุญาตเซิร์ฟเวอร์",
   "setting.remote.paste_success": "ข้อมูลการตั้งค่า API ถูกวางลงในการตั้งค่าแล้ว!",
   "setting.remote.no_config": "ไม่พบข้อมูลการตั้งค่า!",

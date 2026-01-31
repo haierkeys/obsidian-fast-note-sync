@@ -10,8 +10,6 @@ const ro: Partial<LangMap> = {
   "setting.remote.connected": "Serviciu conectat",
   "setting.remote.disconnected": "Serviciu deconectat",
   "setting.remote.setup_title": "Configurarea și alegerea serviciului la distanță",
-  "setting.remote.setup_desc": "Alegeți un serviciu la distanță care vi se potrivește",
-  "setting.remote.setup_table": "| Metodă | Descriere | Detalii de referință |\n| --- | --- | --- |\n| Implementare proprie | Viteză bună, configurație liberă, fără riscuri de confidențialitate | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Lipiți configurația de autorizare a serverului",
   "setting.remote.paste_success": "Informațiile de configurare API au fost lipite în setări!",
   "setting.remote.no_config": "Nu s-au detectat informații de configurare!",

@@ -10,8 +10,6 @@ const ms: Partial<LangMap> = {
   "setting.remote.connected": "Perkhidmatan disambungkan",
   "setting.remote.disconnected": "Perkhidmatan terputus",
   "setting.remote.setup_title": "Penyediaan & Pilihan Perkhidmatan Jauh",
-  "setting.remote.setup_desc": "Pilih perkhidmatan jauh yang sesuai untuk anda",
-  "setting.remote.setup_table": "| Kaedah | Penerangan | Butiran Rujukan |\n| --- | --- | --- |\n| Penempatan Sendiri | Kelajuan baik, konfigurasi bebas, tiada risiko privasi | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Tampal konfigurasi kebenaran pelayan",
   "setting.remote.paste_success": "Maklumat konfigurasi API telah ditampal ke dalam tetapan!",
   "setting.remote.no_config": "Tiada maklumat konfigurasi dikesan!",

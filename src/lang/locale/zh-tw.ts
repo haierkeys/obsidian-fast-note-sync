@@ -10,8 +10,6 @@ const zh_tw: Partial<LangMap> = {
   "setting.remote.connected": "服務已連接",
   "setting.remote.disconnected": "服務已斷開",
   "setting.remote.setup_title": "遠端服務搭建與選擇",
-  "setting.remote.setup_desc": "選擇一個適合自己的遠端",
-  "setting.remote.setup_table": "| 方式 | 說明 | 詳情參考 |\n| --- | --- | --- |\n| 私有服務搭建 | 速度好, 自由配置, 無隱私風險 | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "貼上服務端授權配置",
   "setting.remote.paste_success": "介面配置資訊已經貼上到設置中！",
   "setting.remote.no_config": "未檢測到配置資訊！",

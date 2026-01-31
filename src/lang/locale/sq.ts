@@ -10,8 +10,6 @@ const sq: Partial<LangMap> = {
   "setting.remote.connected": "Shërbimi i lidhur",
   "setting.remote.disconnected": "Shërbimi i shkëputur",
   "setting.remote.setup_title": "Konfigurimi dhe zgjedhja e shërbimit në distancë",
-  "setting.remote.setup_desc": "Zgjidhni një shërbim në distancë që ju përshtatet",
-  "setting.remote.setup_table": "| Metoda | Përshkrimi | Detajet e referencës |\n| --- | --- | --- |\n| Vendosja vetjake | Shpejtësi e mirë, konfigurim i lirë, pa rreziqe të privatësisë | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Ngjitni konfigurimin e autorizimit të serverit",
   "setting.remote.paste_success": "Informacioni i konfigurimit të API-së u ngjit në cilësimet!",
   "setting.remote.no_config": "Nuk u zbulua asnjë informacion konfigurimi!",

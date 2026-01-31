@@ -10,8 +10,6 @@ const de: Partial<LangMap> = {
   "setting.remote.connected": "Dienst verbunden",
   "setting.remote.disconnected": "Dienst getrennt",
   "setting.remote.setup_title": "Remote-Dienst Einrichtung & Auswahl",
-  "setting.remote.setup_desc": "Wählen Sie einen passenden Remote-Dienst",
-  "setting.remote.setup_table": "| Methode | Beschreibung | Details |\n| --- | --- | --- |\n| Private Einrichtung | Gute Geschwindigkeit, freie Konfiguration, kein Datenschutzrisiko | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Server-Autorisierungskonfiguration einfügen",
   "setting.remote.paste_success": "API-Konfigurationsinformationen wurden in die Einstellungen eingefügt!",
   "setting.remote.no_config": "Keine Konfigurationsinformationen erkannt!",

@@ -10,8 +10,6 @@ const hi: Partial<LangMap> = {
   "setting.remote.connected": "सेवा कनेक्ट है",
   "setting.remote.disconnected": "सेवा डिस्कनेक्ट है",
   "setting.remote.setup_title": "रिमोट सेवा सेटअप और चयन",
-  "setting.remote.setup_desc": "वह रिमोट सेवा चुनें जो आपके लिए उपयुक्त हो",
-  "setting.remote.setup_table": "| विधि | विवरण | संदर्भ विवरण |\n| --- | --- | --- |\n| स्व-निर्मित सेवा | अच्छी गति, स्वतंत्र कॉन्फ़िगरेशन, कोई गोपनीयता जोखिम नहीं | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "सर्वर प्राधिकरण कॉन्फ़िगरेशन पेस्ट करें",
   "setting.remote.paste_success": "API कॉन्फ़िगरेशन जानकारी सेटिंग्स में पेस्ट कर दी गई है!",
   "setting.remote.no_config": "कोई कॉन्फ़िगरेशन जानकारी नहीं मिली!",

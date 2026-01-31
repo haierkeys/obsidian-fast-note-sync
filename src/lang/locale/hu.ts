@@ -10,8 +10,6 @@ const hu: Partial<LangMap> = {
   "setting.remote.connected": "Szolgáltatás csatlakozva",
   "setting.remote.disconnected": "Szolgáltatás leválasztva",
   "setting.remote.setup_title": "Távoli szolgáltatás beállítása és kiválasztása",
-  "setting.remote.setup_desc": "Válasszon az Önnek megfelelő távoli szolgáltatást",
-  "setting.remote.setup_table": "| Módszer | Leírás | Referencia részletei |\n| --- | --- | --- |\n| Saját telepítés | Jó sebesség, szabad konfiguráció, nincs adatvédelmi kockázat | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Szerver autorizációs konfiguráció beillesztése",
   "setting.remote.paste_success": "Az API konfigurációs adatai beillesztésre kerültek a beállításokba!",
   "setting.remote.no_config": "Nem található konfigurációs információ!",

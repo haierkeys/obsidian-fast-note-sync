@@ -10,8 +10,6 @@ const ja: Partial<LangMap> = {
   "setting.remote.connected": "サービス接続済み",
   "setting.remote.disconnected": "サービス切断",
   "setting.remote.setup_title": "リモートサービスの構築と選択",
-  "setting.remote.setup_desc": "自分に最適なリモートを選択してください",
-  "setting.remote.setup_table": "| 方法 | 説明 | 詳細参照 |\n| --- | --- | --- |\n| プライベートサービスの構築 | 高速、自由な設定、プライバシーリスクなし | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "サーバー認証設定を貼り付け",
   "setting.remote.paste_success": "API設定情報が設定に貼り付けられました！",
   "setting.remote.no_config": "設定情報が検出されませんでした！",

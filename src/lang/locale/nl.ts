@@ -10,8 +10,6 @@ const nl: Partial<LangMap> = {
   "setting.remote.connected": "Dienst verbonden",
   "setting.remote.disconnected": "Dienst niet verbonden",
   "setting.remote.setup_title": "Setup & Keuze van externe dienst",
-  "setting.remote.setup_desc": "Kies een externe dienst die bij u past",
-  "setting.remote.setup_table": "| Methode | Beschrijving | Referentiedetails |\n| --- | --- | --- |\n| Eigen implementatie | Goede snelheid, vrije configuratie, geen privacyrisico's | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Plak serverautorisatie-configuratie",
   "setting.remote.paste_success": "API-configuratiegegevens zijn in de instellingen geplakt!",
   "setting.remote.no_config": "Geen configuratiegegevens gedetecteerd!",

@@ -10,8 +10,6 @@ const id: Partial<LangMap> = {
   "setting.remote.connected": "Layanan Terhubung",
   "setting.remote.disconnected": "Layanan Terputus",
   "setting.remote.setup_title": "Pengaturan & Pemilihan Layanan Jarak Jauh",
-  "setting.remote.setup_desc": "Pilih layanan jarak jauh yang sesuai untuk Anda",
-  "setting.remote.setup_table": "| Metode | Deskripsi | Detail Referensi |\n| --- | --- | --- |\n| Penyiapan Layanan Pribadi | Kecepatan bagus, konfigurasi bebas, tanpa risiko privasi | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Tempel konfigurasi otorisasi server",
   "setting.remote.paste_success": "Konfigurasi API telah ditempelkan ke pengaturan!",
   "setting.remote.no_config": "Tidak ada informasi konfigurasi yang terdeteksi!",

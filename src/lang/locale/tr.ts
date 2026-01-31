@@ -10,8 +10,6 @@ const tr: Partial<LangMap> = {
   "setting.remote.connected": "Hizmet bağlı",
   "setting.remote.disconnected": "Hizmet bağlantısı kesildi",
   "setting.remote.setup_title": "Uzak Hizmet Kurulumu ve Seçimi",
-  "setting.remote.setup_desc": "Size uygun olan bir uzak hizmet seçin",
-  "setting.remote.setup_table": "| Yöntem | Açıklama | Referans Detayları |\n| --- | --- | --- |\n| Kendi Dağıtımınız | İyi hız, özgür yapılandırma, gizlilik riski yok | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Sunucu yetkilendirme yapılandırmasını yapıştır",
   "setting.remote.paste_success": "API yapılandırma bilgileri ayarlara yapıştırıldı!",
   "setting.remote.no_config": "Yapılandırma bilgisi bulunamadı!",

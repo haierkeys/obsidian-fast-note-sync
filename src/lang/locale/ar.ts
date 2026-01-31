@@ -10,8 +10,6 @@ const ar: Partial<LangMap> = {
   "setting.remote.connected": "الخدمة متصلة",
   "setting.remote.disconnected": "الخدمة مقطوعة",
   "setting.remote.setup_title": "إعداد واختيار الخدمة عن بعد",
-  "setting.remote.setup_desc": "اختر الخدمة عن بعد التي تناسبك",
-  "setting.remote.setup_table": "| الطريقة | الوصف | تفاصيل المرجع |\n| --- | --- | --- |\n| إعداد الخدمة الخاصة | سرعة جيدة، تكوين حر، لا توجد مخاطر خصوصية | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "لصق إعدادات تفويض الخادم",
   "setting.remote.paste_success": "تم لصق معلومات إعدادات API في الإعدادات!",
   "setting.remote.no_config": "لم يتم اكتشاف معلومات الإعدادات!",

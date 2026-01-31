@@ -10,8 +10,6 @@ const be: Partial<LangMap> = {
   "setting.remote.connected": "Сэрвіс падключаны",
   "setting.remote.disconnected": "Сэрвіс адключаны",
   "setting.remote.setup_title": "Налада і выбар аддаленага сэрвісу",
-  "setting.remote.setup_desc": "Абярыце аддалены сэрвіс, які вам падыходзіць",
-  "setting.remote.setup_table": "| Спосаб | Апісанне | Падрабязнасці |\n| --- | --- | --- |\n| Уласная ўстаноўка | Добрая хуткасць, свабодная канфігурацыя, без рызык прыватнасці | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Уставіць канфігурацыю аўтарызацыі сервера",
   "setting.remote.paste_success": "Канфігурацыя API была ўстаўлена ў налады!",
   "setting.remote.no_config": "Інфармацыя аб канфігурацыі не знойдзена!",

@@ -10,8 +10,6 @@ const vi: Partial<LangMap> = {
   "setting.remote.connected": "Dịch vụ đã kết nối",
   "setting.remote.disconnected": "Dịch vụ đã ngắt kết nối",
   "setting.remote.setup_title": "Thiết lập & Lựa chọn dịch vụ từ xa",
-  "setting.remote.setup_desc": "Chọn một dịch vụ từ xa phù hợp với bạn",
-  "setting.remote.setup_table": "| Cách thức | Mô tả | Chi tiết tham khảo |\n| --- | --- | --- |\n| Tự thiết lập dịch vụ | Tốc độ tốt, tự do cấu hình, không rủi ro bảo mật | https://github.com/haierkeys/obsidian-fast-note-sync-service |",
   "setting.remote.paste_config": "Dán cấu hình ủy quyền máy chủ",
   "setting.remote.paste_success": "Thông tin cấu hình API đã được dán vào cài đặt!",
   "setting.remote.no_config": "Không tìm thấy thông tin cấu hình!",
