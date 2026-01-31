@@ -1,7 +1,7 @@
 import { normalizePath, Plugin } from "obsidian";
 
-import { CONFIG_PLUGIN_FILES_TO_WATCH, CONFIG_ROOT_FILES_TO_WATCH, CONFIG_THEME_FILES_TO_WATCH, configModify, configDelete, configAddPathExcluded, configIsPathExcluded, configAllPaths } from "./config_operator";
-import { dump, getFileName, getDirName, getDirNameOrEmpty } from "./helps";
+import { CONFIG_PLUGIN_FILES_TO_WATCH, CONFIG_ROOT_FILES_TO_WATCH, CONFIG_THEME_FILES_TO_WATCH, configModify, configDelete, configAllPaths } from "./config_operator";
+import { dump, getFileName, getDirName, getDirNameOrEmpty, configAddPathExcluded, configIsPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 

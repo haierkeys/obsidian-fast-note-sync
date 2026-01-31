@@ -1,7 +1,7 @@
 import { normalizePath } from "obsidian";
 
+import { hashContent, hashArrayBuffer, dump, sleep, isPathMatch, configIsPathExcluded, configAddPathExcluded } from "./helps";
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, hashArrayBuffer, dump, sleep } from "./helps";
 import type FastSync from "../main";
 
 
@@ -12,10 +12,6 @@ export const CONFIG_ROOT_FILES_TO_WATCH = ["app.json", "appearance.json", "backl
 export const CONFIG_PLUGIN_FILES_TO_WATCH = ["data.json", "manifest.json", "main.js", "styles.css"]
 export const CONFIG_THEME_FILES_TO_WATCH = ["theme.css", "manifest.json"]
 
-/**
- * 排除监听文件的集合
- */
-const CONFIG_EXCLUDE_SET = new Set<string>()
 
 /**
  * 配置操作函数导出
@@ -421,33 +417,6 @@ export const configReload = async function (path: string, plugin: FastSync, even
     }, 1000)
 }
 
-/**
- * 排除监听文件的逻辑
- */
-
-export const configIsPathExcluded = function (relativePath: string, plugin: FastSync): boolean {
-    // 0. 检查白名单 (优先级最高)
-    const whitelistSetting = plugin.settings.configExcludeWhitelist || ""
-    if (whitelistSetting.trim()) {
-        const whitelist = whitelistSetting.split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
-        if (whitelist.some((p) => relativePath === p || relativePath.startsWith(p + "/"))) {
-            return false
-        }
-    }
-
-    if (CONFIG_EXCLUDE_SET.has(relativePath)) return true
-    const setting = plugin.settings.configExclude || ""
-    if (!setting.trim()) return false
-    const paths = setting
-        .split("\n")
-        .map((p) => p.trim())
-        .filter((p) => p !== "")
-    return paths.some((p) => relativePath === p || relativePath.startsWith(p + "/"))
-}
-
-export const configAddPathExcluded = function (relativePath: string, plugin: FastSync): void {
-    CONFIG_EXCLUDE_SET.add(relativePath)
-}
 
 /**
  * 提取 Operator 映射

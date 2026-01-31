@@ -1,10 +1,17 @@
-import { Notice, moment, Menu, MenuItem } from "obsidian";
+import { Notice, moment } from "obsidian";
 
-import { CONFIG_ROOT_FILES_TO_WATCH } from './config_operator';
-import { $ } from "../lang/lang";
 import FastSync from "../main";
 
 
+/**
+ * =============================================================================
+ * 路径与过滤相关 (Path & Exclusion)
+ * =============================================================================
+ */
+
+/**
+ * 获取文件名
+ */
 export const getFileName = function (path: string, includeExt: boolean = true): string {
   const base = path.split(/[\\/]/).pop() || ""
   const lastDotIndex = base.lastIndexOf(".")
@@ -16,6 +23,9 @@ export const getFileName = function (path: string, includeExt: boolean = true): 
   return base.substring(0, lastDotIndex)
 }
 
+/**
+ * 获取目录名
+ */
 export const getDirName = function (path: string): string {
   // 1. 统一将 Windows 分隔符 \ 替换为 /，方便统一处理
   // 2. 找到最后一个斜杠的位置
@@ -28,20 +38,38 @@ export const getDirName = function (path: string): string {
   return parts[0] || "";
 };
 
+/**
+ * 获取目录名或空
+ */
 export const getDirNameOrEmpty = function (path: string): string {
   return path != undefined && path.includes(".") ? "" : path;
 };
 
 /**
- * 检查路径是否被排除
+ * 检查路径是否命中模式 (左匹配/前缀匹配)
+ * 匹配情况：
+ * 1. path === pattern (全等)
+ * 2. path 以 pattern + "/" 开头 (子目录或文件)
+ */
+export const isPathMatch = function (path: string, pattern: string): boolean {
+  // 自动移除 pattern 尾部的斜杠，防止出现 // 匹配
+  const p = pattern.endsWith("/") ? pattern.slice(0, -1) : pattern;
+  if (path === p) return true;
+  if (path.startsWith(p + "/")) return true;
+  return false;
+}
+
+/**
+ * 检查路径是否被排除 (针对笔记和附件)
  */
 export const isPathExcluded = function (path: string, plugin: FastSync): boolean {
   const { syncExcludeFolders, syncExcludeExtensions, syncExcludeWhitelist } = plugin.settings;
+  const normalizedPath = path.replace(/\\/g, "/");
 
   // 0. 检查白名单 (优先级最高)
   if (syncExcludeWhitelist) {
-    const whitelist = syncExcludeWhitelist.split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
-    if (whitelist.some(p => path === p)) {
+    const whitelist = syncExcludeWhitelist.replace(/\\/g, "/").split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
+    if (whitelist.some(p => isPathMatch(normalizedPath, p))) {
       return false;
     }
   }
@@ -49,7 +77,7 @@ export const isPathExcluded = function (path: string, plugin: FastSync): boolean
   // 1. 检查扩展名排除
   if (syncExcludeExtensions) {
     const extList = syncExcludeExtensions.split(/\r?\n/).map(e => e.trim().toLowerCase()).filter(e => e !== "");
-    const ext = "." + path.split(".").pop()?.toLowerCase();
+    const ext = "." + normalizedPath.split(".").pop()?.toLowerCase();
     if (extList.some(e => ext === e || (e.startsWith(".") && ext === e) || (!e.startsWith(".") && ext === "." + e))) {
       return true;
     }
@@ -57,9 +85,8 @@ export const isPathExcluded = function (path: string, plugin: FastSync): boolean
 
   // 2. 检查目录排除
   if (syncExcludeFolders) {
-    const folderList = syncExcludeFolders.split(/\r?\n/).map(f => f.trim()).filter(f => f !== "");
-    const pathParts = path.split(/[\\/]/);
-    if (folderList.some(folder => pathParts.some(part => part === folder))) {
+    const folderList = syncExcludeFolders.replace(/\\/g, "/").split(/\r?\n/).map(f => f.trim()).filter(f => f !== "");
+    if (folderList.some(f => isPathMatch(normalizedPath, f))) {
       return true;
     }
   }
@@ -67,41 +94,53 @@ export const isPathExcluded = function (path: string, plugin: FastSync): boolean
   return false;
 }
 
-
-
+/**
+ * 排除监听文件的集合 (缓存)
+ */
+const CONFIG_EXCLUDE_SET = new Set<string>()
 
 /**
- * timestampToDate
- * 将时间戳转换为格式化的日期字符串（YYYY-MM-DD HH:mm:ss）
- * @param timestamp - 时间戳（以毫秒为单位）
- * @returns 格式化的日期字符串
+ * 检查配置文件路径是否被排除
  */
-export const timestampToDate = function (timestamp: number): string {
-  return moment(timestamp).format("YYYY-MM-DD HH:mm:ss")
-}
-
-/**
- * stringToDate
- * 将日期字符串转换为格式化的日期字符串（YYYY-MM-DD HH:mm:ss）
- * 如果输入的日期字符串为空，则使用默认日期 "1970-01-01 00:00:00"
- * @param date - 日期字符串
- * @returns 格式化的日期字符串
- */
-export const stringToDate = function (date: string): string {
-  if (!date || date == "") {
-    date = "1970-01-01 00:00:00"
+export const configIsPathExcluded = function (relativePath: string, plugin: FastSync): boolean {
+  const normalizedPath = relativePath.replace(/\\/g, "/");
+  // 0. 检查白名单 (优先级最高)
+  const whitelistSetting = plugin.settings.configExcludeWhitelist || ""
+  if (whitelistSetting.trim()) {
+    const whitelist = whitelistSetting.replace(/\\/g, "/").split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
+    if (whitelist.some((p) => isPathMatch(normalizedPath, p))) {
+      return false
+    }
   }
-  return moment(date).format("YYYY-MM-DD HH:mm:ss")
+
+  if (CONFIG_EXCLUDE_SET.has(relativePath)) return true
+  const setting = plugin.settings.configExclude || ""
+  if (!setting.trim()) return false
+  const paths = setting
+    .replace(/\\/g, "/")
+    .split(/\r?\n/)
+    .map((p) => p.trim())
+    .filter((p) => p !== "")
+  return paths.some((p) => isPathMatch(normalizedPath, p))
 }
 
 /**
- * hashContent
- * 使用简单的哈希函数生成输入字符串的哈希值
- * @param content - 要哈希的字符串内容
- * @returns 字符串内容的哈希值
+ * 添加到临时排除集合
+ */
+export const configAddPathExcluded = function (relativePath: string, plugin: FastSync): void {
+  CONFIG_EXCLUDE_SET.add(relativePath)
+}
+
+/**
+ * =============================================================================
+ * 哈希相关 (Hashing)
+ * =============================================================================
+ */
+
+/**
+ * 对字符串内容进行哈希
  */
 export const hashContent = function (content: string): string {
-  // 使用简单的哈希函数生成哈希值
   let hash = 0
   for (let i = 0; i < content.length; i++) {
     const char = content.charCodeAt(i)
@@ -112,10 +151,7 @@ export const hashContent = function (content: string): string {
 }
 
 /**
- * hashArrayBuffer
- * 使用简单的哈希函数生成 ArrayBuffer 的哈希值
- * @param buffer - 要哈希的 ArrayBuffer
- * @returns 内容的哈希值
+ * 对 ArrayBuffer 进行哈希
  */
 export const hashArrayBuffer = function (buffer: ArrayBuffer): string {
   let hash = 0
@@ -129,37 +165,38 @@ export const hashArrayBuffer = function (buffer: ArrayBuffer): string {
 }
 
 /**
- * showErrorDialog
- * 显示一个错误对话框，内容为传入的消息
- * @param message - 要显示的错误消息
+ * =============================================================================
+ * 日期与时间相关 (Date & Time)
+ * =============================================================================
  */
-export const showErrorDialog = function (message: string): void {
-  new Notice(message)
-}
 
-// 默认开启日志
-let isLogEnabled = false
-
-export const setLogEnabled = (enabled: boolean) => {
-  isLogEnabled = enabled
+/**
+ * 将时间戳转换为格式化的日期字符串 (YYYY-MM-DD HH:mm:ss)
+ */
+export const timestampToDate = function (timestamp: number): string {
+  return moment(timestamp).format("YYYY-MM-DD HH:mm:ss")
 }
 
 /**
- * dump
- * 将传入的消息打印到控制台
- * @param message - 要打印的消息，可以是多个参数
+ * 将日期字符串转换为格式化的日期字符串 (YYYY-MM-DD HH:mm:ss)
  */
-export const dump = function (...message: unknown[]): void {
-  if (isLogEnabled) {
-    console.log(...message)
+export const stringToDate = function (date: string): string {
+  if (!date || date == "") {
+    date = "1970-01-01 00:00:00"
   }
+  return moment(date).format("YYYY-MM-DD HH:mm:ss")
 }
 
-export const dumpTable = function (message: any): void {
-  if (isLogEnabled) {
-    console.table(message)
-  }
-}
+/**
+ * 延迟执行 (让出主线程)
+ */
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * =============================================================================
+ * 网络与 URL 相关 (Network & URL)
+ * =============================================================================
+ */
 
 export function isHttpUrl(url: string): boolean {
   return /^https?:\/\/.+/i.test(url)
@@ -178,7 +215,47 @@ export function addRandomParam(url: string): string {
 }
 
 /**
- * 延迟执行（让出主线程）
- * @param ms 毫秒
+ * =============================================================================
+ * 日志与调试相关 (Logging & Debug)
+ * =============================================================================
  */
-export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+let isLogEnabled = false
+
+/**
+ * 设置是否启用日志
+ */
+export const setLogEnabled = (enabled: boolean) => {
+  isLogEnabled = enabled
+}
+
+/**
+ * 打印普通日志
+ */
+export const dump = function (...message: unknown[]): void {
+  if (isLogEnabled) {
+    console.log(...message)
+  }
+}
+
+/**
+ * 以表格形式打印日志
+ */
+export const dumpTable = function (message: any): void {
+  if (isLogEnabled) {
+    console.table(message)
+  }
+}
+
+/**
+ * =============================================================================
+ * 其他 UI 相关 (Other UI)
+ * =============================================================================
+ */
+
+/**
+ * 显示错误消息通知
+ */
+export const showErrorDialog = function (message: string): void {
+  new Notice(message)
+}

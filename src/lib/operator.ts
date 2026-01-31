@@ -1,10 +1,10 @@
 ﻿import { TFolder, Notice, normalizePath } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments } from "./file_operator";
-import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, configIsPathExcluded } from "./config_operator";
+import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd } from "./note_operator";
 import { SyncMode, SnapFile, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData } from "./types";
-import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 

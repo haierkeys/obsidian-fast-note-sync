@@ -1,7 +1,7 @@
 import { Notice, normalizePath } from "obsidian";
 
-import { configIsPathExcluded, configAllPaths } from "./config_operator";
-import { hashContent, hashArrayBuffer, dump } from "./helps";
+import { hashContent, hashArrayBuffer, dump, configIsPathExcluded } from "./helps";
+import { configAllPaths } from "./config_operator";
 import type FastSync from "../main";
 
 
