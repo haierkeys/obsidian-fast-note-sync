@@ -1,6 +1,6 @@
 import { normalizePath, Plugin } from "obsidian";
 
-import { CONFIG_PLUGIN_FILES_TO_WATCH, CONFIG_ROOT_FILES_TO_WATCH, CONFIG_THEME_FILES_TO_WATCH, configModify, configDelete, configAllPaths } from "./config_operator";
+import { CONFIG_PLUGIN_EXTS_TO_WATCH, CONFIG_ROOT_FILES_TO_WATCH, CONFIG_THEME_EXTS_TO_WATCH, configModify, configDelete, configAllPaths } from "./config_operator";
 import { dump, getFileName, getDirName, getDirNameOrEmpty, configAddPathExcluded, configIsPathExcluded } from "./helps";
 import type FastSync from "../main";
 
@@ -11,15 +11,15 @@ export class ConfigManager {
   private pluginRealDir: string = ""
   private fileStates: Map<string, number> = new Map()
   private rootFilesToWatch: string[] = []
-  private pluginFilesToWatch: string[] = []
-  private themeFilesToWatch: string[] = []
+  private pluginExtsToWatch: string[] = []
+  private themeExtsToWatch: string[] = []
   public enabledPlugins: Set<string> = new Set()
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
     this.rootFilesToWatch = CONFIG_ROOT_FILES_TO_WATCH
-    this.pluginFilesToWatch = CONFIG_PLUGIN_FILES_TO_WATCH
-    this.themeFilesToWatch = CONFIG_THEME_FILES_TO_WATCH
+    this.pluginExtsToWatch = CONFIG_PLUGIN_EXTS_TO_WATCH
+    this.themeExtsToWatch = CONFIG_THEME_EXTS_TO_WATCH
     this.pluginRealDir = this.plugin.manifest.dir ?? ""
     this.pluginDir = this.pluginRealDir.replace(this.plugin.app.vault.configDir + "/", "")
 
@@ -86,8 +86,8 @@ export class ConfigManager {
         shouldCheck = true
       } else if (parts.length === 3 && nameDir != "" && fileName != "") {
         // 受监控文件变动
-        const isPluginFile = topDir === "plugins" && this.pluginFilesToWatch.includes(fileName)
-        const isThemeFile = topDir === "themes" && this.themeFilesToWatch.includes(fileName)
+        const isPluginFile = topDir === "plugins" && this.pluginExtsToWatch.some(ext => fileName.endsWith(ext))
+        const isThemeFile = topDir === "themes" && this.themeExtsToWatch.some(ext => fileName.endsWith(ext))
         if (isPluginFile || isThemeFile) shouldCheck = true
       }
     } else if (topDir === "snippets" && nameDir == "" && fileName.endsWith(".css")) {

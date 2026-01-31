@@ -9,8 +9,8 @@ import type FastSync from "../main";
  * 排除监听文件的常量
  */
 export const CONFIG_ROOT_FILES_TO_WATCH = ["app.json", "appearance.json", "backlink.json", "bookmarks.json", "command-palette.json", "community-plugins.json", "core-plugins.json", "core-plugins-migration.json", "graph.json", "hotkeys.json", "page-preview.json", "starred.json", "webviewer.json", "types.json", "daily-notes.json"]
-export const CONFIG_PLUGIN_FILES_TO_WATCH = ["data.json", "manifest.json", "main.js", "styles.css"]
-export const CONFIG_THEME_FILES_TO_WATCH = ["theme.css", "manifest.json"]
+export const CONFIG_PLUGIN_EXTS_TO_WATCH = [".json", ".js", ".css"]
+export const CONFIG_THEME_EXTS_TO_WATCH = [".css", ".json"]
 
 
 /**
@@ -272,9 +272,13 @@ export const configAllPaths = async function (configDir: string, plugin: FastSyn
             const result = await adapter.list(pluginsPath)
             for (const folderPath of result.folders) {
                 const folderName = folderPath.split("/").pop()
-                for (const fileName of CONFIG_PLUGIN_FILES_TO_WATCH) {
-                    const rel = `plugins/${folderName}/${fileName}`
-                    if (!isExcluded(rel) && (await adapter.exists(normalizePath(`${folderPath}/${fileName}`)))) paths.push(rel)
+                const folderItems = await adapter.list(folderPath)
+                for (const file of folderItems.files) {
+                    const fileName = file.split("/").pop() || ""
+                    if (CONFIG_PLUGIN_EXTS_TO_WATCH.some(ext => fileName.endsWith(ext))) {
+                        const rel = `plugins/${folderName}/${fileName}`
+                        if (!isExcluded(rel)) paths.push(rel)
+                    }
                 }
             }
         }
@@ -283,9 +287,13 @@ export const configAllPaths = async function (configDir: string, plugin: FastSyn
             const result = await adapter.list(themesPath)
             for (const folderPath of result.folders) {
                 const folderName = folderPath.split("/").pop()
-                for (const fileName of CONFIG_THEME_FILES_TO_WATCH) {
-                    const rel = `themes/${folderName}/${fileName}`
-                    if (!isExcluded(rel) && (await adapter.exists(normalizePath(`${folderPath}/${fileName}`)))) paths.push(rel)
+                const folderItems = await adapter.list(folderPath)
+                for (const file of folderItems.files) {
+                    const fileName = file.split("/").pop() || ""
+                    if (CONFIG_THEME_EXTS_TO_WATCH.some(ext => fileName.endsWith(ext))) {
+                        const rel = `themes/${folderName}/${fileName}`
+                        if (!isExcluded(rel)) paths.push(rel)
+                    }
                 }
             }
         }
