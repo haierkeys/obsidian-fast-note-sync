@@ -228,7 +228,7 @@ export class SettingTab extends PluginSettingTab {
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.offline_delete_desc"))
 
 
-    new Setting(set).setName($("setting.sync.exclude")).addTextArea((text) =>
+    new Setting(set).setName($("setting.sync.exclude")).addTextArea((text) => {
       text
         .setPlaceholder($("setting.sync.exclude_placeholder"))
         .setValue(this.plugin.settings.syncExcludeFolders)
@@ -237,11 +237,12 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.settings.syncExcludeFolders = value
             await this.plugin.saveSettings()
           }
-        }),
-    )
+        })
+      text.inputEl.style.minHeight = "6lh"
+    })
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_desc"))
 
-    new Setting(set).setName($("setting.sync.exclude_extensions")).addTextArea((text) =>
+    new Setting(set).setName($("setting.sync.exclude_extensions")).addTextArea((text) => {
       text
         .setPlaceholder(".tmp\n.log")
         .setValue(this.plugin.settings.syncExcludeExtensions)
@@ -250,11 +251,12 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.settings.syncExcludeExtensions = value
             await this.plugin.saveSettings()
           }
-        }),
-    )
+        })
+      text.inputEl.style.minHeight = "6lh"
+    })
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_extensions_desc"))
 
-    new Setting(set).setName($("setting.sync.exclude_whitelist")).addTextArea((text) =>
+    new Setting(set).setName($("setting.sync.exclude_whitelist")).addTextArea((text) => {
       text
         .setPlaceholder($("setting.sync.exclude_placeholder"))
         .setValue(this.plugin.settings.syncExcludeWhitelist)
@@ -263,11 +265,12 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.settings.syncExcludeWhitelist = value
             await this.plugin.saveSettings()
           }
-        }),
-    )
+        })
+      text.inputEl.style.minHeight = "6lh"
+    })
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_whitelist_desc"))
 
-    new Setting(set).setName($("setting.sync.config_exclude")).addTextArea((text) =>
+    new Setting(set).setName($("setting.sync.config_exclude")).addTextArea((text) => {
       text
         .setPlaceholder($("setting.sync.config_exclude_placeholder"))
         .setValue(this.plugin.settings.configExclude)
@@ -276,11 +279,12 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.settings.configExclude = value
             await this.plugin.saveSettings()
           }
-        }),
-    )
+        })
+      text.inputEl.style.minHeight = "6lh"
+    })
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_desc"))
 
-    new Setting(set).setName($("setting.sync.config_exclude_whitelist")).addTextArea((text) =>
+    new Setting(set).setName($("setting.sync.config_exclude_whitelist")).addTextArea((text) => {
       text
         .setPlaceholder($("setting.sync.config_exclude_placeholder"))
         .setValue(this.plugin.settings.configExcludeWhitelist)
@@ -289,8 +293,9 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.settings.configExcludeWhitelist = value
             await this.plugin.saveSettings()
           }
-        }),
-    )
+        })
+      text.inputEl.style.minHeight = "6lh"
+    })
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_whitelist_desc"))
 
     new Setting(set).setName($("setting.sync.startup_delay")).addText((text) =>
@@ -364,7 +369,7 @@ export class SettingTab extends PluginSettingTab {
       )
       this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.type_limit_desc"))
 
-      new Setting(set).setName($("setting.cloud.remote_source")).addTextArea((text) =>
+      new Setting(set).setName($("setting.cloud.remote_source")).addTextArea((text) => {
         text
           .setPlaceholder("prefix@.jpg$.png#http://domain.com/{path}")
           .setValue(this.plugin.settings.cloudPreviewRemoteUrl)
@@ -374,8 +379,9 @@ export class SettingTab extends PluginSettingTab {
               await this.plugin.saveSettings()
             }
           })
-          .inputEl.addClass("fast-note-sync-remote-url-area"),
-      )
+        text.inputEl.addClass("fast-note-sync-remote-url-area")
+        text.inputEl.style.minHeight = "6lh"
+      })
       const remoteUrlSetting = set.lastElementChild as HTMLElement
       remoteUrlSetting.addClass("fast-note-sync-remote-url-setting")
       this.setDescWithBreaks(remoteUrlSetting, $("setting.cloud.remote_source_desc"))

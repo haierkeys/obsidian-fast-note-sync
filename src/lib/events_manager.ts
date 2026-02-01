@@ -10,6 +10,7 @@ import { dump } from "./helps";
 
 export class EventManager {
   private plugin: FastSync
+  private fileModTimeMap = new Map<string, any>()
   private rawEventTimers: Map<string, any> = new Map()
 
   constructor(plugin: FastSync) {
@@ -80,7 +81,7 @@ export class EventManager {
       return
     }
 
-    this.runWithDelay(file.path, () => {
+    this.runWithDelay(file, () => {
       if (file.path.endsWith(".md")) {
         noteModify(file, this.plugin, true)
       } else {
@@ -95,7 +96,7 @@ export class EventManager {
       return
     }
 
-    this.runWithDelay(file.path, () => {
+    this.runWithDelay(file, () => {
       if (file.path.endsWith(".md")) {
         noteDelete(file, this.plugin, true)
       } else {
@@ -111,7 +112,7 @@ export class EventManager {
     }
 
     // 重命名操作可能涉及两个路径，我们为新路径设置延迟
-    this.runWithDelay(file.path, () => {
+    this.runWithDelay(file, () => {
       if (file.path.endsWith(".md")) {
         noteRename(file, oldFile, this.plugin, true)
       } else {
@@ -120,7 +121,8 @@ export class EventManager {
     })
   }
 
-  private watchRaw = (path: string, ctx?: any) => {
+  private watchRaw = (file: TAbstractFile, ctx?: any) => {
+    const path = file.path
     if (!path) return
 
     // 检查 WebSocket 认证状态
@@ -134,7 +136,7 @@ export class EventManager {
     }
 
     this.runWithDelay(
-      path,
+      file,
       () => {
         this.plugin.configManager.handleRawEvent(normalizePath(path), true)
       },
@@ -144,10 +146,19 @@ export class EventManager {
 
   /**
    * 延迟执行同步任务
-   * @param key 任务唯一标识（通常是文件路径）
+   * @param file 文件
    * @param task 待执行的任务
    */
-  private runWithDelay(key: string, task: () => void, delayset: number = 0) {
+  private runWithDelay(file: TAbstractFile, task: () => void, delayset: number = 0) {
+    const key = file.path;
+    const fileMtime = file.vault.getFileByPath(key)?.stat.mtime;
+
+    // 文件并未重新修改
+    if (this.fileModTimeMap.get(key) === fileMtime) {
+      return
+    }
+    this.fileModTimeMap.set(key, fileMtime)
+
     // 如果已有定时器，先清除
     if (this.rawEventTimers.has(key)) {
       clearTimeout(this.rawEventTimers.get(key))
