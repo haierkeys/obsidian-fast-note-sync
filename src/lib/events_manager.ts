@@ -121,6 +121,7 @@ export class EventManager {
   }
 
   private watchRaw = (path: string, ctx?: any) => {
+
     if (!path) return
 
     // 检查 WebSocket 认证状态
@@ -129,7 +130,7 @@ export class EventManager {
     }
 
     // 仅处理配置目录下的原始事件
-    if (path.startsWith(this.plugin.app.vault.configDir + "/")) {
+    if (!path.startsWith(this.plugin.app.vault.configDir + "/")) {
       return
     }
 
