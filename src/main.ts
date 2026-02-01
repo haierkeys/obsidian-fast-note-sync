@@ -145,12 +145,14 @@ export default class FastSync extends Plugin {
 
   async onload() {
     this.manifest.description = $("fns.desc")
-    this.wsSettingChange = false
+    this.localStorageManager = new LocalStorageManager(this)
+    this.localStorageManager.startWatch()
+
     await this.loadSettings()
-    this.settings.serverVersionIsNew = false
-    this.settings.serverVersionNewLink = ""
-    this.settings.pluginVersionIsNew = false
-    this.settings.pluginVersionNewLink = ""
+    this.localStorageManager.setMetadata("serverVersionIsNew", false)
+    this.localStorageManager.setMetadata("serverVersionNewLink", "")
+    this.localStorageManager.setMetadata("pluginVersionIsNew", false)
+    this.localStorageManager.setMetadata("pluginVersionNewLink", "")
 
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
@@ -186,6 +188,7 @@ export default class FastSync extends Plugin {
         this.wsSettingChange = true
         this.localStorageManager.setMetadata("isInitSync", false)
         await this.saveSettings()
+        //this.settingTab.display()
         new Notice($("ui.status.config_imported"), 5000)
       }
     })
@@ -208,8 +211,7 @@ export default class FastSync extends Plugin {
     })
 
     this.configManager = new ConfigManager(this)
-    this.localStorageManager = new LocalStorageManager(this)
-    this.localStorageManager.startWatch()
+    this.configManager = new ConfigManager(this)
 
     this.refreshRuntime()
   }
@@ -224,6 +226,7 @@ export default class FastSync extends Plugin {
   async loadSettings() {
     const data = await this.loadData()
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data)
+
     if (!this.settings.vault) {
       this.settings.vault = this.app.vault.getName()
     }

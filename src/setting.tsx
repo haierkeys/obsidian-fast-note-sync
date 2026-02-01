@@ -22,15 +22,6 @@ export interface PluginSettings {
   vault: string
   //  [propName: string]: any;
 
-  serverVersion: string
-  serverVersionIsNew: boolean
-  serverVersionNewName: string
-  serverVersionNewLink: string
-
-  pluginVersionIsNew: boolean
-  pluginVersionNewName: string
-  pluginVersionNewLink: string
-
   configExclude: string
   startupDelay: number
   offlineSyncStrategy: string
@@ -45,6 +36,7 @@ export interface PluginSettings {
   cloudPreviewAutoDeleteLocal: boolean
   offlineDeleteSyncEnabled: boolean
   syncUpdateDelay: number
+  showSyncNotice: boolean
 }
 
 /**
@@ -66,14 +58,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   // API 令牌
   apiToken: "",
   vault: "",
-  serverVersion: "",
-  serverVersionIsNew: false,
-  serverVersionNewName: "",
-  serverVersionNewLink: "",
-
-  pluginVersionIsNew: false,
-  pluginVersionNewName: "",
-  pluginVersionNewLink: "",
 
   configExclude: "",
   startupDelay: 500,
@@ -89,6 +73,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   cloudPreviewAutoDeleteLocal: false,
   offlineDeleteSyncEnabled: false,
   syncUpdateDelay: 0,
+  showSyncNotice: true,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -226,6 +211,16 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.offline_delete_desc"))
+
+    new Setting(set).setName($("setting.sync.show_notice")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.showSyncNotice).onChange(async (value) => {
+        if (value != this.plugin.settings.showSyncNotice) {
+          this.plugin.settings.showSyncNotice = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.show_notice_desc"))
 
 
     new Setting(set).setName($("setting.sync.exclude")).addTextArea((text) =>
@@ -452,6 +447,9 @@ export class SettingTab extends PluginSettingTab {
               lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
               clientName: this.plugin.localStorageManager.getMetadata("clientName"),
               isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
+              serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+              serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
+              pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
             },
             pluginVersion: this.plugin.manifest.version,
           },

@@ -97,13 +97,45 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
     }
   }, [isConnected]);
 
+  // 简单的 Markdown 表格渲染函数
+  const renderMarkdownTable = (content: string) => {
+    const lines = content.split('\n');
+    const tableData = lines.filter(line => line.trim().startsWith('|') && line.trim().endsWith('|'));
+    if (tableData.length < 2) return null;
+
+    const parseRow = (row: string) => row.split('|').filter((_, i, arr) => i > 0 && i < arr.length - 1).map(s => s.trim());
+    const headerRow = parseRow(tableData[0]);
+    const bodyRows = tableData.slice(2).map(parseRow);
+
+    return (
+      <table className="fast-note-sync-settings-openapi">
+        <thead>
+          <tr>
+            {headerRow.map((h, i) => <th key={i}>{h}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {bodyRows.map((row, i) => (
+            <tr key={i}>
+              {row.map((cell, j) => {
+                return <td key={j} dangerouslySetInnerHTML={{ __html: cell }} />;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
   return (
     <>
       <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
         <div className="setting-item-info">
-          <div className="setting-item-name"><a href="https://github.com/haierkeys/fast-note-sync-service" target="_blank">{$("setting.remote.setup_title")}</a></div>
+          <div className="setting-item-name">{$("setting.remote.setup_title")}</div>
+          <div className="setting-item-description">{$("setting.remote.setup_desc")}</div>
         </div>
         <div style={{ width: '100%', marginTop: '0px' }}>
+          {renderMarkdownTable($("setting.remote.setup_table"))}
           <div className="clipboard-read">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>

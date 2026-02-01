@@ -514,7 +514,6 @@ export const receiveFileSyncEnd = async function (data: any, plugin: FastSync) {
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
   plugin.localStorageManager.setMetadata("lastFileSyncTime", syncData.lastTime)
-  await plugin.saveData(plugin.settings)
   plugin.syncTypeCompleteCount++
 }
 
@@ -656,7 +655,6 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
 
     if (Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) < session.lastTime) {
       plugin.localStorageManager.setMetadata("lastFileSyncTime", session.lastTime)
-      await plugin.saveData(plugin.settings)
     }
 
     // 释放内存计数

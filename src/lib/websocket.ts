@@ -201,8 +201,7 @@ export class WebSocketClient {
           } else {
             this.isAuth = true
             if (data.data) {
-              this.plugin.settings.serverVersion = data.data.version ?? this.plugin.settings.serverVersion
-              this.plugin.saveSettings()
+              this.plugin.localStorageManager.setMetadata("serverVersion", data.data.version ?? this.plugin.localStorageManager.getMetadata("serverVersion"))
             }
             dump("Service authorization success")
 
@@ -217,13 +216,12 @@ export class WebSocketClient {
             return
           } else {
             if (data.data) {
-              this.plugin.settings.serverVersionIsNew = data.data.versionIsNew ?? this.plugin.settings.serverVersionIsNew
-              this.plugin.settings.serverVersionNewName = data.data.versionNewName ?? this.plugin.settings.serverVersionNewName
-              this.plugin.settings.serverVersionNewLink = data.data.versionNewLink ?? this.plugin.settings.serverVersionNewLink
-              this.plugin.settings.pluginVersionIsNew = data.data.pluginVersionIsNew ?? this.plugin.settings.pluginVersionIsNew
-              this.plugin.settings.pluginVersionNewName = data.data.pluginVersionNewName ?? this.plugin.settings.pluginVersionNewName
-              this.plugin.settings.pluginVersionNewLink = data.data.pluginVersionNewLink ?? this.plugin.settings.pluginVersionNewLink
-              this.plugin.saveSettings()
+              this.plugin.localStorageManager.setMetadata("serverVersionIsNew", data.data.versionIsNew ?? this.plugin.localStorageManager.getMetadata("serverVersionIsNew"))
+              this.plugin.localStorageManager.setMetadata("serverVersionNewName", data.data.versionNewName ?? this.plugin.localStorageManager.getMetadata("serverVersionNewName"))
+              this.plugin.localStorageManager.setMetadata("serverVersionNewLink", data.data.versionNewLink ?? this.plugin.localStorageManager.getMetadata("serverVersionNewLink"))
+              this.plugin.localStorageManager.setMetadata("pluginVersionIsNew", data.data.pluginVersionIsNew ?? this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"))
+              this.plugin.localStorageManager.setMetadata("pluginVersionNewName", data.data.pluginVersionNewName ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewName"))
+              this.plugin.localStorageManager.setMetadata("pluginVersionNewLink", data.data.pluginVersionNewLink ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewLink"))
             }
           }
           return

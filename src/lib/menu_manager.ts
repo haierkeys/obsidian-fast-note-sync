@@ -205,13 +205,14 @@ export class MenuManager {
       const title = $("ui.menu.plugin") + ": v" + this.plugin.manifest.version;
       item.setTitle(title);
 
-      if (this.plugin.settings.pluginVersionIsNew) {
+      if (this.plugin.localStorageManager.getMetadata("pluginVersionIsNew")) {
         item.onClick(() => {
-          if (this.plugin.settings.pluginVersionNewLink) {
-            window.open(this.plugin.settings.pluginVersionNewLink);
+          const link = this.plugin.localStorageManager.getMetadata("pluginVersionNewLink");
+          if (link) {
+            window.open(link);
           }
         });
-        const ariaLabel = $("ui.status.new_version", { version: this.plugin.settings.pluginVersionNewName || "" });
+        const ariaLabel = $("ui.status.new_version", { version: this.plugin.localStorageManager.getMetadata("pluginVersionNewName") || "" });
         (item as any).dom.setAttribute("aria-label", ariaLabel);
 
         const itemDom = (item as any).dom as HTMLElement;
@@ -233,19 +234,21 @@ export class MenuManager {
     });
 
 
-    if (this.plugin.settings.serverVersion) {
+    const serverVersion = this.plugin.localStorageManager.getMetadata("serverVersion");
+    if (serverVersion) {
       menu.addSeparator();
       menu.addItem((item: MenuItem) => {
-        const title = $("ui.menu.server") + ": v" + this.plugin.settings.serverVersion;
+        const title = $("ui.menu.server") + ": v" + serverVersion;
         item.setTitle(title);
 
-        if (this.plugin.settings.serverVersionIsNew) {
+        if (this.plugin.localStorageManager.getMetadata("serverVersionIsNew")) {
           item.onClick(() => {
-            if (this.plugin.settings.serverVersionNewLink) {
-              window.open(this.plugin.settings.serverVersionNewLink);
+            const link = this.plugin.localStorageManager.getMetadata("serverVersionNewLink");
+            if (link) {
+              window.open(link);
             }
           });
-          const ariaLabel = $("ui.status.new_version", { version: this.plugin.settings.serverVersionNewName || "" });
+          const ariaLabel = $("ui.status.new_version", { version: this.plugin.localStorageManager.getMetadata("serverVersionNewName") || "" });
           (item as any).dom.setAttribute("aria-label", ariaLabel);
 
           const itemDom = (item as any).dom as HTMLElement;

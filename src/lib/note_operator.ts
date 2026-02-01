@@ -136,7 +136,6 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
   }
   if (Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime")) < data.lastTime) {
     plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
-    await plugin.saveData(plugin.settings)
   }
   plugin.removeIgnoredFile(normalizedPath)
 
@@ -235,6 +234,5 @@ export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
   plugin.localStorageManager.setMetadata("lastNoteSyncTime", syncData.lastTime)
-  await plugin.saveData(plugin.settings)
   plugin.syncTypeCompleteCount++
 }

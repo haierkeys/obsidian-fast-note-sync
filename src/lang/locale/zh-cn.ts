@@ -10,6 +10,8 @@ const zh_cn: Partial<LangMap> = {
   "setting.remote.connected": "服务已连接",
   "setting.remote.disconnected": "服务已断开",
   "setting.remote.setup_title": "远端服务搭建与选择",
+  "setting.remote.setup_desc": "选择一个适合自己的远端",
+  "setting.remote.setup_table": "| 方式 | 详情参考 |\n| --- | --- |\n| 自己搭建  |  <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>obsidian-fast-note-sync-service</a> 速度好, 自由配置, 无隐私风险 |",
   "setting.remote.paste_config": "粘贴服务端授权配置",
   "setting.remote.paste_success": "接口配置信息已经粘贴到设置中!",
   "setting.remote.no_config": "未检测到配置信息!",
@@ -57,6 +59,8 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.startup_delay_desc": "配置连接成功后延迟执行首次检查更新的时间。\n如果你打开 Obsidian 时因为其他插件加载导致卡顿，可以尝试设置此项。默认 500 毫秒",
   "setting.sync.sync_delay": "延迟更新同步 (毫秒)",
   "setting.sync.sync_delay_desc": "笔记、附件、配置修改后延迟执行同步的时间。默认 0 毫秒 (即时同步)",
+  "setting.sync.show_notice": "显示同步提示",
+  "setting.sync.show_notice_desc": "开启后，同步开始和同步完成时将弹出系统提示。",
 
   // --- setting.cloud ---
   "setting.cloud.title": "附件云预览",

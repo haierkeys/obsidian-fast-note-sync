@@ -79,6 +79,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
+    if (!(file instanceof TFile)) return
 
     this.runWithDelay(file.path, () => {
       if (file.path.endsWith(".md")) {
@@ -94,7 +95,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
-
+    if (!(file instanceof TFile)) return
     this.runWithDelay(file.path, () => {
       if (file.path.endsWith(".md")) {
         noteDelete(file, this.plugin, true)
@@ -109,6 +110,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
+    if (!(file instanceof TFile)) return
 
     // 重命名操作可能涉及两个路径，我们为新路径设置延迟
     this.runWithDelay(file.path, () => {

@@ -22,7 +22,6 @@ export const resetSettingSyncTime = async (plugin: FastSync) => {
   plugin.localStorageManager.setMetadata("lastNoteSyncTime", 0);
   plugin.localStorageManager.setMetadata("lastConfigSyncTime", 0);
   plugin.localStorageManager.setMetadata("isInitSync", false);
-  plugin.saveSettings();
 };
 
 const vaultEmptyFoldersClean = async (plugin: FastSync) => {
@@ -75,7 +74,9 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
     plugin.totalChunksToUpload = 0;
     plugin.uploadedChunksCount = 0;
 
-    new Notice($("ui.status.completed"));
+    if (plugin.settings.showSyncNotice) {
+      new Notice($("ui.status.completed"));
+    }
     plugin.updateStatusBar($("ui.status.completed"));
 
     if (plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
@@ -261,7 +262,9 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.uploadedChunksCount = 0;
   plugin.disableWatch();
 
-  new Notice($("ui.status.starting"));
+  if (plugin.settings.showSyncNotice) {
+    new Notice($("ui.status.starting"));
+  }
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
   const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [];
