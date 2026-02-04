@@ -151,6 +151,11 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
+    if (plugin.settings.readonlySyncEnabled) {
+        dump(`Read-only mode: Intercepted config upload request for ${data.path}`)
+        plugin.configSyncTasks.completed++
+        return
+    }
     if (configIsPathExcluded(data.path, plugin)) return;
     if (data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return;
 

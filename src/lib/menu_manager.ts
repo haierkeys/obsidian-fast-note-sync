@@ -157,6 +157,16 @@ export class MenuManager {
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
+        .setIcon("cloud")
+        .setTitle($("ui.menu.default_sync"))
+        .onClick(async () => {
+          startupSync(this.plugin);
+        });
+      (item as any).dom.setAttribute("aria-label", $("ui.menu.default_sync_desc"));
+    });
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      item
         .setIcon("cloudy")
         .setTitle($("ui.menu.full_sync"))
         .onClick(async () => {

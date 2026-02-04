@@ -137,6 +137,11 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
  */
 export const receiveFileUpload = async function (data: FileUploadMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.readonlySyncEnabled) {
+    dump(`Read-only mode: Intercepted file upload request for ${data.path}`)
+    plugin.fileSyncTasks.completed++
+    return
+  }
   if (isPathExcluded(data.path, plugin)) return
   dump(`Receive file need upload (queued): `, data.path, data.sessionId)
 
@@ -535,7 +540,7 @@ const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
  * 检查并上传附件 (用于开启云预览后的首次同步后)
  */
 export const checkAndUploadAttachments = async function (plugin: FastSync) {
-  if (!plugin.settings.cloudPreviewEnabled) return;
+  if (!plugin.settings.cloudPreviewEnabled || plugin.settings.readonlySyncEnabled) return;
 
   const apiService = new HttpApiService(plugin);
   const files = plugin.app.vault.getFiles();

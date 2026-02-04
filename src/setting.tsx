@@ -37,6 +37,10 @@ export interface PluginSettings {
   offlineDeleteSyncEnabled: boolean
   syncUpdateDelay: number
   showSyncNotice: boolean
+  // 是否启用手动同步模式
+  manualSyncEnabled: boolean
+  // 是否启用只读同步模式
+  readonlySyncEnabled: boolean
 }
 
 /**
@@ -74,6 +78,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   offlineDeleteSyncEnabled: false,
   syncUpdateDelay: 0,
   showSyncNotice: true,
+  manualSyncEnabled: false,
+  readonlySyncEnabled: false,
 }
 
 export class SettingTab extends PluginSettingTab {
@@ -173,7 +179,6 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set).setName($("setting.sync.auto_note")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.syncEnabled) {
-          this.plugin.wsSettingChange = true
           this.plugin.settings.syncEnabled = value
           this.display()
           await this.plugin.saveSettings("syncEnabled")
@@ -211,6 +216,26 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.offline_delete_desc"))
+
+    new Setting(set).setName($("setting.sync.manual_sync")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.manualSyncEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.manualSyncEnabled) {
+          this.plugin.settings.manualSyncEnabled = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.manual_sync_desc"))
+
+    new Setting(set).setName($("setting.sync.readonly_sync")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.readonlySyncEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.readonlySyncEnabled) {
+          this.plugin.settings.readonlySyncEnabled = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.readonly_sync_desc"))
 
     new Setting(set).setName($("setting.sync.show_notice")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showSyncNotice).onChange(async (value) => {

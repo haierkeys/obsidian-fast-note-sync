@@ -251,6 +251,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     return;
   }
 
+  if (plugin.settings.readonlySyncEnabled) {
+    dump("Read-only mode enabled, skipping sync preparation.");
+    return;
+  }
+
   plugin.currentSyncType = isLoadLastTime ? 'incremental' : 'full';
   plugin.syncTypeCompleteCount = 0;
   plugin.resetSyncTasks();
@@ -262,7 +267,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.uploadedChunksCount = 0;
   plugin.disableWatch();
 
-  if (plugin.settings.showSyncNotice) {
+  if (plugin.settings.showSyncNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
     new Notice($("ui.status.starting"));
   }
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
@@ -283,6 +288,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
   if (plugin.settings.configSyncEnabled && shouldSyncConfigs) expectedCount += 1;
   plugin.expectedSyncCount = expectedCount;
+  if (expectedCount === 0) {
+    plugin.enableWatch();
+    plugin.updateStatusBar("");
+    return;
+  }
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     const list = plugin.app.vault.getFiles();

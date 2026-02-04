@@ -40,7 +40,11 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.strategy_force": "强制合并",
   "setting.sync.strategy_new": "最新才合并",
   "setting.sync.offline_delete": "离线删除同步",
-  "setting.sync.offline_delete_desc": "开启后，离线期间 笔记、附件、配置 的删除操作，下次连接时将自动同步到服务端。",
+  "setting.sync.offline_delete_desc": "在离线状态时对笔记、附件及配置的删除操作，将在重新连接时同步至服务端。",
+  "setting.sync.manual_sync": "手动同步模式",
+  "setting.sync.manual_sync_desc": "开启后，插件将不会在启动或文件修改时自动触发同步，仅可通过菜单手动触发。\n(<b>请谨慎开启</b>,该功能会严重影响使用体验)",
+  "setting.sync.readonly_sync": "只读同步模式",
+  "setting.sync.readonly_sync_desc": "开启后，本设备仅接收服务端更新，不上传任何本地修改。<b>优先级高于手动同步模式。</b>",
 
   "setting.sync.exclude": "同步排除",
   "setting.sync.exclude_placeholder": "输入文件或目录的相对路径，每行一个",
@@ -116,6 +120,8 @@ const zh_cn: Partial<LangMap> = {
 
   // --- ui.menu ---
   "ui.menu.ribbon_title": "FNS菜单",
+  "ui.menu.default_sync": "默认同步",
+  "ui.menu.default_sync_desc": "检查上次同步以来的增量更新",
   "ui.menu.full_sync": "完整同步",
   "ui.menu.full_sync_desc": "会和服务端进行完整比对，同步所有文件，同时清理本地所有空文件夹",
   "ui.menu.enable_sync": "开启同步",

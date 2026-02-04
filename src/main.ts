@@ -254,11 +254,12 @@ export default class FastSync extends Plugin {
   }
 
   refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
-    if (forceRegister && (this.settings.syncEnabled || this.settings.configSyncEnabled) && this.settings.api && this.settings.apiToken) {
+    if (forceRegister && this.settings.api && this.settings.apiToken) {
       if (this.wsSettingChange) {
         this.websocket.unRegister()
         this.wsSettingChange = false
       }
+
       this.websocket.register((status) => this.updateRibbonIcon(status))
 
       if (this.syncTimer) {

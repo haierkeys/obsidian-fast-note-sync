@@ -320,6 +320,12 @@ export class WebSocketClient {
 
     this.plugin.isFirstSync = true
     this.plugin.isWatchEnabled = true
+
+    if (this.plugin.settings.manualSyncEnabled) {
+      dump("Full Manual Sync Mode enabled, skipping startup sync")
+      return
+    }
+
     startupSync(this.plugin)
   }
 

@@ -1,8 +1,8 @@
-// Čeština (cz)
+// Čeština
 import type { LangMap } from "../lang";
 
 
-const cz: Partial<LangMap> = {
+const cs: Partial<LangMap> = {
   "fns.desc": "Doplněk pro synchronizaci a zálohování poznámek, příloh a konfigurací v reálném čase s podporou soukromého nasazení. Podporuje Mac, Windows, Android, iOS atd. a nabízí vícejazyčnou podporu.",
 
   // --- setting.remote ---
@@ -129,7 +129,7 @@ const cz: Partial<LangMap> = {
   "ui.menu.disable_sync": "Dočasně zakázat synchronizaci",
   "ui.menu.disable_sync_desc": "Dočasně zakázat veškerou synchronizaci; automaticky se znovu aktivuje při příštím spuštění Obsidianu.",
   "ui.menu.clear_time": "Smazat místní čas synchronizace",
-  "ui.menu.rebuild_hash": "Znovu sestavit hash mapu souborov",
+  "ui.menu.rebuild_hash": "Znovu sestavit hash mapu souborů",
   "ui.menu.plugin": "Verze doplňku",
   "ui.menu.plugin_desc": "Číslo verze doplňku Fast Note Sync",
   "ui.menu.server": "Verze serveru",
@@ -196,4 +196,4 @@ const cz: Partial<LangMap> = {
 };
 
 
-export default cz;
+export default cs;

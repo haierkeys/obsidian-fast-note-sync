@@ -79,6 +79,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
+    if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
     if (!(file instanceof TFile)) return
 
     this.runWithDelay(file.path, () => {
@@ -95,6 +96,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
+    if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
     if (!(file instanceof TFile)) return
     this.runWithDelay(file.path, () => {
       if (file.path.endsWith(".md")) {
@@ -110,6 +112,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
+    if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
     if (!(file instanceof TFile)) return
 
     // 重命名操作可能涉及两个路径，我们为新路径设置延迟
@@ -130,6 +133,7 @@ export class EventManager {
     if (!this.plugin.websocket || !this.plugin.websocket.isAuth) {
       return
     }
+    if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
 
     // 仅处理配置目录下的原始事件
     if (!path.startsWith(this.plugin.app.vault.configDir + "/")) {

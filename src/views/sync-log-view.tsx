@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, moment } from "obsidian";
+import { ItemView, WorkspaceLeaf, moment, setIcon } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import * as React from "react";
 
@@ -33,7 +33,7 @@ export class SyncLogView extends ItemView {
     async onOpen() {
         this.root = createRoot(this.containerEl.children[1]);
         this.root.render(
-            <SyncLogComponent />
+            <SyncLogComponent plugin={this.plugin} />
         );
     }
 
@@ -44,9 +44,11 @@ export class SyncLogView extends ItemView {
     }
 }
 
-const SyncLogComponent = () => {
+const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
+    const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
     const scrollRef = React.useRef<HTMLDivElement>(null);
+    const iconRef = React.useRef<HTMLSpanElement>(null);
     const throttleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
     const pendingLogsRef = React.useRef<SyncLog[] | null>(null);
 
@@ -76,6 +78,24 @@ const SyncLogComponent = () => {
     }, []);
 
     React.useEffect(() => {
+        const listener = (status: boolean) => {
+            setIsConnected(status);
+        };
+
+        plugin.websocket.addStatusListener(listener);
+        return () => {
+            plugin.websocket.removeStatusListener(listener);
+        };
+    }, [plugin.websocket]);
+
+    React.useEffect(() => {
+        if (iconRef.current) {
+            iconRef.current.empty();
+            setIcon(iconRef.current, isConnected ? "wifi" : "wifi-off");
+        }
+    }, [isConnected]);
+
+    React.useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = 0; // 最新在顶部
         }
@@ -88,7 +108,24 @@ const SyncLogComponent = () => {
     return (
         <div className="fns-sync-log-container">
             <div className="fns-sync-log-header">
-                <h3>{$("ui.log.title")}</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <h3 style={{ margin: 0 }}>{$("ui.log.title")}</h3>
+                    <div
+                        className="connection-status-container clickable-icon"
+                        onClick={(e) => plugin.menuManager.showRibbonMenu(e.nativeEvent as MouseEvent)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
+                    >
+                        <span
+                            ref={iconRef}
+                            className="connection-status-icon"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                color: isConnected ? '#4caf50' : '#f44336'
+                            }}
+                        />
+                    </div>
+                </div>
                 <button onClick={clearLogs} className="fns-sync-log-clear-btn">
                     {$("ui.log.clear")}
                 </button>

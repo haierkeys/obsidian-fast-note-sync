@@ -3,7 +3,7 @@ import type { LangMap } from "../lang";
 
 
 const en: Partial<LangMap> = {
-  "fns.desc": "A plugin for real-time synchronization and backup of notes, attachments, and configurations with private deployment support. Supports Mac, Windows, Android, iOS, and more, offering multi-language support.",
+  "fns.desc": "A plugin for real-time synchronization and backup of notes, attachments, and configurations with private deployment support. Supports Mac, Windows, Android, iOS, etc., and offers multi-language support.",
 
   // --- setting.remote ---
   "setting.remote.title": "Remote",
@@ -13,17 +13,17 @@ const en: Partial<LangMap> = {
   "setting.remote.setup_desc": "Choose a remote service that suits you",
   "setting.remote.setup_table": "| Method | References |\n| --- | --- |\n| Self-hosting | <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>obsidian-fast-note-sync-service</a> High speed, free configuration, no privacy risk |",
   "setting.remote.paste_config": "Paste Server Authorization Config",
-  "setting.remote.paste_success": "API configuration has been pasted into the settings!",
+  "setting.remote.paste_success": "API configuration has been pasted into settings!",
   "setting.remote.no_config": "No configuration information detected!",
-  "setting.remote.api_url": "Remote Service URL",
+  "setting.remote.api_url": "Remote Service Address",
   "setting.remote.api_url_desc": "Select a Fast Note Sync Service address",
-  "setting.remote.api_url_placeholder": "Enter your Fast Note Sync Service URL",
+  "setting.remote.api_url_placeholder": "Enter your Fast Note Sync Service address",
   "setting.remote.api_token": "Remote Service Token",
   "setting.remote.api_token_desc": "Authorization token for remote service access",
   "setting.remote.api_token_placeholder": "Enter your API access token",
   "setting.remote.vault_name": "Remote Vault Name",
   "setting.remote.client_name": "Client Name",
-  "setting.remote.client_name_desc": "Set a custom name for the current client to identify the device during synchronization.",
+  "setting.remote.client_name_desc": "Set a custom name for the current client to identify the device during multi-terminal synchronization.",
   "setting.remote.client_name_placeholder": "Enter client name",
 
   // --- setting.sync ---
@@ -35,12 +35,16 @@ const en: Partial<LangMap> = {
   "setting.sync.pdf_state": "Enable PDF State Sync",
   "setting.sync.pdf_state_desc": "Sync the reading state of the PDF viewer. (Requires configuration sync to be enabled)",
   "setting.sync.merge_strategy": "Offline Note Merge Strategy",
-  "setting.sync.merge_strategy_desc": "How to handle content when reconnecting to the server after offline Markdown editing.\n| Strategy | Description |\n| --- | --- |\n| No Merge, Keep Latest | Last edited note will be kept. Local modifications may be discarded if the server version is newer. |\n| Merge Only if Newer | Content will be merged only if the local note is newer; otherwise, the server version prevails. |\n| Force Merge | Forcefully merge local and server content regardless of editing order. |\nNote: The merge process compares with a common base version, which may cause deleted content to reappear.",
+  "setting.sync.merge_strategy_desc": "How to handle content when reconnecting to the server after offline Markdown editing, local only.\n| Strategy | Description |\n| --- | --- |\n| No Merge, Keep Latest | No merge, only the last edited note is kept. If the local note is older, local modifications will be discarded. |\n| Merge Only if Newer | Content will be merged only if the local note is newer; otherwise, the server version prevails. |\n| Force Merge | Forcefully merge local and server content regardless of editing order. |\nNote: The merge process compares with a common base version, which may cause deleted content to reappear.",
   "setting.sync.strategy_default": "No Merge, Keep Latest",
   "setting.sync.strategy_force": "Force Merge",
   "setting.sync.strategy_new": "Merge Only if Newer",
   "setting.sync.offline_delete": "Offline Delete Sync",
   "setting.sync.offline_delete_desc": "Note, attachment, and configuration deletions during offline will be synced to the server upon reconnection.",
+  "setting.sync.manual_sync": "Manual Sync Mode",
+  "setting.sync.manual_sync_desc": "When enabled, the plugin will not automatically trigger sync on startup or file modification, only manually via menu.\n(<b>Use with caution</b>, this function significantly affects user experience)",
+  "setting.sync.readonly_sync": "Read-only Sync Mode",
+  "setting.sync.readonly_sync_desc": "When enabled, this device only receives server updates and does not upload any local changes. <b>Priority is higher than manual sync mode.</b>",
 
   "setting.sync.exclude": "Sync Exclude",
   "setting.sync.exclude_placeholder": "Enter relative path of file or directory, one per line",
@@ -50,21 +54,21 @@ const en: Partial<LangMap> = {
   "setting.sync.exclude_whitelist": "Sync Exclude Whitelist",
   "setting.sync.exclude_whitelist_desc": "Paths to notes or attachments forced to sync even if they match exclusion rules, one per line.\ne.g., Folder1/important.md",
   "setting.sync.config_exclude": "Config Sync Exclude",
-  "setting.sync.config_exclude_desc": "File path relative to the <b>.obsidian</b> directory, one per line.\ne.g., plugins/obsidian-fast-note-sync/data.json",
-  "setting.sync.config_exclude_placeholder": "Enter relative path of config file or directory",
+  "setting.sync.config_exclude_desc": "File path relative to the <b>.obsidian</b> directory, one per line or directory.\ne.g., plugins/obsidian-fast-note-sync/data.json",
+  "setting.sync.config_exclude_placeholder": "Enter relative path of config file or directory, one per line",
   "setting.sync.config_exclude_whitelist": "Config Sync Whitelist",
   "setting.sync.config_exclude_whitelist_desc": "Config file paths forced to sync even if they match exclusion rules, one per line.\ne.g., plugins/obsidian-fast-note-sync/data.json",
   "setting.sync.startup_delay": "Startup Delay (ms)",
   "setting.sync.startup_delay_placeholder": "Enter delay in milliseconds",
   "setting.sync.startup_delay_desc": "Delay the initial update check after successful connection.\nIf Obsidian lags on startup due to other plugins, try adjusting this value. Default: 500 ms",
-  "setting.sync.sync_delay": "Delay Sync After Update (ms)",
+  "setting.sync.sync_delay": "Delay Update Sync (ms)",
   "setting.sync.sync_delay_desc": "Delay before syncing after notes, attachments, or configs are modified. Default: 0 ms (instant sync)",
   "setting.sync.show_notice": "Show Sync Notices",
   "setting.sync.show_notice_desc": "System notifications will appear when synchronization begins and ends.",
 
   // --- setting.cloud ---
   "setting.cloud.title": "Attachment Cloud Preview",
-  "setting.cloud.desc": "Attachments will <b>no longer be synced</b>; images/videos/audio/PDFs will be previewed online.",
+  "setting.cloud.desc": "When enabled, <b>attachments are no longer synced</b>; images/videos/audio/PDFs will be previewed online.",
   "setting.cloud.type_limit": "Cloud Preview Type Limit",
   "setting.cloud.type_limit_desc": "Cloud preview only for images/audio/videos/PDFs; other attachments sync normally.\nNote: Disable with caution; this may cause related plugins to fail.",
   "setting.cloud.remote_source": "Cloud Preview - Custom Remote Source",
@@ -73,7 +77,7 @@ const en: Partial<LangMap> = {
   "setting.cloud.delete_after_upload_desc": "Local files will be deleted after successful upload to save space.\n(Requires cloud preview to be enabled)\nNote: Disable with caution; this may cause related plugins to fail.",
 
   // --- setting.support ---
-  "setting.support.title": "Sponsorship & Support",
+  "setting.support.title": "Support & Sponsorship",
   "setting.support.desc": "If you find this plugin useful and want to support its continued development, please consider donating. Thank you for supporting open-source software!",
   "setting.support.kofi": "Outside China ( Ko-fi )",
   "setting.support.wechat": "Inside China ( WeChat Pay )",
@@ -116,6 +120,8 @@ const en: Partial<LangMap> = {
 
   // --- ui.menu ---
   "ui.menu.ribbon_title": "FNS Menu",
+  "ui.menu.default_sync": "Default Sync",
+  "ui.menu.default_sync_desc": "Check for incremental updates since last sync",
   "ui.menu.full_sync": "Full Sync",
   "ui.menu.full_sync_desc": "Perform a full comparison with the server, sync all files, and clean empty folders.",
   "ui.menu.enable_sync": "Enable Sync",
@@ -187,7 +193,7 @@ const en: Partial<LangMap> = {
   "ui.log.action.SettingDelete": "Config Delete",
   "ui.log.action.SyncEnd_full": "Sync Main End (Full)",
   "ui.log.action.SyncEnd_incremental": "Sync Main End (Incremental)",
-}
+};
 
 
 export default en;

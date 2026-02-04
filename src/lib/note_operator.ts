@@ -150,6 +150,11 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
  */
 export const receiveNoteUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.readonlySyncEnabled) {
+    dump(`Read-only mode: Intercepted note upload request for ${data.path}`)
+    plugin.noteSyncTasks.completed++
+    return
+  }
   if (isPathExcluded(data.path, plugin)) return
   dump(`Receive note need push:`, data.path)
   if (!data.path.endsWith(".md")) return
