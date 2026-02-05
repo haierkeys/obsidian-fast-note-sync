@@ -89,7 +89,13 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
   }
 
   plugin.addIgnoredFile(file.path)
-  handleFileDeleteByPath(file.path, plugin)
+
+  const data = {
+    vault: plugin.settings.vault,
+    path: file.path,
+    pathHash: hashContent(file.path),
+  }
+  plugin.websocket.SendMessage("FileDelete", data)
   dump(`File delete send`, file.path)
 
   // WebSocket 消息发送后从哈希表中删除
@@ -110,23 +116,35 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (!(file instanceof TFile)) return
 
   plugin.addIgnoredFile(file.path)
-  await fileModify(file, plugin, false)
-  dump(`File rename modify send`, file.path)
+
+  dump(`File rename`, oldfile, file.path)
 
   // 如果旧文件正在上传，则取消上传且不发送删除消息
   if (activeUploadsMap.has(oldfile)) {
     activeUploadsMap.get(oldfile)!.cancelled = true;
+    // 重新上传
+    fileModify(file, plugin)
     dump(`Upload cancelled due to file rename: ${oldfile}`);
   } else {
-    handleFileDeleteByPath(oldfile, plugin)
-    dump(`File rename delete send`, oldfile)
+
+    let contentHash = plugin.fileHashManager.getPathHash(oldfile)
+    if (contentHash == null) {
+      const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+      contentHash = hashArrayBuffer(content)
+    }
+
+    const data = {
+      vault: plugin.settings.vault,
+      oldPath: oldfile,
+      oldPathHash: hashContent(oldfile),
+      path: file.path,
+      pathHash: hashContent(file.path),
+    }
+    plugin.websocket.SendMessage("FileRename", data)
+    plugin.fileHashManager.setFileHash(file.path, contentHash)
   }
 
-  // 删除旧路径,添加新路径(使用内容哈希)
   plugin.fileHashManager.removeFileHash(oldfile)
-  const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
-  const newHash = hashArrayBuffer(content)
-  plugin.fileHashManager.setFileHash(file.path, newHash)
 
   plugin.removeIgnoredFile(file.path)
 }
@@ -520,20 +538,6 @@ export const receiveFileSyncEnd = async function (data: any, plugin: FastSync) {
   const syncData = data as SyncEndData
   plugin.localStorageManager.setMetadata("lastFileSyncTime", syncData.lastTime)
   plugin.syncTypeCompleteCount++
-}
-
-/**
- * 根据路径发送文件删除消息
- */
-const handleFileDeleteByPath = function (path: string, plugin: FastSync) {
-  if (plugin.settings.syncEnabled == false) return
-  if (path.endsWith(".md")) return
-  const data = {
-    vault: plugin.settings.vault,
-    path: path,
-    pathHash: hashContent(path),
-  }
-  plugin.websocket.SendMessage("FileDelete", data)
 }
 
 /**

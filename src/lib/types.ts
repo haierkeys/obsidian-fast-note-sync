@@ -36,7 +36,6 @@ export interface ReceiveFileSyncUpdateMessage {
     vault: string;
     pathHash: string;
     contentHash: string;
-    savePath: string;
     size: number;
     mtime: number;
     ctime: number;

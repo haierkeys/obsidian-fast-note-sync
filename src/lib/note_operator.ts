@@ -85,26 +85,22 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
 
   plugin.addIgnoredFile(file.path)
 
-  const content: string = await plugin.app.vault.cachedRead(file)
-  const contentHash = hashContent(content)
-  const baseHash = plugin.fileHashManager.getPathHash(file.path)
+  let contentHash = plugin.fileHashManager.getPathHash(oldfile)
+  if (contentHash == null) {
+    const content: string = await plugin.app.vault.cachedRead(file)
+    contentHash = hashContent(content)
+  }
 
   const data = {
     vault: plugin.settings.vault,
-    ctime: file.stat.ctime,
-    mtime: file.stat.mtime,
     path: file.path,
     pathHash: hashContent(file.path),
-    content: content,
-    contentHash: contentHash,
     oldPath: oldfile,
     oldPathHash: hashContent(oldfile),
-    // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
-    ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
 
   plugin.websocket.SendMessage("NoteRename", data)
-  dump(`Note rename send`, data.path, data.contentHash, data.mtime, data.pathHash)
+  dump(`Note rename send`, data.path, data.pathHash)
 
   // 删除旧路径,添加新路径(使用内容哈希)
   plugin.fileHashManager.removeFileHash(oldfile)
