@@ -9,6 +9,11 @@ export interface SnapFile {
     baseHash?: string | null;
 }
 
+export interface SnapFolder {
+    path: string;
+    pathHash: string;
+}
+
 export interface PathHashFile {
     path: string;
     pathHash: string;
@@ -111,17 +116,11 @@ export interface ConfigSyncData {
     missingConfigs: PathHashFile[];
 }
 
-export interface FolderSyncCheckRequest {
-    path: string;
-    pathHash: string;
-    ctime: number;
-    mtime: number;
-}
 
 export interface FolderSyncRequest {
     vault: string;
     lastTime: number;
-    folders: FolderSyncCheckRequest[];
+    folders: SnapFolder[];
     delFolders?: PathHashFile[];
     missingFolders?: PathHashFile[];
 }
@@ -137,7 +136,7 @@ export interface FolderSyncRenameMessage {
 
 export interface FolderSyncData {
     lastTime: number;
-    folders: FolderSyncCheckRequest[];
+    folders: SnapFolder[];
     delFolders: PathHashFile[];
     missingFolders: PathHashFile[];
 }

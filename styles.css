@@ -32,7 +32,8 @@
   color: var(--text-muted);
   font-size: var(--font-ui-smaller);
 }
-.fast-note-sync-support-table th, .fast-note-sync-support-table td {
+.fast-note-sync-support-table th,
+.fast-note-sync-support-table td {
   border: 1px solid var(--background-modifier-border) !important;
   padding: 10px;
   text-align: center;
@@ -161,7 +162,8 @@
   margin: 10px 0;
   border: 1px solid var(--background-modifier-border);
 }
-.fast-note-sync-desc-table th, .fast-note-sync-desc-table td {
+.fast-note-sync-desc-table th,
+.fast-note-sync-desc-table td {
   border: 1px solid var(--background-modifier-border) !important;
   padding: 6px 10px;
   text-align: left;
@@ -721,6 +723,9 @@
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-other {
   border-left-color: var(--text-faint);
+}
+.fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-folder {
+  border-left-color: #06b6d4;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-status-error {
   background-color: rgba(255, 0, 0, 0.05);

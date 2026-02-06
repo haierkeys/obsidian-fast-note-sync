@@ -6,7 +6,7 @@ import FastSync from "../main";
 export type LogType = 'send' | 'receive' | 'info' | 'error';
 export type LogStatus = 'success' | 'error' | 'pending';
 
-export type LogCategory = 'note' | 'attachment' | 'config' | 'other';
+export type LogCategory = 'note' | 'attachment' | 'config' | 'folder' | 'other';
 
 export interface SyncLog {
     id: string;
@@ -45,6 +45,7 @@ export class SyncLogManager {
         if (action.startsWith('Note')) return 'note';
         if (action.startsWith('File')) return 'attachment';
         if (action.startsWith('Setting') || action.startsWith('Config')) return 'config';
+        if (action.startsWith('Folder')) return 'folder';
         return 'other';
     }
 

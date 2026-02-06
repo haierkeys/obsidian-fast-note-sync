@@ -3,8 +3,8 @@ import { Notice } from "obsidian";
 
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
+import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
 import { LocalStorageManager } from "./lib/local_storage_manager";
-import { FolderHashManager } from "./lib/folder_hash_manager";
 import { ConfigHashManager } from "./lib/config_hash_manager";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
@@ -30,7 +30,7 @@ export default class FastSync extends Plugin {
   configHashManager: ConfigHashManager // 配置哈希管理器
   localStorageManager: LocalStorageManager // 本地存储管理器
   fileCloudPreview: FileCloudPreview // 云端文件预览管理器
-  folderHashManager: FolderHashManager // 文件夹哈希管理器
+  folderSnapshotManager: FolderSnapshotManager // 文件夹快照管理器
 
   clipboardReadTip: string = "" // 剪贴板读取提示信息
 
@@ -192,8 +192,8 @@ export default class FastSync extends Plugin {
     // 初始化配置哈希管理器
     this.configHashManager = new ConfigHashManager(this)
 
-    // 初始化文件夹哈希管理器
-    this.folderHashManager = new FolderHashManager(this)
+    // 初始化文件夹快照管理器
+    this.folderSnapshotManager = new FolderSnapshotManager(this)
 
     this.registerObsidianProtocolHandler("fast-note-sync/sso", async (data) => {
       if (data?.pushApi) {
@@ -220,8 +220,8 @@ export default class FastSync extends Plugin {
         await this.configHashManager.initialize()
       }
 
-      // 初始化文件夹哈希管理器
-      await this.folderHashManager.initialize()
+      // 初始化文件夹快照管理器
+      await this.folderSnapshotManager.initialize()
 
       // 只有在哈希表初始化完成后才注册事件
       if (this.fileHashManager.isReady()) {

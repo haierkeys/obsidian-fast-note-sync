@@ -16,14 +16,13 @@ export const folderModify = async function (folder: TFolder, plugin: FastSync, e
 
     plugin.addIgnoredFile(folder.path)
 
+    const now = Date.now();
     const data = {
         vault: plugin.settings.vault,
-        ctime: 0, // 文件夹暂不支持 stat.ctime
-        mtime: 0, // 文件夹暂不支持 stat.mtime
         path: folder.path,
         pathHash: hashContent(folder.path),
     }
-    plugin.folderHashManager.setFolderHash(folder.path, hashContent(folder.path))
+    plugin.folderSnapshotManager.setFolderMtime(folder.path, now)
     plugin.websocket.SendMessage("FolderModify", data)
     dump(`Folder modify send`, data.path, data.pathHash)
 
@@ -46,7 +45,7 @@ export const folderDelete = function (folder: TFolder, plugin: FastSync, eventEn
         path: folder.path,
         pathHash: hashContent(folder.path),
     }
-    plugin.folderHashManager.removeFolderHash(folder.path)
+    plugin.folderSnapshotManager.removeFolder(folder.path)
     plugin.websocket.SendMessage("FolderDelete", data)
     dump(`Folder delete send`, folder.path)
 
@@ -64,6 +63,7 @@ export const folderRename = async function (folder: TFolder, oldPath: string, pl
 
     plugin.addIgnoredFile(folder.path)
 
+    const now = Date.now();
     const data = {
         vault: plugin.settings.vault,
         path: folder.path,
@@ -71,8 +71,8 @@ export const folderRename = async function (folder: TFolder, oldPath: string, pl
         oldPath: oldPath,
         oldPathHash: hashContent(oldPath),
     }
-    plugin.folderHashManager.removeFolderHash(oldPath)
-    plugin.folderHashManager.setFolderHash(folder.path, hashContent(folder.path))
+    plugin.folderSnapshotManager.removeFolder(oldPath)
+    plugin.folderSnapshotManager.setFolderMtime(folder.path, now)
     plugin.websocket.SendMessage("FolderRename", data)
     dump(`Folder rename send`, data.path, data.pathHash)
 
@@ -93,8 +93,9 @@ export const receiveFolderSyncModify = async function (data: any, plugin: FastSy
     const existingFolder = plugin.app.vault.getAbstractFileByPath(normalizedPath)
     if (!existingFolder) {
         await plugin.app.vault.createFolder(normalizedPath)
-        plugin.folderHashManager.setFolderHash(normalizedPath, hashContent(normalizedPath))
-        // 注意：Obsidian 文件夹不支持直接设置 stat.mtime/ctime，通常由系统管理
+        plugin.folderSnapshotManager.setFolderMtime(normalizedPath, data.mtime || Date.now())
+    } else {
+        plugin.folderSnapshotManager.setFolderMtime(normalizedPath, data.mtime || Date.now())
     }
 
     plugin.removeIgnoredFile(normalizedPath)
@@ -117,7 +118,7 @@ export const receiveFolderSyncDelete = async function (data: any, plugin: FastSy
         // 递归删除文件夹及其内容，或者只删除空文件夹？服务端通常是递归的。
         // Vault.delete(TAbstractFile, force)
         await plugin.app.vault.delete(folder, true)
-        plugin.folderHashManager.removeFolderHash(normalizedPath)
+        plugin.folderSnapshotManager.removeFolder(normalizedPath)
         plugin.removeIgnoredFile(normalizedPath)
     }
 
@@ -148,8 +149,8 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
         }
 
         await plugin.app.vault.rename(folder, normalizedNewPath)
-        plugin.folderHashManager.removeFolderHash(normalizedOldPath)
-        plugin.folderHashManager.setFolderHash(normalizedNewPath, hashContent(normalizedNewPath))
+        plugin.folderSnapshotManager.removeFolder(normalizedOldPath)
+        plugin.folderSnapshotManager.setFolderMtime(normalizedNewPath, data.mtime || Date.now())
 
         plugin.removeIgnoredFile(normalizedNewPath)
         plugin.removeIgnoredFile(normalizedOldPath)
@@ -159,7 +160,7 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
         if (!target) {
             await plugin.app.vault.createFolder(normalizedNewPath)
             // 远端同步创建同样更新哈希表
-            plugin.folderHashManager.setFolderHash(normalizedNewPath, hashContent(normalizedNewPath))
+            plugin.folderSnapshotManager.setFolderMtime(normalizedNewPath, data.mtime || Date.now())
         }
     }
 

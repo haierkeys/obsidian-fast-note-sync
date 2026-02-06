@@ -3,7 +3,7 @@
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename } from "./note_operator";
-import { SyncMode, SnapFile, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
+import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded } from "./helps";
 import type FastSync from "../main";
@@ -273,7 +273,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
-  const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], folders: any[] = [];
+  const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], folders: SnapFolder[] = [];
   const delNotes: PathHashFile[] = [], delFiles: PathHashFile[] = [], delConfigs: PathHashFile[] = [], delFolders: PathHashFile[] = [];
   const missingNotes: PathHashFile[] = [], missingFiles: PathHashFile[] = [], missingConfigs: PathHashFile[] = [], missingFolders: PathHashFile[] = [];
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
@@ -302,12 +302,15 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
       if (isPathExcluded(file.path, plugin)) continue;
       if (file instanceof TFolder) {
         if (file.path === "/") continue;
-        // 文件夹暂不支持增量时间戳校验，始终全量上报元数据或暂时跳过
+
+        // 使用虚拟化 mtime：优先从快照读取，若是新路径则用当前时间
+        let mtime = plugin.folderSnapshotManager.getMtime(file.path) || Date.now();
+
+        if (isLoadLastTime && mtime < Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"))) continue;
+
         folders.push({
           path: file.path,
           pathHash: hashContent(file.path),
-          ctime: 0,
-          mtime: 0,
         });
         continue;
       }
@@ -363,8 +366,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
       }
 
       // 检测被删除的文件夹
-      if (plugin.folderHashManager && plugin.folderHashManager.isReady()) {
-        const trackedFolderPaths = plugin.folderHashManager.getAllPaths();
+      if (plugin.folderSnapshotManager && plugin.folderSnapshotManager.isReady()) {
+        const trackedFolderPaths = plugin.folderSnapshotManager.getAllPaths();
         const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
         for (const path of trackedFolderPaths) {
           if (isPathExcluded(path, plugin)) continue;
@@ -390,8 +393,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
       }
 
       // 检测缺失的文件夹
-      if (plugin.folderHashManager && plugin.folderHashManager.isReady()) {
-        const trackedFolderPaths = plugin.folderHashManager.getAllPaths();
+      if (plugin.folderSnapshotManager && plugin.folderSnapshotManager.isReady()) {
+        const trackedFolderPaths = plugin.folderSnapshotManager.getAllPaths();
         const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
         for (const path of trackedFolderPaths) {
           if (isPathExcluded(path, plugin)) continue;
@@ -534,7 +537,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
     if (plugin.settings.offlineDeleteSyncEnabled) {
       for (const item of noteData.delNotes) plugin.fileHashManager.removeFileHash(item.path);
       for (const item of fileData.delFiles) plugin.fileHashManager.removeFileHash(item.path);
-      for (const item of folderData.delFolders) plugin.folderHashManager.removeFolderHash(item.path);
+      for (const item of folderData.delFolders) plugin.folderSnapshotManager.removeFolder(item.path);
     }
   }
 
