@@ -725,7 +725,7 @@
   border-left-color: var(--text-faint);
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-folder {
-  border-left-color: #06b6d4;
+  border-left-color: #f472b6;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-status-error {
   background-color: rgba(255, 0, 0, 0.05);
