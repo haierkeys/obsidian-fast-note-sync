@@ -620,6 +620,63 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
 }
 
 /**
+ * 接收服务端文件重命名通知
+ */
+export const receiveFileSyncRename = async function (data: any, plugin: FastSync) {
+  if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.oldPath, plugin)) return
+
+  dump(`Receive file rename:`, data.oldPath, "->", data.path)
+
+  const normalizedOldPath = normalizePath(data.oldPath)
+  const normalizedNewPath = normalizePath(data.path)
+
+  const file = plugin.app.vault.getFileByPath(normalizedOldPath)
+  if (file instanceof TFile) {
+    plugin.addIgnoredFile(normalizedNewPath)
+    plugin.addIgnoredFile(normalizedOldPath)
+
+    const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+    if (targetFile) {
+      await plugin.app.vault.delete(targetFile)
+    }
+
+    await plugin.app.vault.rename(file, normalizedNewPath)
+
+    if (data.mtime) {
+      const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+      if (renamedFile instanceof TFile) {
+        const content = await plugin.app.vault.readBinary(renamedFile)
+        await plugin.app.vault.modifyBinary(renamedFile, content, { ctime: data.ctime, mtime: data.mtime })
+      }
+    }
+
+    plugin.removeIgnoredFile(normalizedNewPath)
+    plugin.removeIgnoredFile(normalizedOldPath)
+
+    plugin.fileHashManager.removeFileHash(data.oldPath)
+    plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+  } else {
+    // 如果本地找不到旧文件，说明本地可能缺失该附件，直接向服务端请求重新推送新路径的内容
+    dump(`Local attachment not found for rename, requesting RePush: ${data.oldPath} -> ${data.path}`)
+    const rePushData = {
+      vault: plugin.settings.vault,
+      path: data.path,
+      pathHash: data.pathHash,
+    }
+    plugin.websocket.SendMessage("FileRePush", rePushData)
+
+    // 虽然重命名失败转拉取，但仍需确保哈希表最终能对应上
+    if (data.contentHash) {
+      plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+    }
+  }
+
+  plugin.fileSyncTasks.completed++
+}
+
+/**
  * 完成文件下载
  */
 const handleFileChunkDownloadComplete = async function (session: FileDownloadSession, plugin: FastSync) {
@@ -666,6 +723,11 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
       plugin.localStorageManager.setMetadata("lastFileSyncTime", session.lastTime)
     }
 
+    // 下载完成后自动计算哈希并更新缓存 (优化点)
+    const contentHash = hashArrayBuffer(completeFile.buffer)
+    plugin.fileHashManager.setFileHash(session.path, contentHash)
+    dump(`Download complete and hash updated for: ${session.path}`, contentHash)
+
     // 释放内存计数
     const sessionSize = Array.from(session.chunks.values()).reduce((sum, c) => sum + c.byteLength, 0)
     currentDownloadBufferBytes -= sessionSize
@@ -678,3 +740,4 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     plugin.fileDownloadSessions.delete(session.sessionId)
   }
 }
+

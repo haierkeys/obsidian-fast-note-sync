@@ -237,3 +237,62 @@ export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
   plugin.localStorageManager.setMetadata("lastNoteSyncTime", syncData.lastTime)
   plugin.syncTypeCompleteCount++
 }
+
+/**
+ * 接收服务端笔记重命名通知
+ */
+export const receiveNoteSyncRename = async function (data: any, plugin: FastSync) {
+  if (plugin.settings.syncEnabled == false) return
+  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.oldPath, plugin)) return
+
+  dump(`Receive note rename:`, data.oldPath, "->", data.path)
+
+  const normalizedOldPath = normalizePath(data.oldPath)
+  const normalizedNewPath = normalizePath(data.path)
+
+  const file = plugin.app.vault.getFileByPath(normalizedOldPath)
+  if (file instanceof TFile) {
+    plugin.addIgnoredFile(normalizedNewPath)
+    plugin.addIgnoredFile(normalizedOldPath)
+
+    // 如果目标路径已存在文件，先尝试删除（或者由 vault.rename 报错处理，这里选择先清理以匹配服务端状态）
+    const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+    if (targetFile) {
+      await plugin.app.vault.delete(targetFile)
+    }
+
+    await plugin.app.vault.rename(file, normalizedNewPath)
+
+    // 更新元数据（ctime, mtime）如果服务端提供了
+    if (data.mtime) {
+      const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+      if (renamedFile instanceof TFile) {
+        const content = await plugin.app.vault.cachedRead(renamedFile)
+        await plugin.app.vault.modify(renamedFile, content, { ctime: data.ctime, mtime: data.mtime })
+      }
+    }
+
+    plugin.removeIgnoredFile(normalizedNewPath)
+    plugin.removeIgnoredFile(normalizedOldPath)
+
+    // 更新哈希表：移除旧路径，添加新路径
+    plugin.fileHashManager.removeFileHash(data.oldPath)
+    plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+  } else {
+    // 如果本地找不到旧文件，说明本地可能缺失该文件，直接向服务端请求重新推送新路径的内容
+    dump(`Local file not found for rename, requesting RePush: ${data.oldPath} -> ${data.path}`)
+    const rePushData = {
+      vault: plugin.settings.vault,
+      path: data.path,
+      pathHash: data.pathHash,
+    }
+    plugin.websocket.SendMessage("NoteRePush", rePushData)
+
+    // 虽然重命名失败转下载，但仍需确保哈希表最终能对应上
+    // 注意：RePush 响应 receiveNoteSyncModify 会再次设置哈希，这里先设上也可以
+    plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+  }
+
+  plugin.noteSyncTasks.completed++
+}
