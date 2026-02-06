@@ -140,7 +140,7 @@ export class SyncLogManager {
 
         // 根据消息类型调整 action 名称
         let logAction = action;
-        const syncTypeActions = ["NoteSync", "FileSync", "SettingSync", "NoteSyncEnd", "FileSyncEnd", "SettingSyncEnd", "SyncEnd"];
+        const syncTypeActions = ["NoteSync", "FileSync", "SettingSync", "FolderSync", "NoteSyncEnd", "FileSyncEnd", "SettingSyncEnd", "FolderSyncEnd", "SyncEnd"];
         if (syncTypeActions.includes(action)) {
             logAction = `${action}_${currentSyncType}`;
         }
@@ -202,7 +202,7 @@ export class SyncLogManager {
 
         // 根据消息类型调整 action 名称
         let logAction = action;
-        if (["NoteSync", "FileSync", "SettingSync"].includes(action)) {
+        if (["NoteSync", "FileSync", "SettingSync", "FolderSync"].includes(action)) {
             logAction = `${action}_${currentSyncType}`;
         }
 

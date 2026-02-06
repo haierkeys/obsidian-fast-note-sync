@@ -111,3 +111,34 @@ export interface ConfigSyncData {
     missingConfigs: PathHashFile[];
 }
 
+export interface FolderSyncCheckRequest {
+    path: string;
+    pathHash: string;
+    ctime: number;
+    mtime: number;
+}
+
+export interface FolderSyncRequest {
+    vault: string;
+    lastTime: number;
+    folders: FolderSyncCheckRequest[];
+    delFolders?: PathHashFile[];
+    missingFolders?: PathHashFile[];
+}
+
+export interface FolderSyncRenameMessage {
+    path: string;
+    pathHash: string;
+    ctime: number;
+    mtime: number;
+    oldPath: string;
+    oldPathHash: string;
+}
+
+export interface FolderSyncData {
+    lastTime: number;
+    folders: FolderSyncCheckRequest[];
+    delFolders: PathHashFile[];
+    missingFolders: PathHashFile[];
+}
+

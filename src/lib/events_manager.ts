@@ -1,5 +1,6 @@
-import { TAbstractFile, Platform, TFile, Menu, MenuItem, normalizePath } from "obsidian";
+import { TAbstractFile, Platform, TFile, TFolder, Menu, MenuItem, normalizePath } from "obsidian";
 
+import { folderModify, folderDelete, folderRename } from "./folder_operator";
 import { NoteHistoryModal } from "../views/note-history/history-modal";
 import { noteModify, noteDelete, noteRename } from "./note_operator";
 import { fileModify, fileDelete, fileRename } from "./file_operator";
@@ -80,13 +81,16 @@ export class EventManager {
       return
     }
     if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
-    if (!(file instanceof TFile)) return
 
     this.runWithDelay(file.path, () => {
-      if (file.path.endsWith(".md")) {
-        noteModify(file, this.plugin, true)
-      } else {
-        fileModify(file, this.plugin, true)
+      if (file instanceof TFile) {
+        if (file.path.endsWith(".md")) {
+          noteModify(file, this.plugin, true)
+        } else {
+          fileModify(file, this.plugin, true)
+        }
+      } else if (file instanceof TFolder) {
+        folderModify(file, this.plugin, true)
       }
     })
   }
@@ -97,12 +101,16 @@ export class EventManager {
       return
     }
     if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
-    if (!(file instanceof TFile)) return
+
     this.runWithDelay(file.path, () => {
-      if (file.path.endsWith(".md")) {
-        noteDelete(file, this.plugin, true)
-      } else {
-        fileDelete(file, this.plugin, true)
+      if (file instanceof TFile) {
+        if (file.path.endsWith(".md")) {
+          noteDelete(file, this.plugin, true)
+        } else {
+          fileDelete(file, this.plugin, true)
+        }
+      } else if (file instanceof TFolder) {
+        folderDelete(file, this.plugin, true)
       }
     })
   }
@@ -113,14 +121,17 @@ export class EventManager {
       return
     }
     if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
-    if (!(file instanceof TFile)) return
 
     // 重命名操作可能涉及两个路径，我们为新路径设置延迟
     this.runWithDelay(file.path, () => {
-      if (file.path.endsWith(".md")) {
-        noteRename(file, oldFile, this.plugin, true)
-      } else {
-        fileRename(file, oldFile, this.plugin, true)
+      if (file instanceof TFile) {
+        if (file.path.endsWith(".md")) {
+          noteRename(file, oldFile, this.plugin, true)
+        } else {
+          fileRename(file, oldFile, this.plugin, true)
+        }
+      } else if (file instanceof TFolder) {
+        folderRename(file, oldFile, this.plugin, true)
       }
     })
   }

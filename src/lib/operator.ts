@@ -1,9 +1,10 @@
-﻿import { TFolder, Notice, normalizePath } from "obsidian";
+﻿import { TFolder, TFile, Notice, normalizePath } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename } from "./note_operator";
-import { SyncMode, SnapFile, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData } from "./types";
+import { SyncMode, SnapFile, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
+import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
@@ -14,37 +15,17 @@ export const startupSync = (plugin: FastSync): void => {
 };
 export const startupFullSync = async (plugin: FastSync) => {
   void handleSync(plugin);
-  await vaultEmptyFoldersClean(plugin);
 };
 
 export const resetSettingSyncTime = async (plugin: FastSync) => {
   plugin.localStorageManager.setMetadata("lastFileSyncTime", 0);
   plugin.localStorageManager.setMetadata("lastNoteSyncTime", 0);
   plugin.localStorageManager.setMetadata("lastConfigSyncTime", 0);
+  plugin.localStorageManager.setMetadata("lastFolderSyncTime", 0);
   plugin.localStorageManager.setMetadata("isInitSync", false);
 };
 
-const vaultEmptyFoldersClean = async (plugin: FastSync) => {
-  const clean = async (folder: TFolder): Promise<boolean> => {
-    let isEmpty = true;
-    for (const child of [...folder.children]) {
-      if (child instanceof TFolder) {
-        if (!(await clean(child))) isEmpty = false;
-      } else {
-        isEmpty = false;
-      }
-    }
-    if (isEmpty && folder.path !== "/") {
-      try {
-        await plugin.app.vault.delete(folder);
-        return true;
-      } catch (e) { }
-    }
-    return isEmpty;
-  };
-  const root = plugin.app.vault.getRoot();
-  for (const child of root.children) if (child instanceof TFolder) await clean(child);
-};
+
 
 /**
  * 检查同步是否完成
@@ -135,6 +116,17 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeou
       }
     }
 
+    // 4. 文件夹同步进度
+    if (plugin.settings.syncEnabled) {
+      const folderTasks = plugin.folderSyncTasks;
+      const total = folderTasks.needUpload + folderTasks.needModify + folderTasks.needSyncMtime + folderTasks.needDelete;
+      if (!plugin.folderSyncEnd) {
+        totalProgressSum += 0;
+      } else {
+        totalProgressSum += total > 0 ? folderTasks.completed / total : 1;
+      }
+    }
+
     const overallPercentage = (totalProgressSum / expectedCount) * 100;
 
     let statusText = $("ui.status.syncing");
@@ -171,17 +163,21 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["SettingSyncMtime", receiveConfigSyncMtime],
   ["SettingSyncDelete", receiveConfigSyncDelete],
   ["SettingSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "config")],
+  ["FolderSyncModify", receiveFolderSyncModify],
+  ["FolderSyncDelete", receiveFolderSyncDelete],
+  ["FolderSyncRename", receiveFolderSyncRename],
+  ["FolderSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "folder")],
 ]);
 
 /**
  * 统一处理 SyncEnd 消息的装饰器
  */
-async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" | "file" | "config") {
+async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" | "file" | "config" | "folder") {
   const syncData = data as SyncEndData;
   dump(`Receive ${type} sync end (wrapper):`, syncData);
 
   // 1. 基础任务计数解析
-  const tasks = type === "note" ? plugin.noteSyncTasks : type === "file" ? plugin.fileSyncTasks : plugin.configSyncTasks;
+  const tasks = type === "note" ? plugin.noteSyncTasks : type === "file" ? plugin.fileSyncTasks : type === "config" ? plugin.configSyncTasks : plugin.folderSyncTasks;
   tasks.needUpload = syncData.needUploadCount || 0;
   tasks.needModify = syncData.needModifyCount || 0;
   tasks.needSyncMtime = syncData.needSyncMtimeCount || 0;
@@ -217,6 +213,9 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
   } else if (type === "config") {
     await receiveConfigSyncEnd(data, plugin);
     plugin.configSyncEnd = true;
+  } else if (type === "folder") {
+    await receiveFolderSyncEnd(data, plugin);
+    plugin.folderSyncEnd = true;
   }
 
   // 4. 异步启动子任务处理
@@ -274,15 +273,16 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
-  const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [];
-  const delNotes: PathHashFile[] = [], delFiles: PathHashFile[] = [], delConfigs: PathHashFile[] = [];
-  const missingNotes: PathHashFile[] = [], missingFiles: PathHashFile[] = [], missingConfigs: PathHashFile[] = [];
+  const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], folders: any[] = [];
+  const delNotes: PathHashFile[] = [], delFiles: PathHashFile[] = [], delConfigs: PathHashFile[] = [], delFolders: PathHashFile[] = [];
+  const missingNotes: PathHashFile[] = [], missingFiles: PathHashFile[] = [], missingConfigs: PathHashFile[] = [], missingFolders: PathHashFile[] = [];
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
   let expectedCount = 0;
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     expectedCount += 1; // NoteSync
+    expectedCount += 1; // FolderSync
     // 如果启用了云预览，FileSync 请求不发送，因此不计入预期计数
     if (!plugin.settings.cloudPreviewEnabled) {
       expectedCount += 1; // FileSync
@@ -297,38 +297,52 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
-    const list = plugin.app.vault.getFiles();
+    const list = plugin.app.vault.getAllLoadedFiles();
     for (const file of list) {
       if (isPathExcluded(file.path, plugin)) continue;
-      if (file.extension === "md") {
-        if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) continue;
-        const contentHash = hashContent(await plugin.app.vault.cachedRead(file));
-        const baseHash = plugin.fileHashManager.getPathHash(file.path);
-        let item = {
+      if (file instanceof TFolder) {
+        if (file.path === "/") continue;
+        // 文件夹暂不支持增量时间戳校验，始终全量上报元数据或暂时跳过
+        folders.push({
           path: file.path,
           pathHash: hashContent(file.path),
-          contentHash: contentHash,
-          mtime: file.stat.mtime,
-          size: file.stat.size,
-          // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
-          ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
-        }
+          ctime: 0,
+          mtime: 0,
+        });
+        continue;
+      }
 
-        notes.push(item);
-      } else {
-        if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) continue;
-        const contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
-        const baseHash = plugin.fileHashManager.getPathHash(file.path);
-        let item = {
-          path: file.path,
-          pathHash: hashContent(file.path),
-          contentHash: contentHash,
-          mtime: file.stat.mtime,
-          size: file.stat.size,
-          // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
-          ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+      if (file instanceof TFile) {
+        if (file.extension === "md") {
+          if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) continue;
+          const contentHash = hashContent(await plugin.app.vault.cachedRead(file));
+          const baseHash = plugin.fileHashManager.getPathHash(file.path);
+          let item = {
+            path: file.path,
+            pathHash: hashContent(file.path),
+            contentHash: contentHash,
+            mtime: file.stat.mtime,
+            size: file.stat.size,
+            // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+            ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+          }
+
+          notes.push(item);
+        } else {
+          if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) continue;
+          const contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
+          const baseHash = plugin.fileHashManager.getPathHash(file.path);
+          let item = {
+            path: file.path,
+            pathHash: hashContent(file.path),
+            contentHash: contentHash,
+            mtime: file.stat.mtime,
+            size: file.stat.size,
+            // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+            ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+          }
+          files.push(item);
         }
-        files.push(item);
       }
     }
 
@@ -347,6 +361,18 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           }
         }
       }
+
+      // 检测被删除的文件夹
+      if (plugin.folderHashManager && plugin.folderHashManager.isReady()) {
+        const trackedFolderPaths = plugin.folderHashManager.getAllPaths();
+        const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
+        for (const path of trackedFolderPaths) {
+          if (isPathExcluded(path, plugin)) continue;
+          if (!localFolderPathsSet.has(path)) {
+            delFolders.push({ path: path, pathHash: hashContent(path) });
+          }
+        }
+      }
     } else if (isLoadLastTime) {
       // 增量同步且未开启离线删除同步：检测缺失的文件（哈希表中有但本地不存在）
       const trackedPaths = plugin.fileHashManager.getAllPaths();
@@ -359,6 +385,18 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
             missingNotes.push(item);
           } else {
             missingFiles.push(item);
+          }
+        }
+      }
+
+      // 检测缺失的文件夹
+      if (plugin.folderHashManager && plugin.folderHashManager.isReady()) {
+        const trackedFolderPaths = plugin.folderHashManager.getAllPaths();
+        const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
+        for (const path of trackedFolderPaths) {
+          if (isPathExcluded(path, plugin)) continue;
+          if (!localFolderPathsSet.has(path)) {
+            missingFolders.push({ path: path, pathHash: hashContent(path) });
           }
         }
       }
@@ -432,18 +470,20 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     }
   }
 
-  let fileTime = 0, noteTime = 0, configTime = 0;
+  let fileTime = 0, noteTime = 0, configTime = 0, folderTime = 0;
   if (isLoadLastTime) {
     fileTime = Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"));
     noteTime = Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"));
     configTime = Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"));
+    folderTime = Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"));
   }
 
   const noteData: NoteSyncData = { lastTime: noteTime, notes, delNotes, missingNotes };
   const fileData: FileSyncData = { lastTime: fileTime, files, delFiles, missingFiles };
   const configData: ConfigSyncData = { lastTime: configTime, configs, delConfigs, missingConfigs };
+  const folderData: FolderSyncData = { lastTime: folderTime, folders, delFolders, missingFolders };
 
-  handleRequestSend(plugin, syncMode, noteData, fileData, configData);
+  handleRequestSend(plugin, syncMode, noteData, fileData, configData, folderData);
 
   // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
   const progressCheckInterval = setInterval(() => {
@@ -452,15 +492,23 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 };
 
 
-
 /**
  * 发送同步请求
  */
-export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode, noteData: NoteSyncData, fileData: FileSyncData, configData: ConfigSyncData) {
+export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode, noteData: NoteSyncData, fileData: FileSyncData, configData: ConfigSyncData, folderData: FolderSyncData) {
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
+    const folderSyncData = {
+      vault: plugin.settings.vault,
+      lastTime: folderData.lastTime,
+      folders: folderData.folders,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delFolders: folderData.delFolders } : {}),
+      ...(folderData.missingFolders.length > 0 ? { missingFolders: folderData.missingFolders } : {}),
+    };
+    plugin.websocket.SendMessage("FolderSync", folderSyncData);
+
     const noteSyncData = {
       vault: plugin.settings.vault,
       lastTime: noteData.lastTime,
@@ -486,6 +534,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
     if (plugin.settings.offlineDeleteSyncEnabled) {
       for (const item of noteData.delNotes) plugin.fileHashManager.removeFileHash(item.path);
       for (const item of fileData.delFiles) plugin.fileHashManager.removeFileHash(item.path);
+      for (const item of folderData.delFolders) plugin.folderHashManager.removeFolderHash(item.path);
     }
   }
 

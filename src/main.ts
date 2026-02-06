@@ -4,6 +4,7 @@ import { Notice } from "obsidian";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { LocalStorageManager } from "./lib/local_storage_manager";
+import { FolderHashManager } from "./lib/folder_hash_manager";
 import { ConfigHashManager } from "./lib/config_hash_manager";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
@@ -29,6 +30,7 @@ export default class FastSync extends Plugin {
   configHashManager: ConfigHashManager // 配置哈希管理器
   localStorageManager: LocalStorageManager // 本地存储管理器
   fileCloudPreview: FileCloudPreview // 云端文件预览管理器
+  folderHashManager: FolderHashManager // 文件夹哈希管理器
 
   clipboardReadTip: string = "" // 剪贴板读取提示信息
 
@@ -57,6 +59,7 @@ export default class FastSync extends Plugin {
   noteSyncEnd: boolean = false // 笔记同步是否完成
   fileSyncEnd: boolean = false // 文件同步是否完成
   configSyncEnd: boolean = false // 配置同步是否完成
+  folderSyncEnd: boolean = false // 文件夹同步是否完成
 
   // 任务统计
   noteSyncTasks = {
@@ -83,15 +86,25 @@ export default class FastSync extends Plugin {
     completed: 0, // 已完成数量
   }
 
+  folderSyncTasks = {
+    needUpload: 0, // 需要上传
+    needModify: 0, // 需要修改
+    needSyncMtime: 0, // 需要同步时间戳
+    needDelete: 0, // 需要删除
+    completed: 0, // 已完成数量
+  }
+
   // 重置所有任务统计
   resetSyncTasks() {
     this.noteSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
     this.fileSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
     this.configSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
+    this.folderSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 }
     this.lastStatusBarPercentage = 0
     this.noteSyncEnd = false
     this.fileSyncEnd = false
     this.configSyncEnd = false
+    this.folderSyncEnd = false
   }
 
   // 计算总任务数
@@ -99,12 +112,13 @@ export default class FastSync extends Plugin {
     const noteTotal = this.noteSyncTasks.needUpload + this.noteSyncTasks.needModify + this.noteSyncTasks.needSyncMtime + this.noteSyncTasks.needDelete
     const fileTotal = this.fileSyncTasks.needUpload + this.fileSyncTasks.needModify + this.fileSyncTasks.needSyncMtime + this.fileSyncTasks.needDelete
     const configTotal = this.configSyncTasks.needUpload + this.configSyncTasks.needModify + this.configSyncTasks.needSyncMtime + this.configSyncTasks.needDelete
-    return noteTotal + fileTotal + configTotal
+    const folderTotal = this.folderSyncTasks.needUpload + this.folderSyncTasks.needModify + this.folderSyncTasks.needSyncMtime + this.folderSyncTasks.needDelete
+    return noteTotal + fileTotal + configTotal + folderTotal
   }
 
   // 计算已完成任务数
   getCompletedTasks() {
-    return this.noteSyncTasks.completed + this.fileSyncTasks.completed + this.configSyncTasks.completed
+    return this.noteSyncTasks.completed + this.fileSyncTasks.completed + this.configSyncTasks.completed + this.folderSyncTasks.completed
   }
 
   getWatchEnabled(): boolean {
@@ -178,6 +192,9 @@ export default class FastSync extends Plugin {
     // 初始化配置哈希管理器
     this.configHashManager = new ConfigHashManager(this)
 
+    // 初始化文件夹哈希管理器
+    this.folderHashManager = new FolderHashManager(this)
+
     this.registerObsidianProtocolHandler("fast-note-sync/sso", async (data) => {
       if (data?.pushApi) {
         this.settings.api = data.pushApi
@@ -202,6 +219,9 @@ export default class FastSync extends Plugin {
       if (this.settings.configSyncEnabled) {
         await this.configHashManager.initialize()
       }
+
+      // 初始化文件夹哈希管理器
+      await this.folderHashManager.initialize()
 
       // 只有在哈希表初始化完成后才注册事件
       if (this.fileHashManager.isReady()) {
@@ -250,6 +270,7 @@ export default class FastSync extends Plugin {
     this.refreshRuntime(true, setItem)
     this.fileHashManager.cleanupExcludedHashes()
     this.configHashManager.cleanupExcludedHashes()
+    // 文件夹暂未实现 cleanupExcludedHashes，但 FolderHashManager 初始化时会自动过滤
     await this.saveData(this.settings)
   }
 

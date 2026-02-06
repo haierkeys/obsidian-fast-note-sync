@@ -42,7 +42,7 @@ export class LocalStorageManager {
     /**
      * 获取元数据项
      */
-    getMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink'): any {
+    getMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'lastFolderSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink'): any {
         const value = this.read(this.getInternalKey(field));
         if (field.endsWith('Time')) {
             return value ? Number(value) : 0;
@@ -56,7 +56,7 @@ export class LocalStorageManager {
     /**
      * 设置元数据项
      */
-    setMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink', value: any): void {
+    setMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'lastFolderSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink', value: any): void {
         this.write(this.getInternalKey(field), String(value));
     }
 
