@@ -192,7 +192,6 @@ export class MenuManager {
     //     .setIcon("cloudy")
     //     .setTitle($("TEST") + "TEST")
     //     .onClick(async () => {
-    //       console.log("TESTqqqqq")
     //       console.table({
     //         isDesktop: Platform.isDesktop,
     //         isMobile: Platform.isMobile,

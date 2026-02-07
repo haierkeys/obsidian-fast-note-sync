@@ -46,16 +46,30 @@ export const getDirNameOrEmpty = function (path: string): string {
 };
 
 /**
- * 检查路径是否命中模式 (左匹配/前缀匹配)
+ * 检查路径是否命中模式
+ * 支持正则 (默认忽略大小写) 或 路径前缀匹配
  * 匹配情况：
- * 1. path === pattern (全等)
- * 2. path 以 pattern + "/" 开头 (子目录或文件)
+ * 1. regex 匹配 (不包含前后斜线)
+ * 2. path === pattern (全等)
+ * 3. path 以 pattern + "/" 开头 (子目录或文件)
  */
 export const isPathMatch = function (path: string, pattern: string): boolean {
-  // 自动移除 pattern 尾部的斜杠，防止出现 // 匹配
-  const p = pattern.endsWith("/") ? pattern.slice(0, -1) : pattern;
-  if (path === p) return true;
-  if (path.startsWith(p + "/")) return true;
+  // 1. 尝试正则匹配 (默认忽略大小写)2
+  try {
+    const regex = new RegExp("^" + pattern, "i");
+    if (regex.test(path)) return true;
+  } catch (e) {
+    // 如果正则非法，则忽略错误，继续后续的路径匹配逻辑
+  }
+
+  // 2. 传统路径前缀匹配 (支持 Windows 分隔符兼容)
+  const normalizedPath = path.replace(/\\/g, "/");
+  const normalizedPattern = pattern.replace(/\\/g, "/");
+  const p = normalizedPattern.endsWith("/") ? normalizedPattern.slice(0, -1) : normalizedPattern;
+
+  if (normalizedPath === p) return true;
+  if (normalizedPath.startsWith(p + "/")) return true;
+
   return false;
 }
 
@@ -68,7 +82,7 @@ export const isPathExcluded = function (path: string, plugin: FastSync): boolean
 
   // 0. 检查白名单 (优先级最高)
   if (syncExcludeWhitelist) {
-    const whitelist = syncExcludeWhitelist.replace(/\\/g, "/").split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
+    const whitelist = syncExcludeWhitelist.split(/\r?\n/).map(p => p.trim()).filter(p => p !== "");
     if (whitelist.some(p => isPathMatch(normalizedPath, p))) {
       return false;
     }
@@ -85,7 +99,7 @@ export const isPathExcluded = function (path: string, plugin: FastSync): boolean
 
   // 2. 检查目录排除
   if (syncExcludeFolders) {
-    const folderList = syncExcludeFolders.replace(/\\/g, "/").split(/\r?\n/).map(f => f.trim()).filter(f => f !== "");
+    const folderList = syncExcludeFolders.split(/\r?\n/).map(f => f.trim()).filter(f => f !== "");
     if (folderList.some(f => isPathMatch(normalizedPath, f))) {
       return true;
     }
@@ -107,7 +121,7 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
   // 0. 检查白名单 (优先级最高)
   const whitelistSetting = plugin.settings.configExcludeWhitelist || ""
   if (whitelistSetting.trim()) {
-    const whitelist = whitelistSetting.replace(/\\/g, "/").split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
+    const whitelist = whitelistSetting.split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
     if (whitelist.some((p) => isPathMatch(normalizedPath, p))) {
       return false
     }
@@ -117,7 +131,6 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
   const setting = plugin.settings.configExclude || ""
   if (!setting.trim()) return false
   const paths = setting
-    .replace(/\\/g, "/")
     .split(/\r?\n/)
     .map((p) => p.trim())
     .filter((p) => p !== "")

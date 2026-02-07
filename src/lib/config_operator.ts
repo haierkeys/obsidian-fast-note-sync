@@ -1,6 +1,6 @@
 import { normalizePath } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, sleep, isPathMatch, configIsPathExcluded, configAddPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, configAddPathExcluded } from "./helps";
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import type FastSync from "../main";
 
