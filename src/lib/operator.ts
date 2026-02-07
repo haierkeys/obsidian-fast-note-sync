@@ -503,14 +503,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
-    const folderSyncData = {
-      vault: plugin.settings.vault,
-      lastTime: folderData.lastTime,
-      folders: folderData.folders,
-      ...(plugin.settings.offlineDeleteSyncEnabled ? { delFolders: folderData.delFolders } : {}),
-      ...(folderData.missingFolders.length > 0 ? { missingFolders: folderData.missingFolders } : {}),
-    };
-    plugin.websocket.SendMessage("FolderSync", folderSyncData);
+
 
     const noteSyncData = {
       vault: plugin.settings.vault,
@@ -532,6 +525,15 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
     if (!plugin.settings.cloudPreviewEnabled) {
       plugin.websocket.SendMessage("FileSync", fileSyncData);
     }
+
+    const folderSyncData = {
+      vault: plugin.settings.vault,
+      lastTime: folderData.lastTime,
+      folders: folderData.folders,
+      ...(plugin.settings.offlineDeleteSyncEnabled ? { delFolders: folderData.delFolders } : {}),
+      ...(folderData.missingFolders.length > 0 ? { missingFolders: folderData.missingFolders } : {}),
+    };
+    plugin.websocket.SendMessage("FolderSync", folderSyncData);
 
     // 清理已删除文件的本地哈希数据,防止重复检测
     if (plugin.settings.offlineDeleteSyncEnabled) {

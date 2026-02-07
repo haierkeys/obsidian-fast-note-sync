@@ -5,6 +5,7 @@ import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
 import { LocalStorageManager } from "./lib/local_storage_manager";
+import { dump, setLogEnabled, isPathMatch } from "./lib/helps";
 import { ConfigHashManager } from "./lib/config_hash_manager";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
@@ -12,7 +13,6 @@ import { SyncLogManager } from "./lib/sync_log_manager";
 import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
-import { dump, setLogEnabled } from "./lib/helps";
 import { MenuManager } from "./lib/menu_manager";
 import { handleSync } from "./lib/operator";
 import { $ } from "./lang/lang";
@@ -139,6 +139,14 @@ export default class FastSync extends Plugin {
 
   removeIgnoredFile(path: string) {
     this.ignoredFiles.delete(path)
+  }
+
+  isIgnoredFile(path: string): boolean {
+    if (this.ignoredFiles.has(path)) return true
+    for (const ignoredPath of this.ignoredFiles) {
+      if (isPathMatch(path, ignoredPath)) return true
+    }
+    return false
   }
 
   addIgnoredConfigFile(path: string) {

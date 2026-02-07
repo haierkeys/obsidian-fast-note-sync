@@ -39,7 +39,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
   if (!(file instanceof TFile)) return
   if (file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
-  if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
@@ -76,7 +76,7 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
   if (!(file instanceof TFile)) return
   if (file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
-  if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
   // 如果该文件正在上传或在队列中，则标记为取消，且不再发送服务端删除消息
@@ -111,7 +111,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (plugin.settings.syncEnabled == false) return
   if (file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) return
-  if (plugin.ignoredFiles.has(file.path) && eventEnter) return
+  if (plugin.isIgnoredFile(file.path) && eventEnter) return
   if (isPathExcluded(file.path, plugin)) return
   if (!(file instanceof TFile)) return
 
@@ -658,6 +658,23 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
     plugin.fileHashManager.removeFileHash(data.oldPath)
     plugin.fileHashManager.setFileHash(data.path, data.contentHash)
   } else {
+    // 如果本地找不到旧文件，但新文件已经存在，检查内容是否一致
+    const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+    if (targetFile instanceof TFile) {
+      // 检查大小和哈希（如果服务端提供了 size）
+      const sizeMatch = data.size === undefined || targetFile.stat.size === data.size
+      if (sizeMatch) {
+        const content = await plugin.app.vault.readBinary(targetFile)
+        const localContentHash = hashArrayBuffer(content)
+        if (localContentHash === data.contentHash) {
+          dump(`Target attachment already exists and matches hash, skipping rename: ${data.path}`)
+          plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+          plugin.fileSyncTasks.completed++
+          return
+        }
+      }
+    }
+
     // 如果本地找不到旧文件，说明本地可能缺失该附件，直接向服务端请求重新推送新路径的内容
     dump(`Local attachment not found for rename, requesting RePush: ${data.oldPath} -> ${data.path}`)
     const rePushData = {

@@ -1,7 +1,7 @@
 import { TFolder, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData, FolderSyncRenameMessage } from "./types";
-import { hashContent, dump, isPathExcluded } from "./helps";
+import { hashContent, dump, isPathExcluded, waitForFolderEmpty } from "./helps";
 import type FastSync from "../main";
 
 
@@ -11,7 +11,7 @@ import type FastSync from "../main";
 export const folderModify = async function (folder: TFolder, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.syncEnabled == false) return
     if (eventEnter && !plugin.getWatchEnabled()) return
-    if (eventEnter && plugin.ignoredFiles.has(folder.path)) return
+    if (eventEnter && plugin.isIgnoredFile(folder.path)) return
     if (isPathExcluded(folder.path, plugin)) return
 
     plugin.addIgnoredFile(folder.path)
@@ -35,7 +35,7 @@ export const folderModify = async function (folder: TFolder, plugin: FastSync, e
 export const folderDelete = function (folder: TFolder, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.syncEnabled == false) return
     if (eventEnter && !plugin.getWatchEnabled()) return
-    if (eventEnter && plugin.ignoredFiles.has(folder.path)) return
+    if (eventEnter && plugin.isIgnoredFile(folder.path)) return
     if (isPathExcluded(folder.path, plugin)) return
 
     plugin.addIgnoredFile(folder.path)
@@ -58,7 +58,7 @@ export const folderDelete = function (folder: TFolder, plugin: FastSync, eventEn
 export const folderRename = async function (folder: TFolder, oldPath: string, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.syncEnabled == false) return
     if (eventEnter && !plugin.getWatchEnabled()) return
-    if (eventEnter && plugin.ignoredFiles.has(folder.path)) return
+    if (eventEnter && plugin.isIgnoredFile(folder.path)) return
     if (isPathExcluded(folder.path, plugin)) return
 
     plugin.addIgnoredFile(folder.path)
@@ -115,6 +115,8 @@ export const receiveFolderSyncDelete = async function (data: any, plugin: FastSy
 
     if (folder instanceof TFolder) {
         plugin.addIgnoredFile(normalizedPath)
+        // 必须检测并等到 目录里的所有文件数量 为 0 之后再执行
+        await waitForFolderEmpty(normalizedPath, plugin);
         // 递归删除文件夹及其内容，或者只删除空文件夹？服务端通常是递归的。
         // Vault.delete(TAbstractFile, force)
         await plugin.app.vault.delete(folder, true)

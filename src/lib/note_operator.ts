@@ -13,7 +13,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
-  if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
@@ -52,7 +52,7 @@ export const noteDelete = function (file: TAbstractFile, plugin: FastSync, event
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
-  if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
@@ -80,7 +80,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
-  if (eventEnter && plugin.ignoredFiles.has(file.path)) return
+  if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
   plugin.addIgnoredFile(file.path)
@@ -280,7 +280,20 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
     plugin.fileHashManager.removeFileHash(data.oldPath)
     plugin.fileHashManager.setFileHash(data.path, data.contentHash)
   } else {
-    // 如果本地找不到旧文件，说明本地可能缺失该文件，直接向服务端请求重新推送新路径的内容
+    // 如果本地找不到旧文件，但新文件已经存在，检查内容是否一致
+    const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+    if (targetFile instanceof TFile) {
+      const content = await plugin.app.vault.cachedRead(targetFile)
+      const localContentHash = hashContent(content)
+      if (localContentHash === data.contentHash) {
+        dump(`Target file already exists and matches hash, skipping rename: ${data.path}`)
+        plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+        plugin.noteSyncTasks.completed++
+        return
+      }
+    }
+
+    // 如果本地找不到旧文件，且新文件不匹配，说明本地可能缺失该文件，直接向服务端请求重新推送新路径的内容
     dump(`Local file not found for rename, requesting RePush: ${data.oldPath} -> ${data.path}`)
     const rePushData = {
       vault: plugin.settings.vault,

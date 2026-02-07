@@ -1,4 +1,4 @@
-import { Notice, moment } from "obsidian";
+import { Notice, moment, normalizePath, TFolder } from "obsidian";
 
 import FastSync from "../main";
 
@@ -191,6 +191,31 @@ export const stringToDate = function (date: string): string {
  * 延迟执行 (让出主线程)
  */
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * 等待文件夹变为空
+ */
+export const waitForFolderEmpty = async function (path: string, plugin: FastSync, timeoutMs: number = 10000): Promise<boolean> {
+  const startTime = Date.now();
+  const normalizedPath = normalizePath(path);
+
+  while (Date.now() - startTime < timeoutMs) {
+    const folder = plugin.app.vault.getAbstractFileByPath(normalizedPath);
+    if (!(folder instanceof TFolder)) {
+      return true; // 文件夹已经不存在了，也算成功
+    }
+
+    if (folder.children.length === 0) {
+      return true; // 文件夹已空
+    }
+
+    dump(`Waiting for folder to be empty: ${normalizedPath} (${folder.children.length} items remaining)`);
+    await sleep(100); // 等待 200ms 后重试
+  }
+
+  dump(`Timeout waiting for folder to be empty: ${normalizedPath}`);
+  return false;
+}
 
 /**
  * =============================================================================
