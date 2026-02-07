@@ -8,38 +8,54 @@ import FastSync from "./main";
 
 
 export interface PluginSettings {
-  //是否自动上传
+  /** 是否启用同步（自动上传/下载） */
   syncEnabled: boolean
-  // 是否开启配置项同步
+  /** 是否开启插件配置项同步 */
   configSyncEnabled: boolean
-  // 是否开启日志
+  /** 是否开启日志记录 */
   logEnabled: boolean
-  //API地址
+  /** API 基础地址 */
   api: string
+  /** WebSocket API 地址（根据 api 自动生成） */
   wsApi: string
-  //API Token
+  /** API 访问令牌 */
   apiToken: string
+  /** 库（Vault）标识名称 */
   vault: string
-  //  [propName: string]: any;
 
+  /** 配置文件同步排除项（通常包含本插件自身的配置路径） */
   configExclude: string
+  /** 启动同步延迟时间（毫秒），避免刚启动时大量 IO 冲突 */
   startupDelay: number
+  /** 离线同步策略（如 newTimeMerge, ignoreTimeMerge 等） */
   offlineSyncStrategy: string
+  /** 笔记/文件同步排除文件夹（每行一个） */
   syncExcludeFolders: string
+  /** 笔记/文件同步排除扩展名（如 .tmp, .log） */
   syncExcludeExtensions: string
+  /** 笔记/文件同步排除白名单（即使在排除文件夹内也强制同步） */
   syncExcludeWhitelist: string
+  /** 配置文件同步排除白名单 */
   configExcludeWhitelist: string
+  /** 是否启用 PDF 状态同步 */
   pdfSyncEnabled: boolean
+  /** 是否启用云端预览功能（减少本地存储占用） */
   cloudPreviewEnabled: boolean
+  /** 是否限制云端预览的文件类型 */
   cloudPreviewTypeRestricted: boolean
+  /** 云端预览远程资源地址模板 */
   cloudPreviewRemoteUrl: string
+  /** 云端预览上传后是否自动删除本地文件 */
   cloudPreviewAutoDeleteLocal: boolean
+  /** 是否启用离线删除同步（本地删除后同步到服务端） */
   offlineDeleteSyncEnabled: boolean
+  /** 同步更新延迟（毫秒），用于防抖处理 */
   syncUpdateDelay: number
+  /** 是否在同步完成后显示通知 */
   showSyncNotice: boolean
-  // 是否启用手动同步模式
+  /** 是否启用手动同步模式（禁用自动触发） */
   manualSyncEnabled: boolean
-  // 是否启用只读同步模式
+  /** 是否启用只读同步模式（不上传本地修改） */
   readonlySyncEnabled: boolean
 }
 

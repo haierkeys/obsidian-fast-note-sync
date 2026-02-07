@@ -15,10 +15,10 @@ test:
 	@echo ${REPO}
 
 dev:
-	npx concurrently "pnpm run devcss" "pnpm run dev"
+	pnpm run dev
 
 air:
-	npx concurrently "pnpm run devcss" "pnpm run dev"
+	pnpm run dev
 
 cp:
 	cp  ./main.js /Users/DevApps/@JsApps/ObsPlugins2/.obsidian/plugins/obsidian-fast-note-sync/
