@@ -65,6 +65,10 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.sync_delay_desc": "笔记、附件、配置修改后延迟执行同步的时间。默认 0 毫秒 (即时同步)",
   "setting.sync.show_notice": "显示同步提示",
   "setting.sync.show_notice_desc": "开启后，同步开始和同步完成时将弹出系统提示。",
+  "setting.sync.clear_remote": "清理远端配置",
+  "setting.sync.clear_remote_desc": "从远端服务清理笔记库的配置。此操作不可逆。",
+  "setting.sync.clear_remote_confirm": "确认从远端服务清理笔记库的配置吗？\n该操作将物理删除远端服务存储的本仓库所有配置，且不可恢复。",
+  "ui.status.clear_success": "远端配置已清理",
 
   // --- setting.cloud ---
   "setting.cloud.title": "附件云预览",
@@ -207,6 +211,10 @@ const zh_cn: Partial<LangMap> = {
   "ui.log.action.SettingDelete": "配置文件删除",
   "ui.log.action.SyncEnd_full": "同步大项结束(全量)",
   "ui.log.action.SyncEnd_incremental": "同步大项结束(增量)",
+
+  // --- ui.button ---
+  "ui.button.confirm": "确认",
+  "ui.button.cancel": "取消",
 }
 
 

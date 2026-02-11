@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Notice, Setting, Platform } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
 import { SettingsView, SupportView } from "./views/settings-view";
+import { ConfirmModal } from "./views/confirm-modal";
 import { KofiImage, WXImage } from "./lib/icons";
 import { $ } from "./lang/lang";
 import FastSync from "./main";
@@ -212,6 +213,28 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_config_desc"))
+
+    new Setting(set).setName($("setting.sync.clear_remote")).setDesc($("setting.sync.clear_remote_desc")).addButton((btn) => {
+      btn.setWarning().setButtonText($("setting.sync.clear_remote")).onClick(async () => {
+        new ConfirmModal(
+          this.app,
+          $("setting.sync.clear_remote"),
+          $("setting.sync.clear_remote_confirm"),
+          () => {
+            this.plugin.websocket.SendMessage("SettingClear", {
+              vault: this.plugin.settings.vault
+            })
+            btn.setDisabled(true)
+            btn.setIcon("check")
+            setTimeout(() => {
+              btn.setDisabled(false)
+              btn.setIcon("")
+              btn.setButtonText($("setting.sync.clear_remote"))
+            }, 2000)
+          }
+        ).open();
+      })
+    })
 
     new Setting(set).setName($("setting.sync.pdf_state")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
