@@ -137,15 +137,14 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                         onClick={() => {
-                            (plugin.app as any).setting.open();
-                            (plugin.app as any).setting.openTabById(plugin.manifest.id);
+                            (plugin.app as any).setting.open()
+                                (plugin.app as any).setting.openTabById(plugin.manifest.id)
                         }}
-                        className="fns-sync-log-clear-btn"
-                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                        className="fns-sync-log-clear-btn clickable-icon"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
                         title={$("ui.menu.settings")}
                     >
                         <span ref={settingsIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
-                        {$("ui.menu.settings")}
                     </button>
                     <button onClick={clearLogs} className="fns-sync-log-clear-btn">
                         {$("ui.log.clear")}
