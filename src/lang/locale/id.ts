@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const id: Partial<LangMap> = {
   "fns.desc": "Plugin untuk sinkronisasi dan pencadangan catatan, lampiran, dan konfigurasi secara real-time antar perangkat. Mendukung penyebaran pribadi (private deployment), berjalan di Mac, Windows, Android, iOS, dll., dan menawarkan dukungan multi-bahasa.",
 
+  "setting.tab.general": "Umum",
+  "setting.tab.debug": "Debug",
+  "setting.tab.remote": "Pengaturan Remote",
+  "setting.tab.sync": "Kontrol Sinkronisasi",
+  "setting.tab.cloud": "Pratinjau Cloud Lampiran",
+  "setting.search.placeholder": "Cari pengaturan...",
+
   // --- setting.remote ---
   "setting.remote.title": "Remote",
   "setting.remote.connected": "Layanan terhubung",
@@ -35,7 +42,7 @@ const id: Partial<LangMap> = {
   "setting.sync.pdf_state": "Sinkronisasi Status PDF",
   "setting.sync.pdf_state_desc": "Jika diaktifkan, status baca pemirsa PDF akan disinkronkan. (Pengaturan ini memerlukan sinkronisasi konfigurasi diaktifkan)",
   "setting.sync.merge_strategy": "Strategi Penggabungan Catatan pada Pengeditan Offline",
-  "setting.sync.merge_strategy_desc": "Metode penanganan konten saat terhubung kembali ke server setelah mengedit catatan Markdown dalam mode offline, hanya untuk perangkat ini.\n| Strategi | Deskripsi |\n| --- | --- |\n| Jangan gabungkan, pertahankan yang terbaru | Tidak ada penggabungan yang dilakukan, hanya catatan terakhir yang diedit yang dipertahankan. Jika catatan lokal lebih lama, perubahan lokal akan hilang. |\n| Gabungkan hanya jika lebih baru | Jika catatan lokal lebih baru, konten akan digabungkan; jika tidak, versi server yang berlaku. |\n| Penggabungan paksa | Mengabaikan urutan pengeditan dan memaksa penggabungan konten lokal dan server. |\nCatatan: Proses penggabungan dibandingkan dengan versi basis yang sama, yang mungkin menyebabkan konten yang dihapus sebelumnya muncul kembali.",
+  "setting.sync.merge_strategy_desc": "Metode penanganan konten saat terhubung kembali ke server setelah mengedit catatan Markdown dalam mode offline, hanya untuk perangkat ini.\n| Strategia | Deskripsi |\n| --- | --- |\n| Jangan gabungkan, pertahankan yang terbaru | Tidak ada penggabungan yang dilakukan, hanya catatan terakhir yang diedit yang dipertahankan. Jika catatan lokal lebih lama, perubahan lokal akan hilang. |\n| Gabungkan hanya jika lebih baru | Jika catatan lokal lebih baru, konten akan digabungkan; jika tidak, versi server yang berlaku. |\n| Penggabungan paksa | Mengabaikan urutan pengeditan dan memaksa penggabungan konten lokal dan server. |\nCatatan: Proses penggabungan dibandingkan dengan versi basis yang sama, yang mungkin menyebabkan konten yang dihapus sebelumnya muncul kembali.",
   "setting.sync.strategy_default": "Jangan gabungkan, pertahankan yang terbaru",
   "setting.sync.strategy_force": "Penggabungan paksa",
   "setting.sync.strategy_new": "Gabungkan hanya jika lebih baru",
@@ -76,7 +83,7 @@ const id: Partial<LangMap> = {
   "setting.cloud.type_limit": "Batas Jenis Pratinjau Cloud",
   "setting.cloud.type_limit_desc": "Jika diaktifkan, pratinjau cloud hanya tersedia untuk gambar/audio/video/PDF; lampiran lainnya disinkronkan secara normal.\nCatatan: Nonaktifkan dengan hati-hati, karena ini dapat menyebabkan malfungsi pada plugin terkait.",
   "setting.cloud.remote_source": "Pratinjau Cloud - pemetaan awalan/akhiran",
-  "setting.cloud.remote_source_desc": "Pengaturan ini digunakan untuk menentukan sumber remote untuk lampiran yang cocok dengan awalan/akhiran tertentu, mendukung aturan multi-baris.\nFormat: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> dapat diabaikan, dan beberapa <b>suffix</b> dapat dipisahkan dengan <b>$</b>. Jika tidak ada aturan yang cocok, sumber FNS default akan digunakan. Mendukung variabel.\n| Variabel | Deskripsi |\n| --- | --- |\n| {path} | path lampiran dalam catatan |\n| {vaultPath} | path relatif dalam vault |\n| {vault} | nama vault |\n| {type} | jenis lampiran (image/video/audio/pdf/other) |\nContoh: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nCatatan: jika Anda menggunakan sumber remote khusus, pastikan sumber tersebut mendukung CORS dan otorisasi yang diperlukan (jika diperlukan).",
+  "setting.cloud.remote_source_desc": "Pengaturan ini digunakan untuk menentukan sumber remote untuk lampiran yang cocok dengan awalan/akhiran tertentu, mendukung aturan multi-baris.\nFormat: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> dapat diabaikan, dan beberapa <b>suffix</b> dapat dipisahkan dengan <b>$</b>. Jika tidak ada aturan yang cocok, sumber FNS default akan digunakan. Mendukung variabel.\n| Variabel | Deskripsi |\n| --- | --- |\n| {path} | path lampiran dalam catatan |\n| {vaultPath} | path relatif dalam vault |\n| {vault} | nama vault |\n| {type} | jenis lampiran (image/video/audio/pdf/other) |\nContoh: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nCatatan: jika Anda menggunakan sumber remote khusus, pastikan sumber tersebut mendukung CORS dan otorisasi yang diperlukan (jika diperlukan).",
   "setting.cloud.delete_after_upload": "Pratinjau Cloud - hapus setelah unggah",
   "setting.cloud.delete_after_upload_desc": "File lokal akan dihapus secara otomatis setelah unggahan berhasil untuk menghemat ruang.\n(Pengaturan ini memerlukan pratinjau cloud lampiran diaktifkan)\nCatatan: Nonaktifkan dengan hati-hati, karena ini dapat menyebabkan malfungsi pada plugin terkait.",
 
@@ -91,7 +98,9 @@ const id: Partial<LangMap> = {
   "setting.support.log_desc": "Jika diaktifkan, log akan ditampilkan di konsol.",
   "setting.support.debug_copy": "Salin Informasi Debug",
   "setting.support.debug_desc": "Salin informasi debug ke clipboard (mungkin berisi data sensitif)!",
-  "setting.support.feedback": "Umpan balik dan Saran",
+  "setting.support.issue": "Laporkan masalah",
+  "setting.support.issue_notice": "Informasi debug telah disalin secara otomatis; harap sertakan <b>informasi debug</b> saat melaporkan masalah untuk memungkinkan analisis yang lebih cepat.",
+  "setting.support.feature": "Saran fitur",
   "setting.support.telegram": "Grup diskusi Telegram",
   "setting.support.console_tip": "Buka konsol dengan tombol pintas untuk melihat log dari plugin ini dan plugin lainnya.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -136,11 +145,12 @@ const id: Partial<LangMap> = {
   "ui.menu.rebuild_hash": "Bangun ulang peta hash file",
   "ui.menu.plugin": "Versi Plugin",
   "ui.menu.plugin_desc": "Nomor versi plugin Fast Note Sync",
-  "ui.menu.server": "Versi Server",
+  "ui.menu.server": "Versia Server",
   "ui.menu.server_desc": "Nomor versi server Fast Note Sync",
+  "ui.menu.settings": "Pengaturan Plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Menyinkronkan...",
+  "ui.status.syncing": "Menyinkronkan",
   "ui.status.starting": "Memulai Sinkronisasi",
   "ui.status.new_version": "Versi baru tersedia: ${version}. Klik untuk memperbarui.",
   "ui.status.completed": "Sinkronisasi selesai",
@@ -217,6 +227,8 @@ const id: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Konfirmasi",
   "ui.button.cancel": "Batal",
+  "ui.button.goto_feedback": "Ke Github Feedback",
+  "ui.title.notice": "Pemberitahuan Umpan Balik",
 }
 
 

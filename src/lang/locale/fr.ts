@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const fr: Partial<LangMap> = {
   "fns.desc": "Un plugin pour la synchronisation et la sauvegarde en temps réel de vos notes, pièces jointes et configurations entre appareils. Prend en charge le déploiement privé, fonctionne sur Mac, Windows, Android, iOS, etc., et offre un support multilingue.",
 
+  "setting.tab.general": "Général",
+  "setting.tab.debug": "Débogage",
+  "setting.tab.remote": "Paramètres distants",
+  "setting.tab.sync": "Contrôle de synchronisation",
+  "setting.tab.cloud": "Aperçu des pièces jointes dans le cloud",
+  "setting.search.placeholder": "Rechercher des paramètres...",
+
   // --- setting.remote ---
   "setting.remote.title": "Distant",
   "setting.remote.connected": "Service connecté",
@@ -76,9 +83,9 @@ const fr: Partial<LangMap> = {
   "setting.cloud.type_limit": "Limite du type d'aperçu dans le cloud",
   "setting.cloud.type_limit_desc": "Lorsqu'il est activé, l'aperçu dans le cloud n'est disponible que pour les images/audio/vidéo/PDF ; les autres pièces jointes sont synchronisées normalement.\nRemarque : Désactivez avec prudence, car cela peut entraîner un dysfonctionnement des plugins associés.",
   "setting.cloud.remote_source": "Aperçu dans le cloud - mappage préfixe/suffixe",
-  "setting.cloud.remote_source_desc": "Ce paramètre est utilisé pour déterminer la source distante des pièces jointes correspondant à certains préfixes/suffixes, prend en charge les règles multi-lignes.\nFormat : <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> peut être omis, et plusieurs <b>suffix</b> peuvent être séparés par <b>$</b>. Si aucune règle ne correspond, la source FNS par défaut est utilisée. Prend en charge les variables.\n| Variable | Description |\n| --- | --- |\n| {path} | chemin de la pièce jointe dans la note |\n| {vaultPath} | chemin relatif dans le vault |\n| {vault} | nom du vault |\n| {type} | type de pièce jointe (image/video/audio/pdf/other) |\nPar exemple : <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nRemarque : si vous utilisez une source distante personnalisée, assurez-vous qu'elle prend en charge CORS et l'autorisation requise (si nécessaire).",
+  "setting.cloud.remote_source_desc": "Ce paramètre est utilisé pour déterminer la source distante des pièces jointes correspondant à certains préfixes/suffixes, prend en charge les règles multi-lignes.\nFormat : <b>prefix@suffix#remote_source</b>\n<b>prefix</b> kann weggelassen werden, und mehrere <b>suffix</b> können durch <b>$</b> getrennt werden. Si aucune règle ne correspond, la source FNS par défaut est utilisée. Prend en charge les variables.\n| Variable | Beschreibung |\n| --- | --- |\n| {path} | Pfad zum Anhang in der Notiz |\n| {vaultPath} | relativer Pfad im Vault |\n| {vault} | Name des Vaults |\n| {type} | Anhangstyp (image/video/audio/pdf/other) |\nPar exemple : <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nRemarque : si vous utilisez une source distante personnalisée, assurez-vous qu'elle prend en charge CORS et l'autorisation requise (si nécessaire).",
   "setting.cloud.delete_after_upload": "Aperçu dans le cloud - supprimer après téléchargement",
-  "setting.cloud.delete_after_upload_desc": "Les fichiers locaux seront automatiquement supprimés après un téléchargement réussi pour gagner de l'espace.\n(Ce paramètre nécessite l'activation de l'aperçu des pièces jointes dans le cloud)\nRemarque : Désactivez avec prudence, car cela peut entraîner un dysfonctionnement des plugins associés.",
+  "setting.cloud.delete_after_upload_desc": "Les fichiers locaux seront automatiquement supprimés après un téléchargement réussi para gagner de l'espace.\n(Ce paramètre nécessite l'activation de l'aperçu des pièces jointes dans le cloud)\nRemarque : Désactivez avec prudence, car cela peut entraîner un dysfonctionnement des plugins associés.",
 
   // --- setting.support ---
   "setting.support.title": "Support et parrainage",
@@ -91,7 +98,9 @@ const fr: Partial<LangMap> = {
   "setting.support.log_desc": "Lorsqu'il est activé, les logs seront affichés dans la console.",
   "setting.support.debug_copy": "Copier les infos de débogage",
   "setting.support.debug_desc": "Copiez les informations de débogage dans le presse-papiers (peut contenir des données sensibles) !",
-  "setting.support.feedback": "Commentaires et suggestions",
+  "setting.support.issue": "Signaler un problème",
+  "setting.support.issue_notice": "Les informations de débogage ont été automatiquement copiées ; veuillez inclure les <b>informations de débogage</b> lors du signalement d'un problème pour permettre une analyse plus rapide.",
+  "setting.support.feature": "Suggestion de fonctionnalité",
   "setting.support.telegram": "Groupe de discussion Telegram",
   "setting.support.console_tip": "Ouvrez la console avec des raccourcis clavier pour voir les logs de ce plugin et des autres.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const fr: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Le numéro de version du plugin Fast Note Sync",
   "ui.menu.server": "Version du serveur",
   "ui.menu.server_desc": "Le numéro de version du serveur Fast Note Sync",
+  "ui.menu.settings": "Paramètres du plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Synchronisation...",
+  "ui.status.syncing": "Synchronisation",
   "ui.status.starting": "Démarrage de la synchronisation",
   "ui.status.new_version": "Nouvelle version disponible : ${version}. Cliquez pour mettre à jour.",
   "ui.status.completed": "Synchronisation terminée",
@@ -217,6 +227,8 @@ const fr: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Confirmer",
   "ui.button.cancel": "Annuler",
+  "ui.button.goto_feedback": "Aller aux commentaires Github",
+  "ui.title.notice": "Avis de commentaires",
 }
 
 

@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const tr: Partial<LangMap> = {
   "fns.desc": "Cihazlar arasında notların, eklerin ve yapılandırmaların gerçek zamanlı senkronizasyonu ve yedeklenmesi için bir eklenti. Özel dağıtımı destekler, Mac, Windows, Android, iOS vb. üzerinde çalışır ve çoklu dil desteği sunar.",
 
+  "setting.tab.general": "Genel",
+  "setting.tab.debug": "Hata Ayıklama",
+  "setting.tab.remote": "Uzak Ayarlar",
+  "setting.tab.sync": "Senkronizasyon Kontrolü",
+  "setting.tab.cloud": "Bulut Eki Önizleme",
+  "setting.search.placeholder": "Ayarları ara...",
+
   // --- setting.remote ---
   "setting.remote.title": "Uzak",
   "setting.remote.connected": "Hizmet bağlandı",
@@ -76,7 +83,7 @@ const tr: Partial<LangMap> = {
   "setting.cloud.type_limit": "Bulut önizleme türü sınırı",
   "setting.cloud.type_limit_desc": "Etkinleştirildiğinde, bulut önizlemesi yalnızca resim/ses/video/PDF için kullanılabilir; diğer ekler normal şekilde senkronize edilir.\nNot: Dikkatli bir şekilde devre dışı bırakın, çünkü bu ilgili eklentilerin arızalanmasına neden olabilir.",
   "setting.cloud.remote_source": "Bulut önizleme - ön ek/son ek eşleme",
-  "setting.cloud.remote_source_desc": "Bu ayar, belirli ön ekler/son ekler ile eşleşen ekler için uzak kaynağı belirlemek için kullanılır, çok satırlı kuralları destekler.\nBiçim: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> atlanabilir ve birden fazla <b>suffix</b> <b>$</b> ile ayrılabilir. Hiçbir kural eşleşmezse, varsayılan FNS kaynağı kullanılır. Değişkenleri destekler.\n| Değişken | Açıklama |\n| --- | --- |\n| {path} | notun içindeki ek yolu |\n| {vaultPath} | kasanın içindeki göreceli yol |\n| {vault} | kasa adı |\n| {type} | ek türü (image/video/audio/pdf/other) |\nÖrneğin: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNot: özel bir uzak kaynak kullanıyorsanız, CORS ve gerekli kimlik doğrulamasını (gerekirse) desteklediğinden emin olun.",
+  "setting.cloud.remote_source_desc": "Bu ayar, belirli ön ekler/son ekler ile eşleşen ekler için uzak kaynağı belirlemek için kullanılır, çok satırlı kuralları destekler.\nBiçim: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> atlanabilir ve birden fazla <b>suffix</b> <b>$</b> ile ayrılabilir. Hiçbir kural eşleşmezse, varsayılan FNS kaynağı kullanılır. Değişkenleri destekler.\n| Değişken | Açıklama |\n| --- | --- |\n| {path} | notun içindeki ek yolu |\n| {vaultPath} | kasanın içindeki göreceli yol |\n| {vault} | kasa adı |\n| {type} | ek türü (image/video/audio/pdf/other) |\nÖrneğin: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNot: özel bir uzak kaynak kullanıyorsanız, CORS ve gerekli kimlik doğrulamasını (gerekirse) desteklediğinden emin olun.",
   "setting.cloud.delete_after_upload": "Bulut önizleme - yüklemeden sonra sil",
   "setting.cloud.delete_after_upload_desc": "Yerel dosyalar, alan kazanmak için başarılı bir yüklemeden sonra otomatik olarak silinecektir.\n(Bu ayar, bulut eki önizlemesinin etkinleştirilmesini gerektirir)\nNot: Dikkatli bir şekilde devre dışı bırakın, çünkü bu ilgili eklentilerin arızalanmasına neden olabilir.",
 
@@ -91,7 +98,9 @@ const tr: Partial<LangMap> = {
   "setting.support.log_desc": "Etkinleştirildiğinde, günlükler konsolda görüntülenecektir.",
   "setting.support.debug_copy": "Hata Ayıklama bilgisini kopyala",
   "setting.support.debug_desc": "Hata ayıklama bilgilerini panoya kopyalayın (hassas veriler içerebilir)!",
-  "setting.support.feedback": "Geri bildirim ve öneriler",
+  "setting.support.issue": "Sorun bildir",
+  "setting.support.issue_notice": "Hata ayıklama bilgileri otomatik olarak kopyalandı; daha hızlı analiz için lütfen bir sorunu bildirirken <b>hata ayıklama bilgilerini</b> ekleyin.",
+  "setting.support.feature": "Özellik önerisi",
   "setting.support.telegram": "Telegram tartışma grubu",
   "setting.support.console_tip": "Bu eklentiden ve diğerlerinden günlükleri görmek için kısayol tuşlarıyla konsolu açın.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const tr: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Fast Note Sync eklentisinin sürüm numarası",
   "ui.menu.server": "Sunucu sürümü",
   "ui.menu.server_desc": "Fast Note Sync sunucusunun sürüm numarası",
+  "ui.menu.settings": "Eklenti Ayarları",
 
   // --- ui.status ---
-  "ui.status.syncing": "Senkronize ediliyor...",
+  "ui.status.syncing": "Senkronize ediliyor",
   "ui.status.starting": "Senkronizasyon başlatılıyor",
   "ui.status.new_version": "Yeni sürüm mevcut: ${version}. Güncellemek için tıklayın.",
   "ui.status.completed": "Senkronizasyon tamamlandı",
@@ -164,7 +174,7 @@ const tr: Partial<LangMap> = {
   "ui.log.action.FolderSync_incremental": "Klasör senkronizasyonu (artımlı)",
   "ui.log.action.FolderSyncEnd_full": "Klasör senkronizasyon sonu (tam)",
   "ui.log.action.FolderSyncEnd_incremental": "Klasör senkronizasyon sonu (artımlı)",
-  "ui.log.action.FolderSyncModify": "Senkronize edilmiş klasör oluşturma",
+  "ui.log.action.FolderSyncModify": "Senkronize edilmiş klasör güncelleme",
   "ui.log.action.FolderSyncDelete": "Senkronize edilmiş klasör silme",
   "ui.log.action.FolderSyncRename": "Senkronize edilmiş klasör yeniden adlandırma",
   "ui.log.action.FolderModify": "Klasör oluşturma",
@@ -217,6 +227,8 @@ const tr: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Onayla",
   "ui.button.cancel": "İptal",
+  "ui.button.goto_feedback": "Github Geri Bildirimine Git",
+  "ui.title.notice": "Geri Bildirim Bildirimi",
 }
 
 

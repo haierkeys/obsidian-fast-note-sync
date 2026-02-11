@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const ptBr: Partial<LangMap> = {
   "fns.desc": "Um plugin para sincronização e backup em tempo real de notas, anexos e configurações entre dispositivos. Suporta implantação privada, funciona em Mac, Windows, Android, iOS, etc., e oferece suporte a vários idiomas.",
 
+  "setting.tab.general": "Geral",
+  "setting.tab.debug": "Depuração",
+  "setting.tab.remote": "Configurações remotas",
+  "setting.tab.sync": "Controle de sincronização",
+  "setting.tab.cloud": "Visualização de anexos na nuvem",
+  "setting.search.placeholder": "Procurar configurações...",
+
   // --- setting.remote ---
   "setting.remote.title": "Remoto",
   "setting.remote.connected": "Serviço conectado",
@@ -76,7 +83,7 @@ const ptBr: Partial<LangMap> = {
   "setting.cloud.type_limit": "Limite de tipo de visualização na nuvem",
   "setting.cloud.type_limit_desc": "Quando ativado, a visualização na nuvem está disponível apenas para imagem/áudio/vídeo/PDF; outros anexos são sincronizados normalmente.\nNota: Desative com cautela, pois isso pode causar o mau funcionamento de plugins relacionados.",
   "setting.cloud.remote_source": "Visualização na nuvem - mapeamento de prefixo/sufixo",
-  "setting.cloud.remote_source_desc": "Esta configuração é usada para determinar a fonte remota para anexos que correspondem a certos prefixos/sufixos, suporta regras de várias linhas.\nFormato: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> pode ser omitido, e múltiplos <b>suffix</b> podem ser separados por <b>$</b>. Se nenhuma regra coincidir, a fonte FNS padrão é usada. Suporta variáveis.\n| Variável | Descrição |\n| --- | --- |\n| {path} | caminho do anexo dentro da nota |\n| {vaultPath} | caminho relativo dentro do vault |\n| {vault} | nome do vault |\n| {type} | tipo de anexo (image/video/audio/pdf/other) |\nPor exemplo: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: se você usar uma fonte remota personalizada, verifique se ela suporta CORS e a autorização necessária (se necessário).",
+  "setting.cloud.remote_source_desc": "Esta configuração é usada para determinar a fonte remota para anexos que correspondem a certos prefixos/sufixos, suporta regras de várias linhas.\nFormato: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> pode ser omitido, e múltiplos <b>suffix</b> podem ser separados por <b>$</b>. Se nenhuma regra coincidir, a fonte FNS padrão é usada. Suporta variáveis.\n| Variável | Descrição |\n| --- | --- |\n| {path} | caminho do anexo dentro da nota |\n| {vaultPath} | caminho relativo dentro do vault |\n| {vault} | nome do vault |\n| {type} | tipo de anexo (image/video/audio/pdf/other) |\nPor exemplo: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: se você usar uma fonte remota personalizada, verifique se ela suporta CORS e a autorização necessária (se necessário).",
   "setting.cloud.delete_after_upload": "Visualização na nuvem - excluir após upload",
   "setting.cloud.delete_after_upload_desc": "Os arquivos locais serão excluídos automaticamente após um upload bem-sucedido para economizar espaço.\n(Esta configuração requer que a visualização de anexos na nuvem esteja ativada)\nNota: Desative com cautela, pois isso pode causar o mau funcionamento de plugins relacionados.",
 
@@ -88,10 +95,12 @@ const ptBr: Partial<LangMap> = {
   "setting.support.or": "ou",
   "setting.support.list": "Lista de apoiadores",
   "setting.support.log": "Ativar Logs",
-  "setting.support.log_desc": "Quando ativado, os logs serão exibidos no console.",
+  "setting.support.log_desc": "Quando ativado, los logs serão exibidos no console.",
   "setting.support.debug_copy": "Copiar informações de depuração",
   "setting.support.debug_desc": "Copia as informações de depuração para a área de transferência (pode conter dados sensíveis)!",
-  "setting.support.feedback": "Feedback e sugestões",
+  "setting.support.issue": "Informar um problema",
+  "setting.support.issue_notice": "As informações de depuração foram copiadas automaticamente; inclua as <b>informações de depuração</b> ao relatar um problema para permitir uma análise mais rápida.",
+  "setting.support.feature": "Sugestão de funcionalidade",
   "setting.support.telegram": "Grupo de discussão do Telegram",
   "setting.support.console_tip": "Abra o console com as teclas de atalho para ver os logs deste plugin e de outros.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const ptBr: Partial<LangMap> = {
   "ui.menu.plugin_desc": "O número da versão do plugin Fast Note Sync",
   "ui.menu.server": "Versão do servidor",
   "ui.menu.server_desc": "O número da versão do servidor Fast Note Sync",
+  "ui.menu.settings": "Configurações do plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Sincronizando...",
+  "ui.status.syncing": "Sincronizando",
   "ui.status.starting": "Iniciando sincronização",
   "ui.status.new_version": "Nova versão disponível: ${version}. Clique para atualizar.",
   "ui.status.completed": "Sincronização concluída",
@@ -217,6 +227,8 @@ const ptBr: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Confirmar",
   "ui.button.cancel": "Cancelar",
+  "ui.button.goto_feedback": "Ir para Github Feedback",
+  "ui.title.notice": "Aviso de comentários",
 }
 
 

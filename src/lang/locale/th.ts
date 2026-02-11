@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const th: Partial<LangMap> = {
   "fns.desc": "ปลั๊กอินสำหรับการซิงโครไนซ์และสำรองข้อมูลบันทึก ไฟล์แนบ และการกำหนดค่าแบบเรียลไทม์ระหว่างอุปกรณ์ รองรับการปรับใช้แบบส่วนตัว (Private Deployment) ทำงานบน Mac, Windows, Android, iOS ฯลฯ และรองรับหลายภาษา",
 
+  "setting.tab.general": "ทั่วไป",
+  "setting.tab.debug": "ดีบัก (Debug)",
+  "setting.tab.remote": "การตั้งค่ารีโมท",
+  "setting.tab.sync": "การควบคุมการซิงค์",
+  "setting.tab.cloud": "แสดงตัวอย่างภาพและไฟล์แนบบนคลาวด์",
+  "setting.search.placeholder": "ค้นหาการตั้งค่า...",
+
   // --- setting.remote ---
   "setting.remote.title": "รีโมท",
   "setting.remote.connected": "เชื่อมต่อบริการแล้ว",
@@ -76,7 +83,7 @@ const th: Partial<LangMap> = {
   "setting.cloud.type_limit": "จำกัดประเภทไฟล์ที่แสดงตัวอย่างบนคลาวด์",
   "setting.cloud.type_limit_desc": "เมื่อเปิดใช้งาน การแสดงตัวอย่างบนคลาวด์จะใช้ได้เฉพาะรูปภาพ/เสียง/วิดีโอ/PDF เท่านั้น; ไฟล์แนบอื่นๆ จะถูกซิงค์ตามปกติ\nหมายเหตุ: ปิดการใช้งานด้วยความระมัดระวัง เนื่องจากอาจทำให้ปลั๊กอินที่เกี่ยวข้องทำงานผิดปกติ",
   "setting.cloud.remote_source": "แสดงตัวอย่างบนคลาวด์ - การจับคู่คำนำหน้า/คำต่อท้าย (Prefix/Suffix)",
-  "setting.cloud.remote_source_desc": "การตั้งค่านี้ใช้เพื่อกำหนดแหล่งข้อมูลรีโมทสำหรับไฟล์แนบที่ตรงกับคำนำหน้า/คำต่อท้ายบางอย่าง รองรับกฎหลายบรรทัด\nรูปแบบ: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> สามารถละเว้นได้ และ <b>suffix</b> หลายรายการสามารถแยกด้วย <b>$</b> หากไม่มีกฎใดตรงกัน จะใช้แหล่งข้อมูล FNS เริ่มต้น รองรับตัวแปร\n| ตัวแปร | คำอธิบาย |\n| --- | --- |\n| {path} | พาธของไฟล์แนบในบันทึก |\n| {vaultPath} | พาธสัมพัทธ์ใน Vault |\n| {vault} | ชื่อของ Vault |\n| {type} | ประเภทของไฟล์แนบ (image/video/audio/pdf/other) |\nตัวอย่างเช่น: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nหมายเหตุ: หากคุณใช้แหล่งข้อมูลรีโมทแบบกำหนดเอง ตรวจสอบให้แน่ใจว่ารองรับ CORS และการอนุญาตที่จำเป็น (ถ้ามี)",
+  "setting.cloud.remote_source_desc": "การตั้งค่านี้ใช้เพื่อกำหนดแหล่งข้อมูลรีโมทสำหรับไฟล์แนบที่ตรงกับคำนำหน้า/คำต่อท้ายบางอย่าง รองรับกฎหลายบรรทัด\nรูปแบบ: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> สามารถละเว้นได้ และ <b>suffix</b> หลายรายการสามารถแยกด้วย <b>$</b> หากไม่มีกฎใดตรงกัน จะใช้แหล่งข้อมูล FNS เริ่มต้น รองรับตัวแปร\n| ตัวแปร | คำอธิบาย |\n| --- | --- |\n| {path} | พาธของไฟล์แนบในบันทึก |\n| {vaultPath} | พาธสัมพัทธ์ใน Vault |\n| {vault} | ชื่อของ Vault |\n| {type} | ประเภทของไฟล์แนบ (image/video/audio/pdf/other) |\nตัวอย่างเช่น: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nหมายเหตุ: หากคุณใช้แหล่งข้อมูลรีโมทแบบกำหนดเอง ตรวจสอบให้แน่ใจว่ารองรับ CORS และการอนุญาตที่จำเป็น (ถ้ามี)",
   "setting.cloud.delete_after_upload": "แสดงตัวอย่างบนคลาวด์ - ลบหลังจากอัปโหลด",
   "setting.cloud.delete_after_upload_desc": "ไฟล์ภายในเครื่องจะถูกลบโดยอัตโนมัติหลังจากอัปโหลดสำเร็จเพื่อประหยัดพื้นที่\n(การตั้งค่านี้กำหนดให้ต้องเปิดใช้งานการแสดงตัวอย่างไฟล์แนบบนคลาวด์)\nหมายเหตุ: ปิดการใช้งานด้วยความระมัดระวัง เนื่องจากอาจทำให้ปลั๊กอินที่เกี่ยวข้องทำงานผิดปกติ",
 
@@ -91,7 +98,9 @@ const th: Partial<LangMap> = {
   "setting.support.log_desc": "เมื่อเปิดใช้งาน บันทึกจะแสดงในคอนโซล",
   "setting.support.debug_copy": "คัดลอกข้อมูล Debug",
   "setting.support.debug_desc": "คัดลอกข้อมูลการดีบักไปยังคลิปบอร์ด (อาจมีข้อมูลที่ละเอียดอ่อน)!",
-  "setting.support.feedback": "คำติชมและข้อเสนอแนะ",
+  "setting.support.issue": "รายงานปัญหา",
+  "setting.support.issue_notice": "ข้อมูลการดีบักถูกคัดลอกโดยอัตโนมัติ โปรดแนบ <b>ข้อมูลการดีบัก</b> เมื่อรายงานปัญหาเพื่อความรวดเร็วในการวิเคราะห์",
+  "setting.support.feature": "ข้อเสนอแนะฟีเจอร์",
   "setting.support.telegram": "กลุ่มสนทนา Telegram",
   "setting.support.console_tip": "เปิดคอนโซลด้วยปุ่มลัดเพื่อดูบันทึกจากปลั๊กอินนี้และปลั๊กอินอื่นๆ",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const th: Partial<LangMap> = {
   "ui.menu.plugin_desc": "หมายเลขเวอร์ชันของปลั๊กอิน Fast Note Sync",
   "ui.menu.server": "เวอร์ชันเซิร์ฟเวอร์",
   "ui.menu.server_desc": "หมายเลขเวอร์ชันของเซิร์ฟเวอร์ Fast Note Sync",
+  "ui.menu.settings": "การตั้งค่าปลั๊กอิน",
 
   // --- ui.status ---
-  "ui.status.syncing": "กำลังซิงค์...",
+  "ui.status.syncing": "กำลังซิงค์",
   "ui.status.starting": "กำลังเริ่มต้นการซิงค์",
   "ui.status.new_version": "เวอร์ชันใหม่พร้อมใช้งาน: ${version} คลิกเพื่ออัปเดต",
   "ui.status.completed": "ซิงค์เสร็จสิ้น",
@@ -217,6 +227,8 @@ const th: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "ยืนยัน",
   "ui.button.cancel": "ยกเลิก",
+  "ui.button.goto_feedback": "ไปที่ Github Feedback",
+  "ui.title.notice": "การแจ้งเตือนคำติชม",
 }
 
 

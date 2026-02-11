@@ -3,7 +3,14 @@ import type { LangMap } from "../lang";
 
 
 const pt: Partial<LangMap> = {
-  "fns.desc": "Um plugin para sincronização e backup em tempo real de notas, anexos e configurações entre dispositivos. Suporta implantação privada, funciona em Mac, Windows, Android, iOS, etc., e oferece suporte a vários idiomas.",
+  "fns.desc": "Um plugin para sincronização e cópia de segurança em tempo real de notas, anexos e configurações entre dispositivos. Suporta implementação privada, funciona em Mac, Windows, Android, iOS, etc., e oferece suporte a vários idiomas.",
+
+  "setting.tab.general": "Geral",
+  "setting.tab.debug": "Depuração",
+  "setting.tab.remote": "Configurações remotas",
+  "setting.tab.sync": "Controle de sincronização",
+  "setting.tab.cloud": "Visualização de anexos na nuvem",
+  "setting.search.placeholder": "Procurar configurações...",
 
   // --- setting.remote ---
   "setting.remote.title": "Remoto",
@@ -42,19 +49,19 @@ const pt: Partial<LangMap> = {
   "setting.sync.offline_delete": "Sincronização de exclusão offline",
   "setting.sync.offline_delete_desc": "As operações de exclusão de notas, anexos e configurações realizadas em estado offline serão sincronizadas com o servidor ao reconectar.",
   "setting.sync.manual_sync": "Modo de sincronização manual",
-  "setting.sync.manual_sync_desc": "Quando ativado, o plugin não acionará automaticamente a sincronização na inicialização ou alteração de arquivo; ela só pode ser acionada manualmente através do menu.\n(<b>Use com cautela</b>, pois isso pode afetar significativamente a experiência do usuário)",
+  "setting.sync.manual_sync_desc": "Quando ativado, o plugin não acionará automaticamente a sincronização na inicialização ou alteração de arquivo; ela só pode be acionada manualmente através do menu.\n(<b>Use com cautela</b>, pois isso pode afetar significativamente a experiência do usuário)",
   "setting.sync.readonly_sync": "Modo de sincronização somente leitura",
   "setting.sync.readonly_sync_desc": "Quando ativado, este dispositivo apenas recebe atualizações do servidor e não faz upload de nenhuma alteração local. <b>A prioridade é maior do que o modo de sincronização manual.</b>",
 
   "setting.sync.exclude": "Excluir da sincronização",
   "setting.sync.exclude_placeholder": "Caminho ou Regex, um por linha",
-  "setting.sync.exclude_desc": "Defina notas, anexos ou diretórios que não participarão da sincronização.\nUm por linha, suporta expressões regulares (insensível a maiúsculas/minúsculas),\nPor exemplo:\n1. <b>Pasta1/demo1.md</b> correspondência exata\n2. <b>Pasta1</b> corresponde ao diretório Pasta1 e a todos os seus subdiretórios e arquivos\n3. <b>Pasta1/(.+)\\.jpg</b> Correspondência Regex para todas as imagens jpg na Pasta1",
+  "setting.sync.exclude_desc": "Defina notas, anexos ou diretórios que não participarão da sincronização.\nUm por linha, suporta expressões regulares (insensível a maiúsculas/minúsculas),\nPar exemplo:\n1. <b>Pasta1/demo1.md</b> correspondência exata\n2. <b>Pasta1</b> corresponde ao diretório Pasta1 e a todos os seus subdiretórios e arquivos\n3. <b>Pasta1/(.+)\\.jpg</b> Correspondência Regex para todas as imagens jpg na Pasta1",
   "setting.sync.exclude_extensions": "Excluir por extensão de arquivo",
   "setting.sync.exclude_extensions_desc": "Defina os tipos de arquivo que não participarão da sincronização, um por linha (com ponto). Ex: .tmp",
   "setting.sync.exclude_whitelist": "Lista branca de sincronização",
   "setting.sync.exclude_whitelist_desc": "Tem prioridade sobre as regras <b>Excluir da sincronização</b> e <b>Excluir por extensão</b>, forçando a sincronização para os itens correspondentes.\nUm por linha, suporta expressões regulares (insensível a maiúsculas/minúsculas).",
   "setting.sync.config_exclude": "Excluir da sincronização de configuração",
-  "setting.sync.config_exclude_desc": "Defina os caminhos que não participarão da sincronização de configuração.\nO caminho deve ser definido em relação ao diretório <b>.obsidian</b>.\nUm por linha, suporta expressões regulares (insensível a maiúsculas/minúsculas).\nPor exemplo: plugins/obsidian-fast-note-sync/data.json",
+  "setting.sync.config_exclude_desc": "Defina os caminhos que não participarão da sincronização de configuração.\nO caminho deve ser definido em relação ao diretório <b>.obsidian</b>.\nUm por linha, suporta expressões regulares (insensível a maiúsculas/minúsculas).\nPar exemplo: plugins/obsidian-fast-note-sync/data.json",
   "setting.sync.config_exclude_placeholder": "Caminho ou Regex, um por linha",
   "setting.sync.config_exclude_whitelist": "Lista branca de exclusão de sincronização de configuração",
   "setting.sync.config_exclude_whitelist_desc": "Tem prioridade sobre as regras <b>Excluir da sincronização de configuração</b>, forçando a sincronização para os itens correspondentes.\nUm por linha, suporta expressões regulares (insensível a maiúsculas/minúsculas).",
@@ -75,8 +82,8 @@ const pt: Partial<LangMap> = {
   "setting.cloud.desc": "Quando ativado, <b>os anexos não serão mais sincronizados</b>; imagens/vídeos/áudio/PDFs e outros anexos serão visualizados online através da rede.",
   "setting.cloud.type_limit": "Limite de tipo de visualização na nuvem",
   "setting.cloud.type_limit_desc": "Quando ativado, a visualização na nuvem está disponível apenas para imagem/áudio/vídeo/PDF; outros anexos são sincronizados normalmente.\nNota: Desative com cautela, pois isso pode causar o mau funcionamento de plugins relacionados.",
-  "setting.cloud.remote_source": "Visualização na nuvem - mapeamento de prefixo/sufixo",
-  "setting.cloud.remote_source_desc": "Esta configuração é usada para determinar a fonte remota para anexos que correspondem a certos prefixos/sufixos, suporta regras de várias linhas.\nFormato: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> pode ser omitido, e múltiplos <b>suffix</b> podem ser separados por <b>$</b>. Se nenhuma regra coincidir, a fonte FNS padrão é usada. Suporta variáveis.\n| Variável | Descrição |\n| --- | --- |\n| {path} | caminho do anexo dentro da nota |\n| {vaultPath} | caminho relativo dentro do vault |\n| {vault} | nome do vault |\n| {type} | tipo de anexo (image/video/audio/pdf/other) |\nPor exemplo: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: se você usar uma fonte remota personalizada, verifique se ela suporta CORS e a autorização necessária (se necessário).",
+  "setting.cloud.remote_source": "Visualização na nuvem - mapeamento de prefixo/sufijo",
+  "setting.cloud.remote_source_desc": "Esta configuração é usada para determinar a fonte remota para anexos que correspondem a certos prefixos/sufixos, suporta regras de várias linhas.\nFormato: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> pode ser omitido, e múltiplos <b>suffix</b> podem ser separados por <b>$</b>. Se nenhuma regra coincidir, a fonte FNS padrão é usada. Suporta variáveis.\n| Variável | Descrição |\n| --- | --- |\n| {path} | caminho do anexo dentro da nota |\n| {vaultPath} | caminho relativo dentro do vault |\n| {vault} | nome do vault |\n| {type} | tipo de anexo (image/video/audio/pdf/other) |\nPar exemplo: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: se você usar uma fonte remota personalizada, verifique se ela suporta CORS e a autorização necessária (se necessário).",
   "setting.cloud.delete_after_upload": "Visualização na nuvem - excluir após upload",
   "setting.cloud.delete_after_upload_desc": "Os arquivos locais serão excluídos automaticamente após um upload bem-sucedido para economizar espaço.\n(Esta configuração requer que a visualização de anexos na nuvem esteja ativada)\nNota: Desative com cautela, pois isso pode causar o mau funcionamento de plugins relacionados.",
 
@@ -89,9 +96,11 @@ const pt: Partial<LangMap> = {
   "setting.support.list": "Lista de apoiadores",
   "setting.support.log": "Ativar Logs",
   "setting.support.log_desc": "Quando ativado, os logs serão exibidos no console.",
-  "setting.support.debug_copy": "Copiar info de Depuração",
+  "setting.support.debug_copy": "Copiar informações de depuração",
   "setting.support.debug_desc": "Copie as informações de depuração para a área de transferência (pode conter dados sensíveis)!",
-  "setting.support.feedback": "Feedback e sugestões",
+  "setting.support.issue": "Informar um problema",
+  "setting.support.issue_notice": "As informações de depuração foram copiadas automaticamente; inclua as <b>informações de depuração</b> ao relatar um problema para permitir uma análise mais rápida.",
+  "setting.support.feature": "Sugestão de funcionalidade",
   "setting.support.telegram": "Grupo de discussão do Telegram",
   "setting.support.console_tip": "Abra o console com as teclas de atalho para ver os logs deste plugin e de outros.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const pt: Partial<LangMap> = {
   "ui.menu.plugin_desc": "O número da versão do plugin Fast Note Sync",
   "ui.menu.server": "Versão do servidor",
   "ui.menu.server_desc": "O número da versão do servidor Fast Note Sync",
+  "ui.menu.settings": "Configurações do plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Sincronizando...",
+  "ui.status.syncing": "Sincronizando",
   "ui.status.starting": "Iniciando sincronização",
   "ui.status.new_version": "Nova versão disponível: ${version}. Clique para atualizar.",
   "ui.status.completed": "Sincronização concluída",
@@ -217,6 +227,8 @@ const pt: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Confirmar",
   "ui.button.cancel": "Cancelar",
+  "ui.button.goto_feedback": "Ir para Github Feedback",
+  "ui.title.notice": "Aviso de comentários",
 }
 
 

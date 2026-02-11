@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const de: Partial<LangMap> = {
   "fns.desc": "Plugin zur Echtzeit-Synchronisation und Sicherung von Notizen, Anhängen und Konfigurationen zwischen Geräten. Unterstützt privates Deployment, läuft auf Mac, Windows, Android, iOS usw. und bietet mehrsprachige Unterstützung.",
 
+  "setting.tab.general": "Allgemein",
+  "setting.tab.debug": "Debug",
+  "setting.tab.remote": "Remote-Einstellungen",
+  "setting.tab.sync": "Synchronisationskontrolle",
+  "setting.tab.cloud": "Cloud-Vorschau für Anhänge",
+  "setting.search.placeholder": "Einstellungen suchen...",
+
   // --- setting.remote ---
   "setting.remote.title": "Remote",
   "setting.remote.connected": "Dienst verbunden",
@@ -52,7 +59,7 @@ const de: Partial<LangMap> = {
   "setting.sync.exclude_extensions": "Nach Dateierweiterung ausschließen",
   "setting.sync.exclude_extensions_desc": "Legen Sie Dateitypen fest, die nicht an der Synchronisation teilnehmen sollen, einen pro Zeile (mit Punkt). Z.B. .tmp",
   "setting.sync.exclude_whitelist": "Synchronisations-Whitelist",
-  "setting.sync.exclude_whitelist_desc": "Hat Vorrang vor den Regeln <b>Von der Synchronisation ausschließen</b> und <b>Nach Erweiterung ausschließen</b> und erzwingt die Synchronisation für übereinstimmende Elemente.\nEiner pro Zeile, unterstützt reguläre Ausdrücke (Groß-/Kleinschreibung ignoriert).",
+  "setting.sync.exclude_whitelist_desc": "Hat Vorrang vor den Regeln <b>Von der Synchronisation ausschließen</b> und <b>Nach Erweiterung ausschließen</b> und erzwingt die Synchronisation for übereinstimmende Elemente.\nEiner pro Zeile, unterstützt reguläre Ausdrücke (Groß-/Kleinschreibung ignoriert).",
   "setting.sync.config_exclude": "Von der Konfigurationssynchronisation ausschließen",
   "setting.sync.config_exclude_desc": "Legen Sie Pfade fest, die nicht an der Konfigurationssynchronisation teilnehmen sollen.\nDer Pfad muss relativ zum Verzeichnis <b>.obsidian</b> festgelegt werden.\nEiner pro Zeile, unterstützt reguläre Ausdrücke (Groß-/Kleinschreibung ignoriert).\nZum Beispiel: plugins/obsidian-fast-note-sync/data.json",
   "setting.sync.config_exclude_placeholder": "Pfad oder Regex, einer pro Zeile",
@@ -76,7 +83,7 @@ const de: Partial<LangMap> = {
   "setting.cloud.type_limit": "Typenbegrenzung für Cloud-Vorschau",
   "setting.cloud.type_limit_desc": "Wenn aktiviert, ist die Cloud-Vorschau nur für Bilder/Audio/Video/PDF verfügbar; andere Anhänge werden normal synchronisiert.\nHinweis: Deaktivieren Sie dies mit Vorsicht, da dies zu Fehlfunktionen zugehöriger Plugins führen kann.",
   "setting.cloud.remote_source": "Cloud-Vorschau - Präfix/Suffix-Zuordnung",
-  "setting.cloud.remote_source_desc": "Diese Einstellung wird verwendet, um die Remote-Quelle für Anhänge zu bestimmen, die bestimmten Präfixen/Suffixen entsprechen; unterstützt mehrzeilige Regeln.\nFormat: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> kann weggelassen werden, und mehrere <b>suffix</b> können durch <b>$</b> getrennt werden. Wenn keine Regel übereinstimmt, wird die Standard-FNS-Quelle verwendet. Unterstützt Variablen.\n| Variable | Beschreibung |\n| --- | --- |\n| {path} | Pfad zum Anhang in der Notiz |\n| {vaultPath} | relativer Pfad im Vault |\n| {vault} | Name des Vaults |\n| {type} | Anhangstyp (image/video/audio/pdf/other) |\nZum Beispiel: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nHinweis: Wenn Sie eine benutzerdefinierte Remote-Quelle verwenden, stellen Sie sicher, dass diese CORS und die erforderliche Autorisierung (falls erforderlich) unterstützt.",
+  "setting.cloud.remote_source_desc": "Diese Einstellung wird verwendet, um die Remote-Quelle für Anhänge zu bestimmen, die bestimmten Präfixen/Suffixen entsprechen; unterstützt mehrzeilige Regeln.\nFormat: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> kann weggelassen werden, und mehrere <b>suffix</b> können durch <b>$</b> getrennt werden. Wenn keine Regel übereinstimmt, wird die Standard-FNS-Quelle verwendet. Unterstützt Variablen.\n| Variable | Beschreibung |\n| --- | --- |\n| {path} | Pfad zum Anhang in der Notiz |\n| {vaultPath} | relativer Pfad im Vault |\n| {vault} | Name des Vaults |\n| {type} | Anhangstyp (image/video/audio/pdf/other) |\nZum Beispiel: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nHinweis: Wenn Sie eine benutzerdefinierte Remote-Quelle verwenden, stellen Sie sicher, dass diese CORS und die erforderliche Autorisierung (falls erforderlich) unterstützt.",
   "setting.cloud.delete_after_upload": "Cloud-Vorschau - Nach dem Hochladen löschen",
   "setting.cloud.delete_after_upload_desc": "Lokale Dateien werden nach einem erfolgreichen Hochladen automatisch gelöscht, um Platz zu sparen.\n(Diese Einstellung erfordert die Aktivierung der Cloud-Vorschau für Anhänge)\nHinweis: Deaktivieren Sie dies mit Vorsicht, da dies zu Fehlfunktionen zugehöriger Plugins führen kann.",
 
@@ -91,7 +98,9 @@ const de: Partial<LangMap> = {
   "setting.support.log_desc": "Wenn aktiviert, werden Logs in der Konsole angezeigt.",
   "setting.support.debug_copy": "Debug-Informationen kopieren",
   "setting.support.debug_desc": "Kopieren Sie Debug-Informationen in die Zwischenablage (kann sensible Daten enthalten)!",
-  "setting.support.feedback": "Feedback und Vorschläge",
+  "setting.support.issue": "Problem melden",
+  "setting.support.issue_notice": "Debug-Informationen wurden automatisch kopiert; bitte fügen Sie die <b>Debug-Informationen</b> bei der Meldung eines Problems ein, um eine schnellere Analyse zu ermöglichen.",
+  "setting.support.feature": "Funktionsvorschlag",
   "setting.support.telegram": "Telegram-Diskussionsgruppe",
   "setting.support.console_tip": "Öffnen Sie die Konsole mit Tastenkombinationen, um Logs von diesem Plugin und anderen zu sehen.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -133,14 +142,15 @@ const de: Partial<LangMap> = {
   "ui.menu.disable_sync": "Synchronisation vorübergehend deaktivieren",
   "ui.menu.disable_sync_desc": "Deaktivieren Sie vorübergehend die gesamte Notiz-/Anhang-/Konfigurations-Synchronisation. Wird beim nächsten Öffnen von Obsidian automatisch wieder aktiviert",
   "ui.menu.clear_time": "Lokale Synchronisationszeit löschen",
-  "ui.menu.rebuild_hash": "Datei-Hash-Map (Hash Map) neu erstellen",
+  "ui.menu.rebuild_hash": "Datei-Hash-Map neu erstellen",
   "ui.menu.plugin": "Plugin-Version",
   "ui.menu.plugin_desc": "Versionsnummer des Fast Note Sync-Plugins",
   "ui.menu.server": "Server-Version",
   "ui.menu.server_desc": "Versionsnummer des Fast Note Sync-Servers",
+  "ui.menu.settings": "Plugin-Einstellungen",
 
   // --- ui.status ---
-  "ui.status.syncing": "Synchronisieren...",
+  "ui.status.syncing": "Synchronisieren",
   "ui.status.starting": "Synchronisation wird gestartet",
   "ui.status.new_version": "Neue Version verfügbar: ${version}. Klicken Sie zum Aktualisieren.",
   "ui.status.completed": "Synchronisation abgeschlossen",
@@ -192,10 +202,10 @@ const de: Partial<LangMap> = {
   "ui.log.action.FileSyncEnd_full": "Ende der Dateisynchronisation (vollständig)",
   "ui.log.action.FileSyncEnd_incremental": "Ende der Dateisynchronisation (inkrementell)",
   "ui.log.action.FileSyncRename": "Umbenennung der synchronisierten Datei",
-  "ui.log.action.FileUpload": "Hochladen von Dateifragmenten",
+  "ui.log.action.FileUpload": "Feilschnipsel-Hochladen",
   "ui.log.action.FileUploadCheck": "Prüfung des Dateiuploads",
-  "ui.log.action.FileDownload": "Herunterladen von Dateifragmenten (empfangen)",
-  "ui.log.action.FileChunkDownload": "Herunterladen von Dateifragmenten (Anfrage)",
+  "ui.log.action.FileDownload": "Feilschnipsel-Herunterladen",
+  "ui.log.action.FileChunkDownload": "Feilschnipsel-Herunterladen (Anfrage)",
   "ui.log.action.FileRename": "Dateiumbenennung",
   "ui.log.action.FileModify": "Dateimodifikation",
   "ui.log.action.FileDelete": "Dateilöschung",
@@ -217,6 +227,8 @@ const de: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Bestätigen",
   "ui.button.cancel": "Abbrechen",
+  "ui.button.goto_feedback": "Zu Github Feedback gehen",
+  "ui.title.notice": "Feedback-Hinweis",
 }
 
 

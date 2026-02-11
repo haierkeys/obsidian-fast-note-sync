@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const pl: Partial<LangMap> = {
   "fns.desc": "Wtyczka do synchronizacji i tworzenia kopii zapasowych notatek, załączników i konfiguracji w czasie rzeczywistym między urządzeniami. Obsługuje prywatne wdrożenie, działa na Mac, Windows, Android, iOS itp. oraz oferuje wsparcie wielojęzyczne.",
 
+  "setting.tab.general": "Ogólne",
+  "setting.tab.debug": "Debugowanie",
+  "setting.tab.remote": "Ustawienia zdalne",
+  "setting.tab.sync": "Kontrola synchronizacji",
+  "setting.tab.cloud": "Podgląd załączników w chmurze",
+  "setting.search.placeholder": "Szukaj ustawień...",
+
   // --- setting.remote ---
   "setting.remote.title": "Zdalny",
   "setting.remote.connected": "Usługa połączona",
@@ -76,7 +83,7 @@ const pl: Partial<LangMap> = {
   "setting.cloud.type_limit": "Limit typów podglądu w chmurze",
   "setting.cloud.type_limit_desc": "Gdy ta opcja jest włączona, podgląd w chmurze jest dostępny tylko dla obrazów/audio/wideo/PDF; inne załączniki są synchronizowane normalnie.\nUwaga: Wyłączaj z rozwagą, ponieważ może to spowodować nieprawidłowe działanie powiązanych wtyczek.",
   "setting.cloud.remote_source": "Podgląd w chmurze - mapowanie prefiksu/sufiksu",
-  "setting.cloud.remote_source_desc": "To ustawienie służy do określania zdalnego źródła dla załączników pasujących do określonych prefiksów/sufiksów, obsługuje reguły wieloliniowe.\nFormat: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> można pominąć, a wiele <b>suffix</b> można oddzielić znakiem <b>$</b>. Jeśli żadna reguła nie pasuje, używane jest domyślne źródło FNS. Obsługuje zmienne.\n| Zmienna | Opis |\n| --- | --- |\n| {path} | ścieżka do załącznika w notatce |\n| {vaultPath} | względna ścieżka w sejfie |\n| {vault} | nazwa sejfu |\n| {type} | typ załącznika (image/video/audio/pdf/other) |\nNa przykład: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nUwaga: jeśli używasz niestandardowego źródła zdalnego, upewnij się, że obsługuje ono CORS i wymaganą autoryzację (jeśli jest wymagana).",
+  "setting.cloud.remote_source_desc": "To ustawienie służy do określania zdalnego źródła dla załączników pasujących do określonych prefiksów/sufiksów, obsługuje reguły wieloliniowe.\nFormat: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> można pominąć, a wiele <b>suffix</b> można oddzielić znakiem <b>$</b>. Jeśli żadna reguła nie pasuje, używane jest domyślne źródło FNS. Obsługuje zmienne.\n| Zmienna | Opis |\n| --- | --- |\n| {path} | ścieżka do załącznika w notatce |\n| {vaultPath} | względna ścieżka w sejfie |\n| {vault} | nazwa sejfu |\n| {type} | typ załącznika (image/video/audio/pdf/other) |\nNa przykład: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nUwaga: jeśli używasz niestandardowego źródła zdalnego, upewnij się, że obsługuje ono CORS i wymaganą autoryzację (jeśli jest wymagana).",
   "setting.cloud.delete_after_upload": "Podgląd w chmurze - usuń po przesłaniu",
   "setting.cloud.delete_after_upload_desc": "Pliki lokalne będą automatycznie usuwane po udanym przesłaniu, aby zaoszczędzić miejsce.\n(To ustawienie wymaga włączonego podglądu załączników w chmurze)\nUwaga: Wyłączaj z rozwagą, ponieważ może to spowodować nieprawidłowe działanie powiązanych wtyczek.",
 
@@ -91,7 +98,9 @@ const pl: Partial<LangMap> = {
   "setting.support.log_desc": "Gdy ta opcja jest włączona, logi będą wyświetlane w konsoli.",
   "setting.support.debug_copy": "Kopiuj informacje debugowania",
   "setting.support.debug_desc": "Kopiuj informacje o debugowaniu do schowka (mogą zawierać wrażliwe dane)!",
-  "setting.support.feedback": "Opinie i sugestie",
+  "setting.support.issue": "Zgłoś problem",
+  "setting.support.issue_notice": "Informacje o debugowaniu zostały skopiowane automatycznie; dołącz <b>informacje o debugowaniu</b> podczas zgłaszania problemu, aby umożliwić szybszą analizę.",
+  "setting.support.feature": "Sugestia funkcji",
   "setting.support.telegram": "Grupa dyskusyjna Telegram",
   "setting.support.console_tip": "Otwórz konsolę klawiszami skrótu, aby zobaczyć logi z tej wtyczki i innych.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const pl: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Numer wersji wtyczki Fast Note Sync",
   "ui.menu.server": "Wersja serwera",
   "ui.menu.server_desc": "Numer wersji serwera Fast Note Sync",
+  "ui.menu.settings": "Ustawienia wtyczki",
 
   // --- ui.status ---
-  "ui.status.syncing": "Synchronizacja...",
+  "ui.status.syncing": "Synchronizacja",
   "ui.status.starting": "Rozpoczynanie synchronizacji",
   "ui.status.new_version": "Dostępna nowa wersja: ${version}. Kliknij, aby zaktualizować.",
   "ui.status.completed": "Synchronizacja zakończona",
@@ -216,7 +226,9 @@ const pl: Partial<LangMap> = {
 
   // --- ui.button ---
   "ui.button.confirm": "Potwierdź",
-  "ui.button.cancel": "Anuluj",
+  "ui.button.cancel": "Annulluj",
+  "ui.button.goto_feedback": "Przejdź do Github Feedback",
+  "ui.title.notice": "Powiadomienie o opinii",
 }
 
 

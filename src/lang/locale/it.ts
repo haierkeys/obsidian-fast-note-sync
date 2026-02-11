@@ -3,7 +3,14 @@ import type { LangMap } from "../lang";
 
 
 const it: Partial<LangMap> = {
-  "fns.desc": "Un plugin per la sincronizzazione e il backup in tempo reale di note, allegati e configurazioni tra dispositivi. Supporta il deployment privato, funziona su Mac, Windows, Android, iOS, ecc. e offre supporto multilingue.",
+  "fns.desc": "Un plugin per la sincronizzazione e il backup in tempo real di note, allegati e configurazioni tra dispositivi. Supporta il deployment privato, funziona su Mac, Windows, Android, iOS, ecc. e offre supporto multilingue.",
+
+  "setting.tab.general": "Generale",
+  "setting.tab.debug": "Debug",
+  "setting.tab.remote": "Impostazioni remote",
+  "setting.tab.sync": "Controllo sincronizzazione",
+  "setting.tab.cloud": "Anteprima allegati cloud",
+  "setting.search.placeholder": "Cerca impostazioni...",
 
   // --- setting.remote ---
   "setting.remote.title": "Remoto",
@@ -76,7 +83,7 @@ const it: Partial<LangMap> = {
   "setting.cloud.type_limit": "Limite tipo anteprima cloud",
   "setting.cloud.type_limit_desc": "Se abilitato, l'anteprima cloud è disponibile solo per immagini/audio/video/PDF; gli altri allegati vengono sincronizzati normalmente.\nNota: Disabilita con cautela, poiché ciò potrebbe causare il malfunzionamento dei plugin correlati.",
   "setting.cloud.remote_source": "Anteprima cloud - mappatura prefisso/suffisso",
-  "setting.cloud.remote_source_desc": "Questa impostazione viene utilizzata per determinare la sorgente remota per gli allegati che corrispondono a determinati prefissi/suffissi, supporta regole su più righe.\nFormato: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> può essere omesso e più <b>suffix</b> possono essere separati da <b>$</b>. Se nessuna regola corrisponde, viene utilizzata la sorgente FNS predefinita. Supporta variabili.\n| Variabile | Descrizione |\n| --- | --- |\n| {path} | percorso allegato all'interno della nota |\n| {vaultPath} | percorso relativo all'interno del vault |\n| {vault} | nome del vault |\n| {type} | tipo di allegato (image/video/audio/pdf/other) |\nAd esempio: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: se utilizzi una sorgente remota personalizzata, assicurati che supporti CORS e l'autorizzazione richiesta (se necessaria).",
+  "setting.cloud.remote_source_desc": "Questa impostazione viene utilizzata per determinare la sorgente remota per gli allegati che corrispondono a determinati prefissi/suffissi, supporta regole su più riga.\nFormato: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> può essere omesso e più <b>suffix</b> possono essere separati da <b>$</b>. Se nessuna regola corrisponde, viene utilizzata la sorgente FNS predefinita. Supporta variabili.\n| Variabile | Descrizione |\n| --- | --- |\n| {path} | percorso allegato all'interno della nota |\n| {vaultPath} | percorso relativo all'interno del vault |\n| {vault} | nome del vault |\n| {type} | tipo di allegato (image/video/audio/pdf/other) |\nAd esempio: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: se utilizzi una sorgente remota personalizzata, assicurati che supporti CORS e l'autorizzazione richiesta (se necessaria).",
   "setting.cloud.delete_after_upload": "Anteprima cloud - elimina dopo il caricamento",
   "setting.cloud.delete_after_upload_desc": "I file locali verranno eliminati automaticamente dopo un caricamento riuscito per risparmiare spazio.\n(Questa impostazione richiede l'abilitazione dell'anteprima degli allegati cloud)\nNota: Disabilita con cautela, poiché ciò potrebbe causare il malfunzionamento dei plugin correlati.",
 
@@ -91,7 +98,9 @@ const it: Partial<LangMap> = {
   "setting.support.log_desc": "Se abilitato, i log verranno visualizzati nella console.",
   "setting.support.debug_copy": "Copia info debug",
   "setting.support.debug_desc": "Copia le informazioni di debug negli appunti (potrebbero contenere dati sensibili)!",
-  "setting.support.feedback": "Feedback e suggerimenti",
+  "setting.support.issue": "Segnala un problema",
+  "setting.support.issue_notice": "Le informazioni di debug sono state copiate automaticamente; includi le <b>informazioni di debug</b> quando segnali un problema per consentire un'analisi più rapida.",
+  "setting.support.feature": "Suggerimento funzione",
   "setting.support.telegram": "Gruppo di discussione Telegram",
   "setting.support.console_tip": "Apri la console con i tasti di scelta rapida per vedere i log di questo plugin e di altri.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -116,7 +125,7 @@ const it: Partial<LangMap> = {
   "ui.history.copy": "Copia",
   "ui.history.no_history": "Cronologia non disponibile",
   "ui.history.copied": "Copiato",
-  "ui.history.restore_confirm": "Sei sicuro di voler ripristinare questa versione? Sostituirà il contenuto attuale della nota.",
+  "ui.history.restore_confirm": "Sei sicuro di voler ripristinare questa versione? Sostituità il contenuto attuale della nota.",
   "ui.history.restore": "Ripristina",
   "ui.history.restore_success": "Ripristinato con successo",
   "ui.history.loading": "Caricamento...",
@@ -138,9 +147,10 @@ const it: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Il numero di versione del plugin Fast Note Sync",
   "ui.menu.server": "Versione del server",
   "ui.menu.server_desc": "Il numero di versione del server Fast Note Sync",
+  "ui.menu.settings": "Impostazioni del plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Sincronizzazione in corso...",
+  "ui.status.syncing": "Sincronizzazione",
   "ui.status.starting": "Avvio sincronizzazione",
   "ui.status.new_version": "Nuova versione disponibile: ${version}. Clicca per aggiornare.",
   "ui.status.completed": "Sincronizzazione completata",
@@ -217,6 +227,8 @@ const it: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Conferma",
   "ui.button.cancel": "Annulla",
+  "ui.button.goto_feedback": "Vai a Github Feedback",
+  "ui.title.notice": "Avviso feedback",
 }
 
 

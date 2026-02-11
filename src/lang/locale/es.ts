@@ -3,7 +3,14 @@ import type { LangMap } from "../lang";
 
 
 const es: Partial<LangMap> = {
-  "fns.desc": "Un plugin para la sincronización y copia de seguridad en tiempo real de notas, archivos adjuntos y configuraciones entre dispositivos. Admite el despliegue privado, funciona en Mac, Windows, Android, iOS, etc., y ofrece soporte multilingüe.",
+  "fns.desc": "Un plugin para la sincronización y copia de seguridad en tiempo real de notas, archivos adjuntos y configuraciones entre dispositivos. Admite el despliegue privado, funciona en Mac, Windows, Android, iOS, etc., y ofrece soporte multilingue.",
+
+  "setting.tab.general": "General",
+  "setting.tab.debug": "Depuración",
+  "setting.tab.remote": "Ajustes remotos",
+  "setting.tab.sync": "Control de sincronización",
+  "setting.tab.cloud": "Vista previa de archivos adjuntos en la nube",
+  "setting.search.placeholder": "Buscar ajustes...",
 
   // --- setting.remote ---
   "setting.remote.title": "Remoto",
@@ -52,7 +59,7 @@ const es: Partial<LangMap> = {
   "setting.sync.exclude_extensions": "Excluir por extensión de archivo",
   "setting.sync.exclude_extensions_desc": "Establezca tipos de archivo que no participarán en la sincronización, uno por línea (con punto). Ej. .tmp",
   "setting.sync.exclude_whitelist": "Lista blanca de sincronización",
-  "setting.sync.exclude_whitelist_desc": "Tiene prioridad sobre las reglas <b>Excluir de la sincronización</b> y <b>Excluir por extensión</b>, forzando la sincronización de los elementos coincidentes.\nUna por línea, admite expresiones regulares (insensible a mayúsculas/minúsculas).",
+  "setting.sync.exclude_whitelist_desc": "Tiene prioridad sobre las reglas <b>Excluir de la sincronización</b> e <b>Excluir por extensión</b>, forzando la sincronización de los elementos coincidentes.\nUna por línea, admite expresiones regulares (insensible a mayúsculas/minúsculas).",
   "setting.sync.config_exclude": "Excluir de la sincronización de configuración",
   "setting.sync.config_exclude_desc": "Establezca las rutas que no participarán en la sincronización de configuración.\nLa ruta debe establecerse relativa al directorio <b>.obsidian</b>.\nUna por línea, admite expresiones regulares (insensible a mayúsculas/minúsculas).\nPor ejemplo: plugins/obsidian-fast-note-sync/data.json",
   "setting.sync.config_exclude_placeholder": "Ruta o Regex, una por línea",
@@ -76,7 +83,7 @@ const es: Partial<LangMap> = {
   "setting.cloud.type_limit": "Límite de tipo de vista previa en la nube",
   "setting.cloud.type_limit_desc": "Cuando está habilitado, la vista previa en la nube solo está disponible para imágenes/audio/vídeos/PDF; otros archivos adjuntos se sincronizan normalmente.\nNota: Deshabilite con precaución, ya que esto puede causar un mal funcionamiento de los plugins relacionados.",
   "setting.cloud.remote_source": "Vista previa en la nube - mapeo de prefijo/sufijo",
-  "setting.cloud.remote_source_desc": "Este ajuste se utiliza para determinar la fuente remota de los archivos adjuntos que coinciden con ciertos prefijos/sufijos, admite reglas multilínea.\nFormato: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> se puede omitir, y se pueden separar múltiples <b>suffix</b> por <b>$</b>. Si ninguna regla coincide, se utiliza la fuente FNS por defecto. Admite variables.\n| Variable | Descripción |\n| --- | --- |\n| {path} | ruta del archivo adjunto dentro de la nota |\n| {vaultPath} | ruta relativa dentro del vault |\n| {vault} | nombre del vault |\n| {type} | tipo de archivo adjunto (image/video/audio/pdf/other) |\nPor ejemplo: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: si utiliza una fuente remota personalizada, asegúrese de que admita CORS y la autorización requerida (si es necesario).",
+  "setting.cloud.remote_source_desc": "Este ajuste se utiliza para determinar la fuente remota de los archivos adjuntos que coinciden con ciertos prefijos/sufijos, admite reglas multilínea.\nFormato: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> se puede omitir, y se pueden separar múltiples <b>suffix</b> por <b>$</b>. Si ninguna regla coincide, se utiliza la fuente FNS por defecto. Admite variables.\n| Variable | Descripción |\n| --- | --- |\n| {path} | ruta del archivo adjunto dentro de la nota |\n| {vaultPath} | ruta relativa dentro del vault |\n| {vault} | nombre del vault |\n| {type} | tipo de archivo adjunto (image/video/audio/pdf/other) |\nPor ejemplo: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNota: si utiliza una fuente remota personalizada, asegúrese de que admita CORS y la autorización requerida (si es necesario).",
   "setting.cloud.delete_after_upload": "Vista previa en la nube - eliminar después de subir",
   "setting.cloud.delete_after_upload_desc": "Los archivos locales se eliminarán automáticamente después de una subida exitosa para ahorrar espacio.\n(Este ajuste requiere habilitar la vista previa de archivos adjuntos en la nube)\nNota: Deshabilite con precaución, ya que esto puede causar un mal funcionamiento de los plugins relacionados.",
 
@@ -91,7 +98,9 @@ const es: Partial<LangMap> = {
   "setting.support.log_desc": "Cuando está habilitado, los logs se mostrarán en la consola.",
   "setting.support.debug_copy": "Copiar info de depuración",
   "setting.support.debug_desc": "¡Copie la información de depuración al portapapeles (puede contener datos sensibles)!",
-  "setting.support.feedback": "Comentarios y sugerencias",
+  "setting.support.issue": "Informar de un problema",
+  "setting.support.issue_notice": "La información de depuración se ha copiado automáticamente; por favor, incluya la <b>información de depuración</b> al informar de un problema para permitir un análisis más rápido.",
+  "setting.support.feature": "Sugerencia de funcionalidad",
   "setting.support.telegram": "Grupo de discusión de Telegram",
   "setting.support.console_tip": "Abra la consola con atajos de teclado para ver los logs de este plugin y otros.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -99,7 +108,7 @@ const es: Partial<LangMap> = {
 
   // --- ui.history ---
   "ui.history.title": "Historial de la nota",
-  "ui.history.version": "Versión",
+  "ui.history.version": "Version",
   "ui.history.time": "Hora de actualización",
   "ui.history.action": "Acción",
   "ui.history.view": "Ver",
@@ -138,9 +147,10 @@ const es: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Número de versión del plugin Fast Note Sync",
   "ui.menu.server": "Versión del servidor",
   "ui.menu.server_desc": "Número de versión del servidor Fast Note Sync",
+  "ui.menu.settings": "Ajustes del plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Sincronizando...",
+  "ui.status.syncing": "Sincronizando",
   "ui.status.starting": "Iniciando sincronización",
   "ui.status.new_version": "Nueva versión disponible: ${version}. Haga clic para actualizar.",
   "ui.status.completed": "Sincronización completada",
@@ -194,7 +204,7 @@ const es: Partial<LangMap> = {
   "ui.log.action.FileSyncRename": "Renombrado de archivo sincronizado",
   "ui.log.action.FileUpload": "Subida de fragmento de archivo",
   "ui.log.action.FileUploadCheck": "Comprobación de subida de archivo",
-  "ui.log.action.FileDownload": "Descarga de fragmento de archivo (recibido)",
+  "ui.log.action.FileDownload": "Descarga de fragmento de archivo",
   "ui.log.action.FileChunkDownload": "Descarga de fragmento de archivo (solicitud)",
   "ui.log.action.FileRename": "Renombrado de archivo",
   "ui.log.action.FileModify": "Modificación de archivo",
@@ -217,6 +227,8 @@ const es: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Confirmar",
   "ui.button.cancel": "Cancelar",
+  "ui.button.goto_feedback": "Ir a Github Feedback",
+  "ui.title.notice": "Aviso de comentarios",
 }
 
 

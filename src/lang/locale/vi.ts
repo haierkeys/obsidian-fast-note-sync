@@ -5,6 +5,13 @@ import type { LangMap } from "../lang";
 const vi: Partial<LangMap> = {
   "fns.desc": "Plugin để đồng bộ hóa và sao lưu ghi chú, tệp đính kèm và cấu hình theo thời gian thực giữa các thiết bị. Hỗ trợ triển khai riêng tư, chạy trên Mac, Windows, Android, iOS, v.v. và cung cấp hỗ trợ đa ngôn ngữ.",
 
+  "setting.tab.general": "Chung",
+  "setting.tab.debug": "Gỡ lỗi",
+  "setting.tab.remote": "Cài đặt từ xa",
+  "setting.tab.sync": "Kiểm soát đồng bộ hóa",
+  "setting.tab.cloud": "Xem trước tệp đính kèm trên đám mây",
+  "setting.search.placeholder": "Tìm kiếm cài đặt...",
+
   // --- setting.remote ---
   "setting.remote.title": "Từ xa",
   "setting.remote.connected": "Dịch vụ đã kết nối",
@@ -67,7 +74,7 @@ const vi: Partial<LangMap> = {
   "setting.sync.show_notice_desc": "Khi được bật, các thông báo hệ thống sẽ được hiển thị khi bắt đầu và kết thúc đồng bộ hóa.",
   "setting.sync.clear_remote": "Xóa cấu hình từ xa",
   "setting.sync.clear_remote_desc": "Xóa cấu hình kho ghi chú khỏi dịch vụ từ xa. Thao tác này không thể hoàn tác.",
-  "setting.sync.clear_remote_confirm": "Bạn có chắc chắn muốn xóa cấu hình kho ghi chú khỏi dịch vụ từ xa không?\nHành động này sẽ xóa vĩnh viễn tất cả cài đặt cho kho này được lưu trữ trên dịch vụ từ xa và không thể khôi phục được.",
+  "setting.sync.clear_remote_confirm": "Bạn có chắc chắn muốn xóa cấu hình kho ghi chú khỏi dịch vụ từ xa không?\nHành động này sẽ xóa vĩnh vễn tất cả cài đặt cho kho này được lưu trữ trên dịch vụ từ xa và không thể khôi phục được.",
   "ui.status.clear_success": "Cấu hình từ xa đã được xóa",
 
   // --- setting.cloud ---
@@ -76,7 +83,7 @@ const vi: Partial<LangMap> = {
   "setting.cloud.type_limit": "Giới hạn loại xem trước trên đám mây",
   "setting.cloud.type_limit_desc": "Khi được bật, xem trước trên đám mây chỉ khả dụng cho hình ảnh/âm thanh/video/PDF; các tệp đính kèm khác đồng bộ hóa bình thường.\nLưu ý: Tắt cẩn thận vì điều này có thể khiến các plugin liên quan hoạt động không chính xác.",
   "setting.cloud.remote_source": "Xem trước trên đám mây - ánh xạ tiền tố/hậu tố",
-  "setting.cloud.remote_source_desc": "Cài đặt này được sử dụng để xác định nguồn từ xa cho các tệp đính kèm khớp với các tiền tố/hậu tố nhất định, hỗ trợ các quy tắc nhiều dòng.\nĐịnh dạng: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> có thể được bỏ qua và nhiều <b>suffix</b> có thể được phân tách bằng <b>$</b>. Nếu không có quy tắc nào khớp, nguồn FNS mặc định sẽ được sử dụng. Hỗ trợ các biến.\n| Biến | Mô tả |\n| --- | --- |\n| {path} | đường dẫn tệp đính kèm trong ghi chú |\n| {vaultPath} | đường dẫn tương đối trong kho lưu trữ |\n| {vault} | tên kho lưu trữ |\n| {type} | loại tệp đính kèm (image/video/audio/pdf/other) |\nVí dụ: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nLưu ý: nếu bạn sử dụng nguồn từ xa tùy chỉnh, hãy đảm bảo rằng nó hỗ trợ CORS và ủy quyền bắt buộc (nếu cần).",
+  "setting.cloud.remote_source_desc": "Cài đặt này được sử dụng để xác định nguồn từ xa cho các tệp đính kèm khớp với các tiền tố/hậu tố nhất định, hỗ trợ các quy tắc nhiều dòng.\nĐịnh dạng: <b>prefix@suffix#remote_source</b>\n<b>prefix</b> có thể được bỏ qua và nhiều <b>suffix</b> có thể được phân tách bằng <b>$</b>. Nếu không có quy tắc nào khớp, nguồn FNS mặc định sẽ được sử dụng. Hỗ trợ các biến.\n| Biến | Mô tả |\n| --- | --- |\n| {path} | đường dẫn tệp đính kèm trong ghi chú |\n| {vaultPath} | đường dẫn tương đối trong kho lưu trữ |\n| {vault} | tên kho lưu trữ |\n| {type} | loại tệp đính kèm (image/video/audio/pdf/other) |\nVí dụ: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nLưu ý: nếu bạn sử dụng nguồn từ xa tùy chỉnh, hãy đảm bảo rằng nó hỗ trợ CORS và ủy quyền bắt buộc (nếu cần).",
   "setting.cloud.delete_after_upload": "Xem trước trên đám mây - xóa sau khi tải lên",
   "setting.cloud.delete_after_upload_desc": "Các tệp cục bộ sẽ tự động bị xóa sau khi tải lên thành công để tiết kiệm dung lượng.\n(Cài đặt này yêu cầu bật xem trước tệp đính kèm trên đám mây)\nLưu ý: Tắt cẩn thận vì điều này có thể khiến các plugin liên quan hoạt động không chính xác.",
 
@@ -91,7 +98,9 @@ const vi: Partial<LangMap> = {
   "setting.support.log_desc": "Khi được bật, các nhật ký sẽ được hiển thị trong bảng điều khiển (console).",
   "setting.support.debug_copy": "Sao chép thông tin gỡ lỗi",
   "setting.support.debug_desc": "Sao chép thông tin gỡ lỗi vào clipboard (có thể chứa dữ liệu nhạy cảm)!",
-  "setting.support.feedback": "Phản hồi và Gợi ý",
+  "setting.support.issue": "Báo cáo vấn đề",
+  "setting.support.issue_notice": "Thông tin gỡ lỗi đã được sao chép tự động; vui lòng đính kèm <b>thông tin gỡ lỗi</b> khi báo cáo vấn đề để phân tích nhanh hơn.",
+  "setting.support.feature": "Đề xuất tính năng",
   "setting.support.telegram": "Nhóm thảo luận Telegram",
   "setting.support.console_tip": "Mở bảng điều khiển bằng phím tắt để xem nhật ký từ plugin này và các plugin khác.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -138,9 +147,10 @@ const vi: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Số phiên bản của plugin Fast Note Sync",
   "ui.menu.server": "Phiên bản Máy chủ",
   "ui.menu.server_desc": "Số phiên bản của máy chủ Fast Note Sync",
+  "ui.menu.settings": "Cài đặt Plugin",
 
   // --- ui.status ---
-  "ui.status.syncing": "Đang đồng bộ hóa...",
+  "ui.status.syncing": "Đang đồng bộ hóa",
   "ui.status.starting": "Bắt đầu đồng bộ hóa",
   "ui.status.new_version": "Có phiên bản mới: ${version}. Nhấp để cập nhật.",
   "ui.status.completed": "Đồng bộ hóa hoàn tất",
@@ -217,6 +227,8 @@ const vi: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Xác nhận",
   "ui.button.cancel": "Hủy bỏ",
+  "ui.button.goto_feedback": "Đi tới Phản hồi Github",
+  "ui.title.notice": "Thông báo phản hồi",
 }
 
 
