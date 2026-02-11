@@ -90,7 +90,7 @@ const zh_cn: Partial<LangMap> = {
   "setting.support.log": "开启日志",
   "setting.support.log_desc": "开启后将在控制台打印日志",
   "setting.support.debug_copy": "复制 Debug 信息",
-  "setting.support.debug_desc": "将调试信息复制到剪贴板, 可能包含敏感信!",
+  "setting.support.debug_desc": "Debug 信息已复制到剪贴板, 敏感信息已脱敏处理",
   "setting.support.feedback": "反馈问题&新建议",
   "setting.support.telegram": "电报讨论群",
   "setting.support.console_tip": "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志",
