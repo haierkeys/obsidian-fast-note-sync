@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, Notice, normalizePath, Platform } from "obsidian";
 
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded, getSafeCtime } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import { HttpApiService } from "./api";
@@ -54,7 +54,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
     pathHash: hashContent(file.path),
     contentHash: contentHash,
     mtime: file.stat.mtime,
-    ctime: file.stat.ctime,
+    ctime: getSafeCtime(file.stat),
     size: file.stat.size,
     // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),

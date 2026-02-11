@@ -1,6 +1,6 @@
 import { normalizePath } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, configAddPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, configAddPathExcluded, getSafeCtime } from "./helps";
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import type FastSync from "../main";
 
@@ -53,7 +53,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
                     contentStr = new TextDecoder().decode(contentBuf)
                     contentHash = hashArrayBuffer(contentBuf)
                     mtime = stat.mtime
-                    ctime = stat.ctime
+                    ctime = getSafeCtime(stat)
                 }
             }
         } catch (error) {
@@ -175,7 +175,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
                 contentBuf = await plugin.app.vault.adapter.readBinary(filePath);
                 contentStr = new TextDecoder().decode(contentBuf);
                 mtime = stat.mtime;
-                ctime = stat.ctime;
+                ctime = getSafeCtime(stat);
             }
         }
     } catch (error) {

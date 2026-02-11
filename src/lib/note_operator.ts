@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, dump, isPathExcluded } from "./helps";
+import { hashContent, dump, isPathExcluded, getSafeCtime } from "./helps";
 import type FastSync from "../main";
 
 
@@ -24,7 +24,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
 
   const data = {
     vault: plugin.settings.vault,
-    ctime: file.stat.ctime,
+    ctime: getSafeCtime(file.stat),
     mtime: file.stat.mtime,
     path: file.path,
     pathHash: hashContent(file.path),
@@ -165,7 +165,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
 
   const sendData = {
     vault: plugin.settings.vault,
-    ctime: file.stat.ctime,
+    ctime: getSafeCtime(file.stat),
     mtime: file.stat.mtime,
     path: file.path,
     pathHash: hashContent(file.path),

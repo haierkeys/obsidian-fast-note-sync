@@ -178,6 +178,13 @@ export const hashArrayBuffer = function (buffer: ArrayBuffer): string {
 }
 
 /**
+ * 获取安全的 ctime (如果不存在则回退到 mtime)
+ */
+export const getSafeCtime = function (stat: { ctime?: number; mtime?: number }): number {
+  return (stat.ctime && stat.ctime > 0) ? stat.ctime : (stat.mtime || Date.now());
+}
+
+/**
  * =============================================================================
  * 日期与时间相关 (Date & Time)
  * =============================================================================
