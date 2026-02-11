@@ -5,6 +5,12 @@ import type { LangMap } from "../lang";
 const en: Partial<LangMap> = {
   "fns.desc": "A plugin for real-time synchronization and backup of notes, attachments, and configurations between devices. Supports private deployment, runs on Mac, Windows, Android, iOS, etc., and offers multi-language support.",
 
+  "setting.tab.general": "General",
+  "setting.tab.debug": "Debug",
+  "setting.tab.remote": "Remote",
+  "setting.tab.sync": "Sync",
+  "setting.tab.cloud": "Cloud",
+
   // --- setting.remote ---
   "setting.remote.title": "Remote",
   "setting.remote.connected": "Service connected",

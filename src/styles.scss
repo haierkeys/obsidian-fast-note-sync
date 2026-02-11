@@ -24,6 +24,39 @@
   }
 }
 
+.fns-setting-tab-header {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 20px;
+  padding-bottom: 0;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.fns-setting-tab-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+  }
+
+  &.is-active {
+    color: var(--interactive-accent);
+    border-bottom-color: var(--interactive-accent);
+  }
+}
+
 .fast-note-sync-support-info {
   margin: 1em 0;
   ul {

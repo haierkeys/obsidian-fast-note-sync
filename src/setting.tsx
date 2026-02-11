@@ -99,9 +99,16 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   readonlySyncEnabled: false,
 }
 
+
+
+export type TabId = "GENERAL" | "DEBUG" | "REMOTE" | "SYNC" | "CLOUD";
+
 export class SettingTab extends PluginSettingTab {
   plugin: FastSync
   root: Root | null = null
+
+  // 设置当前活动选项卡，默认为通用
+  activeTab: TabId = "GENERAL"
 
   constructor(app: App, plugin: FastSync) {
     super(app, plugin)
@@ -120,6 +127,207 @@ export class SettingTab extends PluginSettingTab {
 
     set.empty()
 
+    // 渲染选项卡头部导航
+    this.renderHeader(set)
+
+    const contentEl = set.createDiv("fns-setting-tab-content")
+
+    // 根据活动选项卡渲染内容
+    switch (this.activeTab) {
+      case "GENERAL":
+        this.renderGeneralSettings(contentEl)
+        break
+      case "DEBUG":
+        this.renderDebugSettings(contentEl)
+        break
+      case "REMOTE":
+        this.renderRemoteSettings(contentEl)
+        break
+      case "SYNC":
+        this.renderSyncSettings(contentEl)
+        break
+      case "CLOUD":
+        this.renderCloudSettings(contentEl)
+        break
+    }
+  }
+
+  private renderHeader(containerEl: HTMLElement) {
+    const headerEl = containerEl.createDiv("fns-setting-tab-header")
+
+    const tabs: { id: TabId; label: string }[] = [
+      { id: "GENERAL", label: $("setting.tab.general") },
+      { id: "REMOTE", label: $("setting.tab.remote") },
+      { id: "SYNC", label: $("setting.tab.sync") },
+      { id: "CLOUD", label: $("setting.tab.cloud") },
+      { id: "DEBUG", label: $("setting.tab.debug") },
+    ]
+
+    tabs.forEach((tab) => {
+      const tabEl = headerEl.createDiv("fns-setting-tab-item")
+      tabEl.setText(tab.label)
+      if (this.activeTab === tab.id) {
+        tabEl.addClass("is-active")
+      }
+      tabEl.onclick = () => {
+        // 切换时先卸载之前的 React 根节点
+        if (this.root) {
+          this.root.unmount()
+          this.root = null
+        }
+        this.activeTab = tab.id
+        this.display()
+      }
+    })
+  }
+
+  private renderGeneralSettings(set: HTMLElement) {
+    new Setting(set).setName($("setting.sync.startup_delay")).addText((text) =>
+      text
+        .setPlaceholder($("setting.sync.startup_delay_placeholder"))
+        .setValue(this.plugin.settings.startupDelay.toString())
+        .onChange(async (value) => {
+          const numValue = parseInt(value)
+          if (!isNaN(numValue) && numValue >= 0) {
+            this.plugin.settings.startupDelay = numValue
+            await this.plugin.saveSettings()
+          }
+        }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.startup_delay_desc"))
+
+    new Setting(set)
+      .setName("| " + $("setting.support.title"))
+      .setHeading()
+      .setClass("fast-note-sync-settings-tag")
+
+    const supportSet = set.createDiv()
+    this.root = createRoot(supportSet)
+    this.root.render(<SupportView plugin={this.plugin} />)
+  }
+
+  private renderDebugSettings(set: HTMLElement) {
+    new Setting(set)
+      .setName("| " + $("setting.tab.debug"))
+      .setHeading()
+      .setClass("fast-note-sync-settings-tag")
+
+    new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
+        this.plugin.settings.logEnabled = value
+        await this.plugin.saveSettings()
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
+
+    const debugDiv = set.createDiv()
+    debugDiv.addClass("fast-note-sync-settings-debug")
+
+    const debugButton = debugDiv.createEl("button")
+    debugButton.setText($("setting.support.debug_copy"))
+    debugButton.onclick = async () => {
+      const maskValue = (val: string) => {
+        if (!val) return ""
+        const parts = val.split("://")
+        const protocol = parts.length > 1 ? parts[0] + "://" : ""
+        const address = parts.length > 1 ? parts[1] : parts[0]
+
+        const lastColonIndex = address.lastIndexOf(":")
+        let port = ""
+        let host = address
+        if (lastColonIndex !== -1 && !address.includes("/", lastColonIndex)) {
+          host = address.slice(0, lastColonIndex)
+          port = address.slice(lastColonIndex)
+        }
+
+        let maskedHost = host
+        if (host.length > 4) {
+          maskedHost = host[0] + "***" + host.slice(-1)
+        } else if (host.length > 0) {
+          maskedHost = host[0] + "***"
+        }
+
+        return protocol + maskedHost + port
+      }
+
+      await window.navigator.clipboard.writeText(
+        JSON.stringify(
+          {
+            settings: {
+              ...this.plugin.settings,
+              api: maskValue(this.plugin.settings.api),
+              wsApi: maskValue(this.plugin.settings.wsApi),
+              apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
+              lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
+              lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
+              lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
+              clientName: this.plugin.localStorageManager.getMetadata("clientName"),
+              isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
+              serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+              serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
+              pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
+            },
+            systemInfo: {
+              isDesktop: Platform.isDesktopApp,
+              isMobile: Platform.isMobile,
+              isTablet: Platform.isTablet,
+              platform: typeof process !== "undefined" ? process.platform : "unknown",
+              arch: typeof process !== "undefined" ? process.arch : "unknown",
+              userAgent: navigator.userAgent,
+              versions: typeof process !== "undefined" ? {
+                node: process.versions.node,
+                electron: process.versions.electron,
+                chrome: process.versions.chrome,
+                v8: process.versions.v8,
+              } : {},
+              capacitor: (window as any).Capacitor ? {
+                platform: (window as any).Capacitor.getPlatform(),
+                isNative: (window as any).Capacitor.isNative,
+              } : "not found",
+              obsidianVersion: (this.app as any).version || (navigator.userAgent.match(/obsidian\/([\d.]+)/)?.[1]) || "unknown",
+            },
+            pluginVersion: this.plugin.manifest.version,
+          },
+          null,
+          4,
+        ),
+      )
+      new Notice($("setting.support.debug_desc"))
+    }
+
+    const feedbackButton = debugDiv.createEl("button")
+    feedbackButton.setText($("setting.support.feedback"))
+    feedbackButton.onclick = () => {
+      window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
+    }
+
+    const telegramButton = debugDiv.createEl("button")
+    telegramButton.setText($("setting.support.telegram"))
+    telegramButton.onclick = () => {
+      window.open("https://t.me/obsidian_users", "_blank")
+    }
+
+    const logViewButton = debugDiv.createEl("button")
+    logViewButton.setText($("ui.log.view_log"))
+    logViewButton.onclick = () => {
+      this.plugin.activateLogView()
+    }
+
+    if (Platform.isDesktopApp) {
+      const info = debugDiv.createDiv()
+      info.setText($("setting.support.console_tip"))
+
+      const keys = debugDiv.createDiv()
+      keys.addClass("custom-shortcuts")
+      if (Platform.isMacOS === true) {
+        keys.createEl("kbd", { text: $("setting.support.console_mac") })
+      } else {
+        keys.createEl("kbd", { text: $("setting.support.console_win") })
+      }
+    }
+  }
+
+  private renderRemoteSettings(set: HTMLElement) {
     new Setting(set)
       .setName("| " + $("setting.remote.title"))
       .setHeading()
@@ -186,12 +394,13 @@ export class SettingTab extends PluginSettingTab {
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.client_name_desc"))
+  }
 
+  private renderSyncSettings(set: HTMLElement) {
     new Setting(set)
       .setName("| " + $("setting.sync.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
-    // new Setting(set).setName("Fast Note Sync").setDesc($("Fast sync")).setHeading()
 
     new Setting(set).setName($("setting.sync.auto_note")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
@@ -236,7 +445,7 @@ export class SettingTab extends PluginSettingTab {
               btn.setButtonText($("setting.sync.clear_remote"))
             }, 5000)
           }
-        ).open();
+        ).open()
       })
     })
 
@@ -356,19 +565,6 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_whitelist_desc"))
 
-    new Setting(set).setName($("setting.sync.startup_delay")).addText((text) =>
-      text
-        .setPlaceholder($("setting.sync.startup_delay_placeholder"))
-        .setValue(this.plugin.settings.startupDelay.toString())
-        .onChange(async (value) => {
-          const numValue = parseInt(value)
-          if (!isNaN(numValue) && numValue >= 0) {
-            this.plugin.settings.startupDelay = numValue
-            await this.plugin.saveSettings()
-          }
-        }),
-    )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.startup_delay_desc"))
 
     new Setting(set).setName($("setting.sync.sync_delay")).addText((text) =>
       text
@@ -394,12 +590,13 @@ export class SettingTab extends PluginSettingTab {
         .onChange(async (value) => {
           this.plugin.settings.offlineSyncStrategy = value
           await this.plugin.saveSettings("offlineSyncStrategy")
-          // 立即发送 ClientInfo 到服务端，使设置立即生效
           this.plugin.websocket.sendClientInfo()
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.merge_strategy_desc"))
+  }
 
+  private renderCloudSettings(set: HTMLElement) {
     new Setting(set)
       .setName("| " + $("setting.cloud.title"))
       .setHeading()
@@ -453,130 +650,6 @@ export class SettingTab extends PluginSettingTab {
       )
       this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.cloud.delete_after_upload_desc"))
     }
-
-    new Setting(set)
-      .setName("| " + $("setting.support.title"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
-
-    const supportSet = set.createDiv()
-    const supportRoot = createRoot(supportSet)
-    supportRoot.render(<SupportView plugin={this.plugin} />)
-    new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
-      toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
-        this.plugin.settings.logEnabled = value
-        await this.plugin.saveSettings()
-      }),
-    )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
-    const debugDiv = set.createDiv()
-    debugDiv.addClass("fast-note-sync-settings-debug")
-
-    const debugButton = debugDiv.createEl("button")
-
-    debugButton.setText($("setting.support.debug_copy"))
-    debugButton.onclick = async () => {
-      const maskValue = (val: string) => {
-        if (!val) return ""
-        const parts = val.split("://")
-        const protocol = parts.length > 1 ? parts[0] + "://" : ""
-        const address = parts.length > 1 ? parts[1] : parts[0]
-
-        // 处理端口号
-        const lastColonIndex = address.lastIndexOf(":")
-        let port = ""
-        let host = address
-        if (lastColonIndex !== -1 && !address.includes("/", lastColonIndex)) {
-          host = address.slice(0, lastColonIndex)
-          port = address.slice(lastColonIndex)
-        }
-
-        // 脱敏 Host 部分
-        let maskedHost = host
-        if (host.length > 4) {
-          maskedHost = host[0] + "***" + host.slice(-1)
-        } else if (host.length > 0) {
-          maskedHost = host[0] + "***"
-        }
-
-        return protocol + maskedHost + port
-      }
-
-      await window.navigator.clipboard.writeText(
-        JSON.stringify(
-          {
-            settings: {
-              ...this.plugin.settings,
-              api: maskValue(this.plugin.settings.api),
-              wsApi: maskValue(this.plugin.settings.wsApi),
-              apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
-              lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
-              lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
-              lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
-              clientName: this.plugin.localStorageManager.getMetadata("clientName"),
-              isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
-              serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
-              serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
-              pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
-            },
-            systemInfo: {
-              isDesktop: Platform.isDesktopApp,
-              isMobile: Platform.isMobile,
-              isTablet: Platform.isTablet,
-              platform: typeof process !== "undefined" ? process.platform : "unknown",
-              arch: typeof process !== "undefined" ? process.arch : "unknown",
-              userAgent: navigator.userAgent,
-              versions: typeof process !== "undefined" ? {
-                node: process.versions.node,
-                electron: process.versions.electron,
-                chrome: process.versions.chrome,
-                v8: process.versions.v8,
-              } : {},
-              capacitor: (window as any).Capacitor ? {
-                platform: (window as any).Capacitor.getPlatform(),
-                isNative: (window as any).Capacitor.isNative,
-              } : "not found",
-              obsidianVersion: (this.app as any).version || (navigator.userAgent.match(/obsidian\/([\d.]+)/)?.[1]) || "unknown",
-            },
-            pluginVersion: this.plugin.manifest.version,
-          },
-          null,
-          4,
-        ),
-      )
-      new Notice($("setting.support.debug_desc"))
-    }
-
-    const feedbackButton = debugDiv.createEl("button")
-    feedbackButton.setText($("setting.support.feedback"))
-    feedbackButton.onclick = () => {
-      window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
-    }
-
-    const telegramButton = debugDiv.createEl("button")
-    telegramButton.setText($("setting.support.telegram"))
-    telegramButton.onclick = () => {
-      window.open("https://t.me/obsidian_users", "_blank")
-    }
-
-    const logViewButton = debugDiv.createEl("button")
-    logViewButton.setText($("ui.log.view_log"))
-    logViewButton.onclick = () => {
-      this.plugin.activateLogView();
-    }
-
-    if (Platform.isDesktopApp) {
-      const info = debugDiv.createDiv()
-      info.setText($("setting.support.console_tip"))
-
-      const keys = debugDiv.createDiv()
-      keys.addClass("custom-shortcuts")
-      if (Platform.isMacOS === true) {
-        keys.createEl("kbd", { text: $("setting.support.console_mac") })
-      } else {
-        keys.createEl("kbd", { text: $("setting.support.console_win") })
-      }
-    }
   }
 
   private setDescWithBreaks(el: HTMLElement, desc: string) {
@@ -593,7 +666,6 @@ export class SettingTab extends PluginSettingTab {
       lines.forEach((line) => {
         const trimmedLine = line.trim()
         if (trimmedLine.startsWith("|") && trimmedLine.endsWith("|")) {
-          // 处理表格行
           const parts = trimmedLine
             .split("|")
             .filter((p, i, arr) => i > 0 && i < arr.length - 1)
@@ -612,7 +684,6 @@ export class SettingTab extends PluginSettingTab {
             tbody = table.createEl("tbody")
             fragment.appendChild(table)
           } else {
-            // 检查是否为对齐行 (如 | --- | --- |)
             if (parts.every((p) => p.match(/^-+$/))) {
               return
             }
@@ -625,7 +696,6 @@ export class SettingTab extends PluginSettingTab {
             }
           }
         } else {
-          // 退出表格模式
           inTable = false
           const lineSpan = document.createElement("span")
           lineSpan.innerHTML = line

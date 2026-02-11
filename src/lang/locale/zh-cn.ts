@@ -5,6 +5,12 @@ import type { LangMap } from "../lang";
 const zh_cn: Partial<LangMap> = {
   "fns.desc": "可私有化部署，多端笔记,附件,配置实时同步&备份插件， 支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。",
 
+  "setting.tab.general": "通用",
+  "setting.tab.debug": "调试",
+  "setting.tab.remote": "远端配置",
+  "setting.tab.sync": "同步控制",
+  "setting.tab.cloud": "附件云预览",
+
   // --- setting.remote ---
   "setting.remote.title": "远端",
   "setting.remote.connected": "服务已连接",
@@ -82,7 +88,7 @@ const zh_cn: Partial<LangMap> = {
 
   // --- setting.support ---
   "setting.support.title": "赞助与支持",
-  "setting.support.desc": "如果您觉得这个插件很有用，并且想要它继续开发，请在以下方式支持我们，感谢您对开源软件的支持！",
+  "setting.support.desc": "如果这个插件帮助到您，并且想要它继续开发，请在以下方式支持我们，感谢您对开源软件的支持！",
   "setting.support.kofi": "非中国地区 ( Ko-fi )",
   "setting.support.wechat": "中国地区 ( 微信扫码打赏 )",
   "setting.support.or": "或",
