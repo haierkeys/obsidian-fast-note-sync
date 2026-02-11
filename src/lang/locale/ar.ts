@@ -59,12 +59,16 @@ const ar: Partial<LangMap> = {
   "setting.sync.config_exclude_whitelist": "القائمة البيضاء لاستبعاد مزامنة التكوين",
   "setting.sync.config_exclude_whitelist_desc": "الأولوية على قواعد <b>استبعاد مزامنة التكوين</b>، يفرض المزامنة للمطابقات.\nواحد في كل سطر، يدعم Regex (يتجاهل حالة الأحرف).",
   "setting.sync.startup_delay": "تأخير بدء التشغيل (ms)",
-  "setting.sync.startup_delay_placeholder": "يرجى إدخال التأخير بالميلي ثانية",
+  "setting.sync.startup_delay_placeholder": "يرجى إدخل التأخير بالميلي ثانية",
   "setting.sync.startup_delay_desc": "وقت الانتظار بعد اتصال ناجح قبل إجراء أول فحص للتحديث.\nحاول ضبط هذا إذا كان Obsidian يبدأ ببطء بسبب مكونات إضافية أخرى. الافتراضي: 500 ms",
   "setting.sync.sync_delay": "تأخير مزامنة التحديث (ms)",
   "setting.sync.sync_delay_desc": "التأخير قبل إجراء المزامنة بعد تعديل الملاحظات أو المرفقات أو التكوينات. الافتراضي: 0 ms (مزامنة فورية)",
   "setting.sync.show_notice": "إظهار إشعارات المزامنة",
   "setting.sync.show_notice_desc": "بمجرد التمكين، ستظهر إشعارات النظام عند بدء وانتهاء المزامنة.",
+  "setting.sync.clear_remote": "مسح التكوين عن بعد",
+  "setting.sync.clear_remote_desc": "مسح تكوين مخزن الملاحظات من الخدمة عن بعد. هذا الإجراء غير قابل للتراجع.",
+  "setting.sync.clear_remote_confirm": "هل أنت متأكد من رغبتك في مسح تكوين مخزن الملاحظات من الخدمة عن بعد؟\nسيؤدي هذا الإجراء إلى حذف جميع التكوينات لهذا المخزن المخزنة في الخدمة عن بعد نهائياً، ولا يمكن استعادتها.",
+  "ui.status.clear_success": "تم مسح التكوين عن بعد",
 
   // --- setting.cloud ---
   "setting.cloud.title": "معاينة السحابة للمرفقات",
@@ -131,9 +135,9 @@ const ar: Partial<LangMap> = {
   "ui.menu.clear_time": "مسح وقت المزامنة المحلي",
   "ui.menu.rebuild_hash": "إعادة بناء تعيين هاش الملفات",
   "ui.menu.plugin": "إصدار المكون الإضافي",
-  "ui.menu.plugin_desc": "رقم إصدار مكون Fast Note Sync الإضافي",
+  "ui.menu.plugin_desc": "Fast Note Sync 插件版本号",
   "ui.menu.server": "إصدار الخادم",
-  "ui.menu.server_desc": "رقم إصدار خادم Fast Note Sync",
+  "ui.menu.server_desc": "Fast Note Sync 服务端 version 号",
 
   // --- ui.status ---
   "ui.status.syncing": "جاري المزامنة",
@@ -207,6 +211,12 @@ const ar: Partial<LangMap> = {
   "ui.log.action.SettingDelete": "حذف ملف التكوين",
   "ui.log.action.SyncEnd_full": "نهاية عنصر المزامنة الرئيسي (كاملة)",
   "ui.log.action.SyncEnd_incremental": "نهاية عنصر المزامنة الرئيسي (متزايدة)",
+  "ui.log.action.SettingClear": "مسح التكوين عن بعد",
+  "ui.log.action.SettingSyncClear": "تزامن مسح التكوين عن بعد",
+
+  // --- ui.button ---
+  "ui.button.confirm": "تأكيد",
+  "ui.button.cancel": "إلغاء",
 }
 
 

@@ -3,7 +3,7 @@ import { createRoot, Root } from "react-dom/client";
 
 import { SettingsView, SupportView } from "./views/settings-view";
 import { ConfirmModal } from "./views/confirm-modal";
-import { KofiImage, WXImage } from "./lib/icons";
+import { handleSync } from "./lib/operator";
 import { $ } from "./lang/lang";
 import FastSync from "./main";
 
@@ -221,16 +221,20 @@ export class SettingTab extends PluginSettingTab {
           $("setting.sync.clear_remote"),
           $("setting.sync.clear_remote_confirm"),
           () => {
+            if (this.plugin.settings.configSyncEnabled) {
+              this.plugin.isWaitClearSync = true
+            }
             this.plugin.websocket.SendMessage("SettingClear", {
               vault: this.plugin.settings.vault
             })
+
             btn.setDisabled(true)
             btn.setIcon("check")
             setTimeout(() => {
               btn.setDisabled(false)
               btn.setIcon("")
               btn.setButtonText($("setting.sync.clear_remote"))
-            }, 2000)
+            }, 5000)
           }
         ).open();
       })

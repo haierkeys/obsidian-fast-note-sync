@@ -164,7 +164,6 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["SettingSyncDelete", receiveConfigSyncDelete],
   ["SettingSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "config")],
   ["SettingSyncClear", receiveConfigSyncClear],
-  ["SettingClear", receiveConfigSyncClear],
   ["FolderSyncModify", receiveFolderSyncModify],
   ["FolderSyncDelete", receiveFolderSyncDelete],
   ["FolderSyncRename", receiveFolderSyncRename],

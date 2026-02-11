@@ -211,6 +211,8 @@ const zh_cn: Partial<LangMap> = {
   "ui.log.action.SettingDelete": "配置文件删除",
   "ui.log.action.SyncEnd_full": "同步大项结束(全量)",
   "ui.log.action.SyncEnd_incremental": "同步大项结束(增量)",
+  "ui.log.action.SettingClear": "清理远端配置",
+  "ui.log.action.SettingSyncClear": "同步清理远端配置",
 
   // --- ui.button ---
   "ui.button.confirm": "确认",

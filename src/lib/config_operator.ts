@@ -263,6 +263,12 @@ export const receiveConfigSyncClear = async function (data: any, plugin: FastSyn
     plugin.localStorageManager.setMetadata("lastConfigSyncTime", 0)
     new Notice($("ui.status.clear_success"))
     plugin.configSyncTasks.completed++
+
+    if (plugin.isWaitClearSync) {
+        plugin.isWaitClearSync = false
+        const { handleSync } = await import("./operator");
+        handleSync(plugin, false, "config")
+    }
 }
 
 /**
