@@ -10,6 +10,7 @@ const en: Partial<LangMap> = {
   "setting.tab.remote": "Remote",
   "setting.tab.sync": "Sync",
   "setting.tab.cloud": "Cloud",
+  "setting.search.placeholder": "Search settings...",
 
   // --- setting.remote ---
   "setting.remote.title": "Remote",
@@ -97,7 +98,9 @@ const en: Partial<LangMap> = {
   "setting.support.log_desc": "When enabled, logs will be displayed in the console.",
   "setting.support.debug_copy": "Copy Debug info",
   "setting.support.debug_desc": "Copy debug information to the clipboard (may contain sensitive data)!",
-  "setting.support.feedback": "Feedback and suggestions",
+  "setting.support.issue": "Report an Issue",
+  "setting.support.issue_notice": "Debug info has been automatically copied. Please paste it first when submitting an issue to help us analyze and locate the problem.",
+  "setting.support.feature": "Feature Request",
   "setting.support.telegram": "Telegram discussion group",
   "setting.support.console_tip": "Open the console with hotkeys to see logs from this plugin and others.",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -224,6 +227,8 @@ const en: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "Confirm",
   "ui.button.cancel": "Cancel",
+  "ui.button.goto_feedback": "Go to GitHub Feedback Link",
+  "ui.title.notice": "Feedback Notice",
 }
 
 

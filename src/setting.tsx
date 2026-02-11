@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Notice, Setting, Platform } from "obsidian";
+import { App, PluginSettingTab, Notice, Setting, Platform, SearchComponent } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
 import { SettingsView, SupportView } from "./views/settings-view";
@@ -105,10 +105,11 @@ export type TabId = "GENERAL" | "DEBUG" | "REMOTE" | "SYNC" | "CLOUD";
 
 export class SettingTab extends PluginSettingTab {
   plugin: FastSync
-  root: Root | null = null
+  roots: Root[] = []
 
   // 设置当前活动选项卡，默认为通用
   activeTab: TabId = "GENERAL"
+  searchQuery: string = ""
 
   constructor(app: App, plugin: FastSync) {
     super(app, plugin)
@@ -116,39 +117,104 @@ export class SettingTab extends PluginSettingTab {
   }
 
   hide(): void {
-    if (this.root) {
-      this.root.unmount()
-      this.root = null
-    }
+    this.roots.forEach((root) => root.unmount())
+    this.roots = []
   }
 
   display(): void {
     const { containerEl: set } = this
 
     set.empty()
+    this.roots.forEach((root) => root.unmount())
+    this.roots = []
+
+    // 渲染搜索框
+    this.renderSearch(set)
 
     // 渲染选项卡头部导航
     this.renderHeader(set)
 
     const contentEl = set.createDiv("fns-setting-tab-content")
 
-    // 根据活动选项卡渲染内容
-    switch (this.activeTab) {
-      case "GENERAL":
-        this.renderGeneralSettings(contentEl)
-        break
-      case "DEBUG":
-        this.renderDebugSettings(contentEl)
-        break
-      case "REMOTE":
-        this.renderRemoteSettings(contentEl)
-        break
-      case "SYNC":
-        this.renderSyncSettings(contentEl)
-        break
-      case "CLOUD":
-        this.renderCloudSettings(contentEl)
-        break
+    if (this.searchQuery) {
+      this.renderAllSettings(contentEl)
+      this.applySearchFilter(contentEl)
+    } else {
+      // 根据活动选项卡渲染内容
+      switch (this.activeTab) {
+        case "GENERAL":
+          this.renderGeneralSettings(contentEl)
+          break
+        case "DEBUG":
+          this.renderDebugSettings(contentEl)
+          break
+        case "REMOTE":
+          this.renderRemoteSettings(contentEl)
+          break
+        case "SYNC":
+          this.renderSyncSettings(contentEl)
+          break
+        case "CLOUD":
+          this.renderCloudSettings(contentEl)
+          break
+      }
+    }
+  }
+
+  private renderSearch(containerEl: HTMLElement) {
+    const searchContainer = containerEl.createDiv("fns-setting-search-container")
+    new SearchComponent(searchContainer)
+      .setPlaceholder($("setting.search.placeholder"))
+      .setValue(this.searchQuery)
+      .onChange((value) => {
+        this.searchQuery = value
+        this.display()
+      })
+  }
+
+  private renderAllSettings(contentEl: HTMLElement) {
+    this.renderGeneralSettings(contentEl)
+    this.renderRemoteSettings(contentEl)
+    this.renderSyncSettings(contentEl)
+    this.renderCloudSettings(contentEl)
+    this.renderDebugSettings(contentEl)
+  }
+
+  private applySearchFilter(containerEl: HTMLElement) {
+    const query = this.searchQuery.toLowerCase()
+    const children = containerEl.querySelectorAll(".setting-item")
+    let hasVisibleItem = false
+
+    children.forEach((child) => {
+      const item = child as HTMLElement
+      const name = item.querySelector(".setting-item-name")?.textContent?.toLowerCase() || ""
+      const desc = item.querySelector(".setting-item-description")?.textContent?.toLowerCase() || ""
+
+      if (name.includes(query) || desc.includes(query)) {
+        item.style.display = ""
+        hasVisibleItem = true
+      } else {
+        item.style.display = "none"
+      }
+    })
+
+    // 隐藏空的标题栏
+    const headings = containerEl.querySelectorAll(".setting-item-heading")
+    headings.forEach((heading) => {
+      let next = heading.nextElementSibling
+      let shouldShow = false
+      while (next && !next.classList.contains("setting-item-heading")) {
+        if ((next as HTMLElement).style.display !== "none") {
+          shouldShow = true
+          break
+        }
+        next = next.nextElementSibling
+      }
+      ; (heading as HTMLElement).style.display = shouldShow ? "" : "none"
+    })
+
+    if (!hasVisibleItem) {
+      containerEl.createDiv("fns-setting-no-results").setText("No results found.")
     }
   }
 
@@ -170,11 +236,6 @@ export class SettingTab extends PluginSettingTab {
         tabEl.addClass("is-active")
       }
       tabEl.onclick = () => {
-        // 切换时先卸载之前的 React 根节点
-        if (this.root) {
-          this.root.unmount()
-          this.root = null
-        }
         this.activeTab = tab.id
         this.display()
       }
@@ -202,23 +263,82 @@ export class SettingTab extends PluginSettingTab {
       .setClass("fast-note-sync-settings-tag")
 
     const supportSet = set.createDiv()
-    this.root = createRoot(supportSet)
-    this.root.render(<SupportView plugin={this.plugin} />)
+    const root = createRoot(supportSet)
+    this.roots.push(root)
+    root.render(<SupportView plugin={this.plugin} />)
+
+    this.renderDebugTools(set)
   }
 
-  private renderDebugSettings(set: HTMLElement) {
-    new Setting(set)
-      .setName("| " + $("setting.tab.debug"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+  private getDebugInfo(): string {
+    const maskValue = (val: string) => {
+      if (!val) return ""
+      const parts = val.split("://")
+      const protocol = parts.length > 1 ? parts[0] + "://" : ""
+      const address = parts.length > 1 ? parts[1] : parts[0]
 
-    new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
-      toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
-        this.plugin.settings.logEnabled = value
-        await this.plugin.saveSettings()
-      }),
+      const lastColonIndex = address.lastIndexOf(":")
+      let port = ""
+      let host = address
+      if (lastColonIndex !== -1 && !address.includes("/", lastColonIndex)) {
+        host = address.slice(0, lastColonIndex)
+        port = address.slice(lastColonIndex)
+      }
+
+      let maskedHost = host
+      if (host.length > 4) {
+        maskedHost = host[0] + "***" + host.slice(-1)
+      } else if (host.length > 0) {
+        maskedHost = host[0] + "***"
+      }
+
+      return protocol + maskedHost + port
+    }
+
+    return JSON.stringify(
+      {
+        settings: {
+          ...this.plugin.settings,
+          api: maskValue(this.plugin.settings.api),
+          wsApi: maskValue(this.plugin.settings.wsApi),
+          apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
+          lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
+          lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
+          lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
+          clientName: this.plugin.localStorageManager.getMetadata("clientName"),
+          isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
+          serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+          serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
+          pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
+        },
+        systemInfo: {
+          isDesktop: Platform.isDesktopApp,
+          isMobile: Platform.isMobile,
+          isTablet: Platform.isTablet,
+          platform: typeof process !== "undefined" ? process.platform : "unknown",
+          arch: typeof process !== "undefined" ? process.arch : "unknown",
+          userAgent: navigator.userAgent,
+          versions: typeof process !== "undefined" ? {
+            node: process.versions.node,
+            electron: process.versions.electron,
+            chrome: process.versions.chrome,
+            v8: process.versions.v8,
+          } : {},
+          capacitor: (window as any).Capacitor ? {
+            platform: (window as any).Capacitor.getPlatform(),
+            isNative: (window as any).Capacitor.isNative,
+          } : "not found",
+          obsidianVersion: (this.app as any).version || (navigator.userAgent.match(/obsidian\/([\d.]+)/)?.[1]) || "unknown",
+        },
+        pluginVersion: this.plugin.manifest.version,
+      },
+      null,
+      4,
     )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
+  }
+
+  private renderDebugTools(set: HTMLElement) {
+    set.createEl("hr", { cls: "fns-setting-hr" })
 
     const debugDiv = set.createDiv()
     debugDiv.addClass("fast-note-sync-settings-debug")
@@ -226,78 +346,30 @@ export class SettingTab extends PluginSettingTab {
     const debugButton = debugDiv.createEl("button")
     debugButton.setText($("setting.support.debug_copy"))
     debugButton.onclick = async () => {
-      const maskValue = (val: string) => {
-        if (!val) return ""
-        const parts = val.split("://")
-        const protocol = parts.length > 1 ? parts[0] + "://" : ""
-        const address = parts.length > 1 ? parts[1] : parts[0]
-
-        const lastColonIndex = address.lastIndexOf(":")
-        let port = ""
-        let host = address
-        if (lastColonIndex !== -1 && !address.includes("/", lastColonIndex)) {
-          host = address.slice(0, lastColonIndex)
-          port = address.slice(lastColonIndex)
-        }
-
-        let maskedHost = host
-        if (host.length > 4) {
-          maskedHost = host[0] + "***" + host.slice(-1)
-        } else if (host.length > 0) {
-          maskedHost = host[0] + "***"
-        }
-
-        return protocol + maskedHost + port
-      }
-
-      await window.navigator.clipboard.writeText(
-        JSON.stringify(
-          {
-            settings: {
-              ...this.plugin.settings,
-              api: maskValue(this.plugin.settings.api),
-              wsApi: maskValue(this.plugin.settings.wsApi),
-              apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
-              lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
-              lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
-              lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
-              clientName: this.plugin.localStorageManager.getMetadata("clientName"),
-              isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
-              serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
-              serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
-              pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
-            },
-            systemInfo: {
-              isDesktop: Platform.isDesktopApp,
-              isMobile: Platform.isMobile,
-              isTablet: Platform.isTablet,
-              platform: typeof process !== "undefined" ? process.platform : "unknown",
-              arch: typeof process !== "undefined" ? process.arch : "unknown",
-              userAgent: navigator.userAgent,
-              versions: typeof process !== "undefined" ? {
-                node: process.versions.node,
-                electron: process.versions.electron,
-                chrome: process.versions.chrome,
-                v8: process.versions.v8,
-              } : {},
-              capacitor: (window as any).Capacitor ? {
-                platform: (window as any).Capacitor.getPlatform(),
-                isNative: (window as any).Capacitor.isNative,
-              } : "not found",
-              obsidianVersion: (this.app as any).version || (navigator.userAgent.match(/obsidian\/([\d.]+)/)?.[1]) || "unknown",
-            },
-            pluginVersion: this.plugin.manifest.version,
-          },
-          null,
-          4,
-        ),
-      )
+      await window.navigator.clipboard.writeText(this.getDebugInfo())
       new Notice($("setting.support.debug_desc"))
     }
 
-    const feedbackButton = debugDiv.createEl("button")
-    feedbackButton.setText($("setting.support.feedback"))
-    feedbackButton.onclick = () => {
+    const issueButton = debugDiv.createEl("button")
+    issueButton.setText($("setting.support.issue"))
+    issueButton.onclick = async () => {
+      await window.navigator.clipboard.writeText(this.getDebugInfo())
+      new ConfirmModal(
+        this.app,
+        $("ui.title.notice"),
+        $("setting.support.issue_notice"),
+        () => {
+          window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
+        },
+        $("ui.button.goto_feedback"),
+        $("ui.button.cancel"),
+        false
+      ).open()
+    }
+
+    const featureButton = debugDiv.createEl("button")
+    featureButton.setText($("setting.support.feature"))
+    featureButton.onclick = () => {
       window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
     }
 
@@ -327,6 +399,23 @@ export class SettingTab extends PluginSettingTab {
     }
   }
 
+  private renderDebugSettings(set: HTMLElement) {
+    new Setting(set)
+      .setName("| " + $("setting.tab.debug"))
+      .setHeading()
+      .setClass("fast-note-sync-settings-tag")
+
+    new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
+        this.plugin.settings.logEnabled = value
+        await this.plugin.saveSettings()
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
+
+    this.renderDebugTools(set)
+  }
+
   private renderRemoteSettings(set: HTMLElement) {
     new Setting(set)
       .setName("| " + $("setting.remote.title"))
@@ -336,8 +425,9 @@ export class SettingTab extends PluginSettingTab {
     const apiSet = set.createDiv()
     apiSet.addClass("fast-note-sync-settings")
 
-    this.root = createRoot(apiSet)
-    this.root.render(<SettingsView plugin={this.plugin} />)
+    const root = createRoot(apiSet)
+    this.roots.push(root)
+    root.render(<SettingsView plugin={this.plugin} />)
 
     new Setting(set).setName($("setting.remote.api_url")).addText((text) =>
       text

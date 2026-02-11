@@ -10,6 +10,7 @@ const zh_cn: Partial<LangMap> = {
   "setting.tab.remote": "远端配置",
   "setting.tab.sync": "同步控制",
   "setting.tab.cloud": "附件云预览",
+  "setting.search.placeholder": "搜索面板设置...",
 
   // --- setting.remote ---
   "setting.remote.title": "远端",
@@ -97,7 +98,9 @@ const zh_cn: Partial<LangMap> = {
   "setting.support.log_desc": "开启后将在控制台打印日志",
   "setting.support.debug_copy": "复制 Debug 信息",
   "setting.support.debug_desc": "Debug 信息已复制到剪贴板, 敏感信息已脱敏处理",
-  "setting.support.feedback": "反馈问题&新建议",
+  "setting.support.issue": "反馈问题",
+  "setting.support.issue_notice": "Debug 信息已自动复制，反馈问题时请粘贴 <b>Debug 信息</b>，方便快速分析问题",
+  "setting.support.feature": "功能建议",
   "setting.support.telegram": "电报讨论群",
   "setting.support.console_tip": "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
@@ -224,6 +227,8 @@ const zh_cn: Partial<LangMap> = {
   // --- ui.button ---
   "ui.button.confirm": "确认",
   "ui.button.cancel": "取消",
+  "ui.button.goto_feedback": "跳转 Github 反馈链接",
+  "ui.title.notice": "反馈提示",
 }
 
 

@@ -17,8 +17,36 @@
   margin-bottom: 20px;
 }
 
+.fns-modal-info-message {
+  color: var(--text-normal);
+  margin-bottom: 20px;
+}
+.fns-modal-info-message b {
+  color: #4caf50;
+}
+
 .fast-note-sync-settings-tag .setting-item-name {
   color: var(--interactive-accent);
+}
+
+.fns-setting-hr {
+  margin: 20px 0;
+  border: 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.fns-setting-search-container {
+  margin-bottom: 15px;
+  width: 100%;
+}
+.fns-setting-search-container .search-input-container {
+  width: 100%;
+}
+
+.fns-setting-no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
 }
 
 .fns-setting-tab-header {
