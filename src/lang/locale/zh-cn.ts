@@ -138,6 +138,7 @@ const zh_cn: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Fast Note Sync 插件版本号",
   "ui.menu.server": "服务端版本",
   "ui.menu.server_desc": "Fast Note Sync 服务端 version 号",
+  "ui.menu.settings": "插件设置",
 
   // --- ui.status ---
   "ui.status.syncing": "同步中",

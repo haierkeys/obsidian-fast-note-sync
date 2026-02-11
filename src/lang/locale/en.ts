@@ -138,6 +138,7 @@ const en: Partial<LangMap> = {
   "ui.menu.plugin_desc": "The version number of the Fast Note Sync plugin",
   "ui.menu.server": "Server version",
   "ui.menu.server_desc": "The version number of the Fast Note Sync server",
+  "ui.menu.settings": "Plugin Settings",
 
   // --- ui.status ---
   "ui.status.syncing": "Syncing...",

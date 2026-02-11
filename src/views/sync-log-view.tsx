@@ -49,6 +49,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
     const scrollRef = React.useRef<HTMLDivElement>(null);
     const iconRef = React.useRef<HTMLSpanElement>(null);
+    const settingsIconRef = React.useRef<HTMLSpanElement>(null);
     const throttleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
     const pendingLogsRef = React.useRef<SyncLog[] | null>(null);
 
@@ -96,6 +97,13 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     }, [isConnected]);
 
     React.useEffect(() => {
+        if (settingsIconRef.current) {
+            settingsIconRef.current.empty();
+            setIcon(settingsIconRef.current, "settings");
+        }
+    }, []);
+
+    React.useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = 0; // 最新在顶部
         }
@@ -126,9 +134,23 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         />
                     </div>
                 </div>
-                <button onClick={clearLogs} className="fns-sync-log-clear-btn">
-                    {$("ui.log.clear")}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                        onClick={() => {
+                            (plugin.app as any).setting.open();
+                            (plugin.app as any).setting.openTabById(plugin.manifest.id);
+                        }}
+                        className="fns-sync-log-clear-btn"
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                        title={$("ui.menu.settings")}
+                    >
+                        <span ref={settingsIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        {$("ui.menu.settings")}
+                    </button>
+                    <button onClick={clearLogs} className="fns-sync-log-clear-btn">
+                        {$("ui.log.clear")}
+                    </button>
+                </div>
             </div>
             <div className="fns-sync-log-list" ref={scrollRef}>
                 {logs.length === 0 ? (

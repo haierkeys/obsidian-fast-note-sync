@@ -186,6 +186,18 @@ export class MenuManager {
       (item as any).dom.setAttribute("aria-label", $("ui.log.view_log"));
     });
 
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      item
+        .setIcon("settings")
+        .setTitle($("ui.menu.settings"))
+        .onClick(async () => {
+          (this.plugin.app as any).setting.open();
+          (this.plugin.app as any).setting.openTabById(this.plugin.manifest.id);
+        });
+      (item as any).dom.setAttribute("aria-label", $("ui.menu.settings"));
+    });
+
     // menu.addSeparator();
     // menu.addItem((item: MenuItem) => {
     //   item
