@@ -67,6 +67,17 @@ export const configModify = async function (path: string, plugin: FastSync, even
         return
     }
 
+    // --- 新增：哈希校验 ---
+    // 如果当前内容哈希与已记录的哈希一致，则说明无需发送
+    // 这通常发生在接收到服务端更新并写入本地后，文件系统事件触发的回调中
+    const savedHash = plugin.configHashManager?.getPathHash(path)
+    if (savedHash === contentHash) {
+        plugin.removeIgnoredConfigFile(path)
+        // 顺便更新一下 ConfigManager 的状态，防止下次误判
+        plugin.configManager.updateFileState(normalizePath(`${plugin.app.vault.configDir}/${path}`), mtime)
+        return
+    }
+
     const data = {
         vault: plugin.settings.vault,
         path: path,
@@ -137,6 +148,12 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
     await configReload(data.path, plugin, false, data.content)
     plugin.removeIgnoredConfigFile(data.path)
+
+    // 更新 ConfigManager 的文件状态，防止重复触发 configModify
+    if (plugin.configManager) {
+        const absPath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
+        plugin.configManager.updateFileState(absPath, data.mtime)
+    }
 
     if (Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) < data.lastTime) {
         plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
@@ -239,6 +256,11 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
     const fullPath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
     if (await plugin.app.vault.adapter.exists(fullPath)) {
         await plugin.app.vault.adapter.remove(fullPath)
+    }
+
+    // 更新 ConfigManager 的文件状态
+    if (plugin.configManager) {
+        plugin.configManager.removeFileState(fullPath)
     }
 
     // 从配置哈希表中删除

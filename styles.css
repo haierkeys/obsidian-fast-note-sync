@@ -80,6 +80,11 @@
   border-bottom-color: var(--interactive-accent);
 }
 
+.fns-setting-tab-content {
+  min-height: 400px; /* 确保有足够的滑动区域 */
+  touch-action: pan-y; /* 允许垂直滚动，由 JS 处理水平滑动 1*/
+}
+
 .fast-note-sync-support-info {
   margin: 1em 0;
 }
@@ -162,11 +167,24 @@
 }
 
 .fast-note-sync-settings-debug {
-  margin: var(--size-4-2);
-  text-align: center;
+  margin-top: var(--size-4-2);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
 }
 .fast-note-sync-settings-debug button {
-  margin: var(--size-4-2);
+  margin: 0;
+  padding: 6px 14px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  /* 继承 Obsidian 默认背景/边框/圆角样式，不进行深度自定义 */
+}
+.fast-note-sync-settings-debug button:hover {
+  color: var(--text-normal);
 }
 
 .fast-note-sync-settings {

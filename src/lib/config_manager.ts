@@ -157,4 +157,19 @@ export class ConfigManager {
       dump("Config Modify mtime no change, skip", relativePath)
     } catch (e) { }
   }
+
+  public updateFileState(filePath: string, mtime: number) {
+    this.fileStates.set(filePath, mtime)
+  }
+
+  public removeFileState(filePath: string) {
+    this.fileStates.delete(filePath)
+    // 同时尝试删除目录前缀的缓存（如果有）
+    const prefix = filePath + "/"
+    for (const cachedPath of this.fileStates.keys()) {
+      if (cachedPath.startsWith(prefix)) {
+        this.fileStates.delete(cachedPath)
+      }
+    }
+  }
 }

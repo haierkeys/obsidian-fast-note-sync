@@ -111,6 +111,9 @@ export class SettingTab extends PluginSettingTab {
   activeTab: TabId = "GENERAL"
   searchQuery: string = ""
 
+  private touchStartX: number = 0
+  private touchStartY: number = 0
+
   constructor(app: App, plugin: FastSync) {
     super(app, plugin)
     this.plugin = plugin
@@ -136,6 +139,19 @@ export class SettingTab extends PluginSettingTab {
 
     const contentEl = set.createDiv("fns-setting-tab-content")
 
+    if (Platform.isMobile) {
+      contentEl.addEventListener("touchstart", (e) => {
+        this.touchStartX = e.changedTouches[0].screenX
+        this.touchStartY = e.changedTouches[0].screenY
+      }, { passive: true })
+
+      contentEl.addEventListener("touchend", (e) => {
+        const touchEndX = e.changedTouches[0].screenX
+        const touchEndY = e.changedTouches[0].screenY
+        this.handleSwipe(this.touchStartX, this.touchStartY, touchEndX, touchEndY)
+      }, { passive: true })
+    }
+
     if (this.searchQuery) {
       this.renderAllSettings(contentEl)
       this.applySearchFilter(contentEl)
@@ -157,6 +173,31 @@ export class SettingTab extends PluginSettingTab {
         case "CLOUD":
           this.renderCloudSettings(contentEl)
           break
+      }
+    }
+  }
+
+  private handleSwipe(startX: number, startY: number, endX: number, endY: number) {
+    const deltaX = endX - startX
+    const deltaY = endY - startY
+    const threshold = 50
+
+    if (Math.abs(deltaX) > threshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      const tabs: TabId[] = ["GENERAL", "REMOTE", "SYNC", "CLOUD", "DEBUG"]
+      const currentIndex = tabs.indexOf(this.activeTab)
+
+      if (deltaX > 0) {
+        // Swipe right -> Previous tab
+        if (currentIndex > 0) {
+          this.activeTab = tabs[currentIndex - 1]
+          this.display()
+        }
+      } else {
+        // Swipe left -> Next tab
+        if (currentIndex < tabs.length - 1) {
+          this.activeTab = tabs[currentIndex + 1]
+          this.display()
+        }
       }
     }
   }
@@ -338,10 +379,11 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDebugTools(set: HTMLElement) {
-    set.createEl("hr", { cls: "fns-setting-hr" })
+    const debugItem = set.createDiv("setting-item")
+    const info = debugItem.createDiv("setting-item-info")
+    const desc = info.createDiv("setting-item-description")
 
-    const debugDiv = set.createDiv()
-    debugDiv.addClass("fast-note-sync-settings-debug")
+    const debugDiv = desc.createDiv("fast-note-sync-settings-debug")
 
     const debugButton = debugDiv.createEl("button")
     debugButton.setText($("setting.support.debug_copy"))
