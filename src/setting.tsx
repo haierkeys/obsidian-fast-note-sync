@@ -343,12 +343,21 @@ export class SettingTab extends PluginSettingTab {
           api: maskValue(this.plugin.settings.api),
           wsApi: maskValue(this.plugin.settings.wsApi),
           apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
+        },
+        runtimeInfo: {
+          isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
           lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
           lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
           lastConfigSyncTime: this.plugin.localStorageManager.getMetadata("lastConfigSyncTime"),
           clientName: this.plugin.localStorageManager.getMetadata("clientName"),
-          isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
-          serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+
+          serverConnectionStatus: this.plugin.websocket.isConnected() ? "connected" : "disconnected",
+          ...(this.plugin.websocket.isConnected() ? {
+            serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+          } : {
+            serverLastConnectVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+          }),
+
           serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
           pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
         },
