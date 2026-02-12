@@ -1,4 +1,4 @@
-import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView } from "obsidian";
+import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView, Platform, requestUrl } from "obsidian";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 
 import { hashContent } from "./helps";
@@ -19,8 +19,6 @@ export class FileCloudPreview {
 
   constructor(plugin: FastSync) {
     this.plugin = plugin;
-    if (!this.plugin.settings.cloudPreviewEnabled) return;
-
     this.registerMarkdownPostProcessor();
     this.registerLivePreviewProcessor();
   }
@@ -42,6 +40,7 @@ export class FileCloudPreview {
    * 注册 Markdown 后处理器 (阅读模式)
    */
   private registerMarkdownPostProcessor() {
+    if (!this.plugin.settings.cloudPreviewEnabled) return;
     this.plugin.registerMarkdownPostProcessor(
       async (element: HTMLElement, context: MarkdownPostProcessorContext) => {
         const embeds = element.querySelectorAll(".internal-embed");
@@ -57,6 +56,7 @@ export class FileCloudPreview {
    * 注册 Live Preview 处理器 (编辑模式)
    */
   private registerLivePreviewProcessor() {
+    if (!this.plugin.settings.cloudPreviewEnabled) return;
     const self = this;
     this.plugin.registerEditorExtension([
       ViewPlugin.fromClass(class {
@@ -78,9 +78,10 @@ export class FileCloudPreview {
    * 处理实时预览更新
    */
   private handleLivePreviewUpdate(view: EditorView) {
+    if (!this.plugin.settings.cloudPreviewEnabled) return;
     // 使用 requestAnimationFrame 或 setTimeout 避免频繁触发时的冲突
     window.setTimeout(() => {
-      const embeds = view.dom.querySelectorAll(".internal-embed");
+      const embeds = view.dom.querySelectorAll(".mod-empty-attachment");
       if (embeds.length === 0) return;
 
       const activeView = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
@@ -223,6 +224,10 @@ export class FileCloudPreview {
   }
 
   private async createPdfPreview(filePath: string, cloudUrl: string, subpath?: string): Promise<HTMLElement> {
+    if (Platform.isMobile) {
+      return this.createMobilePdfPreview(filePath, cloudUrl, subpath);
+    }
+
     // 异步加载 PDF.js 库，但不阻塞主 UI
     loadPdfJs().catch(err => console.error("FastSync: Failed to load PDF.js", err));
 
@@ -260,6 +265,86 @@ export class FileCloudPreview {
 
     viewerContainer.appendChild(iframe);
     container.appendChild(viewerContainer);
+
+    return container;
+  }
+
+  private async createMobilePdfPreview(filePath: string, cloudUrl: string, subpath?: string): Promise<HTMLElement> {
+    const container = document.createElement("div");
+    container.addClass("pdf-container");
+    // Remove flex-direction: column; align-items: center; which caused overflow on small screens
+    // Use simple block display with padding, letting children fill width naturally111.
+    
+    container.style.cssText =
+      "width: 100%; padding: 4px; background-color: var(--background-secondary); border-radius: 4px;";
+
+    const loadingEl = container.createDiv({ cls: "pdf-loading" });
+    loadingEl.setText("Loading PDF...");
+    loadingEl.style.color = "var(--text-muted)";
+    loadingEl.style.textAlign = "center";
+    loadingEl.style.padding = "20px";
+
+    // 异步加载和渲染，避免阻塞 UI
+    (async () => {
+      try {
+        const pdfjs = await loadPdfJs();
+        // 获取 PDF 数据 (ArrayBuffer)
+        const response = await requestUrl({ url: cloudUrl });
+        const data = response.arrayBuffer;
+
+        // 加载文档
+        const loadingTask = pdfjs.getDocument(data);
+        const pdf = await loadingTask.promise;
+
+        loadingEl.remove();
+
+        // 简单的渲染逻辑：渲染所有页面
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+
+          const scale = 2.0; // 进一步提高移动端清晰度，依赖 CSS 缩小适配屏幕
+          const viewport = page.getViewport({ scale });
+
+          // 创建 canvas 容器以保持宽高比
+          const canvasWrapper = container.createDiv({ cls: "pdf-page-wrapper" });
+          canvasWrapper.style.marginBottom = "4px"; // 减少页面间距
+          canvasWrapper.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+          canvasWrapper.style.lineHeight = "0"; // 防止 canvas 下方出现空隙
+          canvasWrapper.style.width = "100%"; // 强制宽度适应容器
+
+          const canvas = canvasWrapper.createEl("canvas");
+          const context = canvas.getContext("2d");
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // 适应容器宽度，高度自动
+          canvas.style.width = "100%";
+          canvas.style.height = "auto";
+          canvas.style.display = "block";
+
+          const renderContext = {
+            canvasContext: context,
+            viewport: viewport,
+          };
+
+          await page.render(renderContext).promise;
+        }
+      } catch (e) {
+        console.error("FastSync: Failed to load PDF on mobile", e);
+        loadingEl.setText(`PDF Load Error: ${e.message}`);
+        loadingEl.style.color = "var(--text-error)";
+
+        // 提供一个下载/打开链接作为后备
+        const link = container.createEl("a", {
+          text: "Open PDF in Browser",
+          href: cloudUrl,
+        });
+        link.style.display = "block";
+        link.style.marginTop = "10px";
+        link.style.textAlign = "center";
+        link.target = "_blank";
+      }
+    })();
 
     return container;
   }
