@@ -229,6 +229,18 @@ const de: Partial<LangMap> = {
   "ui.button.cancel": "Abbrechen",
   "ui.button.goto_feedback": "Zu Github Feedback gehen",
   "ui.title.notice": "Feedback-Hinweis",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Papierkorb",
+  "ui.recycle_bin.note": "Notizen",
+  "ui.recycle_bin.file": "Anhänge",
+  "ui.recycle_bin.restore": "Wiederherstellen",
+  "ui.recycle_bin.restore_success": "Wiederherstellung erfolgreich",
+  "ui.recycle_bin.restore_fail": "Wiederherstellung fehlgeschlagen",
+  "ui.recycle_bin.empty": "Papierkorb ist leer",
+  "ui.recycle_bin.load_more": "Mehr laden",
+  "ui.recycle_bin.delete_time": "Löschzeit",
+  "ui.recycle_bin.offline": "Papierkorb ist nur verfügbar, wenn eine Verbindung zum Server besteht",
 }
 
 

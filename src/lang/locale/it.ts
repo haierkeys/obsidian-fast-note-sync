@@ -229,6 +229,18 @@ const it: Partial<LangMap> = {
   "ui.button.cancel": "Annulla",
   "ui.button.goto_feedback": "Vai a Github Feedback",
   "ui.title.notice": "Avviso feedback",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Cestino",
+  "ui.recycle_bin.note": "Note",
+  "ui.recycle_bin.file": "Allegati",
+  "ui.recycle_bin.restore": "Ripristina",
+  "ui.recycle_bin.restore_success": "Ripristino riuscito",
+  "ui.recycle_bin.restore_fail": "Ripristino fallito",
+  "ui.recycle_bin.empty": "Il cestino è vuoto",
+  "ui.recycle_bin.load_more": "Carica altro",
+  "ui.recycle_bin.delete_time": "Ora di eliminazione",
+  "ui.recycle_bin.offline": "Il cestino è disponibile solo quando connesso al server",
 }
 
 

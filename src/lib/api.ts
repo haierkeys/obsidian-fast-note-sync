@@ -179,4 +179,225 @@ export class HttpApiService {
             throw e;
         }
     }
+
+    /**
+     * 获取笔记列表（支持回收站模式）
+     */
+    async getNoteList(page = 1, pageSize = 20, isRecycle = false, keyword = ""): Promise<NoteListResponse> {
+        let url = `${this.plugin.runApi}/api/notes`;
+        const params = new URLSearchParams({
+            vault: this.plugin.settings.vault,
+            page: page.toString(),
+            pageSize: pageSize.toString(),
+            isRecycle: isRecycle ? "true" : "false"
+        });
+
+        if (keyword) {
+            params.append("keyword", keyword);
+        }
+
+        if (isRecycle) {
+            params.set("isRecycle", "true");
+        }
+
+        const requestUrl = addRandomParam(`${url}?${params.toString()}`);
+
+        try {
+            const res = await fetch(requestUrl, {
+                method: "GET",
+                headers: {
+                    "token": this.plugin.settings.apiToken
+                }
+            });
+
+            if (!res.ok) {
+                const msg = `HTTP ${res.status}: Failed to fetch note list`;
+                throw new Error(msg);
+            }
+
+            const json = await res.json();
+            if (!json.status) {
+                const msg = json?.message || "Failed to fetch note list";
+                throw new Error(msg);
+            }
+
+            return json.data || { list: [], pager: { page, pageSize, totalRows: 0, totalPages: 0 } };
+
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    /**
+     * 获取文件列表（支持回收站模式）
+     */
+    async getFileList(page = 1, pageSize = 20, isRecycle = false, keyword = ""): Promise<FileListResponse> {
+        let url = `${this.plugin.runApi}/api/files`;
+        const params = new URLSearchParams({
+            vault: this.plugin.settings.vault,
+            page: page.toString(),
+            pageSize: pageSize.toString(),
+            isRecycle: isRecycle ? "true" : "false"
+        });
+
+        if (keyword) {
+            params.append("keyword", keyword);
+        }
+
+        const requestUrl = addRandomParam(`${url}?${params.toString()}`);
+
+        try {
+            const res = await fetch(requestUrl, {
+                method: "GET",
+                headers: {
+                    "token": this.plugin.settings.apiToken
+                }
+            });
+
+            if (!res.ok) {
+                const msg = `HTTP ${res.status}: Failed to fetch file list`;
+                throw new Error(msg);
+            }
+
+            const json = await res.json();
+            if (!json.status) {
+                const msg = json?.message || "Failed to fetch file list";
+                throw new Error(msg);
+            }
+
+            return json.data || { list: [], pager: { page, pageSize, totalRows: 0, totalPages: 0 } };
+
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    /**
+     * 恢复已删除的笔记
+     */
+    async restoreNote(path: string, pathHash?: string): Promise<boolean> {
+        const url = `${this.plugin.runApi}/api/note/restore`;
+        try {
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    path: path,
+                    pathHash: pathHash,
+                    vault: this.plugin.settings.vault
+                })
+            });
+
+            const json = await res.json();
+            if (res.status !== 200 || !json.status) {
+                const msg = json?.message || "Failed to restore note";
+                new Notice(msg);
+                return false;
+            }
+            return true;
+
+        } catch (e) {
+            console.error("restoreNote error:", e);
+            new Notice("恢复笔记失败");
+            return false;
+        }
+    }
+
+    /**
+     * 恢复已删除的文件
+     */
+    async restoreFile(path: string, pathHash?: string): Promise<boolean> {
+        const url = `${this.plugin.runApi}/api/file/restore`;
+        try {
+            const res = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    path: path,
+                    pathHash: pathHash,
+                    vault: this.plugin.settings.vault
+                })
+            });
+
+            const json = await res.json();
+            if (res.status !== 200 || !json.status) {
+                const msg = json?.message || "Failed to restore file";
+                new Notice(msg);
+                return false;
+            }
+            return true;
+
+        } catch (e) {
+            console.error("restoreFile error:", e);
+            new Notice("恢复文件失败");
+            return false;
+        }
+    }
+
+    /**
+     * 删除文件（移动到回收站）
+     */
+    async deleteFile(path: string, pathHash?: string): Promise<boolean> {
+        const url = `${this.plugin.runApi}/api/file/delete`;
+        try {
+            // 注意：Swagger 是 DELETE /api/file
+            // 但通常 DELETE 请求参数在 query 或 body。根据 webgui:
+            // DELETE /api/file, body: { vault, path, pathHash }
+            const deleteUrl = `${this.plugin.runApi}/api/file`;
+            const res = await fetch(deleteUrl, {
+                method: "DELETE",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    path: path,
+                    pathHash: pathHash,
+                    vault: this.plugin.settings.vault
+                })
+            });
+
+            const json = await res.json();
+            if (res.status !== 200 || !json.status) {
+                const msg = json?.message || "Failed to delete file";
+                new Notice(msg);
+                return false;
+            }
+            return true;
+
+        } catch (e) {
+            console.error("deleteFile error:", e);
+            new Notice("删除文件失败");
+            return false;
+        }
+    }
+}
+
+/**
+ * 扩展 API 服务类以支持回收站功能
+ */
+export interface NoteListResponse {
+    list: any[];
+    pager: {
+        page: number;
+        pageSize: number;
+        totalRows: number;
+        totalPages: number;
+    };
+}
+
+export interface FileListResponse {
+    list: any[];
+    pager: {
+        page: number;
+        pageSize: number;
+        totalRows: number;
+        totalPages: number;
+    };
 }

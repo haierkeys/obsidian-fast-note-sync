@@ -7,6 +7,7 @@ import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
 import { LocalStorageManager } from "./lib/local_storage_manager";
 import { dump, setLogEnabled, isPathMatch } from "./lib/helps";
 import { ConfigHashManager } from "./lib/config_hash_manager";
+import { RecycleBinModal } from "./views/recycle-bin-modal";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
 import { FileHashManager } from "./lib/file_hash_manager";
 import { SyncLogManager } from "./lib/sync_log_manager";
@@ -183,6 +184,14 @@ export default class FastSync extends Plugin {
     // 注册设置选项
     this.addSettingTab(this.settingTab)
     this.websocket = new WebSocketClient(this)
+
+    this.addCommand({
+      id: "open-recycle-bin",
+      name: $("ui.recycle_bin.title"),
+      callback: () => {
+        new RecycleBinModal(this.app, this).open();
+      },
+    });
 
     // 注册同步日志视图
     SyncLogManager.getInstance().init(this)

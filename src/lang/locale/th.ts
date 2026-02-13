@@ -229,6 +229,18 @@ const th: Partial<LangMap> = {
   "ui.button.cancel": "ยกเลิก",
   "ui.button.goto_feedback": "ไปที่ Github Feedback",
   "ui.title.notice": "การแจ้งเตือนคำติชม",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "ถังขยะ",
+  "ui.recycle_bin.note": "บันทึก",
+  "ui.recycle_bin.file": "ไฟล์แนบ",
+  "ui.recycle_bin.restore": "กู้คืน",
+  "ui.recycle_bin.restore_success": "กู้คืนสำเร็จ",
+  "ui.recycle_bin.restore_fail": "กู้คืนล้มเหลว",
+  "ui.recycle_bin.empty": "ถังขยะว่างเปล่า",
+  "ui.recycle_bin.load_more": "โหลดเพิ่มเติม",
+  "ui.recycle_bin.delete_time": "เวลาที่ลบ",
+  "ui.recycle_bin.offline": "ถังขยะใช้งานได้เมื่อเชื่อมต่อกับเซิร์ฟเวอร์เท่านั้น",
 }
 
 

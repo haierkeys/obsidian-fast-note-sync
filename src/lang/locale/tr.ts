@@ -229,6 +229,18 @@ const tr: Partial<LangMap> = {
   "ui.button.cancel": "İptal",
   "ui.button.goto_feedback": "Github Geri Bildirimine Git",
   "ui.title.notice": "Geri Bildirim Bildirimi",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Geri Dönüşüm Kutusu",
+  "ui.recycle_bin.note": "Notlar",
+  "ui.recycle_bin.file": "Ekler",
+  "ui.recycle_bin.restore": "Geri Yükle",
+  "ui.recycle_bin.restore_success": "Geri yükleme başarılı",
+  "ui.recycle_bin.restore_fail": "Geri yükleme başarısız",
+  "ui.recycle_bin.empty": "Geri dönüşüm kutusu boş",
+  "ui.recycle_bin.load_more": "Daha fazla yükle",
+  "ui.recycle_bin.delete_time": "Silinme Zamanı",
+  "ui.recycle_bin.offline": "Geri dönüşüm kutusu yalnızca sunucuya bağlıyken kullanılabilir",
 }
 
 

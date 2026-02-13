@@ -229,6 +229,18 @@ const uk: Partial<LangMap> = {
   "ui.button.cancel": "Скасувати",
   "ui.button.goto_feedback": "Перейти до зворотного зв’язку на Github",
   "ui.title.notice": "Повідомлення про зворотний зв’язок",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Кошик",
+  "ui.recycle_bin.note": "Нотатки",
+  "ui.recycle_bin.file": "Вкладення",
+  "ui.recycle_bin.restore": "Відновити",
+  "ui.recycle_bin.restore_success": "Відновлення успішне",
+  "ui.recycle_bin.restore_fail": "Помилка відновлення",
+  "ui.recycle_bin.empty": "Кошик порожній",
+  "ui.recycle_bin.load_more": "Завантажити ще",
+  "ui.recycle_bin.delete_time": "Час видалення",
+  "ui.recycle_bin.offline": "Кошик доступний лише при підключенні до сервера",
 }
 
 

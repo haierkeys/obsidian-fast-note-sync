@@ -229,6 +229,18 @@ const id: Partial<LangMap> = {
   "ui.button.cancel": "Batal",
   "ui.button.goto_feedback": "Ke Github Feedback",
   "ui.title.notice": "Pemberitahuan Umpan Balik",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Keranjang Sampah",
+  "ui.recycle_bin.note": "Catatan",
+  "ui.recycle_bin.file": "Lampiran",
+  "ui.recycle_bin.restore": "Pulihkan",
+  "ui.recycle_bin.restore_success": "Pemulihan berhasil",
+  "ui.recycle_bin.restore_fail": "Pemulihan gagal",
+  "ui.recycle_bin.empty": "Keranjang sampah kosong",
+  "ui.recycle_bin.load_more": "Muat lebih banyak",
+  "ui.recycle_bin.delete_time": "Waktu penghapusan",
+  "ui.recycle_bin.offline": "Keranjang sampah hanya tersedia saat terhubung ke server",
 }
 
 

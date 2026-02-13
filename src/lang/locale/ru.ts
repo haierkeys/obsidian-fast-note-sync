@@ -229,6 +229,18 @@ const ru: Partial<LangMap> = {
   "ui.button.cancel": "Отмена",
   "ui.button.goto_feedback": "Перейти к Github Feedback",
   "ui.title.notice": "Уведомление об обратной связи",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Корзина",
+  "ui.recycle_bin.note": "Заметки",
+  "ui.recycle_bin.file": "Вложения",
+  "ui.recycle_bin.restore": "Восстановить",
+  "ui.recycle_bin.restore_success": "Восстановление успешно",
+  "ui.recycle_bin.restore_fail": "Ошибка восстановления",
+  "ui.recycle_bin.empty": "Корзина пуста",
+  "ui.recycle_bin.load_more": "Загрузить еще",
+  "ui.recycle_bin.delete_time": "Время удаления",
+  "ui.recycle_bin.offline": "Корзина доступна только при подключении к серверу",
 }
 
 

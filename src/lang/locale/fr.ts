@@ -229,6 +229,18 @@ const fr: Partial<LangMap> = {
   "ui.button.cancel": "Annuler",
   "ui.button.goto_feedback": "Aller aux commentaires Github",
   "ui.title.notice": "Avis de commentaires",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Corbeille",
+  "ui.recycle_bin.note": "Notes",
+  "ui.recycle_bin.file": "Pièces jointes",
+  "ui.recycle_bin.restore": "Restaurer",
+  "ui.recycle_bin.restore_success": "Restauration réussie",
+  "ui.recycle_bin.restore_fail": "Échec de la restauration",
+  "ui.recycle_bin.empty": "La corbeille est vide",
+  "ui.recycle_bin.load_more": "Charger plus",
+  "ui.recycle_bin.delete_time": "Heure de suppression",
+  "ui.recycle_bin.offline": "La corbeille n'est disponible que lorsque le service distant est connecté",
 }
 
 

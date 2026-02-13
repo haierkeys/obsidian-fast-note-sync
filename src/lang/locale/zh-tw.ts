@@ -229,6 +229,18 @@ const zh_tw: Partial<LangMap> = {
   "ui.button.cancel": "取消",
   "ui.button.goto_feedback": "跳轉 Github 反饋鏈接",
   "ui.title.notice": "反饋提示",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "資源回收筒",
+  "ui.recycle_bin.note": "筆記",
+  "ui.recycle_bin.file": "附件",
+  "ui.recycle_bin.restore": "復原",
+  "ui.recycle_bin.restore_success": "復原成功",
+  "ui.recycle_bin.restore_fail": "復原失敗",
+  "ui.recycle_bin.empty": "資源回收筒是空的",
+  "ui.recycle_bin.load_more": "載入更多",
+  "ui.recycle_bin.delete_time": "刪除時間",
+  "ui.recycle_bin.offline": "資源回收筒僅在遠端服務已連線時可用",
 }
 
 

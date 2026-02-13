@@ -456,6 +456,22 @@ export const configReload = async function (path: string, plugin: FastSync, even
         // 统一处理插件重载
         for (const id of pluginsToReload) {
             if (id === "hot-reload") continue
+
+            const hasMainJsUpdate = updates.some(([p]) => p === `plugins/${id}/main.js`)
+            const hasManifestUpdate = updates.some(([p]) => p === `plugins/${id}/manifest.json`)
+
+            // 特殊处理本插件的更新：
+            // 如果 main.js 或 manifest.json 更新了，则进行正常的重载流程
+            // 否则（例如仅 data.json 更新），跳过重载以免影响插件运行1
+            if (id === "obsidian-fast-note-sync") {
+                if (hasMainJsUpdate || hasManifestUpdate) {
+                    dump(`[FastNoteSync] Detected critical update for self, triggering reload.`);
+                    // Fall through to reload logic
+                } else {
+                    continue;
+                }
+            }
+
             if (plugin.configManager.enabledPlugins.has(id)) {
                 await app.plugins.disablePlugin(id)
                 await app.plugins.enablePlugin(id)

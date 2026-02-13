@@ -229,6 +229,18 @@ const ar: Partial<LangMap> = {
   "ui.button.cancel": "إلغاء",
   "ui.button.goto_feedback": "الذهاب إلى Github Feedback",
   "ui.title.notice": "إشعار الملاحظات",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "سلة المحذوفات",
+  "ui.recycle_bin.note": "الملاحظات",
+  "ui.recycle_bin.file": "المرفقات",
+  "ui.recycle_bin.restore": "استعادة",
+  "ui.recycle_bin.restore_success": "تمت الاستعادة بنجاح",
+  "ui.recycle_bin.restore_fail": "فشلت الاستعادة",
+  "ui.recycle_bin.empty": "سلة المحذوفات فارغة",
+  "ui.recycle_bin.load_more": "تحميل المزيد",
+  "ui.recycle_bin.delete_time": "وقت الحذف",
+  "ui.recycle_bin.offline": "سلة المحذوفات متاحة فقط عند الاتصال بالخادم",
 }
 
 

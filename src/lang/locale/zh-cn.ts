@@ -11,6 +11,8 @@ const zh_cn: Partial<LangMap> = {
   "setting.tab.sync": "同步控制",
   "setting.tab.cloud": "附件云预览",
   "setting.search.placeholder": "搜索面板设置...",
+  "setting.debug.show_version": "在同步菜单中显示版本信息",
+  "setting.debug.show_version_desc": "开启后，版本信息将常驻显示在同步菜单中；关闭后，仅在有更新时显示。",
 
   // --- setting.remote ---
   "setting.remote.title": "远端",
@@ -231,6 +233,18 @@ const zh_cn: Partial<LangMap> = {
   "ui.button.cancel": "取消",
   "ui.button.goto_feedback": "跳转 Github 反馈链接",
   "ui.title.notice": "反馈提示",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "回收站",
+  "ui.recycle_bin.note": "笔记",
+  "ui.recycle_bin.file": "附件",
+  "ui.recycle_bin.restore": "恢复",
+  "ui.recycle_bin.restore_success": "恢复成功",
+  "ui.recycle_bin.restore_fail": "恢复失败",
+  "ui.recycle_bin.empty": "回收站为空",
+  "ui.recycle_bin.load_more": "加载更多",
+  "ui.recycle_bin.delete_time": "删除时间",
+  "ui.recycle_bin.offline": "回收站仅在远端服务已连接时可用",
 }
 
 

@@ -229,6 +229,18 @@ const ko: Partial<LangMap> = {
   "ui.button.cancel": "취소",
   "ui.button.goto_feedback": "Github 피드백으로 이동",
   "ui.title.notice": "피드백 알림",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "휴지통",
+  "ui.recycle_bin.note": "노트",
+  "ui.recycle_bin.file": "첨부 파일",
+  "ui.recycle_bin.restore": "복원",
+  "ui.recycle_bin.restore_success": "복원 성공",
+  "ui.recycle_bin.restore_fail": "복원 실패",
+  "ui.recycle_bin.empty": "휴지통이 비어 있습니다",
+  "ui.recycle_bin.load_more": "더 불러오기",
+  "ui.recycle_bin.delete_time": "삭제 시간",
+  "ui.recycle_bin.offline": "휴지통은 서버에 연결되어 있을 때만 사용할 수 있습니다",
 }
 
 

@@ -229,6 +229,18 @@ const ja: Partial<LangMap> = {
   "ui.button.cancel": "キャンセル",
   "ui.button.goto_feedback": "Github フィードバックへ",
   "ui.title.notice": "フィードバック通知",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "ゴミ箱",
+  "ui.recycle_bin.note": "ノート",
+  "ui.recycle_bin.file": "添付ファイル",
+  "ui.recycle_bin.restore": "復元",
+  "ui.recycle_bin.restore_success": "復元に成功しました",
+  "ui.recycle_bin.restore_fail": "復元に失敗しました",
+  "ui.recycle_bin.empty": "ゴミ箱は空です",
+  "ui.recycle_bin.load_more": "もっと読み込む",
+  "ui.recycle_bin.delete_time": "削除日時",
+  "ui.recycle_bin.offline": "ゴミ箱はサーバーに接続されている場合のみ利用可能です",
 }
 
 

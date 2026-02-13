@@ -229,6 +229,18 @@ const vi: Partial<LangMap> = {
   "ui.button.cancel": "Hủy bỏ",
   "ui.button.goto_feedback": "Đi tới Phản hồi Github",
   "ui.title.notice": "Thông báo phản hồi",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Thùng rác",
+  "ui.recycle_bin.note": "Ghi chú",
+  "ui.recycle_bin.file": "Tệp đính kèm",
+  "ui.recycle_bin.restore": "Khôi phục",
+  "ui.recycle_bin.restore_success": "Khôi phục thành công",
+  "ui.recycle_bin.restore_fail": "Khôi phục thất bại",
+  "ui.recycle_bin.empty": "Thùng rác trống",
+  "ui.recycle_bin.load_more": "Tải thêm",
+  "ui.recycle_bin.delete_time": "Thời gian xóa",
+  "ui.recycle_bin.offline": "Thùng rác chỉ khả dụng khi kết nối với máy chủ",
 }
 
 

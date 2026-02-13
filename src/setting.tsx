@@ -60,6 +60,8 @@ export interface PluginSettings {
   readonlySyncEnabled: boolean
   /** 远程服务调试地址（多行） */
   debugRemoteUrls: string
+  /** 是否在菜单中显示版本信息 */
+  showVersionInfo: boolean
 }
 
 /**
@@ -100,6 +102,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   manualSyncEnabled: false,
   readonlySyncEnabled: false,
   debugRemoteUrls: "",
+  showVersionInfo: false,
 }
 
 
@@ -479,6 +482,14 @@ export class SettingTab extends PluginSettingTab {
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.debug_url_desc"))
+
+    new Setting(set).setName($("setting.debug.show_version")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.showVersionInfo).onChange(async (value) => {
+        this.plugin.settings.showVersionInfo = value
+        await this.plugin.saveSettings()
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.show_version_desc"))
 
     this.renderDebugTools(set)
   }

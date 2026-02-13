@@ -2,6 +2,7 @@ import { Menu, MenuItem, Notice, setIcon, Platform } from 'obsidian';
 
 import { startupSync, startupFullSync, resetSettingSyncTime } from './operator';
 import { NoteHistoryModal } from '../views/note-history/history-modal';
+import { RecycleBinModal } from '../views/recycle-bin-modal';
 import { $ } from '../lang/lang';
 import FastSync from '../main';
 
@@ -189,6 +190,17 @@ export class MenuManager {
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
+        .setIcon("trash")
+        .setTitle($("ui.recycle_bin.title"))
+        .onClick(async () => {
+          new RecycleBinModal(this.plugin.app, this.plugin).open();
+        });
+      (item as any).dom.setAttribute("aria-label", $("ui.recycle_bin.title"));
+    });
+
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      item
         .setIcon("settings")
         .setTitle($("ui.menu.settings"))
         .onClick(async () => {
@@ -222,47 +234,55 @@ export class MenuManager {
 
 
     menu.addSeparator();
-    menu.addItem((item: MenuItem) => {
-      const title = $("ui.menu.plugin") + ": v" + this.plugin.manifest.version;
-      item.setTitle(title);
 
-      if (this.plugin.localStorageManager.getMetadata("pluginVersionIsNew")) {
-        item.onClick(() => {
-          const link = this.plugin.localStorageManager.getMetadata("pluginVersionNewLink");
-          if (link) {
-            window.open(link);
+    const showVersion = this.plugin.settings.showVersionInfo;
+    const pluginNew = this.plugin.localStorageManager.getMetadata("pluginVersionIsNew");
+
+    if (showVersion || pluginNew) {
+      menu.addItem((item: MenuItem) => {
+        const title = $("ui.menu.plugin") + ": v" + this.plugin.manifest.version;
+        item.setTitle(title);
+
+        if (pluginNew) {
+          item.onClick(() => {
+            const link = this.plugin.localStorageManager.getMetadata("pluginVersionNewLink");
+            if (link) {
+              window.open(link);
+            }
+          });
+          const ariaLabel = $("ui.status.new_version", { version: this.plugin.localStorageManager.getMetadata("pluginVersionNewName") || "" });
+          (item as any).dom.setAttribute("aria-label", ariaLabel);
+
+          const itemDom = (item as any).dom as HTMLElement;
+          const titleEl = itemDom.querySelector(".menu-item-title");
+          if (titleEl) {
+            const iconSpan = titleEl.createSpan({ cls: "fast-note-sync-update-icon" });
+            setIcon(iconSpan, "circle-arrow-up");
+            iconSpan.style.color = "var(--text-success)";
+            iconSpan.style.marginLeft = "4px";
+            iconSpan.style.width = "14px";
+            iconSpan.style.height = "14px";
+            iconSpan.style.display = "inline-flex";
+            iconSpan.style.verticalAlign = "top";
           }
-        });
-        const ariaLabel = $("ui.status.new_version", { version: this.plugin.localStorageManager.getMetadata("pluginVersionNewName") || "" });
-        (item as any).dom.setAttribute("aria-label", ariaLabel);
-
-        const itemDom = (item as any).dom as HTMLElement;
-        const titleEl = itemDom.querySelector(".menu-item-title");
-        if (titleEl) {
-          const iconSpan = titleEl.createSpan({ cls: "fast-note-sync-update-icon" });
-          setIcon(iconSpan, "circle-arrow-up");
-          iconSpan.style.color = "var(--text-success)";
-          iconSpan.style.marginLeft = "4px";
-          iconSpan.style.width = "14px";
-          iconSpan.style.height = "14px";
-          iconSpan.style.display = "inline-flex";
-          iconSpan.style.verticalAlign = "top";
+        } else {
+          item.setDisabled(true);
+          (item as any).dom.setAttribute("aria-label", $("ui.menu.plugin_desc"));
         }
-      } else {
-        item.setDisabled(true);
-        (item as any).dom.setAttribute("aria-label", $("ui.menu.plugin_desc"));
-      }
-    });
+      });
+    }
 
 
     const serverVersion = this.plugin.localStorageManager.getMetadata("serverVersion");
-    if (serverVersion) {
+    const serverNew = this.plugin.localStorageManager.getMetadata("serverVersionIsNew");
+
+    if (serverVersion && (showVersion || serverNew)) {
       menu.addSeparator();
       menu.addItem((item: MenuItem) => {
         const title = $("ui.menu.server") + ": v" + serverVersion;
         item.setTitle(title);
 
-        if (this.plugin.localStorageManager.getMetadata("serverVersionIsNew")) {
+        if (serverNew) {
           item.onClick(() => {
             const link = this.plugin.localStorageManager.getMetadata("serverVersionNewLink");
             if (link) {

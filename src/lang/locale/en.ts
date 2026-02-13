@@ -11,6 +11,8 @@ const en: Partial<LangMap> = {
   "setting.tab.sync": "Sync Control",
   "setting.tab.cloud": "Cloud Preview",
   "setting.search.placeholder": "Search settings...",
+  "setting.debug.show_version": "Show version info in menu",
+  "setting.debug.show_version_desc": "Always show version info in sync menu. If disabled, it only shows when an update is available.",
 
   // --- setting.remote ---
   "setting.remote.title": "Remote",
@@ -231,6 +233,18 @@ const en: Partial<LangMap> = {
   "ui.button.cancel": "Cancel",
   "ui.button.goto_feedback": "Go to GitHub Feedback",
   "ui.title.notice": "Feedback Notice",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Recycle Bin",
+  "ui.recycle_bin.note": "Notes",
+  "ui.recycle_bin.file": "Attachments",
+  "ui.recycle_bin.restore": "Restore",
+  "ui.recycle_bin.restore_success": "Restore successful",
+  "ui.recycle_bin.restore_fail": "Restore failed",
+  "ui.recycle_bin.empty": "No items in recycle bin",
+  "ui.recycle_bin.load_more": "Load More",
+  "ui.recycle_bin.delete_time": "Deletion Time",
+  "ui.recycle_bin.offline": "Recycle Bin is only available when connected to the server",
 }
 
 

@@ -95,6 +95,22 @@ export class ConfigManager {
     }
 
     if (shouldCheck) {
+      // 特殊处理本插件的 manifest.json 更新 (本地修改场景)
+      if (fileName === "manifest.json" && relativePath === `${this.pluginDir}/manifest.json`) {
+        setTimeout(async () => {
+          try {
+            const content = await this.plugin.app.vault.adapter.read(path)
+            const manifest = JSON.parse(content)
+            if (manifest.version && manifest.version !== this.plugin.manifest.version) {
+              this.plugin.manifest.version = manifest.version
+              dump(`[FastNoteSync] Local manifest updated to ${this.plugin.manifest.version}`)
+            }
+          } catch (e) {
+            console.error("[FastNoteSync] Failed to read local manifest:", e)
+          }
+        }, 500) // 延迟读取确保写入完成
+      }
+
       this.checkFileChange(path, eventEnter)
     }
   }

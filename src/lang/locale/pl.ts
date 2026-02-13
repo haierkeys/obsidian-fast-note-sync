@@ -229,6 +229,18 @@ const pl: Partial<LangMap> = {
   "ui.button.cancel": "Annulluj",
   "ui.button.goto_feedback": "Przejdź do Github Feedback",
   "ui.title.notice": "Powiadomienie o opinii",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Kosz",
+  "ui.recycle_bin.note": "Notatki",
+  "ui.recycle_bin.file": "Załączniki",
+  "ui.recycle_bin.restore": "Przywróć",
+  "ui.recycle_bin.restore_success": "Przywracanie zakończone sukcesem",
+  "ui.recycle_bin.restore_fail": "Przywracanie nie powiodło się",
+  "ui.recycle_bin.empty": "Kosz jest pusty",
+  "ui.recycle_bin.load_more": "Załaduj więcej",
+  "ui.recycle_bin.delete_time": "Czas usunięcia",
+  "ui.recycle_bin.offline": "Kosz jest dostępny tylko po połączeniu z serwerem",
 }
 
 

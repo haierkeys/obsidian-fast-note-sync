@@ -229,6 +229,18 @@ const es: Partial<LangMap> = {
   "ui.button.cancel": "Cancelar",
   "ui.button.goto_feedback": "Ir a Github Feedback",
   "ui.title.notice": "Aviso de comentarios",
+
+  // --- ui.recycle_bin ---
+  "ui.recycle_bin.title": "Papelera de reciclaje",
+  "ui.recycle_bin.note": "Notas",
+  "ui.recycle_bin.file": "Archivos adjuntos",
+  "ui.recycle_bin.restore": "Restaurar",
+  "ui.recycle_bin.restore_success": "Restauración exitosa",
+  "ui.recycle_bin.restore_fail": "Error en la restauración",
+  "ui.recycle_bin.empty": "La papelera de reciclaje está vacía",
+  "ui.recycle_bin.load_more": "Cargar más",
+  "ui.recycle_bin.delete_time": "Hora de eliminación",
+  "ui.recycle_bin.offline": "La papelera de reciclaje solo está disponible cuando se conecta al servicio remoto",
 }
 
 
