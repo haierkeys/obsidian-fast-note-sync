@@ -105,6 +105,8 @@ const en: Partial<LangMap> = {
   "setting.support.console_tip": "Open the console via hotkeys to see logs from this and other plugins",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
   "setting.support.console_win": "CTRL + SHIFT + I",
+  "setting.support.debug_url": "Remote Debug Service Address",
+  "setting.support.debug_url_desc": "One address per line. Automatically attempts to connect using these addresses after 2 connection failures. Once connected, this address will be used temporarily as the runtime API.",
 
   // --- ui.history ---
   "ui.history.title": "Note History",

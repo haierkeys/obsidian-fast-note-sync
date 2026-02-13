@@ -453,7 +453,7 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
   if (file) {
     const content = await plugin.app.vault.readBinary(file)
     plugin.addIgnoredFile(normalizedPath)
-    await plugin.app.vault.modifyBinary(file, content, { ctime: data.ctime, mtime: data.mtime })
+    await plugin.app.vault.modifyBinary(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
     plugin.removeIgnoredFile(normalizedPath)
   }
 
@@ -648,7 +648,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
       const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
       if (renamedFile instanceof TFile) {
         const content = await plugin.app.vault.readBinary(renamedFile)
-        await plugin.app.vault.modifyBinary(renamedFile, content, { ctime: data.ctime, mtime: data.mtime })
+        await plugin.app.vault.modifyBinary(renamedFile, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
       }
     }
 
@@ -725,14 +725,14 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     plugin.addIgnoredFile(normalizedPath)
     const file = plugin.app.vault.getFileByPath(normalizedPath)
     if (file) {
-      await plugin.app.vault.modifyBinary(file, completeFile.buffer, { ctime: session.ctime, mtime: session.mtime })
+      await plugin.app.vault.modifyBinary(file, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
     } else {
       const folder = normalizedPath.split("/").slice(0, -1).join("/")
       if (folder != "") {
         const dirExists = plugin.app.vault.getFolderByPath(folder)
         if (dirExists == null) await plugin.app.vault.createFolder(folder)
       }
-      await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ctime: session.ctime, mtime: session.mtime })
+      await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
     }
     plugin.removeIgnoredFile(normalizedPath)
 

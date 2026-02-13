@@ -58,6 +58,8 @@ export interface PluginSettings {
   manualSyncEnabled: boolean
   /** 是否启用只读同步模式（不上传本地修改） */
   readonlySyncEnabled: boolean
+  /** 远程服务调试地址（多行） */
+  debugRemoteUrls: string
 }
 
 /**
@@ -97,6 +99,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   showSyncNotice: true,
   manualSyncEnabled: false,
   readonlySyncEnabled: false,
+  debugRemoteUrls: "",
 }
 
 
@@ -345,6 +348,8 @@ export class SettingTab extends PluginSettingTab {
           apiToken: this.plugin.settings.apiToken ? "***HIDDEN***" : "",
         },
         runtimeInfo: {
+          runApi: maskValue(this.plugin.runApi),
+          runWsApi: maskValue(this.plugin.runWsApi),
           isInitSync: this.plugin.localStorageManager.getMetadata("isInitSync"),
           lastNoteSyncTime: this.plugin.localStorageManager.getMetadata("lastNoteSyncTime"),
           lastFileSyncTime: this.plugin.localStorageManager.getMetadata("lastFileSyncTime"),
@@ -463,6 +468,17 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.log_desc"))
+
+    new Setting(set).setName($("setting.support.debug_url")).addTextArea((text) =>
+      text
+        .setPlaceholder("http://192.168.1.100:8080\nhttp://debug.example.com")
+        .setValue(this.plugin.settings.debugRemoteUrls)
+        .onChange(async (value) => {
+          this.plugin.settings.debugRemoteUrls = value
+          await this.plugin.saveSettings()
+        }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.support.debug_url_desc"))
 
     this.renderDebugTools(set)
   }

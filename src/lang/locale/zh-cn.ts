@@ -105,6 +105,8 @@ const zh_cn: Partial<LangMap> = {
   "setting.support.console_tip": "通过快捷键打开控制台，你可以看到这个插件和其他插件的日志",
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
   "setting.support.console_win": "CTRL + SHIFT + I",
+  "setting.support.debug_url": "远程服务调试地址",
+  "setting.support.debug_url_desc": "一行一个地址。当连接失败 2 次时自动尝试使用这些地址。\n连接成功后将临时使用该地址作为运行时 API。\n注意: 调试地址指向的远端服务非服务令牌发放服务器, 则无法通过验证",
 
   // --- ui.history ---
   "ui.history.title": "笔记历史",

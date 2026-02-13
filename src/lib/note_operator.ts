@@ -121,14 +121,14 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
   const file = plugin.app.vault.getFileByPath(normalizedPath)
   plugin.addIgnoredFile(normalizedPath)
   if (file) {
-    await plugin.app.vault.modify(file, data.content, { ctime: data.ctime, mtime: data.mtime })
+    await plugin.app.vault.modify(file, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
   } else {
     const folder = normalizedPath.split("/").slice(0, -1).join("/")
     if (folder != "") {
       const dirExists = plugin.app.vault.getFolderByPath(folder)
       if (dirExists == null) await plugin.app.vault.createFolder(folder)
     }
-    await plugin.app.vault.create(normalizedPath, data.content, { ctime: data.ctime, mtime: data.mtime })
+    await plugin.app.vault.create(normalizedPath, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
   }
   if (Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime")) < data.lastTime) {
     plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
@@ -195,7 +195,7 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
   if (file) {
     const content: string = await plugin.app.vault.cachedRead(file)
     plugin.addIgnoredFile(normalizedPath)
-    await plugin.app.vault.modify(file, content, { ctime: data.ctime, mtime: data.mtime })
+    await plugin.app.vault.modify(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
     plugin.removeIgnoredFile(normalizedPath)
   }
 
@@ -269,7 +269,7 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
       const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
       if (renamedFile instanceof TFile) {
         const content = await plugin.app.vault.cachedRead(renamedFile)
-        await plugin.app.vault.modify(renamedFile, content, { ctime: data.ctime, mtime: data.mtime })
+        await plugin.app.vault.modify(renamedFile, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
       }
     }
 

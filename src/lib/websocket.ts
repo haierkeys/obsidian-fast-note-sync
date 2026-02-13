@@ -41,7 +41,7 @@ export class WebSocketClient {
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
-    this.wsApi = plugin.settings.wsApi.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
+    this.wsApi = plugin.runWsApi.replace(/\/+$/, "") // 去除尾部斜杠
 
     // Load count from local storage
     const storedCount = localStorage.getItem(WS_COUNT_STORAGE_KEY)
@@ -80,11 +80,22 @@ export class WebSocketClient {
   }
 
   public register(onStatusChange?: (status: boolean) => void) {
-    this.wsApi = this.plugin.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
+    this.wsApi = this.plugin.runWsApi.replace(/\/+$/, "") // 去除尾部斜杠
 
     if (onStatusChange) this.statusListeners.add(onStatusChange)
 
-    if ((!this.ws || this.ws.readyState !== WebSocket.OPEN) && isWsUrl(this.wsApi)) {
+    // Prevent duplicate connection if already connecting or open
+    if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
+      dump("WebSocket already connecting or open, skipping register");
+      return;
+    }
+
+    // Clean up existing closed socket if any
+    if (this.ws) {
+      this.cleanupWebSocket(this.ws);
+    }
+
+    if (isWsUrl(this.wsApi)) {
       this.isRegister = true
       const url = addRandomParam(this.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
       this.ws = new WebSocket(url)
@@ -108,6 +119,9 @@ export class WebSocketClient {
           url: url
         })
         this.notifyStatusChange(true)
+        if (this.plugin.runApi !== this.plugin.settings.api) {
+          new Notice(`[FastSync] 已临时连接到调试服务地址: ${this.plugin.runApi}`)
+        }
         this.Send("Authorization", this.plugin.settings.apiToken)
         dump("Service authorization")
         this.OnlineStatusCheck()
@@ -132,6 +146,8 @@ export class WebSocketClient {
         } else if (e.reason == "ClientClose") {
           new Notice("Remote Service Connection Closed: " + e.reason)
         }
+
+        // Only reconnect if we differ intended to be registered
         if (this.isRegister && e.reason != "AuthorizationFaild" && e.reason != "ClientClose") {
           this.checkReConnect()
         }
@@ -251,15 +267,38 @@ export class WebSocketClient {
       }
     }
   }
+
+  private cleanupWebSocket(ws: WebSocket) {
+    if (!ws) return;
+
+    // Remove listeners to prevent "ghost" events
+    ws.onopen = null;
+    ws.onmessage = null;
+    ws.onerror = null;
+    ws.onclose = null;
+
+    try {
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close(1000, "Cleanup");
+      }
+    } catch (e) {
+      console.error("Error closing WebSocket:", e);
+    }
+  }
+
   public unRegister() {
     window.clearInterval(this.checkConnection)
     window.clearTimeout(this.checkReConnectTimeout)
     this.isOpen = false
     this.isAuth = false
     this.isRegister = false
+
     if (this.ws) {
-      this.ws.close(1000, "unRegister")
+      // Use helper to cleanly close and remove listeners
+      this.cleanupWebSocket(this.ws);
+      this.ws = null as any; // Clear reference
     }
+
     clearUploadQueue()
     dump("Service unregister")
   }
@@ -274,7 +313,33 @@ export class WebSocketClient {
     if (this.ws && this.ws.readyState === WebSocket.CLOSED) {
       this.timeConnect++
       // Exponential backoff: 3s, 6s, 12s, 24s...
-      const delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
+      let delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
+
+      // 调试地址回退逻辑
+      const debugUrls = this.plugin.settings.debugRemoteUrls ? this.plugin.settings.debugRemoteUrls.split("\n").filter(u => u.trim() !== "") : []
+      if (debugUrls.length > 0) {
+        // 从第2次重试开始尝试调试地址
+        if (this.timeConnect >= 2 && this.timeConnect < 2 + debugUrls.length) {
+          const index = this.timeConnect - 2
+          const url = debugUrls[index].trim()
+          if (url) {
+            dump(`Trying debug URL [${index + 1}/${debugUrls.length}]: ${url}`)
+            // 更新运行时 API
+            this.plugin.runApi = url.replace(/\/+$/, "")
+            this.plugin.runWsApi = url.replace(/^http/, "ws").replace(/\/+$/, "")
+
+            // 调试尝试使用较短延迟
+            delay = 1000
+            new Notice(`[FastSync] 尝试连接调试地址: ${url}`)
+          }
+        } else if (this.timeConnect === 2 + debugUrls.length) {
+          // 所有调试地址都失败，回退到主配置
+          this.plugin.runApi = this.plugin.settings.api
+          this.plugin.runWsApi = this.plugin.settings.wsApi
+          dump(`Debug URLs failed, reverting to settings API`)
+        }
+      }
+
       dump(`Service waiting reconnect: ${this.timeConnect}, delay: ${delay}ms`)
 
       this.checkReConnectTimeout = window.setTimeout(() => {

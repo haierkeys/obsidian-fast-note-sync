@@ -36,7 +36,7 @@ export class HttpApiService {
      * 获取笔记历史列表
      */
     async getNoteHistoryList(path: string, page = 1, pageSize = 20): Promise<{ list: NoteHistoryItem[], totalRows: number }> {
-        const baseUrl = `${this.plugin.settings.api}/api/note/histories`;
+        const baseUrl = `${this.plugin.runApi}/api/note/histories`;
         const params = new URLSearchParams({
             vault: this.plugin.settings.vault,
             path: path,
@@ -86,7 +86,7 @@ export class HttpApiService {
      * 获取笔记历史详情
      */
     async getNoteHistoryDetail(id: number): Promise<NoteHistoryDetail> {
-        const url = addRandomParam(`${this.plugin.settings.api}/api/note/history?id=${id}`);
+        const url = addRandomParam(`${this.plugin.runApi}/api/note/history?id=${id}`);
 
         try {
             const res = await fetch(url, {
@@ -114,7 +114,7 @@ export class HttpApiService {
      * 恢复笔记到指定的历史版本
      */
     async restoreNoteVersion(historyId: number): Promise<boolean> {
-        const url = `${this.plugin.settings.api}/api/note/history/restore`;
+        const url = `${this.plugin.runApi}/api/note/history/restore`;
 
         try {
             const res = await fetch(url, {
@@ -150,7 +150,7 @@ export class HttpApiService {
      * 用于在删除本地文件前核对状态
      */
     async getFileInfo(path: string): Promise<any> {
-        const baseUrl = `${this.plugin.settings.api}/api/file/info`;
+        const baseUrl = `${this.plugin.runApi}/api/file/info`;
         const params = new URLSearchParams({
             vault: this.plugin.settings.vault,
             path: path,

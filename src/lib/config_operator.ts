@@ -141,7 +141,7 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
             }
         }
         const filePath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
-        await plugin.app.vault.adapter.write(filePath, data.content, { ctime: data.ctime, mtime: data.mtime })
+        await plugin.app.vault.adapter.write(filePath, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
     } catch (e) {
         console.error("[writeConfigFile] error:", e)
     }
@@ -238,7 +238,7 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
     try {
         if (await plugin.app.vault.adapter.exists(filePath)) {
             const content = await plugin.app.vault.adapter.readBinary(filePath)
-            await plugin.app.vault.adapter.writeBinary(filePath, content, { ctime: data.ctime, mtime: data.mtime })
+            await plugin.app.vault.adapter.writeBinary(filePath, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
         }
     } catch (e) {
         console.error("[updateConfigFileTime] error:", e)

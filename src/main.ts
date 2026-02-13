@@ -22,6 +22,8 @@ export default class FastSync extends Plugin {
   settingTab: SettingTab // 设置面板
   wsSettingChange: boolean // WebSocket 配置变更标志
   settings: PluginSettings // 插件设置
+  runApi: string // 运行时 API 地址
+  runWsApi: string // 运行时 WebSocket API 地址
   websocket: WebSocketClient // WebSocket 客户端
   configManager: ConfigManager // 配置管理器
   eventManager: EventManager // 事件管理器
@@ -263,6 +265,8 @@ export default class FastSync extends Plugin {
     if (!data || data.configExclude === undefined) {
       this.settings.configExclude = `plugins/${this.manifest.id}`
     }
+    this.runApi = this.settings.api
+    this.runWsApi = this.settings.wsApi
   }
 
   async onExternalSettingsChange() {
@@ -275,6 +279,8 @@ export default class FastSync extends Plugin {
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
       this.settings.wsApi = this.settings.api.replace(/^http/, "ws").replace(/\/+$/, "") // 去除尾部斜杠
+      this.runApi = this.settings.api
+      this.runWsApi = this.settings.wsApi
     }
     this.refreshRuntime(true, setItem)
     this.fileHashManager.cleanupExcludedHashes()
