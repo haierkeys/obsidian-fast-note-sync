@@ -1,9 +1,42 @@
-import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView, Platform, requestUrl } from "obsidian";
+import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView, requestUrl, setIcon, Notice, Menu, TFile } from "obsidian";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 
 import { hashContent } from "./helps";
 import type FastSync from "../main";
 
+
+/**
+ * Simple Event Bus to mimic pdfjsViewer.EventBus
+ */
+class SimpleEventBus {
+  private listeners: Record<string, Function[]> = {};
+
+  on(eventName: string, listener: Function) {
+    if (!this.listeners[eventName]) {
+      this.listeners[eventName] = [];
+    }
+    this.listeners[eventName].push(listener);
+  }
+
+  off(eventName: string, listener: Function) {
+    if (!this.listeners[eventName]) return;
+    this.listeners[eventName].forEach((l, i) => {
+      if (l === listener) {
+        this.listeners[eventName].splice(i, 1);
+      }
+    });
+  }
+
+  dispatch(eventName: string, data?: any) {
+    if (!this.listeners[eventName]) return;
+    this.listeners[eventName].forEach(listener => listener(data));
+  }
+
+  // Internal method for compatibility if needed
+  _on(eventName: string, listener: Function) {
+    this.on(eventName, listener);
+  }
+}
 
 /**
  * 嵌入元素预览处理器
@@ -224,129 +257,243 @@ export class FileCloudPreview {
   }
 
   private async createPdfPreview(filePath: string, cloudUrl: string, subpath?: string): Promise<HTMLElement> {
-    if (Platform.isMobile) {
-      return this.createMobilePdfPreview(filePath, cloudUrl, subpath);
-    }
-
-    // 异步加载 PDF.js 库，但不阻塞主 UI
-    loadPdfJs().catch(err => console.error("FastSync: Failed to load PDF.js", err));
-
-    // 解析 subpath (例如 page=5, height=500)
+    // Parse height from subpath if available (default to 600px for desktop-like feel, or rely on CSS)
     const params = new URLSearchParams(subpath || "");
-    const page = params.get("page") || params.get("p");
-    const height = params.get("height") || "600";
+    const height = params.get("height") || "800";
 
-    // 构建带分页信息的 URL 片段
-    const hashParams: string[] = [];
-    if (page) hashParams.push(`page=${page}`);
-    // 支持官方的其他参数，如 view=FitH
-    const view = params.get("view");
-    if (view) hashParams.push(`view=${view}`);
+    // --- 1. DOM Structure (Matching Obsidian's Internal Structure) ---
+    const loadingContainer = document.createElement("div"); // The root wrapper we return
+    loadingContainer.addClass("pdf-preview-wrapper");
+    loadingContainer.style.cssText = `width: 100%; height: ${height}px; display: flex; flex-direction: column; background-color: var(--background-secondary); border-radius: 4px; overflow: hidden; position: relative;`;
 
-    let finalUrl = cloudUrl;
-    if (hashParams.length > 0) {
-      finalUrl += `#${hashParams.join("&")}`;
+    // Create PDF Main Container
+    const pdfContainer = loadingContainer.createDiv("pdf-container");
+    pdfContainer.style.cssText = "display: flex; flex-direction: column; flex: 1; overflow: hidden; position: relative; background-color: var(--background-primary);"; // Ensure it takes space
+
+    // Check Theme (Simulated)
+    const isThemed = this.plugin.app.loadLocalStorage("pdfjs-is-themed");
+    if (isThemed) {
+      pdfContainer.addClass("mod-themed");
     }
 
-    const container = document.createElement("div");
-    container.addClass("pdf-container");
-    // 确保容器高度严格受控，移除冗余的 display: block
-    container.style.cssText = `width: 100%; height: ${height}px; border: 1px solid var(--background-secondary); border-radius: 4px; overflow: hidden;`;
+    // Create Content Container1
+    const contentEl = pdfContainer.createDiv("pdf-content-container");
+    contentEl.style.cssText = "display: flex; flex: 1; overflow: hidden; position: relative;";
 
-    const viewerContainer = document.createElement("div");
-    viewerContainer.addClass("pdf-viewer-container");
-    viewerContainer.style.cssText = "width: 100%; height: 100%;";
+    // Create Sidebar Container
+    const sidebarContainer = contentEl.createDiv("pdf-sidebar-container");
+    sidebarContainer.style.cssText = "width: 200px; display: none; flex-direction: column; border-right: 1px solid var(--background-modifier-border); background-color: var(--background-secondary); z-index: 1;"; // Hidden by default
+    sidebarContainer.setAttribute("data-view", "thumbnail"); // Default view
 
-    const iframe = document.createElement("iframe");
-    iframe.src = finalUrl;
-    iframe.style.cssText = "width: 100%; height: 100%; border: none; display: block;";
-    iframe.title = `PDF Preview: ${filePath}`;
-    iframe.setAttribute("allowfullscreen", "true");
+    const sidebarContentWrapper = sidebarContainer.createDiv("pdf-sidebar-content-wrapper");
+    sidebarContentWrapper.style.cssText = "flex: 1; overflow-y: auto; overflow-x: hidden;";
+    const sidebarContent = sidebarContentWrapper.createDiv("pdf-sidebar-content");
 
-    viewerContainer.appendChild(iframe);
-    container.appendChild(viewerContainer);
+    const thumbnailViewEl = sidebarContent.createDiv("pdf-thumbnail-view");
+    const outlineViewEl = sidebarContent.createDiv("pdf-outline-view hidden"); // hidden class usually means display: none
 
-    return container;
-  }
+    // Create Viewer Container
+    const viewerContainer = contentEl.createDiv("pdf-viewer-container");
+    viewerContainer.style.cssText = "flex: 1; overflow: auto; position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px;";
 
-  private async createMobilePdfPreview(filePath: string, cloudUrl: string, subpath?: string): Promise<HTMLElement> {
-    const container = document.createElement("div");
-    container.addClass("pdf-container");
-    // Remove flex-direction: column; align-items: center; which caused overflow on small screens
-    // Use simple block display with padding, letting children fill width naturally111.
-    
-    container.style.cssText =
-      "width: 100%; padding: 4px; background-color: var(--background-secondary); border-radius: 4px;";
+    // Viewer Element (Where canvases go)
+    const viewerEl = viewerContainer.createDiv("pdfViewer");
+    viewerEl.style.cssText = "position: relative; width: fit-content; min-height: 100%; display: flex; flex-direction: column; gap: 10px;";
 
-    const loadingEl = container.createDiv({ cls: "pdf-loading" });
-    loadingEl.setText("Loading PDF...");
-    loadingEl.style.color = "var(--text-muted)";
-    loadingEl.style.textAlign = "center";
-    loadingEl.style.padding = "20px";
+    // Event Bus
+    const eventBus = new SimpleEventBus();
 
-    // 异步加载和渲染，避免阻塞 UI
-    (async () => {
+    // --- 2. Toolbar Implementation (Inline for now) ---
+    // Toolbar is attached to loadingContainer (root) in Obsidian's code
+    const toolbar = loadingContainer.createDiv({ cls: "pdf-toolbar", prepend: true }); // Prepend to be at top
+    toolbar.style.cssText = "display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--background-modifier-border); padding: 4px; background-color: var(--background-secondary); flex-shrink: 0;";
+
+    // Toolbar Left
+    const toolbarLeft = toolbar.createDiv({ cls: "pdf-toolbar-left" });
+    toolbarLeft.style.cssText = "display: flex; align-items: center; gap: 4px;";
+
+    const sidebarToggle = toolbarLeft.createDiv({ cls: "clickable-icon", attr: { "aria-label": "Toggle Sidebar" } });
+    setIcon(sidebarToggle, "layout-list");
+    sidebarToggle.onclick = () => {
+      const isHidden = sidebarContainer.style.display === "none";
+      sidebarContainer.style.display = isHidden ? "flex" : "none";
+      sidebarToggle.toggleClass("is-active", !isHidden); // Optional visual feedback
+      eventBus.dispatch("sidebarviewchanged", { view: "thumbnail" });
+    };
+
+    // Spacer
+    const spacer1 = toolbarLeft.createDiv({ cls: "pdf-toolbar-spacer" });
+    spacer1.style.flex = "1";
+
+    // Zoom Controls
+    const zoomOutBtn = toolbarLeft.createDiv({ cls: "clickable-icon", attr: { "aria-label": "Zoom Out" } });
+    setIcon(zoomOutBtn, "zoom-out");
+    zoomOutBtn.onclick = () => eventBus.dispatch("zoomout");
+
+    const zoomInBtn = toolbarLeft.createDiv({ cls: "clickable-icon", attr: { "aria-label": "Zoom In" } });
+    setIcon(zoomInBtn, "zoom-in");
+    zoomInBtn.onclick = () => eventBus.dispatch("zoomin");
+
+    // Page Input
+    const pageInput = toolbarLeft.createEl("input", { type: "number", cls: "pdf-page-input" });
+    pageInput.style.cssText = "width: 40px; text-align: right; border: none; background: transparent; color: var(--text-normal); margin-left: 8px;";
+    pageInput.value = "1";
+    pageInput.min = "1";
+
+    const pageCountEl = toolbarLeft.createSpan({ cls: "pdf-page-numbers" });
+    pageCountEl.setText(" / --");
+    pageCountEl.style.color = "var(--text-muted)";
+
+    pageInput.onchange = () => {
+      const page = parseInt(pageInput.value);
+      if (page > 0) eventBus.dispatch("pagechange", { pageNumber: page });
+    };
+
+    // Toolbar Right
+    const toolbarRight = toolbar.createDiv({ cls: "pdf-toolbar-right" });
+    const moreOptions = toolbarRight.createDiv({ cls: "clickable-icon", attr: { "aria-label": "Open in Browser" } });
+    setIcon(moreOptions, "external-link");
+    moreOptions.onclick = () => window.open(cloudUrl, "_blank");
+
+
+    // --- 3. Viewer Logic (PDF.js) ---
+    // State
+    let pdfDoc: any = null;
+    let currentScale = 1.0;
+    let isRendering = false;
+
+    // Loading Indicator
+    const loadingText = viewerContainer.createDiv({ cls: "pdf-loading" });
+    loadingText.setText("Loading PDF...");
+    loadingText.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-muted);";
+
+    const renderPages = async () => {
+      if (!pdfDoc || isRendering) return;
+      isRendering = true;
+      viewerEl.empty(); // Clear existing
+
       try {
-        const pdfjs = await loadPdfJs();
-        // 获取 PDF 数据 (ArrayBuffer)
-        const response = await requestUrl({ url: cloudUrl });
-        const data = response.arrayBuffer;
+        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+          const page = await pdfDoc.getPage(pageNum);
+          const viewport = page.getViewport({ scale: currentScale });
 
-        // 加载文档
-        const loadingTask = pdfjs.getDocument(data);
-        const pdf = await loadingTask.promise;
+          const pageContainer = viewerEl.createDiv({ cls: "pdf-page-wrapper" });
+          pageContainer.setAttribute("data-page-number", pageNum.toString());
+          pageContainer.style.cssText = "position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; background-color: var(--background-primary);";
+          pageContainer.style.width = `${viewport.width}px`;
+          pageContainer.style.height = `${viewport.height}px`;
 
-        loadingEl.remove();
-
-        // 简单的渲染逻辑：渲染所有页面
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-          const page = await pdf.getPage(pageNum);
-
-          const scale = 2.0; // 进一步提高移动端清晰度，依赖 CSS 缩小适配屏幕
-          const viewport = page.getViewport({ scale });
-
-          // 创建 canvas 容器以保持宽高比
-          const canvasWrapper = container.createDiv({ cls: "pdf-page-wrapper" });
-          canvasWrapper.style.marginBottom = "4px"; // 减少页面间距
-          canvasWrapper.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
-          canvasWrapper.style.lineHeight = "0"; // 防止 canvas 下方出现空隙
-          canvasWrapper.style.width = "100%"; // 强制宽度适应容器
-
-          const canvas = canvasWrapper.createEl("canvas");
+          const canvas = pageContainer.createEl("canvas");
           const context = canvas.getContext("2d");
           canvas.height = viewport.height;
           canvas.width = viewport.width;
-
-          // 适应容器宽度，高度自动
           canvas.style.width = "100%";
-          canvas.style.height = "auto";
-          canvas.style.display = "block";
+          canvas.style.height = "100%";
 
           const renderContext = {
             canvasContext: context,
             viewport: viewport,
           };
-
           await page.render(renderContext).promise;
         }
       } catch (e) {
-        console.error("FastSync: Failed to load PDF on mobile", e);
-        loadingEl.setText(`PDF Load Error: ${e.message}`);
-        loadingEl.style.color = "var(--text-error)";
+        console.error("PDF Render Error", e);
+        new Notice("Error rendering PDF");
+      } finally {
+        isRendering = false;
+      }
+    };
 
-        // 提供一个下载/打开链接作为后备
-        const link = container.createEl("a", {
-          text: "Open PDF in Browser",
-          href: cloudUrl,
+    // Event Listeners for Logic
+    eventBus.on("zoomin", () => {
+      if (currentScale < 5.0) {
+        currentScale += 0.25;
+        renderPages();
+      }
+    });
+
+    eventBus.on("zoomout", () => {
+      if (currentScale > 0.5) {
+        currentScale -= 0.25;
+        renderPages();
+      }
+    });
+
+    eventBus.on("pagechange", (data: any) => {
+      const pageNum = data.pageNumber;
+      if (pageNum >= 1 && pageNum <= (pdfDoc?.numPages || 1)) {
+        const targetPage = viewerEl.querySelector(`.pdf-page-wrapper[data-page-number="${pageNum}"]`);
+        if (targetPage) targetPage.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+
+    // Update Page Number on Scroll
+    viewerContainer.onscroll = () => {
+      if (!pdfDoc) return;
+      const wrappers = viewerEl.querySelectorAll(".pdf-page-wrapper");
+      const containerTop = viewerContainer.scrollTop;
+      const containerHeight = viewerContainer.clientHeight;
+
+      let currentPage = 1;
+      // Find the page that is most visible
+      for (let i = 0; i < wrappers.length; i++) {
+        const el = wrappers[i] as HTMLElement;
+        // Simple check: if element top is within the upper half of the viewport
+        if (el.offsetTop <= containerTop + containerHeight / 2) {
+          currentPage = i + 1;
+        } else {
+          break;
+        }
+      }
+      pageInput.value = currentPage.toString();
+    };
+
+
+    // --- 4. Initialization ---
+    (async () => {
+      try {
+        const pdfjs = await loadPdfJs();
+        const response = await requestUrl({ url: cloudUrl });
+        const data = response.arrayBuffer;
+
+        const loadingTask = pdfjs.getDocument(data);
+        pdfDoc = await loadingTask.promise;
+
+        loadingText.remove();
+        pageCountEl.setText(` / ${pdfDoc.numPages}`);
+        pageInput.max = pdfDoc.numPages;
+
+        await renderPages();
+
+        // Render Thumbnails (Lazy or simple)
+        // For now, simple implementation if sidebar is opened
+        eventBus.on("sidebarviewchanged", async () => {
+          if (sidebarContainer.style.display !== "none" && thumbnailViewEl.children.length === 0) {
+            // Render thumbnails
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+              const page = await pdfDoc.getPage(i);
+              const viewport = page.getViewport({ scale: 0.2 });
+
+              const thumbContainer = thumbnailViewEl.createDiv("pdf-thumbnail");
+              thumbContainer.style.cssText = "margin-bottom: 10px; cursor: pointer; display: flex; justify-content: center;";
+              thumbContainer.onclick = () => eventBus.dispatch("pagechange", { pageNumber: i });
+
+              const canvas = thumbContainer.createEl("canvas");
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+
+              await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+            }
+          }
         });
-        link.style.display = "block";
-        link.style.marginTop = "10px";
-        link.style.textAlign = "center";
-        link.target = "_blank";
+
+      } catch (e) {
+        console.error("PDF Load Error", e);
+        loadingText.setText("Failed to load PDF");
       }
     })();
 
-    return container;
+    return loadingContainer;
   }
 
   private createGenericPreview(filePath: string, cloudUrl: string): HTMLElement {
