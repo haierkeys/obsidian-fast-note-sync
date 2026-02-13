@@ -300,6 +300,7 @@ export class WebSocketClient {
     }
 
     clearUploadQueue()
+    this.notifyStatusChange(false)
     dump("Service unregister")
   }
 
