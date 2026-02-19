@@ -348,6 +348,17 @@ export class WebSocketClient {
       }, delay)
     }
   }
+
+  public triggerReconnect() {
+    dump("Triggering manual reconnect due to network change")
+    // Reset connection time to allow immediate retry
+    this.timeConnect = 0
+    // Clear any existing reconnect timers
+    window.clearTimeout(this.checkReConnectTimeout)
+    // Force register
+    this.register()
+  }
+
   public async StartHandle() {
     const handleId = ++this.currentStartHandleId
     dump(`Service start handle, id: ${handleId}`)

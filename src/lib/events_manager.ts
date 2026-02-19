@@ -41,6 +41,8 @@ export class EventManager {
     window.addEventListener("focus", this.onWindowFocus)
     window.addEventListener("blur", this.onWindowBlur)
     window.addEventListener("visibilitychange", this.onVisibilityChange)
+    window.addEventListener("online", this.onOnline)
+    window.addEventListener("offline", this.onOffline)
 
     // 注册插件卸载时的清理逻辑
     this.plugin.register(() => {
@@ -48,7 +50,23 @@ export class EventManager {
       window.removeEventListener("focus", this.onWindowFocus)
       window.removeEventListener("blur", this.onWindowBlur)
       window.removeEventListener("visibilitychange", this.onVisibilityChange)
+      window.removeEventListener("online", this.onOnline)
+      window.removeEventListener("offline", this.onOffline)
     })
+  }
+
+  private onOnline = () => {
+    dump(`Network restored (Event).`)
+    if (this.plugin.websocket) {
+      this.plugin.websocket.triggerReconnect()
+    }
+  }
+
+  private onOffline = () => {
+    dump(`Network lost (Event).`)
+    if (this.plugin.websocket) {
+      this.plugin.websocket.unRegister()
+    }
   }
 
   private onWindowFocus = () => {
