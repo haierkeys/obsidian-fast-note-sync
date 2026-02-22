@@ -2,6 +2,9 @@
 
 有问题请新建 [issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues/new) , 或加入电报交流群寻求帮助: [https://t.me/obsidian_users](https://t.me/obsidian_users)
 
+中国大陆地区，推荐使用腾讯 `cnb.cool` 镜像库: [https://cnb.cool/haierkeys/obsidian-fast-note-sync](https://cnb.cool/haierkeys/obsidian-fast-note-sync)
+
+
 
 <h1 align="center">Fast Note Sync For Obsidian</h1>
 
@@ -21,11 +24,11 @@
 </p>
 
 <p align="center">
-  需配合独立服务端使用：<a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+  需配合独立服务端使用：<a href="../../../../../haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
 </p>
 
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/8e61d99e-6f76-49b1-a03e-c952ad9e21b0" alt="fast-note-sync-service-preview" width="800" />
+    <img src="/docs/images/demo.gif" alt="fast-note-sync-service-preview" width="800" />
 </div>
 
 
@@ -81,19 +84,19 @@
   | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
 
 - 已支持名单：
-  - https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md
+  - <a href="../../../../../haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
 
 
 ## 🚀 快速开始
 
-1. 安装插件 (二选一)
+1. 安装插件 (三选一)
+   - **推荐** 使用 **BRAT** 安装 ( 支持手机安装 ): 在 Obsidian 插件社区市场, 搜索并安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件, 进入插件设置界面, 点击 **Add plugin** 并粘贴 https://github.com/haierkeys/obsidian-fast-note-sync
    - **官方商店**: <s>打开 Obsidian 社区插件市场, 搜索 **Fast Note Sync** 安装</s>
         > ⚠️ 插件尚未上架官方商店,无法搜索, 请手动安装
    - **手动安装**: 访问 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下载安装包, 解压到 Obsidian 插件目录下 **.obsidian/plugin**
-   - 使用 **BRAT** 安装 ( 支持手机安装 ): 在 Obsidian 插件社区市场, 搜索并安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件, 进入插件设置界面, 点击 **Add beta plugin** 并粘贴 https://github.com/haierkeys/obsidian-fast-note-sync
 2. 打开插件配置项，点击 **粘贴远端配置** 按钮，将远端服务配置粘贴到输入框中。
 
 
 ## 📦 服务端部署
 
-后端服务设置，请参考：[Fast Note Sync Service](https://github.com/haierkeys/fast-note-sync-service)。
+后端服务设置，请参考：<a href="../../../../../haierkeys/fast-note-sync-service">Fast Note Sync Service</a>。
