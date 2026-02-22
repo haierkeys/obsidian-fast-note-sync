@@ -108,12 +108,17 @@ jobs:
         # 只有在 check_version 步骤输出 should_release 为 true 时才执行
         if: steps.check_version.outputs.should_release == 'true'
         run: |
-
           pnpm install
           pnpm run build
-          mkdir ${{ env.NAME }}
-          cp main.js manifest.json styles.css ${{ env.NAME }}
-          zip -r ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip ${{ env.NAME }}
+          # 使用 fast-note-sync 作为文件夹名，移除 obsidian- 前缀
+          PKG_NAME="fast-note-sync"
+          mkdir ${PKG_NAME}
+          cp main.js manifest.json styles.css ${PKG_NAME}
+          zip -r ${PKG_NAME}-v${{ steps.check_version.outputs.release_tag }}.zip ${PKG_NAME}
+
+          # 生成 changelog.txt
+          echo "${{ steps.prepare.outputs.commit_msg }}" > changelog.txt
+
           ls
           # 设置输出变量 tag_name
           echo "tag_name=${{ steps.check_version.outputs.release_tag }}" >> $GITHUB_OUTPUT
@@ -131,11 +136,134 @@ jobs:
           target_commitish: ${{ github.sha }} # 明确指定在当前分支的 commit 上创建 tag
           overwrite_files: true
           files: |
-            ${{ env.NAME }}-v${{ steps.check_version.outputs.release_tag }}.zip
+            fast-note-sync-v${{ steps.check_version.outputs.release_tag }}.zip
             main.js
             manifest.json
             styles.css
+            changelog.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Tag to CNB
+        if: steps.check_version.outputs.should_release == 'true'
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+          CNB_REPO: haierkeys/obsidian-fast-note-sync
+          RELEASE_TAG: ${{ steps.check_version.outputs.release_tag }}
+        run: |
+          git tag "${RELEASE_TAG}" || true
+          git remote add cnb "https://cnb:${CNB_TOKEN}@cnb.cool/${CNB_REPO}.git"
+          git push cnb "${RELEASE_TAG}" --force
+
+      - name: Create CNB Release and Upload Assets
+        if: steps.check_version.outputs.should_release == 'true'
+        env:
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+          CNB_REPO: haierkeys/obsidian-fast-note-sync
+          RELEASE_TAG: ${{ steps.check_version.outputs.release_tag }}
+          RELEASE_BODY: ${{ steps.prepare.outputs.commit_msg }}
+          ZIP_FILE: fast-note-sync-v${{ steps.check_version.outputs.release_tag }}.zip
+        run: |
+          set -e
+          echo "::group::Creating CNB Release: ${RELEASE_TAG}"
+          RELEASE_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Accept: application/vnd.cnb.api+json" \
+            -H "Authorization: Bearer ${CNB_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg tag "${RELEASE_TAG}" \
+              --arg name "${RELEASE_TAG}" \
+              --arg body "${RELEASE_BODY}" \
+              '{tag_name: $tag, name: $name, body: $body, prerelease: false, draft: false}')" \
+            "https://api.cnb.cool/${CNB_REPO}/-/releases")
+
+          HTTP_CODE=$(echo "$RELEASE_RESPONSE" | tail -1)
+          RESPONSE_BODY=$(echo "$RELEASE_RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            RELEASE_ID=$(echo "$RESPONSE_BODY" | jq -r '.id')
+            echo "CNB Release created successfully, ID: ${RELEASE_ID}"
+          else
+            echo "::warning::Failed to create CNB Release (HTTP ${HTTP_CODE}), attempting to fetch existing release..."
+            LIST_RESPONSE=$(curl -s \
+              -H "Accept: application/vnd.cnb.api+json" \
+              -H "Authorization: Bearer ${CNB_TOKEN}" \
+              "https://api.cnb.cool/${CNB_REPO}/-/releases")
+            RELEASE_ID=$(echo "$LIST_RESPONSE" | jq -r ".[] | select(.tag_name==\"${RELEASE_TAG}\") | .id")
+            if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+              echo "::error::Cannot create or find CNB Release for tag ${RELEASE_TAG}"
+              exit 1
+            fi
+            echo "Found existing CNB Release, ID: ${RELEASE_ID}"
+          fi
+          echo "::endgroup::"
+
+          # 准备上传列表
+          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css" "changelog.txt")
+
+          for FILE_NAME in "${FILES[@]}"; do
+            (
+              echo "Uploading ${FILE_NAME}..."
+              FILE_PATH="./${FILE_NAME}"
+              if [ ! -f "$FILE_PATH" ]; then
+                echo "::warning::File not found: ${FILE_PATH}, trying alternative location..."
+                # 处理如果文件在子目录的情况，但 build 步骤是 cp 到当前目录了
+              fi
+
+              FILE_SIZE=$(stat -c%s "$FILE_PATH")
+
+              UPLOAD_RESPONSE=$(curl -s -X POST \
+                -H "Accept: application/vnd.cnb.api+json" \
+                -H "Authorization: Bearer ${CNB_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n \
+                  --arg name "${FILE_NAME}" \
+                  --argjson size ${FILE_SIZE} \
+                  '{asset_name: $name, size: $size, overwrite: true}')" \
+                "https://api.cnb.cool/${CNB_REPO}/-/releases/${RELEASE_ID}/asset-upload-url")
+
+              UPLOAD_URL=$(echo "$UPLOAD_RESPONSE" | jq -r '.upload_url')
+              VERIFY_URL=$(echo "$UPLOAD_RESPONSE" | jq -r '.verify_url')
+
+              if [ -z "$UPLOAD_URL" ] || [ "$UPLOAD_URL" = "null" ]; then
+                echo "::error::Failed to get upload URL for ${FILE_NAME}"
+                echo "Response: ${UPLOAD_RESPONSE}"
+                exit 1
+              fi
+
+              CONTENT_TYPE="application/octet-stream"
+              if [[ "${FILE_NAME}" == *.zip ]]; then CONTENT_TYPE="application/zip"; fi
+              if [[ "${FILE_NAME}" == *.js ]]; then CONTENT_TYPE="application/javascript"; fi
+              if [[ "${FILE_NAME}" == *.json ]]; then CONTENT_TYPE="application/json"; fi
+              if [[ "${FILE_NAME}" == *.css ]]; then CONTENT_TYPE="text/css"; fi
+              if [[ "${FILE_NAME}" == *.txt ]]; then CONTENT_TYPE="text/plain"; fi
+
+              UPLOAD_RESULT=$(curl -s -w "\n%{http_code}" -X PUT \
+                -H "Content-Type: ${CONTENT_TYPE}" \
+                --data-binary @"$FILE_PATH" \
+                "$UPLOAD_URL")
+              UPLOAD_HTTP_CODE=$(echo "$UPLOAD_RESULT" | tail -1)
+
+              if [ "$UPLOAD_HTTP_CODE" -ne 200 ] && [ "$UPLOAD_HTTP_CODE" -ne 201 ]; then
+                echo "::error::Failed to upload ${FILE_NAME} (HTTP ${UPLOAD_HTTP_CODE})"
+                exit 1
+              fi
+
+              CONFIRM_RESULT=$(curl -s -w "\n%{http_code}" -X POST \
+                -H "Accept: application/vnd.cnb.api+json" \
+                -H "Authorization: Bearer ${CNB_TOKEN}" \
+                "${VERIFY_URL}")
+              CONFIRM_HTTP_CODE=$(echo "$CONFIRM_RESULT" | tail -1)
+
+              if [ "$CONFIRM_HTTP_CODE" -ne 200 ] && [ "$CONFIRM_HTTP_CODE" -ne 201 ]; then
+                echo "::error::Failed to confirm upload for ${FILE_NAME} (HTTP ${CONFIRM_HTTP_CODE})"
+                exit 1
+              fi
+
+              echo "✅ ${FILE_NAME} uploaded successfully"
+            ) &
+          done
+          wait
+          echo "🎉 All assets uploaded to CNB Release!"
 
 
