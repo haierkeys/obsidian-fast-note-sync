@@ -1,0 +1,36 @@
+# Mirror repository to CNB.cool
+# 将当前仓库的所有分支和标签同步到 cnb.cool 远程仓库
+name: Mirror to CNB
+
+on:
+  push:
+    branches:
+      - '**'       # 所有分支的推送都会触发
+    tags:
+      - '**'       # 所有标签的推送都会触发
+  delete:           # 分支或标签删除时也同步
+
+jobs:
+  mirror:
+    name: Mirror to CNB.cool
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # 获取完整的 git 历史记录，包括所有分支和标签
+
+      - name: Push to CNB mirror
+        env:
+          CNB_USERNAME: ${{ secrets.CNB_USERNAME }}
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        run: |
+          # 设置 CNB 远程仓库地址（使用认证信息）
+          # Set CNB remote URL with authentication
+          git remote add cnb "https://${CNB_USERNAME}:${CNB_TOKEN}@cnb.cool/haierkeys/fast-note-sync-service.git"
+
+          # 推送所有分支和标签到 CNB 远程仓库
+          # Push all branches and tags to CNB mirror
+          git push cnb --all --force
+          git push cnb --tags --force
