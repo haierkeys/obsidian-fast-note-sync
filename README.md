@@ -32,7 +32,7 @@ For users in Mainland China, it is recommended to use the Tencent `cnb.cool` mir
 
 - 🚀 **Minimalist Configuration**:
     - No complicated settings required, just paste the remote service configuration to start using it out of the box.
-    - One-click import on the desktop client for automatic authorization.
+    - Also supports one-click import on the desktop client for automatic authorization.
 - 📗 **Real-time Note Sync**:
     - Automatically monitors and syncs all creations, updates, and deletions of notes within the Vault.
 - 🖼️ **Full Attachment Support**:
@@ -75,12 +75,13 @@ We are continuously improving, and the following are future development plans:
 
 - If you find this plugin very useful and would like it to continue development, please support us in the following ways. Thank you for supporting open-source software:
 
-  | Ko-fi *Non-China Region*                                                                                             |    | WeChat Pay *China Region*                                          |
-  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
-  | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
+  | Ko-fi *Non-China Region*                                                                         |    | WeChat Pay *China Region*                      |
+  |--------------------------------------------------------------------------------------------------|----|------------------------------------------------|
+  | [<img src="/docs/images/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="/docs/images/wxds.png" height="150"> |
 
 - Supported List:
   - <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
+  - <a href="https://cnb.cool/haierkeys/fast-note-sync-service/-/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md (cnb.cool Mirror)</a>
 
 
 ## 🚀 Quick Start
@@ -95,4 +96,6 @@ We are continuously improving, and the following are future development plans:
 
 ## 📦 Server Deployment
 
-For backend service settings, please refer to: <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>.
+For backend service settings, please refer to:
+- <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+- <a href="https://cnb.cool/haierkeys/fast-note-sync-service">Fast Note Sync Service (cnb.cool Mirror)</a>

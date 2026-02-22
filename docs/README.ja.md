@@ -32,7 +32,7 @@
 
 - 🚀 **極限までシンプルな設定**:
     - 面倒な設定は不要です。リモートサービスの構成を貼り付けるだけで、すぐに使い始めることができます。
-    - デスクトップ版では、ワンクリックインポートを使用して自動的に認証を完了することもできます。
+    - また、デスクトップ版ではワンクリックインポートを使用して自動的に認証を完了することもできます。
 - 📗 **ノートのリアルタイム同期**:
     - Vault（保管庫）内のすべてのノートの作成、更新、削除操作を自動的に監視して同期します。
 - 🖼️ **添付ファイルの完全サポート**:
@@ -75,12 +75,13 @@
 
 - このプラグインが非常に便利だと感じ、開発を継続してほしいと思われる場合は、以下の方法でサポートをお願いします。オープンソースソフトウェアへのご支援をお願いいたします。
 
-  | Ko-fi *中国以外*                                                                                                     |    | Wechat *中国*                                                      |
-  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
-  | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
+  | Ko-fi *中国以外*                                                                                 |    | Wechat *中国*                                  |
+  |--------------------------------------------------------------------------------------------------|----|------------------------------------------------|
+  | [<img src="/docs/images/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="/docs/images/wxds.png" height="150"> |
 
 - 支援者リスト：
   - <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
+  - <a href="https://cnb.cool/haierkeys/fast-note-sync-service/-/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md (cnb.cool ミラー)</a>
 
 
 ## 🚀 クイックスタート
@@ -89,10 +90,12 @@
    - **推奨**：**BRAT** を使用してインストール（モバイルへのインストールをサポート）：Obsidianプラグインコミュニティ市場で [BRAT](https://github.com/TfTHacker/obsidian42-brat) プラグインを検索してインストールし、プラグイン設定画面に入り、**Add plugin** をクリックして https://github.com/haierkeys/obsidian-fast-note-sync を貼り付けます。
    - **公式ストア**：<s>Obsidianプラグインコミュニティ市場を開き、**Fast Note Sync** を検索してインストールします</s>
         > ⚠️ プラグインはまだ公式ストアに掲載されていないため、検索できません。手動でインストールしてください。
-   - **手動インストール**：https://github.com/haierkeys/obsidian-fast-note-sync/releases にアクセスしてインストールパッケージをダウンロードし、Obsidianのプラグインディレクトリ **.obsidian/plugins** に解凍します。
+   - **手動インストール**：https://github.com/haierkeys/obsidian-fast-note-sync/releases にアクセスしてインストールパッケージをダウンロードし、Obsidianの插件ディレクトリ **.obsidian/plugins** に解凍します。
 2. プラグインの構成項目を開き、**Paste Remote Config**（リモート構成を貼り付け）ボタンをクリックして、リモートサービスの構成を入力ボックスに入力します。
 
 
 ## 📦 サーバー側のデプロイ
 
-バックエンドサービスの設定については、以下を参照してください：<a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>。
+バックエンドサービスの設定については、以下を参照してください：
+- <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+- <a href="https://cnb.cool/haierkeys/fast-note-sync-service">Fast Note Sync Service (cnb.cool ミラー)</a>

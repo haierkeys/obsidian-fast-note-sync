@@ -1,6 +1,6 @@
 [简体中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-CN.md) / [English](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/README.md) / [日本語](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ja.md) / [한국어](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.ko.md) / [繁體中文](https://github.com/haierkeys/obsidian-fast-note-sync/blob/master/docs/README.zh-TW.md)
 
-문제가 있는 경우 새로운 [issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues/new)를 생성하거나, 텔레그램 뉴스 그룹에 가입하여 도움을 요청하세요: [https://t.me/obsidian_users](https://t.me/obsidian_users)
+문제가 있는 경우 새로운 [issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues/new)를 생성하거나, 텔레그램 그룹에 가입하여 도움을 요청하세요: [https://t.me/obsidian_users](https://t.me/obsidian_users)
 
 중국 본토 지역의 경우, 텐센트 `cnb.cool` 미러 저장소 사용을 권장합니다: [https://cnb.cool/haierkeys/obsidian-fast-note-sync](https://cnb.cool/haierkeys/obsidian-fast-note-sync)
 
@@ -32,7 +32,7 @@
 
 - 🚀 **극도로 단순한 설정**:
     - 번거로운 설정 없이 원격 서비스 구성을 붙여넣기만 하면 즉시 사용할 수 있습니다.
-    - 데스크톱 버전에서는 한 번의 클릭으로 구성을 가져와 자동으로 인증을 완료할 수도 있습니다.
+    - 또한 데스크톱 버전에서는 한 번의 클릭으로 구성을 가져와 자동으로 인증을 완료할 수도 있습니다.
 - 📗 **노트 실시간 동기화**:
     - Vault(보관소) 내의 모든 노트 생성, 업데이트 및 삭제 작업을 자동으로 감지하고 동기화합니다.
 - 🖼️ **첨부 파일 완벽 지원**:
@@ -75,12 +75,13 @@
 
 - 이 플러그인이 유용하다고 생각하시고 계속 개발되기를 원하신다면 아래의 방법으로 저희를 지원해 주세요. 오픈 소스 소프트웨어에 대한 지원에 감사드립니다:
 
-  | Ko-fi *중국 이외 지역*                                                                                                     |    | 위챗페이 *중국 지역*                                                       |
-  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
-  | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
+  | Ko-fi *중국 이외 지역*                                                                                 |    | 위챗페이 *중국 지역*                                   |
+  |--------------------------------------------------------------------------------------------------|----|------------------------------------------------|
+  | [<img src="/docs/images/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | or | <img src="/docs/images/wxds.png" height="150"> |
 
 - 후원자 명단:
   - <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
+  - <a href="https://cnb.cool/haierkeys/fast-note-sync-service/-/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md (cnb.cool 미러)</a>
 
 
 ## 🚀 시작하기
@@ -95,4 +96,6 @@
 
 ## 📦 서버 배포
 
-백엔드 서버 설정은 다음을 참조하세요: <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>.
+백엔드 서버 설정은 다음을 참조하세요:
+- <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+- <a href="https://cnb.cool/haierkeys/fast-note-sync-service">Fast Note Sync Service (cnb.cool 미러)</a>

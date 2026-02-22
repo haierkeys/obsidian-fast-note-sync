@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  需配合独立服务端使用：<a href="../../../../../haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+  需配合独立服务端使用：<a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
 </p>
 
 <div align="center">
@@ -79,12 +79,13 @@
 
 - 如果觉得这个插件很有用，并且想要它继续开发，请在以下方式支持我们，感谢您对开源软件的支持:
 
-  | Ko-fi *非中国地区*                                                                                                   |    | 微信扫码打赏 *中国地区*                                            |
-  |----------------------------------------------------------------------------------------------------------------------|----|--------------------------------------------------------------------|
-  | [<img src="https://ik.imagekit.io/haierkeys/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="https://ik.imagekit.io/haierkeys/wxds.png" height="150"> |
+  | Ko-fi *非中国地区*                                                                               |    | 微信扫码打赏 *中国地区*                        |
+  |--------------------------------------------------------------------------------------------------|----|------------------------------------------------|
+  | [<img src="/docs/images/kofi.png" alt="BuyMeACoffee" height="150">](https://ko-fi.com/haierkeys) | 或 | <img src="/docs/images/wxds.png" height="150"> |
 
 - 已支持名单：
-  - <a href="../../../../../haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
+  - <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md</a>
+  - <a href="https://cnb.cool/haierkeys/fast-note-sync-service/-/blob/master/docs/Support.zh-CN.md">Support.zh-CN.md (cnb.cool 镜像库)</a>
 
 
 ## 🚀 快速开始
@@ -99,4 +100,6 @@
 
 ## 📦 服务端部署
 
-后端服务设置，请参考：<a href="../../../../../haierkeys/fast-note-sync-service">Fast Note Sync Service</a>。
+后端服务设置，请参考：
+- <a href="https://github.com/haierkeys/fast-note-sync-service">Fast Note Sync Service</a>
+- <a href="https://cnb.cool/haierkeys/fast-note-sync-service">Fast Note Sync Service (cnb.cool 镜像库)</a>
