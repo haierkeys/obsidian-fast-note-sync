@@ -28,7 +28,7 @@ jobs:
         run: |
           # 设置 CNB 远程仓库地址（使用认证信息）
           # Set CNB remote URL with authentication
-          git remote add cnb "https://${CNB_USERNAME}:${CNB_TOKEN}@cnb.cool/haierkeys/fast-note-sync-service.git"
+          git remote add cnb "https://${CNB_USERNAME}:${CNB_TOKEN}@cnb.cool/haierkeys/obsidian-fast-note-sync.git"
 
           # 推送所有分支和标签到 CNB 远程仓库
           # Push all branches and tags to CNB mirror
