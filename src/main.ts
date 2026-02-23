@@ -272,7 +272,7 @@ export default class FastSync extends Plugin {
     }
     // 仅在首次运行或该设置项不存在时才设置默认值
     if (!data || data.configExclude === undefined) {
-      this.settings.configExclude = `plugins/${this.manifest.id}`
+      this.settings.configExclude = `${this.app.vault.configDir}/plugins/${this.manifest.id}`
     }
     this.runApi = this.settings.api
     this.runWsApi = this.settings.wsApi

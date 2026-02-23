@@ -169,13 +169,9 @@ export class EventManager {
       return
     }
 
-    this.runWithDelay(
-      path,
-      () => {
-        this.plugin.configManager.handleRawEvent(normalizePath(path), true)
-      },
-      300,
-    )
+    this.runWithDelay(path, () => {
+      this.plugin.configManager.handleRawEvent(normalizePath(path), true)
+    }, 300)
   }
 
   /**

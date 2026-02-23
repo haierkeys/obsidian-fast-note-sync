@@ -409,7 +409,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     }
   }
 
-  const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths(plugin.app.vault.configDir, plugin) : [];
+  const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths([plugin.app.vault.configDir], plugin) : [];
   for (const path of configPaths) {
     if (configIsPathExcluded(path, plugin)) continue;
     const fullPath = normalizePath(`${plugin.app.vault.configDir}/${path}`);

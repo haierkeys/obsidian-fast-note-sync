@@ -63,7 +63,7 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.exclude_whitelist": "同步白名单",
   "setting.sync.exclude_whitelist_desc": "优先于 <b>同步排除</b> 和 <b>同步排除扩展名</b> 规则，对匹配项强制同步。 \n每行一个，支持正则 (忽略大小写)。",
   "setting.sync.config_exclude": "配置同步排除",
-  "setting.sync.config_exclude_desc": "设置的路径将不参与配置同步。\n需设置 <b>.obsidian</b> 目录的相对路径。\n每行一个，支持正则 (忽略大小写)。\n例如：plugins/obsidian-fast-note-sync/data.json",
+  "setting.sync.config_exclude_desc": "设置的路径将不参与配置同步。\n需设置 包含 <b>.obsidian</b> 相对路径。\n每行一个，支持正则 (忽略大小写)。\n例如：.obsidian/plugins/obsidian-fast-note-sync/data.json",
   "setting.sync.config_exclude_placeholder": "路径或正则，每行一个",
   "setting.sync.config_exclude_whitelist": "配置同步排除白名单",
   "setting.sync.config_exclude_whitelist_desc": "优先于 <b>配置同步排除</b> 规则，对匹配项强制同步\n每行一个，支持正则 (忽略大小写)。",

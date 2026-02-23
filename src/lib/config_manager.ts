@@ -21,10 +21,11 @@ export class ConfigManager {
     this.pluginExtsToWatch = CONFIG_PLUGIN_EXTS_TO_WATCH
     this.themeExtsToWatch = CONFIG_THEME_EXTS_TO_WATCH
     this.pluginRealDir = this.plugin.manifest.dir ?? ""
-    this.pluginDir = this.pluginRealDir.replace(this.plugin.app.vault.configDir + "/", "")
+    const configDir = this.plugin.app.vault.configDir
+    this.pluginDir = this.pluginRealDir
 
-    configAddPathExcluded("plugins/hot-reload/data.json", this.plugin)
-    configAddPathExcluded("plugins/hot-reload/main.js", this.plugin)
+    configAddPathExcluded(`${configDir}/plugins/hot-reload/data.json`, this.plugin)
+    configAddPathExcluded(`${configDir}/plugins/hot-reload/main.js`, this.plugin)
 
     this.loadEnabledPlugins()
     this.initializeFileStates()
@@ -34,10 +35,10 @@ export class ConfigManager {
     if (!this.plugin.settings.configSyncEnabled) return
 
     const configDir = this.plugin.app.vault.configDir
-    const paths = await configAllPaths(configDir, this.plugin)
+    const paths = await configAllPaths([configDir], this.plugin)
 
     for (const relPath of paths) {
-      const fullPath = normalizePath(`${configDir}/${relPath}`)
+      const fullPath = normalizePath(relPath)
       try {
         const stat = await this.plugin.app.vault.adapter.stat(fullPath)
         if (stat && stat.type === "file") {
@@ -57,18 +58,19 @@ export class ConfigManager {
     if (path.includes("/.git") || path.includes("/.DS_Store")) return
     if (!path.startsWith(configDir + "/")) return
     //相对目录
-    const relativePath = path.replace(configDir + "/", "")
+    const relativePath = path
     if (configIsPathExcluded(relativePath, this.plugin)) return
     if (this.plugin.settings.logEnabled && relativePath.startsWith(this.pluginDir)) {
       dump("plugin.settings.logEnabled true Skip", relativePath)
       return
     }
     // 功能目录
-    const topDir = getDirName(relativePath)
+    const relativePathWithoutConfig = path.replace(configDir + "/", "")
+    const topDir = getDirName(relativePathWithoutConfig)
     // 文件名
     const fileName = getFileName(path)
 
-    const parts = relativePath.split("/")
+    const parts = relativePathWithoutConfig.split("/")
     // 名称目录
     const nameDir = getDirNameOrEmpty(parts[1])
 
@@ -126,7 +128,7 @@ export class ConfigManager {
   }
 
   private async checkFileChange(filePath: string, eventEnter: boolean = false, isFolder: boolean = false) {
-    const relativePath = filePath.replace(this.plugin.app.vault.configDir + "/", "")
+    const relativePath = filePath
     if (this.plugin.ignoredConfigFiles.has(relativePath)) return
 
     try {
@@ -138,7 +140,7 @@ export class ConfigManager {
         let foundMatch = false
         for (const cachedPath of this.fileStates.keys()) {
           if (cachedPath === filePath || cachedPath.startsWith(prefix)) {
-            const rel = cachedPath.replace(this.plugin.app.vault.configDir + "/", "")
+            const rel = cachedPath
             this.fileStates.delete(cachedPath)
             configDelete(rel, this.plugin, eventEnter)
             dump("Config Delete", rel)

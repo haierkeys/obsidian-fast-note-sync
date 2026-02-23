@@ -44,7 +44,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
         ctime = Date.now()
     } else {
         // 从文件系统读取
-        const filePath = normalizePath(`${plugin.app.vault.configDir}/${path}`)
+        const filePath = normalizePath(path)
         try {
             const exists = await plugin.app.vault.adapter.exists(filePath)
             if (exists) {
@@ -74,7 +74,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
     if (savedHash === contentHash) {
         plugin.removeIgnoredConfigFile(path)
         // 顺便更新一下 ConfigManager 的状态，防止下次误判
-        plugin.configManager.updateFileState(normalizePath(`${plugin.app.vault.configDir}/${path}`), mtime)
+        plugin.configManager.updateFileState(normalizePath(path), mtime)
         return
     }
 
@@ -115,13 +115,21 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
 
 export const receiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
+    const configDir = plugin.app.vault.configDir
+    const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
+    const isConfig = data.path.startsWith(configDir + "/")
+    if (!isVirtual && !isConfig) {
+        dump(`Forbidden config path: ${data.path}`)
+        return
+    }
+
     if (configIsPathExcluded(data.path, plugin)) return
     if (plugin.ignoredConfigFiles.has(data.path)) return
 
     plugin.addIgnoredConfigFile(data.path)
     try {
         // 拦截 LocalStorage 更新
-        if (data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) {
+        if (isVirtual) {
             if (await plugin.localStorageManager.handleReceivedUpdate(data.path, data.content)) {
                 plugin.removeIgnoredConfigFile(data.path)
                 if (Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) < data.lastTime) {
@@ -135,12 +143,12 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
         const folder = data.path.split("/").slice(0, -1).join("/")
         if (folder !== "") {
-            const fullFolderPath = normalizePath(`${plugin.app.vault.configDir}/${folder}`)
+            const fullFolderPath = normalizePath(folder)
             if (!(await plugin.app.vault.adapter.exists(fullFolderPath))) {
                 await plugin.app.vault.adapter.mkdir(fullFolderPath)
             }
         }
-        const filePath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
+        const filePath = normalizePath(data.path)
         await plugin.app.vault.adapter.write(filePath, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
     } catch (e) {
         console.error("[writeConfigFile] error:", e)
@@ -151,7 +159,7 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
     // 更新 ConfigManager 的文件状态，防止重复触发 configModify
     if (plugin.configManager) {
-        const absPath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
+        const absPath = normalizePath(data.path)
         plugin.configManager.updateFileState(absPath, data.mtime)
     }
 
@@ -169,17 +177,22 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
+    const configDir = plugin.app.vault.configDir
+    const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
+    const isConfig = data.path.startsWith(configDir + "/")
+    if (!isVirtual && !isConfig) return;
+
     if (plugin.settings.readonlySyncEnabled) {
         dump(`Read-only mode: Intercepted config upload request for ${data.path}`)
         plugin.configSyncTasks.completed++
         return
     }
     if (configIsPathExcluded(data.path, plugin)) return;
-    if (data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return;
+    if (isVirtual) return;
 
     plugin.addIgnoredConfigFile(data.path);
 
-    const filePath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`);
+    const filePath = normalizePath(data.path);
     let contentStr = "";
     let contentBuf: ArrayBuffer | null = null;
     let mtime = 0;
@@ -230,11 +243,14 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
 
 export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
+    const configDir = plugin.app.vault.configDir
+    if (!data.path.startsWith(configDir + "/") && !data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return
+
     if (configIsPathExcluded(data.path, plugin)) return
     if (plugin.ignoredConfigFiles.has(data.path)) return
 
     plugin.addIgnoredConfigFile(data.path)
-    const filePath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
+    const filePath = normalizePath(data.path)
     try {
         if (await plugin.app.vault.adapter.exists(filePath)) {
             const content = await plugin.app.vault.adapter.readBinary(filePath)
@@ -250,10 +266,13 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
 
 export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
+    const configDir = plugin.app.vault.configDir
+    if (!data.path.startsWith(configDir + "/") && !data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return
+
     if (configIsPathExcluded(data.path, plugin)) return
     if (plugin.ignoredConfigFiles.has(data.path)) return
 
-    const fullPath = normalizePath(`${plugin.app.vault.configDir}/${data.path}`)
+    const fullPath = normalizePath(data.path)
     if (await plugin.app.vault.adapter.exists(fullPath)) {
         await plugin.app.vault.adapter.remove(fullPath)
     }
@@ -297,58 +316,87 @@ export const receiveConfigSyncClear = async function (data: any, plugin: FastSyn
  * 辅助逻辑提取
  */
 
-export const configAllPaths = async function (configDir: string, plugin: FastSync): Promise<string[]> {
+export const configAllPaths = async function (configDirs: string[], plugin: FastSync): Promise<string[]> {
     const paths: string[] = []
     const adapter = plugin.app.vault.adapter
     const isExcluded = (p: string) => configIsPathExcluded(p, plugin)
 
-    try {
-        for (const fileName of CONFIG_ROOT_FILES_TO_WATCH) {
-            if (isExcluded(fileName)) continue
-            if (await adapter.exists(normalizePath(`${configDir}/${fileName}`))) paths.push(fileName)
+    /**
+     * 递归扫描通用目录
+     */
+    const scanDirRecursive = async (dirPath: string) => {
+        try {
+            if (!(await adapter.exists(normalizePath(dirPath)))) return
+            const result = await adapter.list(normalizePath(dirPath))
+            for (const file of result.files) {
+                if (isExcluded(file)) continue
+                paths.push(file)
+            }
+            for (const folder of result.folders) {
+                if (isExcluded(folder)) continue
+                await scanDirRecursive(folder)
+            }
+        } catch (e) {
+            dump(`Error scanning directory ${dirPath}:`, e)
         }
-        const pluginsPath = normalizePath(`${configDir}/plugins`)
-        if (await adapter.exists(pluginsPath)) {
-            const result = await adapter.list(pluginsPath)
-            for (const folderPath of result.folders) {
-                const folderName = folderPath.split("/").pop()
-                const folderItems = await adapter.list(folderPath)
-                for (const file of folderItems.files) {
-                    const fileName = file.split("/").pop() || ""
-                    if (CONFIG_PLUGIN_EXTS_TO_WATCH.some(ext => fileName.endsWith(ext))) {
-                        const rel = `plugins/${folderName}/${fileName}`
-                        if (!isExcluded(rel)) paths.push(rel)
+    }
+
+    for (const configDir of configDirs) {
+        try {
+            // 特殊处理 .obsidian 目录（为了向后兼容和针对插件/主题的特定扫描逻辑）
+            if (configDir.endsWith(".obsidian")) {
+                for (const fileName of CONFIG_ROOT_FILES_TO_WATCH) {
+                    const rel = `${configDir}/${fileName}`
+                    if (isExcluded(rel)) continue
+                    if (await adapter.exists(normalizePath(rel))) paths.push(rel)
+                }
+                const pluginsPath = normalizePath(`${configDir}/plugins`)
+                if (await adapter.exists(pluginsPath)) {
+                    const result = await adapter.list(pluginsPath)
+                    for (const folderPath of result.folders) {
+                        const folderName = folderPath.split("/").pop()
+                        const folderItems = await adapter.list(folderPath)
+                        for (const file of folderItems.files) {
+                            const fileName = file.split("/").pop() || ""
+                            if (CONFIG_PLUGIN_EXTS_TO_WATCH.some(ext => fileName.endsWith(ext))) {
+                                const rel = `${configDir}/plugins/${folderName}/${fileName}`
+                                if (!isExcluded(rel)) paths.push(rel)
+                            }
+                        }
                     }
                 }
-            }
-        }
-        const themesPath = normalizePath(`${configDir}/themes`)
-        if (await adapter.exists(themesPath)) {
-            const result = await adapter.list(themesPath)
-            for (const folderPath of result.folders) {
-                const folderName = folderPath.split("/").pop()
-                const folderItems = await adapter.list(folderPath)
-                for (const file of folderItems.files) {
-                    const fileName = file.split("/").pop() || ""
-                    if (CONFIG_THEME_EXTS_TO_WATCH.some(ext => fileName.endsWith(ext))) {
-                        const rel = `themes/${folderName}/${fileName}`
-                        if (!isExcluded(rel)) paths.push(rel)
+                const themesPath = normalizePath(`${configDir}/themes`)
+                if (await adapter.exists(themesPath)) {
+                    const result = await adapter.list(themesPath)
+                    for (const folderPath of result.folders) {
+                        const folderName = folderPath.split("/").pop()
+                        const folderItems = await adapter.list(folderPath)
+                        for (const file of folderItems.files) {
+                            const fileName = file.split("/").pop() || ""
+                            if (CONFIG_THEME_EXTS_TO_WATCH.some(ext => fileName.endsWith(ext))) {
+                                const rel = `${configDir}/themes/${folderName}/${fileName}`
+                                if (!isExcluded(rel)) paths.push(rel)
+                            }
+                        }
                     }
                 }
-            }
-        }
-        const snippetsPath = normalizePath(`${configDir}/snippets`)
-        if (await adapter.exists(snippetsPath)) {
-            const result = await adapter.list(snippetsPath)
-            for (const filePath of result.files) {
-                if (filePath.endsWith(".css")) {
-                    const rel = `snippets/${filePath.split("/").pop()}`
-                    if (!isExcluded(rel)) paths.push(rel)
+                const snippetsPath = normalizePath(`${configDir}/snippets`)
+                if (await adapter.exists(snippetsPath)) {
+                    const result = await adapter.list(snippetsPath)
+                    for (const filePath of result.files) {
+                        if (filePath.endsWith(".css")) {
+                            const rel = `${configDir}/snippets/${filePath.split("/").pop()}`
+                            if (!isExcluded(rel)) paths.push(rel)
+                        }
+                    }
                 }
+            } else {
+                // 通用递归扫描
+                await scanDirRecursive(configDir)
             }
+        } catch (e) {
+            dump(`Error processing config dir ${configDir}:`, e)
         }
-    } catch (e) {
-        dump("Error getting config paths:", e)
     }
     return paths
 }
@@ -384,6 +432,7 @@ export const configReload = async function (path: string, plugin: FastSync, even
 
     reloadTimer = setTimeout(async () => {
         const app = plugin.app as any
+        const configDir = plugin.app.vault.configDir
 
         const updates = Array.from(pendingConfigUpdates.entries())
         pendingConfigUpdates.clear()
@@ -392,9 +441,8 @@ export const configReload = async function (path: string, plugin: FastSync, even
         if (app.vault.reloadConfig) await app.vault.reloadConfig()
 
         const pluginsToReload = new Set<string>()
-
         for (const [p, d] of updates) {
-            if (p === "app.json" || p === "appearance.json") {
+            if (p === `${configDir}/app.json` || p === `${configDir}/appearance.json`) {
                 try {
                     const config = JSON.parse(d)
                     // 仅在值确实改变时才设置，减少刷新频率
@@ -404,7 +452,7 @@ export const configReload = async function (path: string, plugin: FastSync, even
                         }
                     }
 
-                    if (p === "appearance.json" && app.customCss) {
+                    if (p === `${configDir}/appearance.json` && app.customCss) {
                         // 修正属性名：社区主题使用的是 cssTheme
                         const targetTheme = config.cssTheme;
                         if (targetTheme !== undefined) {
@@ -424,7 +472,7 @@ export const configReload = async function (path: string, plugin: FastSync, even
                 } catch (e) {
                     console.error(`[Sync] 处理 ${p} 失败:`, e);
                 }
-            } else if (p === "community-plugins.json") {
+            } else if (p === `${configDir}/community-plugins.json`) {
                 try {
                     const newP = JSON.parse(d)
                     const oldP = Array.from(plugin.configManager.enabledPlugins)
@@ -440,14 +488,15 @@ export const configReload = async function (path: string, plugin: FastSync, even
                         if (id != "hot-reload" && id != "fast-note-sync") await app.plugins.disablePlugin(id)
                     }
                 } catch (e) { }
-            } else if (p === "hotkeys.json") {
+            } else if (p === `${configDir}/hotkeys.json`) {
                 if (app.hotkeys) await app.hotkeys.load()
-            } else if (p.startsWith("snippets/") && p.endsWith(".css")) {
+            } else if (p.startsWith(`${configDir}/snippets/`) && p.endsWith(".css")) {
                 if (app.customCss) await app.customCss.readSnippets()
-            } else if (p.startsWith("plugins/")) {
+            } else if (p.startsWith(`${configDir}/plugins/`)) {
                 const parts = p.split("/")
-                if (parts.length >= 3) {
-                    const id = parts[1]
+                // .obsidian/plugins/id/file -> parts=[".obsidian", "plugins", "id", "file"]
+                if (parts.length >= 4) {
+                    const id = parts[2]
                     pluginsToReload.add(id)
                 }
             }
@@ -457,8 +506,8 @@ export const configReload = async function (path: string, plugin: FastSync, even
         for (const id of pluginsToReload) {
             if (id === "hot-reload") continue
 
-            const hasMainJsUpdate = updates.some(([p]) => p === `plugins/${id}/main.js`)
-            const hasManifestUpdate = updates.some(([p]) => p === `plugins/${id}/manifest.json`)
+            const hasMainJsUpdate = updates.some(([p]) => p === `${configDir}/plugins/${id}/main.js`)
+            const hasManifestUpdate = updates.some(([p]) => p === `${configDir}/plugins/${id}/manifest.json`)
 
             // 特殊处理本插件的更新：
             // 如果 main.js 或 manifest.json 更新了，则进行正常的重载流程
@@ -491,7 +540,7 @@ const configOperators: Map<string, ConfigOperator> = new Map([
     ["ConfigDelete", configDelete],
     ["ConfigEmptyFoldersClean", configEmptyFoldersClean],
     ["ConfigReload", configReload],
-    ["ConfigAllPaths", configAllPaths],
+    ["ConfigAllPaths", configAllPaths as any],
     ["ConfigIsPathExcluded", configIsPathExcluded],
     ["ConfigAddPathExcluded", configAddPathExcluded],
 ])
