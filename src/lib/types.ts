@@ -5,6 +5,7 @@ export interface SnapFile {
     pathHash: string;
     contentHash: string;
     mtime: number;
+    ctime: number;
     size: number;
     baseHash?: string | null;
 }

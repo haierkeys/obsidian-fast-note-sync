@@ -224,6 +224,7 @@ export class LocalStorageManager {
                 pathHash: hashContent(path),
                 contentHash: contentHash,
                 mtime: mtime,
+                ctime: mtime,
                 size: value.length,
                 isLocalStorage: true
             });

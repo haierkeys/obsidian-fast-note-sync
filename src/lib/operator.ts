@@ -326,6 +326,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
             pathHash: hashContent(file.path),
             contentHash: contentHash,
             mtime: file.stat.mtime,
+            ctime: file.stat.ctime,
             size: file.stat.size,
             // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
             ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
@@ -341,6 +342,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
             pathHash: hashContent(file.path),
             contentHash: contentHash,
             mtime: file.stat.mtime,
+            ctime: file.stat.ctime,
             size: file.stat.size,
             // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
             ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
@@ -421,6 +423,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         pathHash: hashContent(path),
         contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
         mtime: stat.mtime,
+        ctime: stat.ctime,
         size: stat.size
       });
     }
