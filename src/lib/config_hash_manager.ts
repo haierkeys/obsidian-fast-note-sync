@@ -1,6 +1,6 @@
 import { Notice, normalizePath } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, configIsPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, getConfigSyncCustomDirs } from "./helps";
 import { configAllPaths } from "./config_operator";
 import type FastSync from "../main";
 
@@ -54,7 +54,9 @@ export class ConfigHashManager {
 
         try {
             // 获取所有配置文件路径
-            const configPaths = await configAllPaths(this.plugin.app.vault.configDir, this.plugin);
+            const configDir = this.plugin.app.vault.configDir;
+            const customDirs = getConfigSyncCustomDirs(this.plugin);
+            const configPaths = await configAllPaths([configDir, ...customDirs], this.plugin);
 
             // 添加 LocalStorage 虚拟路径
             const localStorageConfigs = await this.plugin.localStorageManager.getStorageConfigs();
@@ -86,7 +88,8 @@ export class ConfigHashManager {
                     }
                 } else {
                     // 从文件系统读取配置文件
-                    const filePath = normalizePath(`${this.plugin.app.vault.configDir}/${path}`);
+                    // 注意：configAllPaths 返回的已经是相对于 Vault 的路径，无需再拼接 configDir
+                    const filePath = normalizePath(path);
                     try {
                         const exists = await this.plugin.app.vault.adapter.exists(filePath);
                         if (exists) {
