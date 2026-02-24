@@ -50,7 +50,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
     const iconRef = React.useRef<HTMLSpanElement>(null);
     const settingsIconRef = React.useRef<HTMLSpanElement>(null);
-    const throttleTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const throttleTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingLogsRef = React.useRef<SyncLog[] | null>(null);
 
     React.useEffect(() => {

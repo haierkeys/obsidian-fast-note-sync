@@ -1,6 +1,6 @@
 import { normalizePath, Notice } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, configAddPathExcluded, getSafeCtime } from "./helps";
+import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, configAddPathExcluded, getSafeCtime, isPathInConfigSyncDirs } from "./helps";
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
@@ -18,11 +18,12 @@ export const CONFIG_THEME_EXTS_TO_WATCH = [".css", ".json"]
  * 配置操作函数导出
  */
 
-let reloadTimer: NodeJS.Timeout | null = null
+let reloadTimer: ReturnType<typeof setTimeout> | null = null
 const pendingConfigUpdates: Map<string, string> = new Map()
 
 export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false, content?: string) {
     if (plugin.settings.configSyncEnabled == false) return
+    if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
     if (configIsPathExcluded(path, plugin)) return
@@ -99,6 +100,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
 
 export const configDelete = function (path: string, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.configSyncEnabled == false) return
+    if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
     if (configIsPathExcluded(path, plugin)) return
@@ -115,13 +117,13 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
 
 export const receiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
-    const configDir = plugin.app.vault.configDir
-    const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
-    const isConfig = data.path.startsWith(configDir + "/")
-    if (!isVirtual && !isConfig) {
+
+    if (!isPathInConfigSyncDirs(data.path, plugin)) {
         dump(`Forbidden config path: ${data.path}`)
         return
     }
+
+    const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
 
     if (configIsPathExcluded(data.path, plugin)) return
     if (plugin.ignoredConfigFiles.has(data.path)) return
@@ -177,10 +179,10 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
-    const configDir = plugin.app.vault.configDir
+
+    if (!isPathInConfigSyncDirs(data.path, plugin)) return;
+
     const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
-    const isConfig = data.path.startsWith(configDir + "/")
-    if (!isVirtual && !isConfig) return;
 
     if (plugin.settings.readonlySyncEnabled) {
         dump(`Read-only mode: Intercepted config upload request for ${data.path}`)
@@ -243,8 +245,8 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
 
 export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
-    const configDir = plugin.app.vault.configDir
-    if (!data.path.startsWith(configDir + "/") && !data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return
+
+    if (!isPathInConfigSyncDirs(data.path, plugin)) return
 
     if (configIsPathExcluded(data.path, plugin)) return
     if (plugin.ignoredConfigFiles.has(data.path)) return
@@ -266,8 +268,8 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
 
 export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
-    const configDir = plugin.app.vault.configDir
-    if (!data.path.startsWith(configDir + "/") && !data.path.startsWith(plugin.localStorageManager.syncPathPrefix)) return
+
+    if (!isPathInConfigSyncDirs(data.path, plugin)) return
 
     if (configIsPathExcluded(data.path, plugin)) return
     if (plugin.ignoredConfigFiles.has(data.path)) return
@@ -343,8 +345,11 @@ export const configAllPaths = async function (configDirs: string[], plugin: Fast
 
     for (const configDir of configDirs) {
         try {
+            // 解析目录名称，用于判断是否为自定义目录
+            const normalizedConfigDir = configDir.replace(/\\/g, "/")
+
             // 特殊处理 .obsidian 目录（为了向后兼容和针对插件/主题的特定扫描逻辑）
-            if (configDir.endsWith(".obsidian")) {
+            if (normalizedConfigDir.endsWith(".obsidian")) {
                 for (const fileName of CONFIG_ROOT_FILES_TO_WATCH) {
                     const rel = `${configDir}/${fileName}`
                     if (isExcluded(rel)) continue
@@ -391,7 +396,7 @@ export const configAllPaths = async function (configDirs: string[], plugin: Fast
                     }
                 }
             } else {
-                // 通用递归扫描
+                // 通用递归扫描 (自定义目录同步所有文件)
                 await scanDirRecursive(configDir)
             }
         } catch (e) {

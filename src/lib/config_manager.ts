@@ -1,7 +1,7 @@
 import { normalizePath, Plugin } from "obsidian";
 
+import { dump, getFileName, getDirName, getDirNameOrEmpty, configAddPathExcluded, configIsPathExcluded, isPathInConfigSyncDirs, getConfigSyncCustomDirs } from "./helps";
 import { CONFIG_PLUGIN_EXTS_TO_WATCH, CONFIG_ROOT_FILES_TO_WATCH, CONFIG_THEME_EXTS_TO_WATCH, configModify, configDelete, configAllPaths } from "./config_operator";
-import { dump, getFileName, getDirName, getDirNameOrEmpty, configAddPathExcluded, configIsPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 
@@ -35,7 +35,8 @@ export class ConfigManager {
     if (!this.plugin.settings.configSyncEnabled) return
 
     const configDir = this.plugin.app.vault.configDir
-    const paths = await configAllPaths([configDir], this.plugin)
+    const customDirs = getConfigSyncCustomDirs(this.plugin)
+    const paths = await configAllPaths([configDir, ...customDirs], this.plugin)
 
     for (const relPath of paths) {
       const fullPath = normalizePath(relPath)
@@ -56,44 +57,48 @@ export class ConfigManager {
 
     const configDir = this.plugin.app.vault.configDir
     if (path.includes("/.git") || path.includes("/.DS_Store")) return
-    if (!path.startsWith(configDir + "/")) return
-    //相对目录
+
+    // 检查路径是否属于配置同步范畴
+    if (!isPathInConfigSyncDirs(path, this.plugin)) return
+
+    // 相对目录
     const relativePath = path
     if (configIsPathExcluded(relativePath, this.plugin)) return
     if (this.plugin.settings.logEnabled && relativePath.startsWith(this.pluginDir)) {
       dump("plugin.settings.logEnabled true Skip", relativePath)
       return
     }
-    // 功能目录
-    const relativePathWithoutConfig = path.replace(configDir + "/", "")
-    const topDir = getDirName(relativePathWithoutConfig)
-    // 文件名
+
     const fileName = getFileName(path)
-
-    const parts = relativePathWithoutConfig.split("/")
-    // 名称目录
-    const nameDir = getDirNameOrEmpty(parts[1])
-
-    // 使用 stat 确定真实类型
-
     let shouldCheck = false
 
-    if (parts.length === 1) {
-      // 根配置
-      if (this.rootFilesToWatch.includes(fileName)) shouldCheck = true
-    } else if (topDir === "plugins" || topDir === "themes") {
-      // 插件或主题
-      if (parts.length === 2 && nameDir != "" && fileName == "") {
-        // 目录变动
-        shouldCheck = true
-      } else if (parts.length === 3 && nameDir != "" && fileName != "") {
-        // 受监控文件变动
-        const isPluginFile = topDir === "plugins" && this.pluginExtsToWatch.some(ext => fileName.endsWith(ext))
-        const isThemeFile = topDir === "themes" && this.themeExtsToWatch.some(ext => fileName.endsWith(ext))
-        if (isPluginFile || isThemeFile) shouldCheck = true
-      }
-    } else if (topDir === "snippets" && nameDir == "" && fileName.endsWith(".css")) {
+    // 如果路径不在核心配置目录内 (即自定义同步目录或虚拟路径)，则全量放行（除非被排除）
+    if (!path.startsWith(configDir + "/")) {
       shouldCheck = true
+    } else {
+      // 核心配置目录内的路径，按照原有精细化规则分发
+      const relativePathInConfig = path.replace(configDir + "/", "")
+      const parts = relativePathInConfig.split("/")
+      const topDir = parts[0]
+
+      if (parts.length === 1) {
+        // 根配置
+        if (this.rootFilesToWatch.includes(fileName)) shouldCheck = true
+      } else if (topDir === "plugins" || topDir === "themes") {
+        const nameDir = getDirNameOrEmpty(parts[1])
+        // 插件或主题
+        if (parts.length === 2 && nameDir != "" && fileName == "") {
+          // 目录变动
+          shouldCheck = true
+        } else if (parts.length === 3 && nameDir != "" && fileName != "") {
+          // 受监控文件变动
+          const isPluginFile = topDir === "plugins" && this.pluginExtsToWatch.some(ext => fileName.endsWith(ext))
+          const isThemeFile = topDir === "themes" && this.themeExtsToWatch.some(ext => fileName.endsWith(ext))
+          if (isPluginFile || isThemeFile) shouldCheck = true
+        }
+      } else if (topDir === "snippets" && parts.length === 2 && fileName.endsWith(".css")) {
+        shouldCheck = true
+      }
     }
 
     if (shouldCheck) {

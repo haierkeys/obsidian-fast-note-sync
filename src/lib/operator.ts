@@ -5,7 +5,7 @@ import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, r
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
-import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
 
@@ -30,7 +30,7 @@ export const resetSettingSyncTime = async (plugin: FastSync) => {
 /**
  * 检查同步是否完成
  */
-export function checkSyncCompletion(plugin: FastSync, intervalId?: NodeJS.Timeout) {
+export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<typeof setTimeout>) {
   const ws = plugin.websocket.ws;
   const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
 
@@ -409,7 +409,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     }
   }
 
-  const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths([plugin.app.vault.configDir], plugin) : [];
+  const configDirs = [plugin.app.vault.configDir, ...getConfigSyncCustomDirs(plugin)]
+  const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths(configDirs, plugin) : [];
   for (const path of configPaths) {
     if (configIsPathExcluded(path, plugin)) continue;
     const fullPath = normalizePath(`${plugin.app.vault.configDir}/${path}`);

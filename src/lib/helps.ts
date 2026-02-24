@@ -138,6 +138,39 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
 }
 
 /**
+ * 获取用户自定义的配置同步目录列表（过滤 . 开头的目录）
+ */
+export const getConfigSyncCustomDirs = function (plugin: FastSync): string[] {
+  const setting = plugin.settings.configSyncOtherDirs || ""
+  return setting
+    .split(/\r?\n/)
+    .map((p) => p.trim())
+    .filter((p) => p !== "" && p.startsWith("."))
+}
+
+/**
+ * 校验路径是否属于配置同步范畴
+ * 包含：.obsidian 目录、localStorage 虚拟目录、以及用户自定义目录
+ */
+export const isPathInConfigSyncDirs = function (path: string, plugin: FastSync): boolean {
+  const normalizedPath = path.replace(/\\/g, "/")
+  const configDir = plugin.app.vault.configDir
+
+  // 1. 检查是否为标准配置目录
+  if (normalizedPath.startsWith(configDir + "/")) return true
+
+  // 2. 检查是否为 localStorage 虚拟目录
+  const storagePrefix = plugin.localStorageManager.syncPathPrefix
+  if (normalizedPath === storagePrefix || normalizedPath.startsWith(storagePrefix + "/")) return true
+
+  // 3. 检查是否为用户定义的自定义同步目录
+  const customDirs = getConfigSyncCustomDirs(plugin)
+  if (customDirs.some(dir => normalizedPath === dir || normalizedPath.startsWith(dir + "/"))) return true
+
+  return false
+}
+
+/**
  * 添加到临时排除集合
  */
 export const configAddPathExcluded = function (relativePath: string, plugin: FastSync): void {

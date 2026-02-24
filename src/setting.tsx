@@ -62,6 +62,8 @@ export interface PluginSettings {
   debugRemoteUrls: string
   /** 是否在菜单中显示版本信息 */
   showVersionInfo: boolean
+  /** 配置同步 - 增加目录同步（多行） */
+  configSyncOtherDirs: string
 }
 
 /**
@@ -103,6 +105,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   readonlySyncEnabled: false,
   debugRemoteUrls: "",
   showVersionInfo: false,
+  configSyncOtherDirs: "",
 }
 
 
@@ -732,6 +735,28 @@ export class SettingTab extends PluginSettingTab {
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_whitelist_desc"))
+
+    new Setting(set).setName($("setting.sync.config_dirs")).addTextArea((text) =>
+      text
+        .setPlaceholder($("setting.sync.config_dirs_placeholder"))
+        .setValue(this.plugin.settings.configSyncOtherDirs)
+        .onChange(async (value) => {
+          const lines = value.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+          // 逻辑反转：必须以 . 开头
+          const hasInvalid = lines.some(l => !l.startsWith("."));
+
+          if (hasInvalid) {
+            new Notice($("setting.sync.config_dirs_must_start_with_dot_warning"));
+            const filteredValue = lines.filter(l => l.startsWith(".")).join("\n");
+            this.plugin.settings.configSyncOtherDirs = filteredValue;
+            text.setValue(filteredValue);
+          } else {
+            this.plugin.settings.configSyncOtherDirs = value;
+          }
+          await this.plugin.saveSettings();
+        }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_dirs_desc"))
 
 
     new Setting(set).setName($("setting.sync.sync_delay")).addText((text) =>

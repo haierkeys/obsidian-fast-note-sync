@@ -42,36 +42,39 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
-  plugin.addIgnoredFile(file.path)
+  await plugin.lockManager.withLock(file.path, async () => {
+    plugin.addIgnoredFile(file.path)
+    try {
+      const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+      const contentHash = hashArrayBuffer(content)
+      const baseHash = plugin.fileHashManager.getPathHash(file.path)
 
-  const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
-  const contentHash = hashArrayBuffer(content)
-  const baseHash = plugin.fileHashManager.getPathHash(file.path)
+      const data = {
+        vault: plugin.settings.vault,
+        path: file.path,
+        pathHash: hashContent(file.path),
+        contentHash: contentHash,
+        mtime: file.stat.mtime,
+        ctime: getSafeCtime(file.stat),
+        size: file.stat.size,
+        // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
+        ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+      }
+      plugin.websocket.SendMessage("FileUploadCheck", data)
+      dump(`File modify check sent`, data.path, data.contentHash)
 
-  const data = {
-    vault: plugin.settings.vault,
-    path: file.path,
-    pathHash: hashContent(file.path),
-    contentHash: contentHash,
-    mtime: file.stat.mtime,
-    ctime: getSafeCtime(file.stat),
-    size: file.stat.size,
-    // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
-    ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
-  }
-  plugin.websocket.SendMessage("FileUploadCheck", data)
-  dump(`File modify check sent`, data.path, data.contentHash)
-
-  // WebSocket 消息发送后更新哈希表(使用内容哈希)
-  plugin.fileHashManager.setFileHash(file.path, contentHash)
-
-  plugin.removeIgnoredFile(file.path)
+      // WebSocket 消息发送后更新哈希表(使用内容哈希)
+      plugin.fileHashManager.setFileHash(file.path, contentHash)
+    } finally {
+      plugin.removeIgnoredFile(file.path)
+    }
+  }, { maxRetries: 5, retryInterval: 50 });
 }
 
 /**
  * 文件删除事件处理
  */
-export const fileDelete = function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
+export const fileDelete = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
   if (plugin.settings.syncEnabled == false) return
   if (!(file instanceof TFile)) return
   if (file.path.endsWith(".md")) return
@@ -79,29 +82,32 @@ export const fileDelete = function (file: TAbstractFile, plugin: FastSync, event
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
-  // 如果该文件正在上传或在队列中，则标记为取消，且不再发送服务端删除消息
-  if (activeUploadsMap.has(file.path)) {
-    activeUploadsMap.get(file.path)!.cancelled = true;
-    dump(`Upload cancelled due to file deletion: ${file.path}`);
-    // 仅清理本地状态
-    plugin.fileHashManager.removeFileHash(file.path)
-    return
-  }
+  await plugin.lockManager.withLock(file.path, async () => {
+    // 如果该文件正在上传或在队列中，则标记为取消，且不再发送服务端删除消息
+    if (activeUploadsMap.has(file.path)) {
+      activeUploadsMap.get(file.path)!.cancelled = true;
+      dump(`Upload cancelled due to file deletion: ${file.path}`);
+      // 仅清理本地状态
+      plugin.fileHashManager.removeFileHash(file.path)
+      return
+    }
 
-  plugin.addIgnoredFile(file.path)
+    plugin.addIgnoredFile(file.path)
+    try {
+      const data = {
+        vault: plugin.settings.vault,
+        path: file.path,
+        pathHash: hashContent(file.path),
+      }
+      plugin.websocket.SendMessage("FileDelete", data)
+      dump(`File delete send`, file.path)
 
-  const data = {
-    vault: plugin.settings.vault,
-    path: file.path,
-    pathHash: hashContent(file.path),
-  }
-  plugin.websocket.SendMessage("FileDelete", data)
-  dump(`File delete send`, file.path)
-
-  // WebSocket 消息发送后从哈希表中删除
-  plugin.fileHashManager.removeFileHash(file.path)
-
-  plugin.removeIgnoredFile(file.path)
+      // WebSocket 消息发送后从哈希表中删除
+      plugin.fileHashManager.removeFileHash(file.path)
+    } finally {
+      plugin.removeIgnoredFile(file.path)
+    }
+  }, { maxRetries: 3, retryInterval: 50 });
 }
 
 /**
@@ -115,38 +121,41 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (isPathExcluded(file.path, plugin)) return
   if (!(file instanceof TFile)) return
 
-  plugin.addIgnoredFile(file.path)
+  await plugin.lockManager.withLock(file.path, async () => {
+    plugin.addIgnoredFile(file.path)
+    try {
+      dump(`File rename`, oldfile, file.path)
 
-  dump(`File rename`, oldfile, file.path)
+      // 如果旧文件正在上传，则取消上传且不发送删除消息
+      if (activeUploadsMap.has(oldfile)) {
+        activeUploadsMap.get(oldfile)!.cancelled = true;
+        // 重新上传
+        fileModify(file, plugin)
+        dump(`Upload cancelled due to file rename: ${oldfile}`);
+      } else {
 
-  // 如果旧文件正在上传，则取消上传且不发送删除消息
-  if (activeUploadsMap.has(oldfile)) {
-    activeUploadsMap.get(oldfile)!.cancelled = true;
-    // 重新上传
-    fileModify(file, plugin)
-    dump(`Upload cancelled due to file rename: ${oldfile}`);
-  } else {
+        let contentHash = plugin.fileHashManager.getPathHash(oldfile)
+        if (contentHash == null) {
+          const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
+          contentHash = hashArrayBuffer(content)
+        }
 
-    let contentHash = plugin.fileHashManager.getPathHash(oldfile)
-    if (contentHash == null) {
-      const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
-      contentHash = hashArrayBuffer(content)
+        const data = {
+          vault: plugin.settings.vault,
+          oldPath: oldfile,
+          oldPathHash: hashContent(oldfile),
+          path: file.path,
+          pathHash: hashContent(file.path),
+        }
+        plugin.websocket.SendMessage("FileRename", data)
+        plugin.fileHashManager.setFileHash(file.path, contentHash)
+      }
+
+      plugin.fileHashManager.removeFileHash(oldfile)
+    } finally {
+      plugin.removeIgnoredFile(file.path)
     }
-
-    const data = {
-      vault: plugin.settings.vault,
-      oldPath: oldfile,
-      oldPathHash: hashContent(oldfile),
-      path: file.path,
-      pathHash: hashContent(file.path),
-    }
-    plugin.websocket.SendMessage("FileRename", data)
-    plugin.fileHashManager.setFileHash(file.path, contentHash)
-  }
-
-  plugin.fileHashManager.removeFileHash(oldfile)
-
-  plugin.removeIgnoredFile(file.path)
+  }, { maxRetries: 5, retryInterval: 50 });
 }
 
 
@@ -412,15 +421,20 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
 
   dump(`Receive file delete: `, data.path)
   const normalizedPath = normalizePath(data.path)
-  const file = plugin.app.vault.getFileByPath(normalizedPath)
-  if (file instanceof TFile) {
-    plugin.addIgnoredFile(normalizedPath)
-    await plugin.app.vault.delete(file)
-    plugin.removeIgnoredFile(normalizedPath)
 
-    // 服务端推送删除,从哈希表中移除
-    plugin.fileHashManager.removeFileHash(normalizedPath)
-  }
+  await plugin.lockManager.withLock(normalizedPath, async () => {
+    const file = plugin.app.vault.getFileByPath(normalizedPath)
+    if (file instanceof TFile) {
+      plugin.addIgnoredFile(normalizedPath)
+      try {
+        await plugin.app.vault.delete(file)
+        // 服务端推送删除,从哈希表中移除
+        plugin.fileHashManager.removeFileHash(normalizedPath)
+      } finally {
+        plugin.removeIgnoredFile(normalizedPath)
+      }
+    }
+  }, { maxRetries: 5, retryInterval: 100 });
 
   plugin.fileSyncTasks.completed++
 }
@@ -449,13 +463,19 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
 
   dump(`Receive file sync mtime: `, data.path, data.mtime)
   const normalizedPath = normalizePath(data.path)
-  const file = plugin.app.vault.getFileByPath(normalizedPath)
-  if (file) {
-    const content = await plugin.app.vault.readBinary(file)
-    plugin.addIgnoredFile(normalizedPath)
-    await plugin.app.vault.modifyBinary(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
-    plugin.removeIgnoredFile(normalizedPath)
-  }
+
+  await plugin.lockManager.withLock(normalizedPath, async () => {
+    const file = plugin.app.vault.getFileByPath(normalizedPath)
+    if (file) {
+      const content = await plugin.app.vault.readBinary(file)
+      plugin.addIgnoredFile(normalizedPath)
+      try {
+        await plugin.app.vault.modifyBinary(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
+      } finally {
+        plugin.removeIgnoredFile(normalizedPath)
+      }
+    }
+  }, { maxRetries: 5, retryInterval: 100 });
 
   plugin.fileSyncTasks.completed++
 }
@@ -632,63 +652,62 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
   const normalizedOldPath = normalizePath(data.oldPath)
   const normalizedNewPath = normalizePath(data.path)
 
-  const file = plugin.app.vault.getFileByPath(normalizedOldPath)
-  if (file instanceof TFile) {
-    plugin.addIgnoredFile(normalizedNewPath)
-    plugin.addIgnoredFile(normalizedOldPath)
+  await plugin.lockManager.withLock(normalizedNewPath, async () => {
+    const file = plugin.app.vault.getFileByPath(normalizedOldPath)
+    if (file instanceof TFile) {
+      plugin.addIgnoredFile(normalizedNewPath)
+      plugin.addIgnoredFile(normalizedOldPath)
 
-    const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
-    if (targetFile) {
-      await plugin.app.vault.delete(targetFile)
-    }
+      try {
+        const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+        if (targetFile) {
+          await plugin.app.vault.delete(targetFile)
+        }
 
-    await plugin.app.vault.rename(file, normalizedNewPath)
+        await plugin.app.vault.rename(file, normalizedNewPath)
 
-    if (data.mtime) {
-      const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
-      if (renamedFile instanceof TFile) {
-        const content = await plugin.app.vault.readBinary(renamedFile)
-        await plugin.app.vault.modifyBinary(renamedFile, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
+        if (data.mtime) {
+          const renamedFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+          if (renamedFile instanceof TFile) {
+            const content = await plugin.app.vault.readBinary(renamedFile)
+            await plugin.app.vault.modifyBinary(renamedFile, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
+          }
+        }
+
+        plugin.fileHashManager.removeFileHash(data.oldPath)
+        plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+      } finally {
+        plugin.removeIgnoredFile(normalizedNewPath)
+        plugin.removeIgnoredFile(normalizedOldPath)
       }
-    }
-
-    plugin.removeIgnoredFile(normalizedNewPath)
-    plugin.removeIgnoredFile(normalizedOldPath)
-
-    plugin.fileHashManager.removeFileHash(data.oldPath)
-    plugin.fileHashManager.setFileHash(data.path, data.contentHash)
-  } else {
-    // 如果本地找不到旧文件，但新文件已经存在，检查内容是否一致
-    const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
-    if (targetFile instanceof TFile) {
-      // 检查大小和哈希（如果服务端提供了 size）
-      const sizeMatch = data.size === undefined || targetFile.stat.size === data.size
-      if (sizeMatch) {
-        const content = await plugin.app.vault.readBinary(targetFile)
-        const localContentHash = hashArrayBuffer(content)
-        if (localContentHash === data.contentHash) {
-          dump(`Target attachment already exists and matches hash, skipping rename: ${data.path}`)
-          plugin.fileHashManager.setFileHash(data.path, data.contentHash)
-          plugin.fileSyncTasks.completed++
-          return
+    } else {
+      // 找不到旧文件...
+      const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
+      if (targetFile instanceof TFile) {
+        const sizeMatch = data.size === undefined || targetFile.stat.size === data.size
+        if (sizeMatch) {
+          const content = await plugin.app.vault.readBinary(targetFile)
+          const localContentHash = hashArrayBuffer(content)
+          if (localContentHash === data.contentHash) {
+            dump(`Target attachment already exists and matches hash, skipping rename: ${data.path}`)
+            plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+            return
+          }
         }
       }
-    }
 
-    // 如果本地找不到旧文件，说明本地可能缺失该附件，直接向服务端请求重新推送新路径的内容
-    dump(`Local attachment not found for rename, requesting RePush: ${data.oldPath} -> ${data.path}`)
-    const rePushData = {
-      vault: plugin.settings.vault,
-      path: data.path,
-      pathHash: data.pathHash,
+      dump(`Local attachment not found for rename, requesting RePush: ${data.oldPath} -> ${data.path}`)
+      const rePushData = {
+        vault: plugin.settings.vault,
+        path: data.path,
+        pathHash: data.pathHash,
+      }
+      plugin.websocket.SendMessage("FileRePush", rePushData)
+      if (data.contentHash) {
+        plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+      }
     }
-    plugin.websocket.SendMessage("FileRePush", rePushData)
-
-    // 虽然重命名失败转拉取，但仍需确保哈希表最终能对应上
-    if (data.contentHash) {
-      plugin.fileHashManager.setFileHash(data.path, data.contentHash)
-    }
-  }
+  }, { maxRetries: 10, retryInterval: 100 });
 
   plugin.fileSyncTasks.completed++
 }
@@ -722,28 +741,33 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     }
 
     const normalizedPath = normalizePath(session.path)
-    plugin.addIgnoredFile(normalizedPath)
-    const file = plugin.app.vault.getFileByPath(normalizedPath)
-    if (file) {
-      await plugin.app.vault.modifyBinary(file, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
-    } else {
-      const folder = normalizedPath.split("/").slice(0, -1).join("/")
-      if (folder != "") {
-        const dirExists = plugin.app.vault.getFolderByPath(folder)
-        if (dirExists == null) await plugin.app.vault.createFolder(folder)
+    await plugin.lockManager.withLock(normalizedPath, async () => {
+      plugin.addIgnoredFile(normalizedPath)
+      try {
+        const file = plugin.app.vault.getFileByPath(normalizedPath)
+        if (file) {
+          await plugin.app.vault.modifyBinary(file, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
+        } else {
+          const folder = normalizedPath.split("/").slice(0, -1).join("/")
+          if (folder != "") {
+            const dirExists = plugin.app.vault.getFolderByPath(folder)
+            if (dirExists == null) await plugin.app.vault.createFolder(folder)
+          }
+          await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
+        }
+      } finally {
+        plugin.removeIgnoredFile(normalizedPath)
       }
-      await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
-    }
-    plugin.removeIgnoredFile(normalizedPath)
 
-    if (Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) < session.lastTime) {
-      plugin.localStorageManager.setMetadata("lastFileSyncTime", session.lastTime)
-    }
+      if (Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) < session.lastTime) {
+        plugin.localStorageManager.setMetadata("lastFileSyncTime", session.lastTime)
+      }
 
-    // 下载完成后自动计算哈希并更新缓存 (优化点)
-    const contentHash = hashArrayBuffer(completeFile.buffer)
-    plugin.fileHashManager.setFileHash(session.path, contentHash)
-    dump(`Download complete and hash updated for: ${session.path}`, contentHash)
+      // 下载完成后自动计算哈希并更新缓存
+      const contentHash = hashArrayBuffer(completeFile.buffer)
+      plugin.fileHashManager.setFileHash(session.path, contentHash)
+      dump(`Download complete and hash updated for: ${session.path}`, contentHash)
+    }, { maxRetries: 5, retryInterval: 100 });
 
     // 释放内存计数
     const sessionSize = Array.from(session.chunks.values()).reduce((sum, c) => sum + c.byteLength, 0)

@@ -15,6 +15,7 @@ import { ConfigManager } from "./lib/config_manager";
 import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
 import { MenuManager } from "./lib/menu_manager";
+import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
 import { $ } from "./lang/lang";
 
@@ -27,6 +28,7 @@ export default class FastSync extends Plugin {
   runWsApi: string // 运行时 WebSocket API 地址
   websocket: WebSocketClient // WebSocket 客户端
   configManager: ConfigManager // 配置管理器
+  lockManager: LockManager // 锁管理器
   eventManager: EventManager // 事件管理器
   menuManager: MenuManager // 菜单管理器
   fileHashManager: FileHashManager // 文件哈希管理器
@@ -55,7 +57,7 @@ export default class FastSync extends Plugin {
 
   // 文件下载会话管理
   fileDownloadSessions: Map<string, any> = new Map()
-  syncTimer: NodeJS.Timeout | null = null // 同步定时器
+  syncTimer: ReturnType<typeof setTimeout> | null = null // 同步定时器
 
   public lastStatusBarPercentage: number = 0
   public currentSyncType: "full" | "incremental" = "incremental"
@@ -198,6 +200,9 @@ export default class FastSync extends Plugin {
     this.registerView(SYNC_LOG_VIEW_TYPE, (leaf) => new SyncLogView(leaf, this))
 
 
+
+    // 初始化锁管理器 (必须在事件管理器和操作模块之前)
+    this.lockManager = new LockManager()
 
     // 初始化 菜单/状态栏/命令 等 UI 入口
     this.menuManager = new MenuManager(this)

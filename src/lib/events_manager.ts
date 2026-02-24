@@ -4,9 +4,9 @@ import { folderModify, folderDelete, folderRename } from "./folder_operator";
 import { NoteHistoryModal } from "../views/note-history/history-modal";
 import { noteModify, noteDelete, noteRename } from "./note_operator";
 import { fileModify, fileDelete, fileRename } from "./file_operator";
+import { dump, isPathInConfigSyncDirs } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../lang/lang";
-import { dump } from "./helps";
 
 
 export class EventManager {
@@ -164,10 +164,8 @@ export class EventManager {
     }
     if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
 
-    // 仅处理配置目录下的原始事件
-    if (!path.startsWith(this.plugin.app.vault.configDir + "/")) {
-      return
-    }
+    // 路径安全性校验
+    if (!isPathInConfigSyncDirs(path, this.plugin)) return
 
     this.runWithDelay(path, () => {
       this.plugin.configManager.handleRawEvent(normalizePath(path), true)
@@ -175,7 +173,7 @@ export class EventManager {
   }
 
   /**
-   * 延迟执行同步任务
+   * 延迟执行同步任务，引入 Atomics 保证原子性
    * @param key 任务唯一标识（通常是文件路径）
    * @param task 待执行的任务
    */
@@ -183,20 +181,29 @@ export class EventManager {
     // 如果已有定时器，先清除
     if (this.rawEventTimers.has(key)) {
       clearTimeout(this.rawEventTimers.get(key))
+      this.rawEventTimers.delete(key)
     }
 
     let delay = this.plugin.settings.syncUpdateDelay || 0
     delay = delay + delayset
 
     if (delay <= 0) {
-      task()
-      this.rawEventTimers.delete(key)
+      // 立即执行也需要加锁，以防与其他异步任务冲突
+      // 如果获取锁失败，尝试重试 3 次，每次 50ms
+      this.plugin.lockManager.withLock(key, async () => {
+        task()
+      }, { maxRetries: 3, retryInterval: 50 })
       return
     }
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       this.rawEventTimers.delete(key)
-      task()
+
+      // 执行任务时加锁，并带重试逻辑
+      // 这里的重试是为了应对可能正好有远程同步在写该文件的情况
+      await this.plugin.lockManager.withLock(key, async () => {
+        task()
+      }, { maxRetries: 5, retryInterval: 100 })
     }, delay)
 
     this.rawEventTimers.set(key, timer)
