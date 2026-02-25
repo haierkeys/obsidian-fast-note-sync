@@ -156,6 +156,8 @@ const zh_tw: Partial<LangMap> = {
   "ui.menu.server": "服務端版本",
   "ui.menu.server_desc": "Fast Note Sync 服務端 version 號",
   "ui.menu.settings": "插件設置",
+  "setting.debug.clear_time_desc": "清理本地所有類型的同步記錄時間戳，不影響遠端數據。下次同步將進行全量比對。",
+  "setting.debug.clear_hash_desc": "清理本地文件哈希映射表，不影響物理文件。點擊後將立即觸發重建，可能產生短暫卡頓。",
 
   // --- ui.status ---
   "ui.status.syncing": "同步中",

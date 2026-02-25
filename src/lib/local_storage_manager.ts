@@ -60,6 +60,17 @@ export class LocalStorageManager {
         this.write(this.getInternalKey(field), String(value));
     }
 
+    /**
+     * 清理所有同步记录时间戳
+     */
+    clearSyncTime(): void {
+        this.setMetadata('lastNoteSyncTime', 0);
+        this.setMetadata('lastFileSyncTime', 0);
+        this.setMetadata('lastConfigSyncTime', 0);
+        this.setMetadata('lastFolderSyncTime', 0);
+        this.setMetadata('isInitSync', false);
+    }
+
     constructor(plugin: FastSync) {
         this.plugin = plugin;
     }

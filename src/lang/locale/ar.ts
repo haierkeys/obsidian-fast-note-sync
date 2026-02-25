@@ -156,6 +156,8 @@ const ar: Partial<LangMap> = {
   "ui.menu.server": "إصدار الخادم",
   "ui.menu.server_desc": "رقم إصدار خادم Fast Note Sync",
   "ui.menu.settings": "إعدادات الإضافة",
+  "setting.debug.clear_time_desc": "مسح جميع الطوابع الزمنية للمزامنة المحلية. لا تتأثر البيانات البعيدة. ستقوم المزامنة التالية بإجراء مقارنة كاملة.",
+  "setting.debug.clear_hash_desc": "مسح جدول تخطيط تجزئة الملفات المحلية. لا تتأثر الملفات المادية. سيتم تشغيل إعادة البناء فوراً، مما قد يسبب تعليقاً مؤقتاً.",
 
   // --- ui.status ---
   "ui.status.syncing": "جاري المزامنة",

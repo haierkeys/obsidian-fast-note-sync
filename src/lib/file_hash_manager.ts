@@ -181,6 +181,14 @@ export class FileHashManager {
   }
 
   /**
+   * 清理哈希表内容
+   */
+  clearAll(): void {
+    this.hashMap.clear();
+    this.saveToStorage();
+  }
+
+  /**
    * 清清理已排除文件的哈希
    * 当同步排除设置变更时调用
    */

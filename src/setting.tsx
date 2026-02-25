@@ -317,7 +317,7 @@ export class SettingTab extends PluginSettingTab {
     this.roots.push(root)
     root.render(<SupportView plugin={this.plugin} />)
 
-    this.renderDebugTools(set)
+    this.renderDebugTools(set, true)
   }
 
   private getDebugInfo(): string {
@@ -398,7 +398,7 @@ export class SettingTab extends PluginSettingTab {
     )
   }
 
-  private renderDebugTools(set: HTMLElement) {
+  private renderDebugTools(set: HTMLElement, isHomePage: boolean = false) {
     const debugItem = set.createDiv("setting-item")
     const info = debugItem.createDiv("setting-item-info")
     const desc = info.createDiv("setting-item-description")
@@ -412,39 +412,80 @@ export class SettingTab extends PluginSettingTab {
       new Notice($("setting.support.debug_desc"))
     }
 
-    const issueButton = debugDiv.createEl("button")
-    issueButton.setText($("setting.support.issue"))
-    issueButton.onclick = async () => {
-      await window.navigator.clipboard.writeText(this.getDebugInfo())
-      new ConfirmModal(
-        this.app,
-        $("ui.title.notice"),
-        $("setting.support.issue_notice"),
-        () => {
-          window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
-        },
-        $("ui.button.goto_feedback"),
-        $("ui.button.cancel"),
-        false
-      ).open()
-    }
+    if (isHomePage) {
+      const issueButton = debugDiv.createEl("button")
+      issueButton.setText($("setting.support.issue"))
+      issueButton.onclick = async () => {
+        await window.navigator.clipboard.writeText(this.getDebugInfo())
+        new ConfirmModal(
+          this.app,
+          $("ui.title.notice"),
+          $("setting.support.issue_notice"),
+          () => {
+            window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
+          },
+          $("ui.button.goto_feedback"),
+          $("ui.button.cancel"),
+          false
+        ).open()
+      }
 
-    const featureButton = debugDiv.createEl("button")
-    featureButton.setText($("setting.support.feature"))
-    featureButton.onclick = () => {
-      window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
-    }
+      const featureButton = debugDiv.createEl("button")
+      featureButton.setText($("setting.support.feature"))
+      featureButton.onclick = () => {
+        window.open("https://github.com/haierkeys/obsidian-fast-note-sync/issues", "_blank")
+      }
 
-    const telegramButton = debugDiv.createEl("button")
-    telegramButton.setText($("setting.support.telegram"))
-    telegramButton.onclick = () => {
-      window.open("https://t.me/obsidian_users", "_blank")
-    }
+      const telegramButton = debugDiv.createEl("button")
+      telegramButton.setText($("setting.support.telegram"))
+      telegramButton.onclick = () => {
+        window.open("https://t.me/obsidian_users", "_blank")
+      }
 
-    const logViewButton = debugDiv.createEl("button")
-    logViewButton.setText($("ui.log.view_log"))
-    logViewButton.onclick = () => {
-      this.plugin.activateLogView()
+      const logViewButton = debugDiv.createEl("button")
+      logViewButton.setText($("ui.log.view_log"))
+      logViewButton.onclick = () => {
+        this.plugin.activateLogView()
+      }
+    } else {
+      const clearTimeButton = debugDiv.createEl("button")
+      clearTimeButton.setText($("ui.menu.clear_time"))
+      clearTimeButton.onclick = () => {
+        new ConfirmModal(
+          this.app,
+          $("ui.title.notice"),
+          $("setting.debug.clear_time_desc"),
+          async () => {
+            this.plugin.localStorageManager.clearSyncTime();
+            new Notice($("ui.status.completed"));
+          },
+          $("ui.button.confirm"),
+          $("ui.button.cancel"),
+          false
+        ).open()
+      }
+
+      const clearHashButton = debugDiv.createEl("button")
+      clearHashButton.setText($("ui.menu.rebuild_hash"))
+      clearHashButton.onclick = () => {
+        new ConfirmModal(
+          this.app,
+          $("ui.title.notice"),
+          $("setting.debug.clear_hash_desc"),
+          async () => {
+            this.plugin.fileHashManager.clearAll();
+            this.plugin.configHashManager.clearAll();
+            await this.plugin.fileHashManager.initialize();
+            if (this.plugin.settings.configSyncEnabled) {
+              await this.plugin.configHashManager.initialize();
+            }
+            new Notice($("ui.status.completed"));
+          },
+          $("ui.button.confirm"),
+          $("ui.button.cancel"),
+          false
+        ).open()
+      }
     }
 
     if (Platform.isDesktopApp) {
@@ -494,7 +535,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.show_version_desc"))
 
-    this.renderDebugTools(set)
+    this.renderDebugTools(set, false)
   }
 
   private renderRemoteSettings(set: HTMLElement) {

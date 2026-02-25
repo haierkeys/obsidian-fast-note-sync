@@ -156,6 +156,8 @@ const pl: Partial<LangMap> = {
   "ui.menu.server": "Wersja serwera",
   "ui.menu.server_desc": "Numer wersji serwera Fast Note Sync",
   "ui.menu.settings": "Ustawienia wtyczki",
+  "setting.debug.clear_time_desc": "Wyczyść wszystkie lokalne znaczniki czasu synchronizacji. Dane zdalne pozostaną nienaruszone. Następna synchronizacja przeprowadzi pełne porównanie.",
+  "setting.debug.clear_hash_desc": "Wyczyść lokalną tabelę mapowania skrótów plików. Pliki fizyczne pozostaną nienaruszone. Odbudowa rozpocznie się natychmiast, co może spowodować krótkie przycięcie.",
 
   // --- ui.status ---
   "ui.status.syncing": "Synchronizacja w toku",

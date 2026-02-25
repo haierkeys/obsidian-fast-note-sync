@@ -156,6 +156,8 @@ const fr: Partial<LangMap> = {
   "ui.menu.server": "Version du serveur",
   "ui.menu.server_desc": "Numéro de version du serveur Fast Note Sync",
   "ui.menu.settings": "Réglages du plugin",
+  "setting.debug.clear_time_desc": "Effacer tous les horodatages de synchronisation locaux. Les données distantes ne sont pas affectées. La prochaine synchronisation effectuera une comparaison complète.",
+  "setting.debug.clear_hash_desc": "Effacer la table de hachage des fichiers locaux. Les fichiers physiques ne sont pas affectés. La reconstruction commence immédiatement et peut causer un léger ralentissement.",
 
   // --- ui.status ---
   "ui.status.syncing": "Synchronisation en cours",

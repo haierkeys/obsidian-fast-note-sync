@@ -203,6 +203,14 @@ export class ConfigHashManager {
     }
 
     /**
+     * 清理哈希表内容
+     */
+    clearAll(): void {
+        this.hashMap.clear();
+        this.saveToStorage();
+    }
+
+    /**
      * 清理已排除配置的哈希
      * 当配置排除设置变更时调用
      */

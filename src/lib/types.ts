@@ -30,6 +30,7 @@ export interface ReceiveMessage {
     ctime: number;
     mtime: number;
     lastTime: number;
+    context?: string;
 }
 
 export interface SyncMessage {
@@ -94,6 +95,7 @@ export interface SyncEndData {
     needModifyCount?: number;
     needSyncMtimeCount?: number;
     needDeleteCount?: number;
+    context?: string;
 }
 
 export interface NoteSyncData {
@@ -101,6 +103,7 @@ export interface NoteSyncData {
     notes: SnapFile[];
     delNotes: PathHashFile[];
     missingNotes: PathHashFile[];
+    context?: string;
 }
 
 export interface FileSyncData {
@@ -108,6 +111,7 @@ export interface FileSyncData {
     files: SnapFile[];
     delFiles: PathHashFile[];
     missingFiles: PathHashFile[];
+    context?: string;
 }
 
 export interface ConfigSyncData {
@@ -115,6 +119,7 @@ export interface ConfigSyncData {
     configs: SnapFile[];
     delConfigs: PathHashFile[];
     missingConfigs: PathHashFile[];
+    context?: string;
 }
 
 
@@ -124,6 +129,7 @@ export interface FolderSyncRequest {
     folders: SnapFolder[];
     delFolders?: PathHashFile[];
     missingFolders?: PathHashFile[];
+    context?: string;
 }
 
 export interface FolderSyncRenameMessage {
@@ -140,5 +146,6 @@ export interface FolderSyncData {
     folders: SnapFolder[];
     delFolders: PathHashFile[];
     missingFolders: PathHashFile[];
+    context?: string;
 }
 

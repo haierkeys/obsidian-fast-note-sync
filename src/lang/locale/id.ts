@@ -156,6 +156,8 @@ const id: Partial<LangMap> = {
   "ui.menu.server": "Versi Server",
   "ui.menu.server_desc": "Nomor versi server Fast Note Sync",
   "ui.menu.settings": "Pengaturan Plugin",
+  "setting.debug.clear_time_desc": "Hapus semua stempel waktu sinkronisasi lokal. Data jarak jauh tidak terpengaruh. Sinkronisasi berikutnya akan melakukan perbandingan penuh.",
+  "setting.debug.clear_hash_desc": "Hapus tabel pemetaan hash file lokal. File fisik tidak terpengaruh. Pembangunan kembali akan segera dipicu, mungkin menyebabkan sedikit kelambatan.",
 
   // --- ui.status ---
   "ui.status.syncing": "Sinkronisasi sedang berlangsung",

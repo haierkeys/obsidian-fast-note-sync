@@ -156,6 +156,8 @@ const ja: Partial<LangMap> = {
   "ui.menu.server": "サーバーバージョン",
   "ui.menu.server_desc": "Fast Note Sync サーバーのバージョン番号",
   "ui.menu.settings": "プラグイン設定",
+  "setting.debug.clear_time_desc": "ローカルのすべての同期タイムスタンプをクリアします。リモートデータには影響しません。次回の同期でフル比較が行われます。",
+  "setting.debug.clear_hash_desc": "ローカルファイルハッシュマップをクリアします。物理ファイルには影響しません。クリック後すぐに再構築が開始され、一時的な遅延が発生する場合があります。",
 
   // --- ui.status ---
   "ui.status.syncing": "同期中",

@@ -34,15 +34,22 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
   const ws = plugin.websocket.ws;
   const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
 
-  // 检查是否满足所有完成条件
-  const allSyncEndReceived = plugin.syncTypeCompleteCount >= plugin.expectedSyncCount;
+  // 模块进度的完成判定：已收到 End 通知，且已处理的明细数达到需处理总数
+  const noteSyncDone = plugin.noteSyncEnd && plugin.noteSyncTasks.completed >= (plugin.noteSyncTasks.needUpload + plugin.noteSyncTasks.needModify + plugin.noteSyncTasks.needSyncMtime + plugin.noteSyncTasks.needDelete);
+  const fileSyncDone = plugin.fileSyncEnd && plugin.fileSyncTasks.completed >= (plugin.fileSyncTasks.needUpload + plugin.fileSyncTasks.needModify + plugin.fileSyncTasks.needSyncMtime + plugin.fileSyncTasks.needDelete);
+  const configSyncDone = plugin.configSyncEnd && plugin.configSyncTasks.completed >= (plugin.configSyncTasks.needUpload + plugin.configSyncTasks.needModify + plugin.configSyncTasks.needSyncMtime + plugin.configSyncTasks.needDelete);
+  const folderSyncDone = plugin.folderSyncEnd && plugin.folderSyncTasks.completed >= (plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete);
+
+  const allSyncDone = (!plugin.settings.syncEnabled || (noteSyncDone && folderSyncDone && (plugin.settings.cloudPreviewEnabled || fileSyncDone))) &&
+                      (!plugin.settings.configSyncEnabled || configSyncDone);
+
   const totalChunks = plugin.totalChunksToUpload + plugin.totalChunksToDownload;
   const completedChunks = plugin.uploadedChunksCount + plugin.downloadedChunksCount;
   const allChunksCompleted = totalChunks === 0 || completedChunks >= totalChunks;
   const allDownloadsComplete = plugin.fileDownloadSessions.size === 0;
   const bufferCleared = bufferedAmount === 0;
 
-  if (allSyncEndReceived && allChunksCompleted && allDownloadsComplete && bufferCleared) {
+  if (allSyncDone && allChunksCompleted && allDownloadsComplete && bufferCleared) {
     if (intervalId) clearInterval(intervalId);
 
     plugin.enableWatch();
@@ -175,7 +182,7 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
  */
 async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" | "file" | "config" | "folder") {
   const syncData = data as SyncEndData;
-  dump(`Receive ${type} sync end (wrapper):`, syncData);
+  dump(`Receive ${type} sync end (wrapper):`, syncData.context, syncData);
 
   // 1. 基础任务计数解析
   const tasks = type === "note" ? plugin.noteSyncTasks : type === "file" ? plugin.fileSyncTasks : type === "config" ? plugin.configSyncTasks : plugin.folderSyncTasks;
@@ -244,6 +251,8 @@ async function processSyncMessages(messages: any[], plugin: FastSync) {
  * 启动全量/增量同步
  */
 export const handleSync = async function (plugin: FastSync, isLoadLastTime: boolean = false, syncMode: SyncMode = "auto") {
+  const context = crypto.randomUUID();
+  dump(`Sync context generated: ${context}`);
   if (!plugin.menuManager.ribbonIconStatus) {
     new Notice($("setting.remote.disconnected"));
     return;
@@ -490,6 +499,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   const configData: ConfigSyncData = { lastTime: configTime, configs, delConfigs, missingConfigs };
   const folderData: FolderSyncData = { lastTime: folderTime, folders, delFolders, missingFolders };
 
+  noteData.context = context;
+  fileData.context = context;
+  configData.context = context;
+  folderData.context = context;
+
   handleRequestSend(plugin, syncMode, noteData, fileData, configData, folderData);
 
   // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
@@ -513,6 +527,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       vault: plugin.settings.vault,
       lastTime: noteData.lastTime,
       notes: noteData.notes,
+      context: noteData.context,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delNotes: noteData.delNotes } : {}),
       ...(noteData.missingNotes.length > 0 ? { missingNotes: noteData.missingNotes } : {}),
     };
@@ -522,6 +537,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       vault: plugin.settings.vault,
       lastTime: fileData.lastTime,
       files: fileData.files,
+      context: fileData.context,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delFiles: fileData.delFiles } : {}),
       ...(fileData.missingFiles.length > 0 ? { missingFiles: fileData.missingFiles } : {}),
     };
@@ -534,6 +550,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       vault: plugin.settings.vault,
       lastTime: folderData.lastTime,
       folders: folderData.folders,
+      context: folderData.context,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delFolders: folderData.delFolders } : {}),
       ...(folderData.missingFolders.length > 0 ? { missingFolders: folderData.missingFolders } : {}),
     };
@@ -553,6 +570,7 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       lastTime: configData.lastTime,
       settings: configData.configs,
       cover: Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) == 0,
+      context: configData.context,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delSettings: configData.delConfigs } : {}),
       ...(configData.missingConfigs.length > 0 ? { missingSettings: configData.missingConfigs } : {}),
     };
