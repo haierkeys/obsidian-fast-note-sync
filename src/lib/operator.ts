@@ -411,23 +411,22 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
   const configDirs = [plugin.app.vault.configDir, ...getConfigSyncCustomDirs(plugin)]
   const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths(configDirs, plugin) : [];
+
+  //测试
   for (const path of configPaths) {
     if (configIsPathExcluded(path, plugin)) continue;
-    const fullPath = normalizePath(`${plugin.app.vault.configDir}/${path}`);
+    const fullPath = normalizePath(path);
     const stat = await plugin.app.vault.adapter.stat(fullPath);
     if (!stat) continue;
     if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
-
-    if (path.endsWith(".json") || path.endsWith(".css") || path.endsWith(".js")) {
-      configs.push({
-        path: path,
-        pathHash: hashContent(path),
-        contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
-        mtime: stat.mtime,
-        ctime: stat.ctime,
-        size: stat.size
-      });
-    }
+    configs.push({
+      path: path,
+      pathHash: hashContent(path),
+      contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
+      mtime: stat.mtime,
+      ctime: stat.ctime,
+      size: stat.size
+    });
   }
 
   // 加入 LocalStorage 同步项
