@@ -127,7 +127,12 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
     }
   }
 
-  if (CONFIG_EXCLUDE_SET.has(relativePath)) return true
+  // 1. 检查内部排除集合 (支持左匹配)
+  if (Array.from(CONFIG_EXCLUDE_SET).some(p => isPathMatch(normalizedPath, p))) {
+    return true
+  }
+
+  // 2. 检查用户设置的排除
   const setting = plugin.settings.configExclude || ""
   if (!setting.trim()) return false
   const paths = setting

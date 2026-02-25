@@ -24,8 +24,7 @@ export class ConfigManager {
     const configDir = this.plugin.app.vault.configDir
     this.pluginDir = this.pluginRealDir
 
-    configAddPathExcluded(`${configDir}/plugins/hot-reload/data.json`, this.plugin)
-    configAddPathExcluded(`${configDir}/plugins/hot-reload/main.js`, this.plugin)
+    configAddPathExcluded(`${configDir}/plugins/hot-reload/`, this.plugin)
 
     this.loadEnabledPlugins()
     this.initializeFileStates()
