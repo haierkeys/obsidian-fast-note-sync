@@ -6,7 +6,7 @@ import { noteModify, noteDelete, noteRename } from "./note_operator";
 import { fileModify, fileDelete, fileRename } from "./file_operator";
 import { dump, isPathInConfigSyncDirs } from "./helps";
 import type FastSync from "../main";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 export class EventManager {

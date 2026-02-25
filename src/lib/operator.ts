@@ -7,7 +7,7 @@ import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs } from "./helps";
 import type FastSync from "../main";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 export const startupSync = (plugin: FastSync): void => {

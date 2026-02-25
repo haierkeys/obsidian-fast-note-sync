@@ -4,7 +4,7 @@ import { dump } from "src/lib/helps";
 import { setIcon } from "obsidian";
 import FastSync from "src/main";
 
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 async function getClipboardContent(plugin: FastSync): Promise<void> {

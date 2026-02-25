@@ -17,7 +17,7 @@ import { WebSocketClient } from "./lib/websocket";
 import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
-import { $ } from "./lang/lang";
+import { $ } from "./i18n/lang";
 
 
 export default class FastSync extends Plugin {

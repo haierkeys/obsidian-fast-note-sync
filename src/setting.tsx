@@ -4,7 +4,7 @@ import { createRoot, Root } from "react-dom/client";
 import { SettingsView, SupportView } from "./views/settings-view";
 import { ConfirmModal } from "./views/confirm-modal";
 import { handleSync } from "./lib/operator";
-import { $ } from "./lang/lang";
+import { $ } from "./i18n/lang";
 import FastSync from "./main";
 
 

@@ -1,6 +1,6 @@
 import { App, Modal, Setting } from "obsidian";
 
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 export class ConfirmModal extends Modal {

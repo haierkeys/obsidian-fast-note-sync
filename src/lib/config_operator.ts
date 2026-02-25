@@ -3,7 +3,7 @@ import { normalizePath, Notice } from "obsidian";
 import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, configAddPathExcluded, getSafeCtime, isPathInConfigSyncDirs } from "./helps";
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
 import type FastSync from "../main";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 /**

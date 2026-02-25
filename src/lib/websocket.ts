@@ -5,7 +5,7 @@ import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } f
 import { dump, isWsUrl, addRandomParam, isPathExcluded } from "./helps";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 // 冲突相关错误码

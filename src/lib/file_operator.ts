@@ -6,7 +6,7 @@ import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import { HttpApiService } from "./api";
 import type FastSync from "../main";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 // 上传并发控制 - 手机端严格限制，电脑端适度放开

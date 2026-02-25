@@ -3,7 +3,7 @@ import { App, Modal, Notice, setIcon, ButtonComponent } from "obsidian";
 import { formatFileSize } from "../lib/helps";
 import { HttpApiService } from "../lib/api";
 import type FastSync from "../main";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 
 
 // 简单的接口定义，避免循环依赖

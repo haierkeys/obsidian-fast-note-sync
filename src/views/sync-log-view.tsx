@@ -3,7 +3,7 @@ import { createRoot, Root } from "react-dom/client";
 import * as React from "react";
 
 import { SyncLogManager, SyncLog } from "../lib/sync_log_manager";
-import { $ } from "../lang/lang";
+import { $ } from "../i18n/lang";
 import FastSync from "../main";
 
 

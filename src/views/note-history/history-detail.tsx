@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { LucideIcon } from "./lucide-icon";
-import { $ } from "../../lang/lang";
+import { $ } from "../../i18n/lang";
 
 
 interface HistoryDetailProps {

@@ -3,7 +3,7 @@ import { Menu, MenuItem, Notice, setIcon, Platform } from 'obsidian';
 import { startupSync, startupFullSync, resetSettingSyncTime } from './operator';
 import { NoteHistoryModal } from '../views/note-history/history-modal';
 import { RecycleBinModal } from '../views/recycle-bin-modal';
-import { $ } from '../lang/lang';
+import { $ } from '../i18n/lang';
 import FastSync from '../main';
 
 

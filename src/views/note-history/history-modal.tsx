@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { HistoryView } from "./history-view";
 import type FastSync from "../../main";
-import { $ } from "../../lang/lang";
+import { $ } from "../../i18n/lang";
 
 
 export class NoteHistoryModal extends Modal {

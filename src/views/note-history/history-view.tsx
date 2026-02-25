@@ -5,7 +5,7 @@ import { NoteHistoryItem, HttpApiService, NoteHistoryDetail as NoteHistoryDetail
 import { HistoryDetail } from "./history-detail";
 import { LucideIcon } from "./lucide-icon";
 import type FastSync from "../../main";
-import { $ } from "../../lang/lang";
+import { $ } from "../../i18n/lang";
 
 
 interface HistoryViewProps {
