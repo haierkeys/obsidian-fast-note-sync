@@ -344,7 +344,10 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
  */
 export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdateMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.fileSyncTasks.completed++;
+    return
+  }
 
   // 如果开启了云预览，且是初始化同步阶段，由于云预览可以按需加载，跳过所有附件下载
   if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
@@ -402,7 +405,10 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
  */
 export const receiveFileSyncDelete = async function (data: ReceivePathMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.fileSyncTasks.completed++;
+    return
+  }
 
   if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
@@ -444,7 +450,10 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
  */
 export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.fileSyncTasks.completed++;
+    return
+  }
 
   if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
@@ -644,8 +653,10 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
  */
 export const receiveFileSyncRename = async function (data: any, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
-  if (isPathExcluded(data.oldPath, plugin)) return
+  if (isPathExcluded(data.path, plugin) || isPathExcluded(data.oldPath, plugin)) {
+    plugin.fileSyncTasks.completed++;
+    return
+  }
 
   dump(`Receive file rename:`, data.oldPath, "->", data.path)
 

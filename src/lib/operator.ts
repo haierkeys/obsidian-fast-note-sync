@@ -136,14 +136,35 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
 
     const overallPercentage = (totalProgressSum / expectedCount) * 100;
 
+    // --- 修复 90% 卡死问题 ---
+    // 如果所有模块都收到了 End 消息，且网络缓冲区和下载 session 已清空，
+    // 说明该任务逻辑上已经“推送完毕”，此时如果还差一点到 100%，说明是后端未推送排除项导致的。
+    const allEndReceived = (!plugin.settings.syncEnabled || (plugin.noteSyncEnd && plugin.folderSyncEnd)) &&
+                           (!plugin.settings.configSyncEnabled || plugin.configSyncEnd);
+
+    let finalPercentage = overallPercentage;
+    if (allEndReceived && bufferCleared && allDownloadsComplete && allChunksCompleted) {
+        // 如果各模块已有的 completed 指数已经达到 needXX 的 90% 以上，且无活跃数据传输，强制完成
+        if (overallPercentage > 90) {
+            finalPercentage = 100;
+            // 补偿各 Tasks 的计数，使其满足完成条件，下一次循环即触发完成
+            if (plugin.settings.syncEnabled) {
+                plugin.noteSyncTasks.completed = plugin.noteSyncTasks.needUpload + plugin.noteSyncTasks.needModify + plugin.noteSyncTasks.needSyncMtime + plugin.noteSyncTasks.needDelete;
+                plugin.folderSyncTasks.completed = plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete;
+            }
+            if (plugin.settings.configSyncEnabled) {
+                plugin.configSyncTasks.completed = plugin.configSyncTasks.needUpload + plugin.configSyncTasks.needModify + plugin.configSyncTasks.needSyncMtime + plugin.configSyncTasks.needDelete;
+            }
+        }
+    }
+
     let statusText = $("ui.status.syncing");
     if (bufferedAmount > 0) {
       const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
       statusText = `${$("ui.status.syncing")} (缓冲区: ${bufferMB}MB)`;
     }
 
-    // 使用 100 做分母，overallPercentage 做分子
-    plugin.updateStatusBar(statusText, Math.floor(overallPercentage), 100);
+    plugin.updateStatusBar(statusText, Math.floor(finalPercentage), 100);
   }
 }
 /**
@@ -191,25 +212,8 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
   tasks.needSyncMtime = syncData.needSyncMtimeCount || 0;
   tasks.needDelete = syncData.needDeleteCount || 0;
 
-  // 2. 详细消息解析与分块统计预估 (仅针对 file 同步)
-  if (syncData.messages && syncData.messages.length > 0) {
-    for (const msg of syncData.messages) {
-      if (msg.action === "FileSyncUpdate") {
-        const d = msg.data;
-        // 如果开启了云端预览并且是受限类型，不需要下载它，但在计算总量时暂不排除
-        // 因为 receiveFileSyncUpdate 会根据 setting 处理下载动作
-        const totalChunks = Math.ceil(d.size / (d.chunkSize || 1024 * 1024));
-        plugin.totalChunksToDownload += totalChunks;
-      } else if (msg.action === "FileUpload") {
-        const d = msg.data;
-        const file = plugin.app.vault.getFileByPath(normalizePath(d.path));
-        if (file) {
-          const totalChunks = Math.ceil(file.stat.size / (d.chunkSize || 1024 * 1024));
-          plugin.totalChunksToUpload += totalChunks;
-        }
-      }
-    }
-  }
+  // 1.1 注意：v1.1 协议中 End 消息不再携带 messages 列表。
+  // 排除项的处理将依赖于后端是否推送相关通知。
 
   // 3. 调用原始 End 处理函数 (更新时间戳等)
   if (type === "note") {
@@ -224,11 +228,6 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
   } else if (type === "folder") {
     await receiveFolderSyncEnd(data, plugin);
     plugin.folderSyncEnd = true;
-  }
-
-  // 4. 异步启动子任务处理
-  if (syncData.messages && syncData.messages.length > 0) {
-    processSyncMessages(syncData.messages, plugin);
   }
 }
 

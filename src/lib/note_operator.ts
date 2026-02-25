@@ -125,7 +125,10 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
  */
 export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
   dump(`Receive note modify:`, data.path, data.contentHash, data.mtime, data.pathHash)
 
   const normalizedPath = normalizePath(data.path)
@@ -204,7 +207,10 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
  */
 export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
   dump(`Receive note sync mtime:`, data.path, data.mtime)
 
   const normalizedPath = normalizePath(data.path)
@@ -230,7 +236,10 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
  */
 export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
   dump(`Receive note delete:`, data.path, data.mtime, data.pathHash)
   const normalizedPath = normalizePath(data.path)
 
@@ -269,8 +278,10 @@ export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
  */
 export const receiveNoteSyncRename = async function (data: any, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
-  if (isPathExcluded(data.path, plugin)) return
-  if (isPathExcluded(data.oldPath, plugin)) return
+  if (isPathExcluded(data.path, plugin) || isPathExcluded(data.oldPath, plugin)) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
 
   dump(`Receive note rename:`, data.oldPath, "->", data.path)
 

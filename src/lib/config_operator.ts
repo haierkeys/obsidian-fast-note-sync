@@ -118,14 +118,12 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
 export const receiveConfigSyncModify = async function (data: ReceiveMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
 
-    if (!isPathInConfigSyncDirs(data.path, plugin)) {
-        dump(`Forbidden config path: ${data.path}`)
-        return
-    }
-
     const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
 
-    if (configIsPathExcluded(data.path, plugin)) return
+    if (configIsPathExcluded(data.path, plugin)) {
+        plugin.configSyncTasks.completed++
+        return
+    }
     if (plugin.ignoredConfigFiles.has(data.path)) return
 
     plugin.addIgnoredConfigFile(data.path)
@@ -184,12 +182,10 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
 
     const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
 
-    if (plugin.settings.readonlySyncEnabled) {
-        dump(`Read-only mode: Intercepted config upload request for ${data.path}`)
+    if (configIsPathExcluded(data.path, plugin)) {
         plugin.configSyncTasks.completed++
         return
     }
-    if (configIsPathExcluded(data.path, plugin)) return;
     if (isVirtual) return;
 
     plugin.addIgnoredConfigFile(data.path);
@@ -248,7 +244,10 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
 
     if (!isPathInConfigSyncDirs(data.path, plugin)) return
 
-    if (configIsPathExcluded(data.path, plugin)) return
+    if (configIsPathExcluded(data.path, plugin)) {
+        plugin.configSyncTasks.completed++
+        return
+    }
     if (plugin.ignoredConfigFiles.has(data.path)) return
 
     plugin.addIgnoredConfigFile(data.path)
@@ -271,7 +270,10 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
 
     if (!isPathInConfigSyncDirs(data.path, plugin)) return
 
-    if (configIsPathExcluded(data.path, plugin)) return
+    if (configIsPathExcluded(data.path, plugin)) {
+        plugin.configSyncTasks.completed++
+        return
+    }
     if (plugin.ignoredConfigFiles.has(data.path)) return
 
     const fullPath = normalizePath(data.path)

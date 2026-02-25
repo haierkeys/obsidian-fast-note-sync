@@ -93,7 +93,10 @@ export const folderRename = async function (folder: TFolder, oldPath: string, pl
  */
 export const receiveFolderSyncModify = async function (data: any, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return
-    if (isPathExcluded(data.path, plugin)) return
+    if (isPathExcluded(data.path, plugin)) {
+        plugin.folderSyncTasks.completed++
+        return
+    }
     dump(`Receive folder modify:`, data.path, data.pathHash)
 
     const normalizedPath = normalizePath(data.path)
@@ -119,7 +122,10 @@ export const receiveFolderSyncModify = async function (data: any, plugin: FastSy
  */
 export const receiveFolderSyncDelete = async function (data: any, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return
-    if (isPathExcluded(data.path, plugin)) return
+    if (isPathExcluded(data.path, plugin)) {
+        plugin.folderSyncTasks.completed++
+        return
+    }
     dump(`Receive folder delete:`, data.path, data.pathHash)
 
     const normalizedPath = normalizePath(data.path)
@@ -147,8 +153,10 @@ export const receiveFolderSyncDelete = async function (data: any, plugin: FastSy
  */
 export const receiveFolderSyncRename = async function (data: FolderSyncRenameMessage, plugin: FastSync) {
     if (plugin.settings.syncEnabled == false) return
-    if (isPathExcluded(data.path, plugin)) return
-    if (isPathExcluded(data.oldPath, plugin)) return
+    if (isPathExcluded(data.path, plugin) || isPathExcluded(data.oldPath, plugin)) {
+        plugin.folderSyncTasks.completed++
+        return
+    }
 
     dump(`Receive folder rename:`, data.oldPath, "->", data.path)
 
