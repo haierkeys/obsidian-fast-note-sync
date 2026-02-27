@@ -53,26 +53,24 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
 
   // 计算整体权重进度
   let totalProgressSum = 0;
-  const expectedCount = Math.max(1, plugin.expectedSyncCount);
+  let activeModuleCount = 0;
 
   // 1. 笔记同步进度
   if (plugin.settings.syncEnabled) {
+    activeModuleCount++;
     const noteTasks = plugin.noteSyncTasks;
     const total = noteTasks.needUpload + noteTasks.needModify + noteTasks.needSyncMtime + noteTasks.needDelete;
-    if (!plugin.noteSyncEnd) {
-      totalProgressSum += 0;
-    } else {
+    if (plugin.noteSyncEnd) {
       totalProgressSum += Math.min(1, total > 0 ? noteTasks.completed / total : 1);
     }
   }
 
   // 2. 文件同步进度
-  if (plugin.settings.syncEnabled) {
+  if (plugin.settings.syncEnabled && !plugin.settings.cloudPreviewEnabled) {
+    activeModuleCount++;
     const fileTasks = plugin.fileSyncTasks;
     const taskTotal = fileTasks.needUpload + fileTasks.needModify + fileTasks.needSyncMtime + fileTasks.needDelete;
-    if (!plugin.fileSyncEnd) {
-      totalProgressSum += 0;
-    } else {
+    if (plugin.fileSyncEnd) {
       const avgChunkSize = 512 * 1024;
       const bufferChunks = Math.ceil(bufferedAmount / avgChunkSize);
       const actualUploadedChunks = Math.max(0, plugin.uploadedChunksCount - bufferChunks);
@@ -86,27 +84,27 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
 
   // 3. 配置同步进度
   if (plugin.settings.configSyncEnabled) {
+    activeModuleCount++;
     const configTasks = plugin.configSyncTasks;
     const total = configTasks.needUpload + configTasks.needModify + configTasks.needSyncMtime + configTasks.needDelete;
-    if (!plugin.configSyncEnd) {
-      totalProgressSum += 0;
-    } else {
+    if (plugin.configSyncEnd) {
       totalProgressSum += Math.min(1, total > 0 ? configTasks.completed / total : 1);
     }
   }
 
   // 4. 文件夹同步进度
   if (plugin.settings.syncEnabled) {
+    activeModuleCount++;
     const folderTasks = plugin.folderSyncTasks;
     const total = folderTasks.needUpload + folderTasks.needModify + folderTasks.needSyncMtime + folderTasks.needDelete;
-    if (!plugin.folderSyncEnd) {
-      totalProgressSum += 0;
-    } else {
+    if (plugin.folderSyncEnd) {
       totalProgressSum += Math.min(1, total > 0 ? folderTasks.completed / total : 1);
     }
   }
 
-  const overallPercentage = (totalProgressSum / expectedCount) * 100;
+  // 使用动态计算的活跃模块数，避免 handleSync 中的静态计数同步延迟或错误导致的分母偏差
+  const divisor = Math.max(1, activeModuleCount);
+  const overallPercentage = (totalProgressSum / divisor) * 100;
 
   // 判断是否强制完成：进度到 100% 且网络空闲，或者是所有模块都标记了 Done
   const isProgressComplete = overallPercentage >= 100 && bufferCleared && allDownloadsComplete;
@@ -293,7 +291,6 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     expectedCount += 1; // NoteSync
     expectedCount += 1; // FolderSync
-    // 如果启用了云预览，FileSync 请求不发送，因此不计入预期计数
     if (!plugin.settings.cloudPreviewEnabled) {
       expectedCount += 1; // FileSync
     }

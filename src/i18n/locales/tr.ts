@@ -158,6 +158,7 @@ const tr: Partial<LangMap> = {
   "ui.menu.settings": "Plugin Ayarları",
   "setting.debug.clear_time_desc": "Tüm yerel senkronizasyon zaman damgalarını temizle. Uzak veriler etkilenmez. Bir sonraki senkronizasyon tam bir karşılaştırma yapacaktır.",
   "setting.debug.clear_hash_desc": "Yerel dosya hash eşleme tablosunu temizle. Fiziksel dosyalar etkilenmez. Yeniden oluşturma hemen tetiklenecektir, kısa süreli takılmalara neden olabilir.",
+  "setting.debug.clear_time_success": "Yerel senkronizasyon süresi temizlendi",
 
   // --- ui.status ---
   "ui.status.syncing": "Senkronizasyon yapılıyor",

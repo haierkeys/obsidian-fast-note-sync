@@ -158,6 +158,7 @@ const ko: Partial<LangMap> = {
   "ui.menu.settings": "플러그인 설정",
   "setting.debug.clear_time_desc": "로컬의 모든 동기화 타임스탬프를 지웁니다. 원격 데이터에는 영향을 주지 않습니다. 다음 동기화 시 전체 비교가 수행됩니다.",
   "setting.debug.clear_hash_desc": "로컬 파일 해시 맵을 지웁니다. 실제 파일에는 영향을 주지 않습니다. 클릭 즉시 재구축이 시작되며 일시적인 끊김이 발생할 수 있습니다.",
+  "setting.debug.clear_time_success": "로컬 동기화 시간이 삭제되었습니다",
 
   // --- ui.status ---
   "ui.status.syncing": "동기화 중",

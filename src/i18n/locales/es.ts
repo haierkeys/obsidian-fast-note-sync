@@ -158,6 +158,7 @@ const es: Partial<LangMap> = {
   "ui.menu.settings": "Ajustes del plugin",
   "setting.debug.clear_time_desc": "Borrar todas las marcas de tiempo de sincronización local. Los datos remotos no se ven afectados. La próxima sincronización realizará una comparación completa.",
   "setting.debug.clear_hash_desc": "Borrar la tabla de hash de archivos locales. Los archivos físicos no se ven afectados. La reconstrucción comienza de inmediato y puede causar un breve retraso.",
+  "setting.debug.clear_time_success": "Tiempo de sincronización local borrado",
 
   // --- ui.status ---
   "ui.status.syncing": "Sincronizando",

@@ -158,6 +158,7 @@ const de: Partial<LangMap> = {
   "ui.menu.settings": "Plugin-Einstellungen",
   "setting.debug.clear_time_desc": "Alle lokalen Synchronisierungs-Zeitstempel löschen. Remote-Daten sind nicht betroffen. Die nächste Synchronisierung führt einen vollständigen Vergleich durch.",
   "setting.debug.clear_hash_desc": "Lokale Datei-Hash-Tabelle löschen. Physische Dateien sind nicht betroffen. Der Wiederaufbau startet sofort und kann zu kurzen Verzögerungen führen.",
+  "setting.debug.clear_time_success": "Lokale Synchronisationszeit gelöscht",
 
   // --- ui.status ---
   "ui.status.syncing": "Synchronisierung läuft",

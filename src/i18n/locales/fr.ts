@@ -158,6 +158,7 @@ const fr: Partial<LangMap> = {
   "ui.menu.settings": "Réglages du plugin",
   "setting.debug.clear_time_desc": "Effacer tous les horodatages de synchronisation locaux. Les données distantes ne sont pas affectées. La prochaine synchronisation effectuera une comparaison complète.",
   "setting.debug.clear_hash_desc": "Effacer la table de hachage des fichiers locaux. Les fichiers physiques ne sont pas affectés. La reconstruction commence immédiatement et peut causer un léger ralentissement.",
+  "setting.debug.clear_time_success": "Temps de synchronisation locale effacé",
 
   // --- ui.status ---
   "ui.status.syncing": "Synchronisation en cours",

@@ -150,6 +150,7 @@ const vi: Partial<LangMap> = {
   "ui.menu.settings": "Cài đặt Plugin",
   "setting.debug.clear_time_desc": "Xóa tất cả dấu thời gian đồng bộ hóa cục bộ. Dữ liệu từ xa không bị ảnh hưởng. Lần đồng bộ tiếp theo sẽ thực hiện so sánh đầy đủ.",
   "setting.debug.clear_hash_desc": "Xóa bảng ánh xạ mã băm tệp cục bộ. Các tệp vật lý không bị ảnh hưởng. Việc xây dựng lại sẽ được kích hoạt ngay lập tức, có thể gây ra lag nhẹ.",
+  "setting.debug.clear_time_success": "Đã xóa thời gian đồng bộ cục bộ",
 
   // --- ui.status ---
   "ui.status.syncing": "Đang đồng bộ hóa",
