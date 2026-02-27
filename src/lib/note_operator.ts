@@ -23,6 +23,13 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
       const content: string = await plugin.app.vault.cachedRead(file)
       const contentHash = hashContent(content)
       const baseHash = plugin.fileHashManager.getPathHash(file.path)
+      const lastSyncMtime = plugin.lastSyncMtime.get(file.path)
+
+      // --- 新增：哈希 + mtime 复合校验 ---
+      if (contentHash === baseHash && (lastSyncMtime !== undefined && lastSyncMtime === file.stat.mtime)) {
+        dump(`Note modify intercepted (hash & mtime match): ${file.path}`)
+        return
+      }
 
       const data = {
         vault: plugin.settings.vault,
@@ -59,6 +66,12 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
+  // --- 新增：删除拦截 ---
+  if (plugin.lastSyncPathDeleted.has(file.path)) {
+    dump(`Note delete intercepted: ${file.path}`)
+    return
+  }
+
   await plugin.lockManager.withLock(file.path, async () => {
     plugin.addIgnoredFile(file.path)
     try {
@@ -89,6 +102,12 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
+
+  // --- 新增：重命名拦截 ---
+  if (plugin.lastSyncPathRenamed.has(file.path)) {
+    dump(`Note rename intercepted: ${file.path}`)
+    return
+  }
 
   // 重命名涉及两个路径，我们锁定新路径，旧路径由调用方或原子性保证
   await plugin.lockManager.withLock(file.path, async () => {
@@ -153,8 +172,12 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
 
       // 服务端推送笔记更新,更新哈希表(使用内容哈希)
       plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+      // 记录同步后的 mtime 用于拦截
+      plugin.lastSyncMtime.set(data.path, data.mtime)
     } finally {
-      plugin.removeIgnoredFile(normalizedPath)
+      setTimeout(() => {
+        plugin.removeIgnoredFile(normalizedPath)
+      }, 500);
     }
   }, { maxRetries: 5, retryInterval: 100 });
 
@@ -222,6 +245,8 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
       plugin.addIgnoredFile(normalizedPath)
       try {
         await plugin.app.vault.modify(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
+        // 记录 mtime
+        plugin.lastSyncMtime.set(data.path, data.mtime)
       } finally {
         plugin.removeIgnoredFile(normalizedPath)
       }
@@ -247,12 +272,19 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
     const file = plugin.app.vault.getFileByPath(normalizedPath)
     if (file instanceof TFile) {
       plugin.addIgnoredFile(normalizedPath)
+      // 记录待删除路径，用于拦截本地删除事件
+      plugin.lastSyncPathDeleted.add(normalizedPath)
       try {
         await plugin.app.vault.delete(file)
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath)
+        plugin.lastSyncMtime.delete(normalizedPath)
       } finally {
-        plugin.removeIgnoredFile(normalizedPath)
+        // 延时 500ms 清理拦截集合，确保本地事件已被处理
+        setTimeout(() => {
+          plugin.removeIgnoredFile(normalizedPath)
+          plugin.lastSyncPathDeleted.delete(normalizedPath)
+        }, 500);
       }
     }
   }, { maxRetries: 5, retryInterval: 100 });
@@ -295,6 +327,9 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
       plugin.addIgnoredFile(normalizedNewPath)
       plugin.addIgnoredFile(normalizedOldPath)
 
+      // 记录重命名后的新路径，用于拦截本地事件
+      plugin.lastSyncPathRenamed.add(normalizedNewPath)
+
       try {
         // 如果目标路径已存在文件，先尝试删除
         const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
@@ -317,8 +352,11 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
         plugin.fileHashManager.removeFileHash(data.oldPath)
         plugin.fileHashManager.setFileHash(data.path, data.contentHash)
       } finally {
-        plugin.removeIgnoredFile(normalizedNewPath)
-        plugin.removeIgnoredFile(normalizedOldPath)
+        setTimeout(() => {
+          plugin.removeIgnoredFile(normalizedNewPath)
+          plugin.removeIgnoredFile(normalizedOldPath)
+          plugin.lastSyncPathRenamed.delete(normalizedNewPath)
+        }, 500);
       }
     } else {
       // 找不到旧文件...

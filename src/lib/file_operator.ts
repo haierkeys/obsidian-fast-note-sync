@@ -48,6 +48,13 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
       const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
       const contentHash = hashArrayBuffer(content)
       const baseHash = plugin.fileHashManager.getPathHash(file.path)
+      const lastSyncMtime = plugin.lastSyncMtime.get(file.path)
+
+      // --- 新增：哈希 + mtime 复合校验 ---
+      if (contentHash === baseHash && (lastSyncMtime !== undefined && lastSyncMtime === file.stat.mtime)) {
+        dump(`File modify intercepted (hash & mtime match): ${file.path}`)
+        return
+      }
 
       const data = {
         vault: plugin.settings.vault,
@@ -81,6 +88,12 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
   if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
+
+  // --- 新增：删除拦截 ---
+  if (plugin.lastSyncPathDeleted.has(file.path)) {
+    dump(`File delete intercepted: ${file.path}`)
+    return
+  }
 
   await plugin.lockManager.withLock(file.path, async () => {
     // 如果该文件正在上传或在队列中，则标记为取消，且不再发送服务端删除消息
@@ -120,6 +133,12 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (plugin.isIgnoredFile(file.path) && eventEnter) return
   if (isPathExcluded(file.path, plugin)) return
   if (!(file instanceof TFile)) return
+
+  // --- 新增：重命名拦截 ---
+  if (plugin.lastSyncPathRenamed.has(file.path)) {
+    dump(`File rename intercepted: ${file.path}`)
+    return
+  }
 
   await plugin.lockManager.withLock(file.path, async () => {
     plugin.addIgnoredFile(file.path)
@@ -396,6 +415,8 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
 
   // 服务端推送文件更新,更新哈希表(使用内容哈希)
   plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+  // 记录 mtime
+  plugin.lastSyncMtime.set(data.path, data.mtime)
 
   plugin.fileSyncTasks.completed++
 }
@@ -432,12 +453,19 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
     const file = plugin.app.vault.getFileByPath(normalizedPath)
     if (file instanceof TFile) {
       plugin.addIgnoredFile(normalizedPath)
+      // 记录待删除路径
+      plugin.lastSyncPathDeleted.add(normalizedPath)
       try {
         await plugin.app.vault.delete(file)
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath)
+        plugin.lastSyncMtime.delete(normalizedPath)
       } finally {
-        plugin.removeIgnoredFile(normalizedPath)
+        // 延时 500ms 清理
+        setTimeout(() => {
+          plugin.removeIgnoredFile(normalizedPath)
+          plugin.lastSyncPathDeleted.delete(normalizedPath)
+        }, 500);
       }
     }
   }, { maxRetries: 5, retryInterval: 100 });
@@ -480,8 +508,12 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
       plugin.addIgnoredFile(normalizedPath)
       try {
         await plugin.app.vault.modifyBinary(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
+        // 记录 mtime
+        plugin.lastSyncMtime.set(data.path, data.mtime)
       } finally {
-        plugin.removeIgnoredFile(normalizedPath)
+        setTimeout(() => {
+          plugin.removeIgnoredFile(normalizedPath)
+        }, 500);
       }
     }
   }, { maxRetries: 5, retryInterval: 100 });
@@ -669,6 +701,9 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
       plugin.addIgnoredFile(normalizedNewPath)
       plugin.addIgnoredFile(normalizedOldPath)
 
+      // 记录新路径
+      plugin.lastSyncPathRenamed.add(normalizedNewPath)
+
       try {
         const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
         if (targetFile) {
@@ -688,8 +723,11 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
         plugin.fileHashManager.removeFileHash(data.oldPath)
         plugin.fileHashManager.setFileHash(data.path, data.contentHash)
       } finally {
-        plugin.removeIgnoredFile(normalizedNewPath)
-        plugin.removeIgnoredFile(normalizedOldPath)
+        setTimeout(() => {
+          plugin.removeIgnoredFile(normalizedNewPath)
+          plugin.removeIgnoredFile(normalizedOldPath)
+          plugin.lastSyncPathRenamed.delete(normalizedNewPath)
+        }, 500);
       }
     } else {
       // 找不到旧文件...
@@ -767,7 +805,9 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
           await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
         }
       } finally {
-        plugin.removeIgnoredFile(normalizedPath)
+        setTimeout(() => {
+          plugin.removeIgnoredFile(normalizedPath)
+        }, 500);
       }
 
       if (Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) < session.lastTime) {
@@ -777,6 +817,8 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
       // 下载完成后自动计算哈希并更新缓存
       const contentHash = hashArrayBuffer(completeFile.buffer)
       plugin.fileHashManager.setFileHash(session.path, contentHash)
+      // 记录同步后的 mtime
+      plugin.lastSyncMtime.set(session.path, session.mtime)
       dump(`Download complete and hash updated for: ${session.path}`, contentHash)
     }, { maxRetries: 5, retryInterval: 100 });
 

@@ -41,6 +41,12 @@ export const folderDelete = async function (folder: TFolder, plugin: FastSync, e
     if (eventEnter && plugin.isIgnoredFile(folder.path)) return
     if (isPathExcluded(folder.path, plugin)) return
 
+    // --- 新增：删除拦截 ---
+    if (plugin.lastSyncPathDeleted.has(folder.path)) {
+        dump(`Folder delete intercepted: ${folder.path}`)
+        return
+    }
+
     await plugin.lockManager.withLock(folder.path, async () => {
         plugin.addIgnoredFile(folder.path)
         try {
@@ -66,6 +72,12 @@ export const folderRename = async function (folder: TFolder, oldPath: string, pl
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.isIgnoredFile(folder.path)) return
     if (isPathExcluded(folder.path, plugin)) return
+
+    // --- 新增：重命名拦截 ---
+    if (plugin.lastSyncPathRenamed.has(folder.path)) {
+        dump(`Folder rename intercepted: ${folder.path}`)
+        return
+    }
 
     await plugin.lockManager.withLock(folder.path, async () => {
         plugin.addIgnoredFile(folder.path)
@@ -110,7 +122,9 @@ export const receiveFolderSyncModify = async function (data: any, plugin: FastSy
             }
             plugin.folderSnapshotManager.setFolderMtime(normalizedPath, data.mtime || Date.now())
         } finally {
-            plugin.removeIgnoredFile(normalizedPath)
+            setTimeout(() => {
+                plugin.removeIgnoredFile(normalizedPath)
+            }, 500);
         }
     }, { maxRetries: 5, retryInterval: 100 });
 
@@ -137,10 +151,15 @@ export const receiveFolderSyncDelete = async function (data: any, plugin: FastSy
             try {
                 // 必须检测并等到 目录里的所有文件数量 为 0 之后再执行
                 await waitForFolderEmpty(normalizedPath, plugin);
+                // 记录待删除路径
+                plugin.lastSyncPathDeleted.add(normalizedPath)
                 await plugin.app.vault.delete(folder, true)
                 plugin.folderSnapshotManager.removeFolder(normalizedPath)
             } finally {
-                plugin.removeIgnoredFile(normalizedPath)
+                setTimeout(() => {
+                    plugin.removeIgnoredFile(normalizedPath)
+                    plugin.lastSyncPathDeleted.delete(normalizedPath)
+                }, 500);
             }
         }
     }, { maxRetries: 10, retryInterval: 200 });
@@ -169,6 +188,9 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
             plugin.addIgnoredFile(normalizedNewPath)
             plugin.addIgnoredFile(normalizedOldPath)
 
+            // 记录新路径
+            plugin.lastSyncPathRenamed.add(normalizedNewPath)
+
             try {
                 const target = plugin.app.vault.getAbstractFileByPath(normalizedNewPath)
                 if (target) {
@@ -179,8 +201,11 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
                 plugin.folderSnapshotManager.removeFolder(normalizedOldPath)
                 plugin.folderSnapshotManager.setFolderMtime(normalizedNewPath, data.mtime || Date.now())
             } finally {
-                plugin.removeIgnoredFile(normalizedNewPath)
-                plugin.removeIgnoredFile(normalizedOldPath)
+                setTimeout(() => {
+                    plugin.removeIgnoredFile(normalizedNewPath)
+                    plugin.removeIgnoredFile(normalizedOldPath)
+                    plugin.lastSyncPathRenamed.delete(normalizedNewPath)
+                }, 500);
             }
         } else {
             const target = plugin.app.vault.getAbstractFileByPath(normalizedNewPath)

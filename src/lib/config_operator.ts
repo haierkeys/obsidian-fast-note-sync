@@ -72,10 +72,13 @@ export const configModify = async function (path: string, plugin: FastSync, even
     // 如果当前内容哈希与已记录的哈希一致，则说明无需发送
     // 这通常发生在接收到服务端更新并写入本地后，文件系统事件触发的回调中
     const savedHash = plugin.configHashManager?.getPathHash(path)
-    if (savedHash === contentHash) {
+    const lastSyncMtime = plugin.lastSyncMtime.get(path)
+
+    if (savedHash === contentHash && (lastSyncMtime !== undefined && lastSyncMtime === mtime)) {
         plugin.removeIgnoredConfigFile(path)
         // 顺便更新一下 ConfigManager 的状态，防止下次误判
         plugin.configManager.updateFileState(normalizePath(path), mtime)
+        dump(`Config modify intercepted (hash & mtime match): ${path}`)
         return
     }
 
@@ -104,6 +107,12 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
     if (configIsPathExcluded(path, plugin)) return
+
+    // --- 新增：删除拦截 ---
+    if (plugin.lastSyncPathDeleted.has(path)) {
+        dump(`Config delete intercepted: ${path}`)
+        return
+    }
 
     plugin.addIgnoredConfigFile(path)
     const data = {
@@ -170,6 +179,8 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
     // 更新配置哈希表
     if (plugin.configHashManager && plugin.configHashManager.isReady()) {
         plugin.configHashManager.setFileHash(data.path, data.contentHash)
+        // 记录 mtime
+        plugin.lastSyncMtime.set(data.path, data.mtime)
     }
 
     plugin.configSyncTasks.completed++
@@ -278,7 +289,16 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
 
     const fullPath = normalizePath(data.path)
     if (await plugin.app.vault.adapter.exists(fullPath)) {
-        await plugin.app.vault.adapter.remove(fullPath)
+        // 记录删除路径
+        plugin.lastSyncPathDeleted.add(data.path)
+        try {
+            await plugin.app.vault.adapter.remove(fullPath)
+        } finally {
+            // 延时 500ms 清理
+            setTimeout(() => {
+                plugin.lastSyncPathDeleted.delete(data.path)
+            }, 500);
+        }
     }
 
     // 更新 ConfigManager 的文件状态

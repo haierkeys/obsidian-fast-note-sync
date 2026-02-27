@@ -43,6 +43,9 @@ export default class FastSync extends Plugin {
   isWatchEnabled: boolean = false // 是否启用文件监听
   ignoredFiles: Set<string> = new Set() // 忽略的文件集合
   ignoredConfigFiles: Set<string> = new Set() // 忽略的配置文件集合
+  lastSyncMtime: Map<string, number> = new Map() // 最后同步的修改时间
+  lastSyncPathDeleted: Set<string> = new Set() // 通过同步删除的路径
+  lastSyncPathRenamed: Set<string> = new Set() // 通过同步重命名的路径
 
   syncTypeCompleteCount: number = 0 // 已完成同步的类型计数
   expectedSyncCount: number = 0 // 预期的同步类型计数
@@ -328,12 +331,18 @@ export default class FastSync extends Plugin {
       }
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
+      this.lastSyncMtime = new Map()
+      this.lastSyncPathDeleted = new Set()
+      this.lastSyncPathRenamed = new Set()
       this.fileDownloadSessions = new Map<string, any>()
     } else {
       this.websocket.unRegister()
       this.isWatchEnabled = false
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
+      this.lastSyncMtime.clear()
+      this.lastSyncPathDeleted.clear()
+      this.lastSyncPathRenamed.clear()
       this.fileDownloadSessions.clear()
       this.updateStatusBar("")
     }
