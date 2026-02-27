@@ -158,6 +158,7 @@ const en: Partial<LangMap> = {
   "ui.menu.settings": "Plugin Settings",
   "setting.debug.clear_time_desc": "Clear all local sync timestamps. Remote data is not affected. The next sync will perform a full comparison.",
   "setting.debug.clear_hash_desc": "Clear the local file hash map. Physical files are not affected. Rebuilding starts immediately and may cause a brief lag.",
+  "setting.debug.clear_time_success": "Local sync time cleared",
 
   // --- ui.status ---
   "ui.status.syncing": "Syncing",

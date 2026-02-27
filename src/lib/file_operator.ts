@@ -188,12 +188,16 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     plugin.fileSyncTasks.completed++
     return
   }
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.fileSyncTasks.completed++
+    return
+  }
   dump(`Receive file need upload (queued): `, data.path, data.sessionId)
 
   const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
   if (!file) {
     dump(`File not found for upload: ${data.path} `)
+    plugin.fileSyncTasks.completed++
     return
   }
 
@@ -740,6 +744,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
           if (localContentHash === data.contentHash) {
             dump(`Target attachment already exists and matches hash, skipping rename: ${data.path}`)
             plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+            plugin.fileSyncTasks.completed++
             return
           }
         }

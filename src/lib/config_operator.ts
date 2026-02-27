@@ -189,7 +189,10 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
 
-    if (!isPathInConfigSyncDirs(data.path, plugin)) return;
+    if (!isPathInConfigSyncDirs(data.path, plugin)) {
+        plugin.configSyncTasks.completed++
+        return
+    }
 
     const isVirtual = data.path.startsWith(plugin.localStorageManager.syncPathPrefix)
 
@@ -197,7 +200,10 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         plugin.configSyncTasks.completed++
         return
     }
-    if (isVirtual) return;
+    if (isVirtual) {
+        plugin.configSyncTasks.completed++
+        return
+    }
 
     plugin.addIgnoredConfigFile(data.path);
 

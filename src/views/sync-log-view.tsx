@@ -27,7 +27,7 @@ export class SyncLogView extends ItemView {
     }
 
     getIcon(): string {
-        return "scroll-text";
+        return "arrow-down-up";
     }
 
     async onOpen() {

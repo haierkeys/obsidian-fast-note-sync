@@ -1,6 +1,6 @@
 import { Menu, MenuItem, Notice, setIcon, Platform } from 'obsidian';
 
-import { startupSync, startupFullSync, resetSettingSyncTime } from './operator';
+import { startupSync, startupFullSync, resetSettingSyncTime, rebuildAllHashes } from './operator';
 import { NoteHistoryModal } from '../views/note-history/history-modal';
 import { RecycleBinModal } from '../views/recycle-bin-modal';
 import { $ } from '../i18n/lang';
@@ -14,6 +14,7 @@ export class MenuManager {
   public ribbonIconStatus: boolean = false;
   public statusBarItem: HTMLElement;
   public historyStatusBarItem: HTMLElement;
+  public logStatusBarItem: HTMLElement;
 
   private statusBarText: HTMLElement;
   private statusBarFill: HTMLElement;
@@ -47,6 +48,15 @@ export class MenuManager {
       }
     });
 
+    // 初始化 同步日志 状态栏入口
+    this.logStatusBarItem = this.plugin.addStatusBarItem();
+    this.logStatusBarItem.addClass("mod-clickable");
+    setIcon(this.logStatusBarItem, "arrow-down-up");
+    this.logStatusBarItem.setAttribute("aria-label", $("ui.log.view_log"));
+    this.logStatusBarItem.addEventListener("click", () => {
+      this.plugin.activateLogView();
+    });
+
     this.plugin.addCommand({
       id: "start-full-sync",
       name: $("ui.menu.full_sync"),
@@ -62,10 +72,7 @@ export class MenuManager {
     this.plugin.addCommand({
       id: "rebuild-file-hash-map",
       name: $("ui.menu.rebuild_hash"),
-      callback: async () => {
-        await this.plugin.fileHashManager.rebuildHashMap();
-        await this.plugin.configHashManager.rebuildHashMap();
-      },
+      callback: () => rebuildAllHashes(this.plugin),
     });
 
     // 注册命令
@@ -179,7 +186,7 @@ export class MenuManager {
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
-        .setIcon("scroll-text")
+        .setIcon("arrow-down-up")
         .setTitle($("ui.log.title"))
         .onClick(async () => {
           this.plugin.activateLogView();

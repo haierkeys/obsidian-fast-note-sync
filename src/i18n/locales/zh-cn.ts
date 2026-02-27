@@ -158,6 +158,7 @@ const zh_cn: Partial<LangMap> = {
   "ui.menu.settings": "插件设置",
   "setting.debug.clear_time_desc": "清理本地所有类型的同步记录时间戳，不影响远端数据。下次同步将进行全量比对。",
   "setting.debug.clear_hash_desc": "清理本地文件哈希映射表，不影响物理文件。点击后将立即触发重建，可能产生短暂卡顿。",
+  "setting.debug.clear_time_success": "本地同步时间清理完毕",
 
   // --- ui.status ---
   "ui.status.syncing": "同步中",

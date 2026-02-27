@@ -1,9 +1,9 @@
 import { App, PluginSettingTab, Notice, Setting, Platform, SearchComponent } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
+import { handleSync, resetSettingSyncTime, rebuildAllHashes } from "./lib/operator";
 import { SettingsView, SupportView } from "./views/settings-view";
 import { ConfirmModal } from "./views/confirm-modal";
-import { handleSync } from "./lib/operator";
 import { $ } from "./i18n/lang";
 import FastSync from "./main";
 
@@ -456,8 +456,7 @@ export class SettingTab extends PluginSettingTab {
           $("ui.title.notice"),
           $("setting.debug.clear_time_desc"),
           async () => {
-            this.plugin.localStorageManager.clearSyncTime();
-            new Notice($("ui.status.completed"));
+            await resetSettingSyncTime(this.plugin);
           },
           $("ui.button.confirm"),
           $("ui.button.cancel"),
@@ -473,13 +472,7 @@ export class SettingTab extends PluginSettingTab {
           $("ui.title.notice"),
           $("setting.debug.clear_hash_desc"),
           async () => {
-            this.plugin.fileHashManager.clearAll();
-            this.plugin.configHashManager.clearAll();
-            await this.plugin.fileHashManager.initialize();
-            if (this.plugin.settings.configSyncEnabled) {
-              await this.plugin.configHashManager.initialize();
-            }
-            new Notice($("ui.status.completed"));
+            await rebuildAllHashes(this.plugin);
           },
           $("ui.button.confirm"),
           $("ui.button.cancel"),

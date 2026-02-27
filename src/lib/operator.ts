@@ -18,11 +18,13 @@ export const startupFullSync = async (plugin: FastSync) => {
 };
 
 export const resetSettingSyncTime = async (plugin: FastSync) => {
-  plugin.localStorageManager.setMetadata("lastFileSyncTime", 0);
-  plugin.localStorageManager.setMetadata("lastNoteSyncTime", 0);
-  plugin.localStorageManager.setMetadata("lastConfigSyncTime", 0);
-  plugin.localStorageManager.setMetadata("lastFolderSyncTime", 0);
-  plugin.localStorageManager.setMetadata("isInitSync", false);
+  plugin.localStorageManager.clearSyncTime();
+  new Notice($("setting.debug.clear_time_success"));
+};
+
+export const rebuildAllHashes = async (plugin: FastSync) => {
+  await plugin.fileHashManager.rebuildHashMap();
+  await plugin.configHashManager.rebuildHashMap();
 };
 
 
@@ -41,7 +43,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
   const folderSyncDone = plugin.folderSyncEnd && plugin.folderSyncTasks.completed >= (plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete);
 
   const allSyncDone = (!plugin.settings.syncEnabled || (noteSyncDone && folderSyncDone && (plugin.settings.cloudPreviewEnabled || fileSyncDone))) &&
-                      (!plugin.settings.configSyncEnabled || configSyncDone);
+    (!plugin.settings.configSyncEnabled || configSyncDone);
 
   const totalChunks = plugin.totalChunksToUpload + plugin.totalChunksToDownload;
   const completedChunks = plugin.uploadedChunksCount + plugin.downloadedChunksCount;
@@ -49,7 +51,67 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
   const allDownloadsComplete = plugin.fileDownloadSessions.size === 0;
   const bufferCleared = bufferedAmount === 0;
 
-  if (allSyncDone && allChunksCompleted && allDownloadsComplete && bufferCleared) {
+  // 计算整体权重进度
+  let totalProgressSum = 0;
+  const expectedCount = Math.max(1, plugin.expectedSyncCount);
+
+  // 1. 笔记同步进度
+  if (plugin.settings.syncEnabled) {
+    const noteTasks = plugin.noteSyncTasks;
+    const total = noteTasks.needUpload + noteTasks.needModify + noteTasks.needSyncMtime + noteTasks.needDelete;
+    if (!plugin.noteSyncEnd) {
+      totalProgressSum += 0;
+    } else {
+      totalProgressSum += Math.min(1, total > 0 ? noteTasks.completed / total : 1);
+    }
+  }
+
+  // 2. 文件同步进度
+  if (plugin.settings.syncEnabled) {
+    const fileTasks = plugin.fileSyncTasks;
+    const taskTotal = fileTasks.needUpload + fileTasks.needModify + fileTasks.needSyncMtime + fileTasks.needDelete;
+    if (!plugin.fileSyncEnd) {
+      totalProgressSum += 0;
+    } else {
+      const avgChunkSize = 512 * 1024;
+      const bufferChunks = Math.ceil(bufferedAmount / avgChunkSize);
+      const actualUploadedChunks = Math.max(0, plugin.uploadedChunksCount - bufferChunks);
+      const doneChunks = actualUploadedChunks + plugin.downloadedChunksCount;
+
+      const unitsTotal = taskTotal + totalChunks;
+      const unitsDone = fileTasks.completed + doneChunks;
+      totalProgressSum += Math.min(1, unitsTotal > 0 ? unitsDone / unitsTotal : 1);
+    }
+  }
+
+  // 3. 配置同步进度
+  if (plugin.settings.configSyncEnabled) {
+    const configTasks = plugin.configSyncTasks;
+    const total = configTasks.needUpload + configTasks.needModify + configTasks.needSyncMtime + configTasks.needDelete;
+    if (!plugin.configSyncEnd) {
+      totalProgressSum += 0;
+    } else {
+      totalProgressSum += Math.min(1, total > 0 ? configTasks.completed / total : 1);
+    }
+  }
+
+  // 4. 文件夹同步进度
+  if (plugin.settings.syncEnabled) {
+    const folderTasks = plugin.folderSyncTasks;
+    const total = folderTasks.needUpload + folderTasks.needModify + folderTasks.needSyncMtime + folderTasks.needDelete;
+    if (!plugin.folderSyncEnd) {
+      totalProgressSum += 0;
+    } else {
+      totalProgressSum += Math.min(1, total > 0 ? folderTasks.completed / total : 1);
+    }
+  }
+
+  const overallPercentage = (totalProgressSum / expectedCount) * 100;
+
+  // 判断是否强制完成：进度到 100% 且网络空闲，或者是所有模块都标记了 Done
+  const isProgressComplete = overallPercentage >= 100 && bufferCleared && allDownloadsComplete;
+
+  if ((allSyncDone && allChunksCompleted && allDownloadsComplete && bufferCleared) || isProgressComplete) {
     if (intervalId) clearInterval(intervalId);
 
     plugin.enableWatch();
@@ -78,84 +140,23 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
 
     setTimeout(() => plugin.updateStatusBar(""), 3000);
   } else {
-    // 实时计算加权进度，防止由于任务总数突增导致的百分比回跳
-    let totalProgressSum = 0;
-    const expectedCount = Math.max(1, plugin.expectedSyncCount);
-
-    // 1. 笔记同步进度
-    if (plugin.settings.syncEnabled) {
-      const noteTasks = plugin.noteSyncTasks;
-      const total = noteTasks.needUpload + noteTasks.needModify + noteTasks.needSyncMtime + noteTasks.needDelete;
-      if (!plugin.noteSyncEnd) {
-        totalProgressSum += 0; // 尚未收到结束通知，该项进度为 0
-      } else {
-        totalProgressSum += total > 0 ? noteTasks.completed / total : 1;
-      }
-    }
-
-    // 2. 文件同步进度 (包含分片和缓冲区)
-    if (plugin.settings.syncEnabled) {
-      const fileTasks = plugin.fileSyncTasks;
-      const taskTotal = fileTasks.needUpload + fileTasks.needModify + fileTasks.needSyncMtime + fileTasks.needDelete;
-      if (!plugin.fileSyncEnd) {
-        totalProgressSum += 0;
-      } else {
-        // 计算分片进度，考虑缓冲区
-        const avgChunkSize = 512 * 1024;
-        const bufferChunks = Math.ceil(bufferedAmount / avgChunkSize);
-        const actualUploadedChunks = Math.max(0, plugin.uploadedChunksCount - bufferChunks);
-        const doneChunks = actualUploadedChunks + plugin.downloadedChunksCount;
-
-        const unitsTotal = taskTotal + totalChunks;
-        const unitsDone = fileTasks.completed + doneChunks;
-        totalProgressSum += unitsTotal > 0 ? unitsDone / unitsTotal : 1;
-      }
-    }
-
-    // 3. 配置同步进度
-    if (plugin.settings.configSyncEnabled) {
-      const configTasks = plugin.configSyncTasks;
-      const total = configTasks.needUpload + configTasks.needModify + configTasks.needSyncMtime + configTasks.needDelete;
-      if (!plugin.configSyncEnd) {
-        totalProgressSum += 0;
-      } else {
-        totalProgressSum += total > 0 ? configTasks.completed / total : 1;
-      }
-    }
-
-    // 4. 文件夹同步进度
-    if (plugin.settings.syncEnabled) {
-      const folderTasks = plugin.folderSyncTasks;
-      const total = folderTasks.needUpload + folderTasks.needModify + folderTasks.needSyncMtime + folderTasks.needDelete;
-      if (!plugin.folderSyncEnd) {
-        totalProgressSum += 0;
-      } else {
-        totalProgressSum += total > 0 ? folderTasks.completed / total : 1;
-      }
-    }
-
-    const overallPercentage = (totalProgressSum / expectedCount) * 100;
-
-    // --- 修复 90% 卡死问题 ---
-    // 如果所有模块都收到了 End 消息，且网络缓冲区和下载 session 已清空，
-    // 说明该任务逻辑上已经“推送完毕”，此时如果还差一点到 100%，说明是后端未推送排除项导致的。
-    const allEndReceived = (!plugin.settings.syncEnabled || (plugin.noteSyncEnd && plugin.folderSyncEnd)) &&
-                           (!plugin.settings.configSyncEnabled || plugin.configSyncEnd);
+    // --- 强制完成逻辑与 90% 补偿 ---
+    const allEndReceived = (!plugin.settings.syncEnabled || (plugin.noteSyncEnd && plugin.folderSyncEnd && (plugin.settings.cloudPreviewEnabled || plugin.fileSyncEnd))) &&
+      (!plugin.settings.configSyncEnabled || plugin.configSyncEnd);
 
     let finalPercentage = overallPercentage;
     if (allEndReceived && bufferCleared && allDownloadsComplete && allChunksCompleted) {
-        // 如果各模块已有的 completed 指数已经达到 needXX 的 90% 以上，且无活跃数据传输，强制完成
-        if (overallPercentage > 90) {
-            finalPercentage = 100;
-            // 补偿各 Tasks 的计数，使其满足完成条件，下一次循环即触发完成
-            if (plugin.settings.syncEnabled) {
-                plugin.noteSyncTasks.completed = plugin.noteSyncTasks.needUpload + plugin.noteSyncTasks.needModify + plugin.noteSyncTasks.needSyncMtime + plugin.noteSyncTasks.needDelete;
-                plugin.folderSyncTasks.completed = plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete;
-            }
-            if (plugin.settings.configSyncEnabled) {
-                plugin.configSyncTasks.completed = plugin.configSyncTasks.needUpload + plugin.configSyncTasks.needModify + plugin.configSyncTasks.needSyncMtime + plugin.configSyncTasks.needDelete;
-            }
+      if (overallPercentage > 90) {
+        finalPercentage = 100;
+        if (plugin.settings.syncEnabled) {
+          plugin.noteSyncTasks.completed = plugin.noteSyncTasks.needUpload + plugin.noteSyncTasks.needModify + plugin.noteSyncTasks.needSyncMtime + plugin.noteSyncTasks.needDelete;
+          plugin.folderSyncTasks.completed = plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete;
+          plugin.fileSyncTasks.completed = plugin.fileSyncTasks.needUpload + plugin.fileSyncTasks.needModify + plugin.fileSyncTasks.needSyncMtime + plugin.fileSyncTasks.needDelete;
         }
+        if (plugin.settings.configSyncEnabled) {
+          plugin.configSyncTasks.completed = plugin.configSyncTasks.needUpload + plugin.configSyncTasks.needModify + plugin.configSyncTasks.needSyncMtime + plugin.configSyncTasks.needDelete;
+        }
+      }
     }
 
     let statusText = $("ui.status.syncing");
@@ -164,7 +165,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
       statusText = `${$("ui.status.syncing")} (缓冲区: ${bufferMB}MB)`;
     }
 
-    plugin.updateStatusBar(statusText, Math.floor(finalPercentage), 100);
+    plugin.updateStatusBar(statusText, Math.min(100, Math.floor(finalPercentage)), 100);
   }
 }
 /**

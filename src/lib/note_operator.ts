@@ -194,11 +194,20 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
     plugin.noteSyncTasks.completed++
     return
   }
-  if (isPathExcluded(data.path, plugin)) return
+  if (isPathExcluded(data.path, plugin)) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
   dump(`Receive note need push:`, data.path)
-  if (!data.path.endsWith(".md")) return
+  if (!data.path.endsWith(".md")) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
   const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
-  if (!file) return
+  if (!file) {
+    plugin.noteSyncTasks.completed++
+    return
+  }
 
   plugin.addIgnoredFile(file.path)
 
