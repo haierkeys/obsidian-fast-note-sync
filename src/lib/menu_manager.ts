@@ -197,7 +197,7 @@ export class MenuManager {
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
-        .setIcon("trash")
+        .setIcon("lucide-archive-x")
         .setTitle($("ui.recycle_bin.title"))
         .onClick(async () => {
           new RecycleBinModal(this.plugin.app, this.plugin).open();
