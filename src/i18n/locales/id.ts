@@ -246,12 +246,24 @@ const id: Partial<LangMap> = {
   "ui.recycle_bin.note": "Catatan",
   "ui.recycle_bin.file": "Lampiran",
   "ui.recycle_bin.restore": "Pulihkan",
-  "ui.recycle_bin.restore_success": "Pemulihan berhasil",
+  "ui.recycle_bin.restore_success": "Berhasil dipulihkan",
   "ui.recycle_bin.restore_fail": "Gagal memulihkan",
   "ui.recycle_bin.empty": "Tempat sampah kosong",
-  "ui.recycle_bin.load_more": "Muat lebih banyak",
-  "ui.recycle_bin.delete_time": "Waktu Penghapusan",
-  "ui.recycle_bin.offline": "Tempat sampah hanya tersedia saat terhubung ke layanan jarak jauh",
+  "ui.recycle_bin.empty_note": "Tidak ada catatan yang dihapus di tempat sampah",
+  "ui.recycle_bin.empty_file": "Tidak ada lampiran yang dihapus di tempat sampah",
+  "ui.recycle_bin.load_more": "Muat Lebih Banyak",
+  "ui.recycle_bin.delete_time": "Dihapus Pada",
+  "ui.recycle_bin.offline": "Tempat sampah hanya tersedia saat layanan terhubung",
+  "ui.recycle_bin.clear": "Bersihkan",
+  "ui.recycle_bin.clear_confirm": "Apakah Anda yakin ingin mengosongkan tempat sampah? Tindakan ini tidak dapat dibatalkan.",
+  "ui.recycle_bin.delete": "Hapus",
+  "ui.recycle_bin.delete_confirm": "Apakah Anda yakin ingin menghapus item ini? Tindakan ini tidak dapat dibatalkan.",
+  "ui.recycle_bin.bulk_delete": "Hapus Massal",
+  "ui.recycle_bin.bulk_delete_confirm": "Apakah Anda yakin ingin menghapus item yang dipilih? Tindakan ini tidak dapat dibatalkan.",
+  "ui.recycle_bin.clear_success": "Tempat sampah berhasil dibersihkan",
+  "ui.recycle_bin.delete_success": "Berhasil dihapus",
+  "ui.recycle_bin.bulk_restore": "Pulihkan Massal",
+  "ui.recycle_bin.select_all": "Pilih Semua"
 }
 
 

@@ -249,9 +249,21 @@ const ar: Partial<LangMap> = {
   "ui.recycle_bin.restore_success": "تمت الاستعادة بنجاح",
   "ui.recycle_bin.restore_fail": "فشلت الاستعادة",
   "ui.recycle_bin.empty": "سلة المهملات فارغة",
+  "ui.recycle_bin.empty_note": "لا توجد ملاحظات محذوفة في سلة المهملات",
+  "ui.recycle_bin.empty_file": "لا توجد مرفقات محذوفة في سلة المهملات",
   "ui.recycle_bin.load_more": "تحميل المزيد",
   "ui.recycle_bin.delete_time": "وقت الحذف",
   "ui.recycle_bin.offline": "سلة المهملات متاحة فقط عند الاتصال بالخدمة البعيدة",
+  "ui.recycle_bin.clear": "مسح",
+  "ui.recycle_bin.clear_confirm": "هل أنت متأكد من إفراغ سلة المهملات؟ لا يمكن التراجع عن هذا الإجراء.",
+  "ui.recycle_bin.delete": "حذف",
+  "ui.recycle_bin.delete_confirm": "هل أنت متأكد من حذف هذا العنصر؟ لا يمكن التراجع عن هذا الإجراء.",
+  "ui.recycle_bin.bulk_delete": "حذف جماعي",
+  "ui.recycle_bin.bulk_delete_confirm": "هل أنت متأكد من حذف العناصر المحددة؟ لا يمكن التراجع عن هذا الإجراء.",
+  "ui.recycle_bin.clear_success": "تم مسح سلة المهملات",
+  "ui.recycle_bin.delete_success": "تم الحذف بنجاح",
+  "ui.recycle_bin.bulk_restore": "استعادة جماعية",
+  "ui.recycle_bin.select_all": "تحديد الكل",
 }
 
 

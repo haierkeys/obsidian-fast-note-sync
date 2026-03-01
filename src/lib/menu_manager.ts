@@ -15,6 +15,7 @@ export class MenuManager {
   public statusBarItem: HTMLElement;
   public historyStatusBarItem: HTMLElement;
   public logStatusBarItem: HTMLElement;
+  public recycleBinStatusBarItem: HTMLElement;
 
   private statusBarText: HTMLElement;
   private statusBarFill: HTMLElement;
@@ -55,6 +56,15 @@ export class MenuManager {
     this.logStatusBarItem.setAttribute("aria-label", $("ui.log.view_log"));
     this.logStatusBarItem.addEventListener("click", () => {
       this.plugin.activateLogView();
+    });
+
+    // 初始化 回收站 状态栏入口
+    this.recycleBinStatusBarItem = this.plugin.addStatusBarItem();
+    this.recycleBinStatusBarItem.addClass("mod-clickable");
+    setIcon(this.recycleBinStatusBarItem, "lucide-archive-x");
+    this.recycleBinStatusBarItem.setAttribute("aria-label", $("ui.recycle_bin.title"));
+    this.recycleBinStatusBarItem.addEventListener("click", () => {
+      new RecycleBinModal(this.plugin.app, this.plugin).open();
     });
 
     this.plugin.addCommand({

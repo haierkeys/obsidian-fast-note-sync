@@ -233,7 +233,6 @@ const vi: Partial<LangMap> = {
   "ui.button.goto_feedback": "Đi tới Phản hồi Github",
   "ui.title.notice": "Thông báo phản hồi",
 
-  // --- ui.recycle_bin ---
   "ui.recycle_bin.title": "Thùng rác",
   "ui.recycle_bin.note": "Ghi chú",
   "ui.recycle_bin.file": "Tệp đính kèm",
@@ -241,9 +240,21 @@ const vi: Partial<LangMap> = {
   "ui.recycle_bin.restore_success": "Khôi phục thành công",
   "ui.recycle_bin.restore_fail": "Khôi phục thất bại",
   "ui.recycle_bin.empty": "Thùng rác trống",
+  "ui.recycle_bin.empty_note": "Không có ghi chú đã xóa trong thùng rác",
+  "ui.recycle_bin.empty_file": "Không có tệp đính kèm đã xóa trong thùng rác",
   "ui.recycle_bin.load_more": "Tải thêm",
   "ui.recycle_bin.delete_time": "Thời gian xóa",
-  "ui.recycle_bin.offline": "Thùng rác chỉ khả dụng khi kết nối với máy chủ",
+  "ui.recycle_bin.offline": "Thùng rác chỉ khả dụng khi dịch vụ được kết nối",
+  "ui.recycle_bin.clear": "Xóa sạch",
+  "ui.recycle_bin.clear_confirm": "Bạn có chắc chắn muốn làm trống thùng rác không? Hành động này không thể hoàn tác.",
+  "ui.recycle_bin.delete": "Xóa",
+  "ui.recycle_bin.delete_confirm": "Bạn có chắc chắn muốn xóa mục này không? Hành động này không thể hoàn tác.",
+  "ui.recycle_bin.bulk_delete": "Xóa hàng loạt",
+  "ui.recycle_bin.bulk_delete_confirm": "Bạn có chắc chắn muốn xóa các mục đã chọn không? Hành động này không thể hoàn tác.",
+  "ui.recycle_bin.clear_success": "Thùng rác đã được xóa sạch",
+  "ui.recycle_bin.delete_success": "Đã xóa thành công",
+  "ui.recycle_bin.bulk_restore": "Khôi phục hàng loạt",
+  "ui.recycle_bin.select_all": "Chọn tất cả",
 }
 
 

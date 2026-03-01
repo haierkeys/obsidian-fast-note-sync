@@ -377,6 +377,42 @@ export class HttpApiService {
             return false;
         }
     }
+
+    /**
+     * 清除回收站内容（支持批量和一键清空）
+     */
+    async clearRecycleBin(type: 'note' | 'file', paths?: string[], pathHashes?: string[]): Promise<boolean> {
+        const endpoint = type === 'note' ? '/api/note/recycle-clear' : '/api/file/recycle-clear';
+        const url = `${this.plugin.runApi}${endpoint}`;
+
+        try {
+            const res = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    vault: this.plugin.settings.vault,
+                    paths: paths || [],
+                    pathHashes: pathHashes || []
+                })
+            });
+
+            const json = await res.json();
+            if (res.status !== 200 || !json.status) {
+                const msg = json?.message || (paths && paths.length > 0 ? "批量永久删除失败" : "清空回收站失败");
+                new Notice(msg);
+                return false;
+            }
+            return true;
+
+        } catch (e) {
+            console.error("clearRecycleBin error:", e);
+            new Notice("请求失败，请检查网络");
+            return false;
+        }
+    }
 }
 
 /**

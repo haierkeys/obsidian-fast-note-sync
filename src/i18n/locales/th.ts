@@ -241,9 +241,21 @@ const th: Partial<LangMap> = {
   "ui.recycle_bin.restore_success": "กู้คืนสำเร็จ",
   "ui.recycle_bin.restore_fail": "กู้คืนล้มเหลว",
   "ui.recycle_bin.empty": "ถังขยะว่างเปล่า",
+  "ui.recycle_bin.empty_note": "ไม่มีบันทึกที่ถูกลบในถังขยะ",
+  "ui.recycle_bin.empty_file": "ไม่มีไฟล์แนบที่ถูกลบในถังขยะ",
   "ui.recycle_bin.load_more": "โหลดเพิ่มเติม",
   "ui.recycle_bin.delete_time": "เวลาที่ลบ",
   "ui.recycle_bin.offline": "ถังขยะใช้งานได้เมื่อเชื่อมต่อกับเซิร์ฟเวอร์เท่านั้น",
+  "ui.recycle_bin.clear": "ล้าง",
+  "ui.recycle_bin.clear_confirm": "คุณแน่ใจหรือไม่ว่าต้องการล้างถังขยะ? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+  "ui.recycle_bin.delete": "ลบ",
+  "ui.recycle_bin.delete_confirm": "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+  "ui.recycle_bin.bulk_delete": "ลบจำนวนมาก",
+  "ui.recycle_bin.bulk_delete_confirm": "คุณแน่ใจหรือไม่ว่าต้องการลบรายการที่เลือก? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+  "ui.recycle_bin.clear_success": "ล้างถังขยะแล้ว",
+  "ui.recycle_bin.delete_success": "ลบสำเร็จ",
+  "ui.recycle_bin.bulk_restore": "กู้คืนจำนวนมาก",
+  "ui.recycle_bin.select_all": "เลือกทั้งหมด",
 }
 
 

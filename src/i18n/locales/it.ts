@@ -246,12 +246,24 @@ const it: Partial<LangMap> = {
   "ui.recycle_bin.note": "Note",
   "ui.recycle_bin.file": "Allegati",
   "ui.recycle_bin.restore": "Ripristina",
-  "ui.recycle_bin.restore_success": "Ripristino riuscito",
-  "ui.recycle_bin.restore_fail": "Ripristino fallito",
+  "ui.recycle_bin.restore_success": "Ripristinato con successo",
+  "ui.recycle_bin.restore_fail": "Ripristino non riuscito",
   "ui.recycle_bin.empty": "Il cestino è vuoto",
+  "ui.recycle_bin.empty_note": "Nessuna nota eliminata nel cestino",
+  "ui.recycle_bin.empty_file": "Nessun allegato eliminato nel cestino",
   "ui.recycle_bin.load_more": "Carica altro",
-  "ui.recycle_bin.delete_time": "Ora eliminazione",
-  "ui.recycle_bin.offline": "Il cestino è disponibile solo quando connesso al servizio remoto",
+  "ui.recycle_bin.delete_time": "Eliminato il",
+  "ui.recycle_bin.offline": "Il cestino è disponibile solo con il servizio connesso",
+  "ui.recycle_bin.clear": "Svuota",
+  "ui.recycle_bin.clear_confirm": "Svuotare il cestino? Questa azione è irreversibile.",
+  "ui.recycle_bin.delete": "Elimina",
+  "ui.recycle_bin.delete_confirm": "Eliminare questo elemento? Questa azione è irreversibile.",
+  "ui.recycle_bin.bulk_delete": "Eliminazione di massa",
+  "ui.recycle_bin.bulk_delete_confirm": "Eliminare gli elementi selezionati? Questa azione è irreversibile.",
+  "ui.recycle_bin.clear_success": "Cestino svuotato",
+  "ui.recycle_bin.delete_success": "Eliminato con successo",
+  "ui.recycle_bin.bulk_restore": "Ripristino di massa",
+  "ui.recycle_bin.select_all": "Seleziona tutto"
 }
 
 

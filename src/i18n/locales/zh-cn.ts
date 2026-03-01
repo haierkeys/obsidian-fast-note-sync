@@ -249,9 +249,21 @@ const zh_cn: Partial<LangMap> = {
   "ui.recycle_bin.restore_success": "恢复成功",
   "ui.recycle_bin.restore_fail": "恢复失败",
   "ui.recycle_bin.empty": "回收站为空",
+  "ui.recycle_bin.empty_note": "回收站中暂无已删除的笔记",
+  "ui.recycle_bin.empty_file": "回收站中暂无已删除的附件",
   "ui.recycle_bin.load_more": "加载更多",
   "ui.recycle_bin.delete_time": "删除时间",
   "ui.recycle_bin.offline": "回收站仅在远端服务已连接时可用",
+  "ui.recycle_bin.clear": "清空",
+  "ui.recycle_bin.clear_confirm": "确认清空回收站吗？此操作不可恢复。",
+  "ui.recycle_bin.delete": "删除",
+  "ui.recycle_bin.delete_confirm": "确认要删除该项吗？此操作不可恢复。",
+  "ui.recycle_bin.bulk_delete": "批量删除",
+  "ui.recycle_bin.bulk_delete_confirm": "确认要删除选中的项目吗？此操作不可恢复。",
+  "ui.recycle_bin.clear_success": "回收站已清空",
+  "ui.recycle_bin.delete_success": "删除成功",
+  "ui.recycle_bin.bulk_restore": "批量恢复",
+  "ui.recycle_bin.select_all": "全选",
 }
 
 

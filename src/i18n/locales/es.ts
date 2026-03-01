@@ -242,16 +242,28 @@ const es: Partial<LangMap> = {
   "ui.title.notice": "Aviso de feedback",
 
   // --- ui.recycle_bin ---
-  "ui.recycle_bin.title": "Papelera de reciclaje",
+  "ui.recycle_bin.title": "Papelera",
   "ui.recycle_bin.note": "Notas",
   "ui.recycle_bin.file": "Adjuntos",
   "ui.recycle_bin.restore": "Restaurar",
-  "ui.recycle_bin.restore_success": "Restauración exitosa",
-  "ui.recycle_bin.restore_fail": "Fallo al restaurar",
+  "ui.recycle_bin.restore_success": "Restaurado con éxito",
+  "ui.recycle_bin.restore_fail": "Error al restaurar",
   "ui.recycle_bin.empty": "La papelera está vacía",
+  "ui.recycle_bin.empty_note": "No hay notas eliminadas en la papelera",
+  "ui.recycle_bin.empty_file": "No hay archivos adjuntos eliminados en la papelera",
   "ui.recycle_bin.load_more": "Cargar más",
-  "ui.recycle_bin.delete_time": "Hora de eliminación",
-  "ui.recycle_bin.offline": "La papelera solo está disponible al conectar con el servicio remoto",
+  "ui.recycle_bin.delete_time": "Eliminado el",
+  "ui.recycle_bin.offline": "La papelera solo está disponible cuando el servicio está conectado",
+  "ui.recycle_bin.clear": "Vaciar",
+  "ui.recycle_bin.clear_confirm": "¿Estás seguro de que deseas vaciar la papelera? Esta acción no se puede deshacer.",
+  "ui.recycle_bin.delete": "Eliminar",
+  "ui.recycle_bin.delete_confirm": "¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.",
+  "ui.recycle_bin.bulk_delete": "Eliminación masiva",
+  "ui.recycle_bin.bulk_delete_confirm": "¿Estás seguro de que deseas eliminar los elementos seleccionados? Esta acción no se puede deshacer.",
+  "ui.recycle_bin.clear_success": "Papelera vaciada",
+  "ui.recycle_bin.delete_success": "Eliminado con éxito",
+  "ui.recycle_bin.bulk_restore": "Restauración masiva",
+  "ui.recycle_bin.select_all": "Seleccionar todo",
 }
 
 

@@ -246,12 +246,24 @@ const pl: Partial<LangMap> = {
   "ui.recycle_bin.note": "Notatki",
   "ui.recycle_bin.file": "Załączniki",
   "ui.recycle_bin.restore": "Przywróć",
-  "ui.recycle_bin.restore_success": "Przywrócenie pomyślne",
-  "ui.recycle_bin.restore_fail": "Przywrócenie nieudane",
+  "ui.recycle_bin.restore_success": "Przywrócono pomyślnie",
+  "ui.recycle_bin.restore_fail": "Przywracanie nieudane",
   "ui.recycle_bin.empty": "Kosz jest pusty",
+  "ui.recycle_bin.empty_note": "Brak usuniętych notatek w koszu",
+  "ui.recycle_bin.empty_file": "Brak usuniętych załączników w koszu",
   "ui.recycle_bin.load_more": "Załaduj więcej",
-  "ui.recycle_bin.delete_time": "Czas usunięcia",
-  "ui.recycle_bin.offline": "Kosz dostępny tylko przy połączeniu z usługą zdalną",
+  "ui.recycle_bin.delete_time": "Usunięto o",
+  "ui.recycle_bin.offline": "Kosz jest dostępny tylko po połączeniu z usługą",
+  "ui.recycle_bin.clear": "Wyczyść",
+  "ui.recycle_bin.clear_confirm": "Czy na pewno chcesz opróżnić kosz? Tej operacji nie można cofnąć.",
+  "ui.recycle_bin.delete": "Usuń",
+  "ui.recycle_bin.delete_confirm": "Czy na pewno chcesz usunąć ten element? Tej operacji nie można cofnąć.",
+  "ui.recycle_bin.bulk_delete": "Usuń zaznaczone",
+  "ui.recycle_bin.bulk_delete_confirm": "Czy na pewno chcesz usunąć wybrane elementy? Tej operacji nie można cofnąć.",
+  "ui.recycle_bin.clear_success": "Kosz został wyczyszczony",
+  "ui.recycle_bin.delete_success": "Usunięto pomyślnie",
+  "ui.recycle_bin.bulk_restore": "Przywróć zaznaczone",
+  "ui.recycle_bin.select_all": "Zaznacz wszystko"
 }
 
 
