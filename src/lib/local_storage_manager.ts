@@ -81,6 +81,7 @@ export class LocalStorageManager {
     startWatch() {
         if (this.watchTimer) return;
 
+        dump("[LocalStorageManager] Starting watch...");
         // 加载持久化的哈希和时间戳状态
         this.loadState();
 
@@ -94,6 +95,7 @@ export class LocalStorageManager {
      */
     stopWatch() {
         if (this.watchTimer) {
+            dump("[LocalStorageManager] Stopping watch.");
             window.clearInterval(this.watchTimer);
             this.watchTimer = null;
         }
@@ -104,8 +106,22 @@ export class LocalStorageManager {
      */
     private async checkChanges() {
         // 如果未连接或未初始化，跳过检查
-        if (!this.plugin.websocket.isConnected() || !this.plugin.getWatchEnabled() || !this.plugin.isFirstSync) return;
-        if (!this.plugin.settings.configSyncEnabled) return;
+        if (!this.plugin.websocket.isConnected()) {
+            // dump("[LocalStorageManager] Skip check: WebSocket not connected.");
+            return;
+        }
+        if (!this.plugin.getWatchEnabled()) {
+            // dump("[LocalStorageManager] Skip check: Watch disabled.");
+            return;
+        }
+        if (!this.plugin.isFirstSync) {
+            // dump("[LocalStorageManager] Skip check: First sync not completed.");
+            return;
+        }
+        if (!this.plugin.settings.configSyncEnabled) {
+            // dump("[LocalStorageManager] Skip check: Config sync disabled.");
+            return;
+        }
 
         const keys = this.getKeys();
         for (const key of keys) {
@@ -116,6 +132,7 @@ export class LocalStorageManager {
             const lastHash = this.lastHashes.get(key);
 
             if (currentHash !== lastHash) {
+                dump(`[LocalStorageManager] Detected change in key: ${key}`);
                 // 内容发生变化，更新时间戳并触发同步
                 const mtime = Date.now();
                 this.lastHashes.set(key, currentHash);
@@ -123,6 +140,7 @@ export class LocalStorageManager {
                 this.saveState();
 
                 const path = this.keyToPath(key);
+                dump(`[LocalStorageManager] Triggering configModify for path: ${path}`);
                 configModify(path, this.plugin, false, val);
             }
         }
@@ -138,8 +156,9 @@ export class LocalStorageManager {
                 mtimes: Object.fromEntries(this.lastMtimes)
             };
             this.write(this.getInternalKey("local-storage-state"), JSON.stringify(state));
+            dump("[LocalStorageManager] State saved.");
         } catch (e) {
-            dump("保存 LocalStorage 状态失败:", e);
+            dump("[LocalStorageManager] Failed to save state:", e);
         }
     }
 
@@ -153,15 +172,19 @@ export class LocalStorageManager {
                 const state = JSON.parse(stored);
                 if (state.hashes) this.lastHashes = new Map(Object.entries(state.hashes));
                 if (state.mtimes) this.lastMtimes = new Map(Object.entries(state.mtimes));
+                dump("[LocalStorageManager] State loaded from storage.");
             } else {
                 // 兼容旧版
                 const oldHashes = this.read(this.getInternalKey("local-storage-hashes"));
                 if (oldHashes) {
                     this.lastHashes = new Map(Object.entries(JSON.parse(oldHashes)));
+                    dump("[LocalStorageManager] Old hashes loaded.");
+                } else {
+                    dump("[LocalStorageManager] No stored state found.");
                 }
             }
         } catch (e) {
-            dump("加载 LocalStorage 状态失败:", e);
+            dump("[LocalStorageManager] Failed to load state:", e);
         }
     }
 
@@ -250,6 +273,7 @@ export class LocalStorageManager {
     async handleReceivedUpdate(path: string, content: string): Promise<boolean> {
         const key = this.pathToKey(path);
         if (key) {
+            dump(`[LocalStorageManager] Received remote update for key: ${key}`);
             const contentHash = hashContent(content);
             this.setItemValue(key, content);
 

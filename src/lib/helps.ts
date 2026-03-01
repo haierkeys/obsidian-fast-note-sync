@@ -164,9 +164,12 @@ export const isPathInConfigSyncDirs = function (path: string, plugin: FastSync):
   // 1. 检查是否为标准配置目录
   if (normalizedPath.startsWith(configDir + "/")) return true
 
+
+
   // 2. 检查是否为 localStorage 虚拟目录
   const storagePrefix = plugin.localStorageManager.syncPathPrefix
-  if (normalizedPath === storagePrefix || normalizedPath.startsWith(storagePrefix + "/")) return true
+
+  if (normalizedPath === storagePrefix || normalizedPath.startsWith(storagePrefix)) return true
 
   // 3. 检查是否为用户定义的自定义同步目录
   const customDirs = getConfigSyncCustomDirs(plugin)
