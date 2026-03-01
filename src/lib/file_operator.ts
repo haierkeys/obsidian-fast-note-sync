@@ -212,7 +212,8 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file)
       if (!content) return;
 
-      const actualTotalChunks = Math.ceil(content.byteLength / chunkSize)
+      // 如果是空文件，强制设置分片数量为 1，发送一个空分片以通知服务端上传完成
+      const actualTotalChunks = content.byteLength === 0 ? 1 : Math.ceil(content.byteLength / chunkSize)
 
       // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
       if (plugin.getWatchEnabled()) {

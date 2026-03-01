@@ -215,6 +215,10 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   const contentHash = hashContent(content)
   const baseHash = plugin.fileHashManager.getPathHash(file.path)
 
+  if (content.length === 0) {
+    dump(`Empty note upload: ${data.path}`);
+  }
+
   const sendData = {
     vault: plugin.settings.vault,
     ctime: getSafeCtime(file.stat),

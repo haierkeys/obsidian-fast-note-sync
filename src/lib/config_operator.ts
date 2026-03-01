@@ -230,6 +230,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     }
 
     if (!contentBuf || mtime === 0) {
+        plugin.configSyncTasks.completed++;
         return;
     }
 
