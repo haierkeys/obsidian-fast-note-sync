@@ -364,9 +364,6 @@ export default class FastSync extends Plugin {
     // 同步更新 WS 地址
     this.runWsApi = cleanUrl.replace(/^http/, "ws");
 
-    if (this.settings.showSyncNotice) {
-      new Notice($("ui.status.api_redirected", { url: cleanUrl }), 5000);
-    }
   }
 
   async activateLogView() {

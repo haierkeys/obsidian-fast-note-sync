@@ -72,8 +72,8 @@ const zh_cn: Partial<LangMap> = {
   "setting.sync.startup_delay_desc": "配置连接成功后延迟执行首次检查更新的时间。\n如果你打开 Obsidian 时因为其他插件加载导致卡顿，可以尝试设置此项。默认 500 毫秒",
   "setting.sync.sync_delay": "延迟更新同步 (毫秒)",
   "setting.sync.sync_delay_desc": "笔记、附件、配置修改后延迟执行同步的时间。默认 0 毫秒 (即时同步)",
-  "setting.sync.show_notice": "显示同步提示",
-  "setting.sync.show_notice_desc": "开启后，同步开始和同步完成时将弹出系统提示。",
+  "setting.general.show_notice": "显示消息提示",
+  "setting.general.show_notice_desc": "关闭所有成功操作的消息提示，错误消息正常显示",
   "setting.sync.config_dirs": "配置同步-增加目录同步",
   "setting.sync.config_dirs_desc": "在核心配置同步基础上，增加需要同步的特殊目录（必须以 <b>.</b> 开头）。每行一个。\n注意：不以 <b>.</b> 开头的行将被自动忽略，这些目录下的所有文件都将参与同步，例如：.claude。",
   "setting.sync.config_dirs_placeholder": "输入需要增加同步的目录路径，必须以 . 开头，如：.claude",
@@ -114,7 +114,7 @@ const zh_cn: Partial<LangMap> = {
   "setting.support.debug_url": "远程服务调试地址",
   "setting.support.debug_url_desc": "一行一个地址。当连接失败 2 次时自动尝试使用这些地址。\n连接成功后将临时使用该地址作为运行时 API。\n注意: 调试地址指向的远端服务非服务令牌发放服务器, 则无法通过验证",
   "setting.debug.network_library": "API 请求库选择",
-  "setting.debug.network_library_desc": "选择 API 请求使用的底层库。'fetch' 为原生实现，'requestUrl' 为 Obsidian 提供的适配实现（可绕过某些跨域限制并自动处理跳转）。",
+  "setting.debug.network_library_desc": "选择 API 请求使用的底层库。'fetch' 为原生实现，'requestUrl' 为 Obsidian 官方实现（推荐使用）。",
 
   // --- ui.history ---
   "ui.history.title": "笔记历史",

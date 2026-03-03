@@ -72,8 +72,8 @@ const ko: Partial<LangMap> = {
   "setting.sync.startup_delay_desc": "연결 성공 후 첫 번째 업데이트 확인을 실행할 때까지의 대기 시간입니다.\n다른 플러그인 로드로 인해 Obsidian 시작 시 병목 현상이 발생하면 이 값을 설정해 보세요. 기본값 500ms",
   "setting.sync.sync_delay": "동기화 지연 (밀리초)",
   "setting.sync.sync_delay_desc": "노트, 첨부 파일, 설정 수정 후 동기화를 실행할 때까지의 대기 시간입니다. 기본값 0ms (즉시 동기화)",
-  "setting.sync.show_notice": "동기화 알림 표시",
-  "setting.sync.show_notice_desc": "활성화하면 동기화 시작 및 완료 시 시스템 알림이 표시됩니다.",
+  "setting.general.show_notice": "메시지 알림 표시",
+  "setting.general.show_notice_desc": "모든 성공적인 작업의 알림을 끕니다. 오류 메시지는 정상적으로 표시됩니다",
   "setting.sync.config_dirs": "설정 동기화 - 추가 디렉토리 동기화",
   "setting.sync.config_dirs_desc": "핵심 설정 동기화 외에 추가로 동기화할 특수 디렉토리를 지정합니다 (반드시 <b>.</b>으로 시작해야 함). 한 줄당 하나.\n주의: <b>.</b>으로 시작하지 않는 행은 무시됩니다. 해당 디렉토리의 모든 파일이 동기화됩니다 (예: .claude).",
   "setting.sync.config_dirs_placeholder": "동기화에 추가할 디렉토리 경로 입력 (예: .claude)",
@@ -113,6 +113,8 @@ const ko: Partial<LangMap> = {
   "setting.support.console_win": "CTRL + SHIFT + I",
   "setting.support.debug_url": "원격 디버그 주소",
   "setting.support.debug_url_desc": "한 줄당 한 주소 입력. 연결에 2회 실패 시 자동으로 이 주소들을 시도합니다.\n연결 성공 시 일시적으로 런타임 API로 사용됩니다.\n주의: 토큰 발급 서버 이외의 주소를 지정하면 인증에 실패합니다.",
+  "setting.debug.network_library": "API 요청 라이브러리 선택",
+  "setting.debug.network_library_desc": "API 요청에 사용할 기본 라이브러리를 선택합니다. 'fetch'는 네이티브 구현이며, 'requestUrl'은 Obsidian 공식 구현입니다 (권장).",
 
   // --- ui.history ---
   "ui.history.title": "노트 이력",
@@ -167,7 +169,8 @@ const ko: Partial<LangMap> = {
   "ui.status.completed": "동기화 완료",
   "ui.status.conflict": "동기화 충돌이 감지되어 강제 병합되었습니다. ${path}를 수동으로 확인하세요.",
   "ui.status.no_connection": "서버에 연결할 수 없습니다. 네트워크를 확인하세요",
-  "ui.status.config_imported": "인증 설정이 임포트되었습니다",
+  "ui.status.api_connected": "식별된 서비스 주소에 연결되었습니다: ${url}",
+  "ui.status.api_redirected": "원격 서비스 주소 리다이렉션을 감지하여 자동으로 업데이트되었습니다: ${url}",
   "ui.status.last_sync_not_completed": "이전 전체 동기화가 아직 완료되지 않았습니다. 잠시 기다리거나 서버 상태를 확인하세요",
 
   // --- ui.log ---

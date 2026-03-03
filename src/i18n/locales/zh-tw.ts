@@ -72,8 +72,8 @@ const zh_tw: Partial<LangMap> = {
   "setting.sync.startup_delay_desc": "配置連接成功後延遲執行首次檢查更新的時間。\n如果你打開 Obsidian 時因為其他插件加載導致卡頓，可以嘗試設置此項。默認 500 毫秒",
   "setting.sync.sync_delay": "延遲更新同步 (毫秒)",
   "setting.sync.sync_delay_desc": "筆記、附件、配置修改後延遲執行同步的時間。默認 0 毫秒 (即時同步)",
-  "setting.sync.show_notice": "顯示同步提示",
-  "setting.sync.show_notice_desc": "開啟後，同步開始和同步完成時將彈出系統提示。",
+  "setting.general.show_notice": "顯示消息提示",
+  "setting.general.show_notice_desc": "關閉所有成功操作的消息提示，錯誤消息正常顯示",
   "setting.sync.config_dirs": "配置同步-增加目錄同步",
   "setting.sync.config_dirs_desc": "在核心配置同步基礎上，增加需要同步的特殊目錄（必須以 <b>.</b> 開頭）。每行一個。\n注意：不以 <b>.</b> 開頭的行將被自動忽略，這些目錄下的所有文件都將參與同步，例如：.claude。",
   "setting.sync.config_dirs_placeholder": "輸入需要增加同步的目錄路徑，必須以 . 開頭，如：.claude",
@@ -113,6 +113,8 @@ const zh_tw: Partial<LangMap> = {
   "setting.support.console_win": "CTRL + SHIFT + I",
   "setting.support.debug_url": "遠程服務調試地址",
   "setting.support.debug_url_desc": "一行一個地址。當連接失敗 2 次時自動嘗試使用這些地址。\n連接成功後將臨時使用該地址作為運行時 API。\n注意: 調試地址指向的遠端服務非服務令牌發放服務器, 則無法通過驗證",
+  "setting.debug.network_library": "API 請求庫選擇",
+  "setting.debug.network_library_desc": "選擇 API 請求使用的底層庫。'fetch' 為原生實現，'requestUrl' 為 Obsidian 官方實現（推薦使用）。",
 
   // --- ui.history ---
   "ui.history.title": "筆記歷史",
@@ -167,7 +169,8 @@ const zh_tw: Partial<LangMap> = {
   "ui.status.completed": "同步完成",
   "ui.status.conflict": "檢測到同步衝突，已強制合併，需要手動處理 ${path}。",
   "ui.status.no_connection": "無法連接到服務器，請檢查網絡連接",
-  "ui.status.config_imported": "已導入授權配置",
+  "ui.status.api_connected": "已連接到識別後的服務地址: ${url}",
+  "ui.status.api_redirected": "檢測到遠端服務地址重定向，已自動更新為: ${url}",
   "ui.status.last_sync_not_completed": "上一次的全部同步尚未完成，請耐心等待或檢查服務端狀態",
 
   // --- ui.log ---

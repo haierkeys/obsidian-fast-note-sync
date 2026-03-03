@@ -51,7 +51,7 @@ export interface PluginSettings {
   /** 同步更新延迟（毫秒），用于防抖处理 */
   syncUpdateDelay: number
   /** 是否在同步完成后显示通知 */
-  showSyncNotice: boolean
+  isShowNotice: boolean
   /** 是否启用手动同步模式（禁用自动触发） */
   manualSyncEnabled: boolean
   /** 是否启用只读同步模式（不上传本地修改） */
@@ -99,13 +99,13 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   cloudPreviewAutoDeleteLocal: false,
   offlineDeleteSyncEnabled: false,
   syncUpdateDelay: 0,
-  showSyncNotice: true,
+  isShowNotice: true,
   manualSyncEnabled: false,
   readonlySyncEnabled: false,
   debugRemoteUrls: "",
   showVersionInfo: false,
   configSyncOtherDirs: "",
-  networkLibrary: "fetch",
+  networkLibrary: "requestUrl",
 }
 
 
@@ -306,6 +306,16 @@ export class SettingTab extends PluginSettingTab {
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.startup_delay_desc"))
+
+    new Setting(set).setName($("setting.general.show_notice")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.isShowNotice).onChange(async (value) => {
+        if (value != this.plugin.settings.isShowNotice) {
+          this.plugin.settings.isShowNotice = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.show_notice_desc"))
 
     new Setting(set)
       .setName("| " + $("setting.support.title"))
@@ -705,15 +715,6 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.readonly_sync_desc"))
 
-    new Setting(set).setName($("setting.sync.show_notice")).addToggle((toggle) =>
-      toggle.setValue(this.plugin.settings.showSyncNotice).onChange(async (value) => {
-        if (value != this.plugin.settings.showSyncNotice) {
-          this.plugin.settings.showSyncNotice = value
-          await this.plugin.saveSettings()
-        }
-      }),
-    )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.show_notice_desc"))
 
 
     new Setting(set).setName($("setting.sync.exclude")).addTextArea((text) =>

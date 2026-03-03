@@ -118,7 +118,7 @@ export class WebSocketClient {
         })
         this.notifyStatusChange(true)
         if (this.plugin.runApi !== this.plugin.settings.api) {
-          if (this.plugin.settings.showSyncNotice) {
+          if (this.plugin.settings.isShowNotice) {
             new Notice($("ui.status.api_connected", { url: this.plugin.runApi }), 5000)
           }
         }

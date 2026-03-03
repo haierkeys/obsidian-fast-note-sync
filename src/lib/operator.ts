@@ -122,7 +122,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
     plugin.totalChunksToUpload = 0;
     plugin.uploadedChunksCount = 0;
 
-    if (plugin.settings.showSyncNotice) {
+    if (plugin.settings.isShowNotice) {
       new Notice($("ui.status.completed"));
     }
     plugin.updateStatusBar($("ui.status.completed"));
@@ -276,7 +276,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.uploadedChunksCount = 0;
   plugin.disableWatch();
 
-  if (plugin.settings.showSyncNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
+  if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
     new Notice($("ui.status.starting"));
   }
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);

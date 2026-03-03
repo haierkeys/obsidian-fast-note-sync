@@ -72,8 +72,8 @@ const en: Partial<LangMap> = {
   "setting.sync.startup_delay_desc": "Wait time for the initial update check after a successful connection.\nIf Obsidian lags due to other plugin loads, try setting this. Default 500ms",
   "setting.sync.sync_delay": "Deferred Sync Update (ms)",
   "setting.sync.sync_delay_desc": "Wait time before performing sync after note, attachment, or config modification. Default 0ms (instant sync)",
-  "setting.sync.show_notice": "Show Sync Notices",
-  "setting.sync.show_notice_desc": "When enabled, system notices will pop up when sync starts and completes.",
+  "setting.general.show_notice": "Show Message Notifications",
+  "setting.general.show_notice_desc": "Turn off message notifications for all successful operations; error messages will display normally",
   "setting.sync.config_dirs": "Config Sync - Add Directory Sync",
   "setting.sync.config_dirs_desc": "In addition to core config sync, add special directories to sync (must start with <b>.</b>). One per line.\nNote: Lines NOT starting with <b>.</b> will be ignored. All files in these directories will participate in sync, e.g., .claude.",
   "setting.sync.config_dirs_placeholder": "Enter directory path to add for sync, must start with ., e.g., .claude",
@@ -114,7 +114,7 @@ const en: Partial<LangMap> = {
   "setting.support.debug_url": "Remote Debug Address",
   "setting.support.debug_url_desc": "One address per line. Automatically attempts to use these addresses after 2 connection failures.\nTemporary API used during runtime after successful connection.\nNote: If the debug address points to a server other than the token issuer, verification will fail.",
   "setting.debug.network_library": "API Request Library",
-  "setting.debug.network_library_desc": "Select the underlying library for API requests. 'fetch' is the native implementation, 'requestUrl' is Obsidian's adapter (can bypass some CORS restrictions and handles redirects automatically).",
+  "setting.debug.network_library_desc": "Select the underlying library for API requests. 'fetch' is the native implementation, 'requestUrl' is the official Obsidian implementation (Recommended).",
 
   // --- ui.history ---
   "ui.history.title": "Note History",
@@ -170,7 +170,8 @@ const en: Partial<LangMap> = {
   "ui.status.conflict": "Sync conflict detected and forcefully merged, manual handling needed for ${path}.",
   "ui.status.no_connection": "Unable to connect to server, please check your network connection",
   "ui.status.config_imported": "Authorization config imported",
-  "ui.status.api_redirected": "Service redirect detected, automatically updated to: ${url}",
+  "ui.status.api_connected": "Connected to identified service address: ${url}",
+  "ui.status.api_redirected": "Remote service redirect detected, automatically updated to: ${url}",
   "ui.status.last_sync_not_completed": "The previous full sync has not completed yet, please wait or check server status",
 
   // --- ui.log ---

@@ -72,8 +72,8 @@ const ja: Partial<LangMap> = {
   "setting.sync.startup_delay_desc": "接続成功後、最初の更新チェックを実行するまでの待機時間。\n他のプラグインの読み込みでObsidianの起動が重い場合に設定してください。デフォルト 500ms",
   "setting.sync.sync_delay": "同期実行の遅延（ミリ秒）",
   "setting.sync.sync_delay_desc": "ノート、添付ファイル、設定の変更後、同期を実行するまでの待機時間。デフォルト 0ms（即時同期）",
-  "setting.sync.show_notice": "同期通知を表示",
-  "setting.sync.show_notice_desc": "有効にすると、同期の開始時と完了時にシステム通知が表示されます。",
+  "setting.general.show_notice": "メッセージ通知を表示",
+  "setting.general.show_notice_desc": "すべての正常な操作の通知をオフにします。エラーメッセージは通常通り表示されます",
   "setting.sync.config_dirs": "設定同期 - 追加ディレクトリの同期",
   "setting.sync.config_dirs_desc": "コア設定の同期に加え、同期が必要な特殊ディレクトリを追加します（必ず <b>.</b> で始まる必要があります）。1行に1つ。\n注意：<b>.</b> で始まらない行は自動的に無視されます。これらの配下の全ファイルが同期対象となります（例：.claude）。",
   "setting.sync.config_dirs_placeholder": "同期に追加するパスを入力（例：.claude）",
@@ -113,6 +113,8 @@ const ja: Partial<LangMap> = {
   "setting.support.console_win": "CTRL + SHIFT + I",
   "setting.support.debug_url": "リモートデバッグアドレス",
   "setting.support.debug_url_desc": "1行に1つのアドレス。接続が2回失敗した場合、自動的にこれらのアドレスを試行します。\n接続成功後は一時的に実行時APIとして使用されます。\n注意：トークン発行サーバー以外を指定すると認証に失敗します。",
+  "setting.debug.network_library": "APIリクエストライブラリの選択",
+  "setting.debug.network_library_desc": "APIリクエストに使用する基盤ライブラリを選択します。'fetch'はネイティブ実装、'requestUrl'はObsidian公式実装です（推奨）。",
 
   // --- ui.history ---
   "ui.history.title": "ノート履歴",
@@ -167,7 +169,8 @@ const ja: Partial<LangMap> = {
   "ui.status.completed": "同期完了",
   "ui.status.conflict": "同期競合を検出し強制統合されました。${path} を手動で確認してください。",
   "ui.status.no_connection": "サーバーに接続できません。ネットワークを確認してください",
-  "ui.status.config_imported": "認証設定をインポートしました",
+  "ui.status.api_connected": "識別されたサービスアドレスに接続しました: ${url}",
+  "ui.status.api_redirected": "リモートサービスのアドレス転送を検出し、自動的に更新しました: ${url}",
   "ui.status.last_sync_not_completed": "前回の全同期が完了していません。しばらくお待ちいただくかサーバーを確認してください",
 
   // --- ui.log ---
