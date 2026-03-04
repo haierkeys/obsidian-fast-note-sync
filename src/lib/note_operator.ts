@@ -314,7 +314,10 @@ export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
 
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
-  plugin.localStorageManager.setMetadata("lastNoteSyncTime", syncData.lastTime)
+  const hasUpdates = (syncData.needUploadCount || 0) + (syncData.needModifyCount || 0) + (syncData.needSyncMtimeCount || 0) + (syncData.needDeleteCount || 0) > 0;
+  if (hasUpdates) {
+    plugin.localStorageManager.setMetadata("lastNoteSyncTime", syncData.lastTime)
+  }
   plugin.syncTypeCompleteCount++
 }
 
