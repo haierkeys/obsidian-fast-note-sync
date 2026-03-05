@@ -141,7 +141,7 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
         if (isVirtual) {
             if (await plugin.localStorageManager.handleReceivedUpdate(data.path, data.content)) {
                 plugin.removeIgnoredConfigFile(data.path)
-                if (Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) < data.lastTime) {
+                if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
                     plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
                 }
                 plugin.configSyncTasks.completed++
@@ -172,7 +172,7 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
         plugin.configManager.updateFileState(absPath, data.mtime)
     }
 
-    if (Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime")) < data.lastTime) {
+    if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
         plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
 
@@ -280,10 +280,15 @@ export const receiveConfigSyncMtime = async function (data: ReceiveMtimeMessage,
     }
     plugin.removeIgnoredConfigFile(data.path)
 
+    // 更新同步时间
+    if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
+        plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
+    }
+
     plugin.configSyncTasks.completed++
 }
 
-export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plugin: FastSync) {
+export const receiveConfigSyncDelete = async function (data: any, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return
 
     if (!isPathInConfigSyncDirs(data.path, plugin)) return
@@ -316,6 +321,11 @@ export const receiveConfigSyncDelete = async function (data: ReceiveMessage, plu
     // 从配置哈希表中删除
     if (plugin.configHashManager && plugin.configHashManager.isReady()) {
         plugin.configHashManager.removeFileHash(data.path)
+    }
+
+    // 更新同步时间
+    if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
+        plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
 
     plugin.configSyncTasks.completed++

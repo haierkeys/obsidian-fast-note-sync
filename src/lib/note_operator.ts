@@ -166,7 +166,7 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
         }
         await plugin.app.vault.create(normalizedPath, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
       }
-      if (Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime")) < data.lastTime) {
+      if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
         plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
       }
 
@@ -260,6 +260,10 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
         await plugin.app.vault.modify(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
         // 记录 mtime
         plugin.lastSyncMtime.set(data.path, data.mtime)
+        // 更新同步时间
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
+          plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
+        }
       } finally {
         plugin.removeIgnoredFile(normalizedPath)
       }
@@ -292,6 +296,10 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath)
         plugin.lastSyncMtime.delete(normalizedPath)
+        // 更新同步时间
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
+          plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
+        }
       } finally {
         // 延时 500ms 清理拦截集合，确保本地事件已被处理
         setTimeout(() => {
@@ -367,6 +375,11 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
         // 更新哈希表：移除旧路径，添加新路径
         plugin.fileHashManager.removeFileHash(data.oldPath)
         plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+
+        // 更新同步时间
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
+          plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
+        }
       } finally {
         setTimeout(() => {
           plugin.removeIgnoredFile(normalizedNewPath)

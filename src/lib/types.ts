@@ -82,10 +82,12 @@ export interface ReceiveMtimeMessage {
     path: string;
     ctime: number;
     mtime: number;
+    lastTime?: number;
 }
 
 export interface ReceivePathMessage {
     path: string;
+    lastTime?: number;
 }
 
 export interface SyncEndData {

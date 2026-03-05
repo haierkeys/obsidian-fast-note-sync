@@ -423,6 +423,11 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   // 记录 mtime
   plugin.lastSyncMtime.set(data.path, data.mtime)
 
+  // 更新同步时间
+  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+    plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+  }
+
   plugin.fileSyncTasks.completed++
 }
 
@@ -465,6 +470,10 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath)
         plugin.lastSyncMtime.delete(normalizedPath)
+        // 更新同步时间
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+          plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+        }
       } finally {
         // 延时 500ms 清理
         setTimeout(() => {
@@ -515,6 +524,10 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
         await plugin.app.vault.modifyBinary(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
         // 记录 mtime
         plugin.lastSyncMtime.set(data.path, data.mtime)
+        // 更新同步时间
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+          plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+        }
       } finally {
         setTimeout(() => {
           plugin.removeIgnoredFile(normalizedPath)
@@ -730,6 +743,11 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
 
         plugin.fileHashManager.removeFileHash(data.oldPath)
         plugin.fileHashManager.setFileHash(data.path, data.contentHash)
+
+        // 更新同步时间
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+          plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+        }
       } finally {
         setTimeout(() => {
           plugin.removeIgnoredFile(normalizedNewPath)
