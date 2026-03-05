@@ -1,4 +1,4 @@
-import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView, requestUrl, setIcon, Notice, Menu, TFile } from "obsidian";
+import { MarkdownPostProcessorContext, parseLinktext, loadPdfJs, MarkdownView, requestUrl, setIcon, Notice, Platform } from "obsidian";
 import { ViewPlugin, ViewUpdate, EditorView } from "@codemirror/view";
 
 import { hashContent } from "./helps";
@@ -261,6 +261,15 @@ export class FileCloudPreview {
     const params = new URLSearchParams(subpath || "");
     const height = params.get("height") || "800";
 
+    // use electron's native pdf viewer for desktop app
+    if (Platform.isDesktopApp) {
+      const iframe = document.createElement("iframe");
+      iframe.src = cloudUrl;
+      iframe.style.cssText =
+        "width: 100%; height: 100%; border: none; display: block;";
+      return iframe;
+    }
+
     // --- 1. DOM Structure (Matching Obsidian's Internal Structure) ---
     const loadingContainer = document.createElement("div"); // The root wrapper we return
     loadingContainer.addClass("pdf-preview-wrapper");
@@ -294,11 +303,11 @@ export class FileCloudPreview {
 
     // Create Viewer Container
     const viewerContainer = contentEl.createDiv("pdf-viewer-container");
-    viewerContainer.style.cssText = "flex: 1; overflow: auto; position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px;";
+    viewerContainer.style.cssText = "flex: 1; overflow: auto; position: relative; display: flex; flex-direction: column; flex-start: center; padding: 20px;";
 
     // Viewer Element (Where canvases go)
     const viewerEl = viewerContainer.createDiv("pdfViewer");
-    viewerEl.style.cssText = "position: relative; width: fit-content; min-height: 100%; display: flex; flex-direction: column; gap: 10px;";
+    viewerEl.style.cssText = "position: relative; width: max-content; min-height: 100%; display: flex; flex-direction: column; gap: 10px;";
 
     // Event Bus
     const eventBus = new SimpleEventBus();
@@ -462,6 +471,12 @@ export class FileCloudPreview {
         loadingText.remove();
         pageCountEl.setText(` / ${pdfDoc.numPages}`);
         pageInput.max = pdfDoc.numPages;
+
+        const firstPage = await pdfDoc.getPage(1);
+        const viewport = firstPage.getViewport({ scale: 1 });
+
+        const containerWidth = viewerContainer.clientWidth - 40; // padding
+        currentScale = containerWidth / viewport.width;
 
         await renderPages();
 
