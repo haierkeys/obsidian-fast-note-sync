@@ -64,6 +64,8 @@ export interface PluginSettings {
   configSyncOtherDirs: string
   /** 网络请求库类型 */
   networkLibrary: 'fetch' | 'requestUrl'
+  /** 最小化自动暂停同步 */
+  autoPauseMinimized: boolean
 }
 
 /**
@@ -106,6 +108,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   showVersionInfo: false,
   configSyncOtherDirs: "",
   networkLibrary: "requestUrl",
+  autoPauseMinimized: false,
 }
 
 
@@ -714,6 +717,16 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.readonly_sync_desc"))
+
+    new Setting(set).setName($("setting.sync.auto_pause_minimized")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.autoPauseMinimized).onChange(async (value) => {
+        if (value != this.plugin.settings.autoPauseMinimized) {
+          this.plugin.settings.autoPauseMinimized = value
+          await this.plugin.saveSettings()
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_pause_minimized_desc"))
 
 
 

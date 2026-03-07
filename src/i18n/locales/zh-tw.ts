@@ -54,6 +54,8 @@ const zh_tw: Partial<LangMap> = {
   "setting.sync.manual_sync_desc": "開啟後，插件將不會在啟動或文件修改時自動觸發同步，僅可通過菜單手動觸發。\n(<b>請謹慎開啟</b>,該功能會嚴重影響使用體驗)",
   "setting.sync.readonly_sync": "唯讀同步模式",
   "setting.sync.readonly_sync_desc": "開啟後，本設備僅接收服務端更新，不上傳任何本地修改。<b>優先級高於手动同步模式。</b>",
+  "setting.sync.auto_pause_minimized": "最小化自動暫停同步",
+  "setting.sync.auto_pause_minimized_desc": "開啟後，當 Obsidian 視窗最小化時，將自動暫停本地文件變更引發的自動同步，默認關閉。",
 
   "setting.sync.exclude": "同步排除",
   "setting.sync.exclude_placeholder": "路徑或正則，每行一個",

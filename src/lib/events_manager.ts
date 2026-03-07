@@ -85,11 +85,18 @@ export class EventManager {
 
   private onVisibilityChange = () => {
     if (document.visibilityState === "hidden") {
-      dump("Obsidian 已最小化")
-      this.plugin.disableWatch()
+      if (this.plugin.settings.autoPauseMinimized) {
+        dump("Obsidian 已最小化，自动暂停同步")
+        this.plugin.disableWatch()
+      }
     } else {
-      dump("Obsidian 已从最小化恢复")
-      this.plugin.enableWatch()
+      if (this.plugin.settings.autoPauseMinimized) {
+        dump("Obsidian 已从最小化恢复，恢复同步")
+        this.plugin.enableWatch()
+      } else {
+        // 如果未开启自动暂停，确保恢复时监听也是开启的（增强鲁棒性）
+        this.plugin.enableWatch()
+      }
     }
   }
 

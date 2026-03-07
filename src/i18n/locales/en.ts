@@ -54,6 +54,8 @@ const en: Partial<LangMap> = {
   "setting.sync.manual_sync_desc": "When enabled, the plugin will not automatically trigger sync on startup or file modification; sync can only be triggered manually via the menu.\n(<b>Enable with caution</b>, it significantly affects user experience)",
   "setting.sync.readonly_sync": "Read-only Sync Mode",
   "setting.sync.readonly_sync_desc": "When enabled, this device only receives server updates and does not upload local modifications. <b>Priority is higher than Manual Sync Mode.</b>",
+  "setting.sync.auto_pause_minimized": "Auto Pause Sync when Minimized",
+  "setting.sync.auto_pause_minimized_desc": "When enabled, automatic sync triggered by local file changes will be paused when the Obsidian window is minimized. Default is disabled.",
 
   "setting.sync.exclude": "Sync Exclusion",
   "setting.sync.exclude_placeholder": "Path or Regex, one per line",
