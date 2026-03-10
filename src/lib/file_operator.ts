@@ -602,6 +602,14 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
     status: 'pending',
     progress: 0
   });
+
+  // 如果分片数为 0（空文件），立即触发完成逻辑1
+  if (data.totalChunks === 0) {
+    const finalSession = plugin.fileDownloadSessions.get(data.sessionId);
+    if (finalSession) {
+      await handleFileChunkDownloadComplete(finalSession, plugin);
+    }
+  }
 }
 
 
