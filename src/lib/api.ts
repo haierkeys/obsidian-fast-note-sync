@@ -456,6 +456,38 @@ export class HttpApiService {
             return false;
         }
     }
+
+    /**
+     * 创建分享链接
+     */
+    async createShare(path: string): Promise<{ id: number, token: string } | null> {
+        const endpoint = `/api/share`;
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "POST",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    path: path,
+                    pathHash: hashContent(path),
+                    vault: this.plugin.settings.vault
+                })
+            });
+
+            if (status !== 200 || !json.status) {
+                const msg = json?.message || "Failed to create share";
+                new Notice(msg);
+                return null;
+            }
+            return json.data;
+        } catch (e) {
+            console.error("createShare error:", e);
+            new Notice("创建分享失败");
+            return null;
+        }
+    }
 }
 
 /**

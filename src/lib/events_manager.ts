@@ -7,7 +7,7 @@ import { fileModify, fileDelete, fileRename } from "./file_operator";
 import { dump, isPathInConfigSyncDirs } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
-
+import { ShareModal } from "../views/share-modal"
 
 export class EventManager {
   private plugin: FastSync
@@ -225,6 +225,15 @@ export class EventManager {
         .setIcon("history")
         .onClick(() => {
           new NoteHistoryModal(this.plugin.app, this.plugin, file.path).open()
+        })
+    })
+
+    menu.addItem((item: MenuItem) => {
+      item
+        .setTitle($("ui.share.title"))
+        .setIcon("share-2")
+        .onClick(() => {
+          new ShareModal(this.plugin.app, this.plugin, file.path).open()
         })
     })
   }

@@ -2,6 +2,7 @@ import { Menu, MenuItem, Notice, setIcon, Platform } from 'obsidian';
 
 import { startupSync, startupFullSync, resetSettingSyncTime, rebuildAllHashes } from './operator';
 import { NoteHistoryModal } from '../views/note-history/history-modal';
+import { ShareModal } from '../views/share-modal';
 import { RecycleBinModal } from '../views/recycle-bin-modal';
 import { $ } from '../i18n/lang';
 import FastSync from '../main';
@@ -14,6 +15,7 @@ export class MenuManager {
   public ribbonIconStatus: boolean = false;
   public statusBarItem: HTMLElement;
   public historyStatusBarItem: HTMLElement;
+  public shareStatusBarItem: HTMLElement;
   public logStatusBarItem: HTMLElement;
   public recycleBinStatusBarItem: HTMLElement;
 
@@ -44,6 +46,20 @@ export class MenuManager {
       const activeFile = this.plugin.app.workspace.getActiveFile();
       if (activeFile && activeFile.extension === "md") {
         new NoteHistoryModal(this.plugin.app, this.plugin, activeFile.path).open();
+      } else {
+        new Notice($("ui.history.md_only"));
+      }
+    });
+
+    // 初始化 分享 状态栏入口
+    this.shareStatusBarItem = this.plugin.addStatusBarItem();
+    this.shareStatusBarItem.addClass("mod-clickable");
+    setIcon(this.shareStatusBarItem, "share-2");
+    this.shareStatusBarItem.setAttribute("aria-label", $("ui.share.title"));
+    this.shareStatusBarItem.addEventListener("click", () => {
+      const activeFile = this.plugin.app.workspace.getActiveFile();
+      if (activeFile && activeFile.extension === "md") {
+        new ShareModal(this.plugin.app, this.plugin, activeFile.path).open();
       } else {
         new Notice($("ui.history.md_only"));
       }

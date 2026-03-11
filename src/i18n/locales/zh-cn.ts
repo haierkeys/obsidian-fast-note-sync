@@ -273,6 +273,13 @@ const zh_cn: Partial<LangMap> = {
   "ui.recycle_bin.delete_success": "删除成功",
   "ui.recycle_bin.bulk_restore": "批量恢复",
   "ui.recycle_bin.select_all": "全选",
+  "ui.share.title": "分享笔记",
+  "ui.share.create": "创建分享链接",
+  "ui.share.link": "分享链接",
+  "ui.share.copy": "复制链接",
+  "ui.share.success": "分享链接已生成",
+  "ui.share.button_creating": "正在创建...",
+  "ui.share.copy_success": "分享链接已复制到剪贴板",
 }
 
 
