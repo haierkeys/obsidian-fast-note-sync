@@ -280,6 +280,9 @@ const zh_cn: Partial<LangMap> = {
   "ui.share.success": "分享链接已生成",
   "ui.share.button_creating": "正在创建...",
   "ui.share.copy_success": "分享链接已复制到剪贴板",
+  "ui.share.cancel": "取消分享",
+  "ui.share.cancel_success": "已取消分享",
+  "ui.share.checking": "正在检查分享状态...",
 }
 
 

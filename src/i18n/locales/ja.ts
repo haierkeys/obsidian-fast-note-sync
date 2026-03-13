@@ -3,7 +3,7 @@ import type { LangMap } from "../lang";
 
 
 const ja: Partial<LangMap> = {
-  "fns.desc": "プライベートデプロイ可能なマルチプラットフォーム対応のノート、添付ファイル、設定のリアルタイム同期＆バックアッププラグイン。Mac、Windows、Android、iOSなどをサポートし、多言語に対応しています。",
+  "fns.desc": "プライベートデプロイ可能な、マルチ端末対応のノート、添付ファイル、設定のリアルタイム同期＆バックアッププラグイン。Mac、Windows、Android、iOSプラットフォームをサポートし、多言語対応を提供します。",
 
   "setting.tab.general": "全般",
   "setting.tab.debug": "デバッグ",
@@ -12,7 +12,7 @@ const ja: Partial<LangMap> = {
   "setting.tab.cloud": "添付ファイルクラウドプレビュー",
   "setting.search.placeholder": "設定を検索...",
   "setting.debug.show_version": "同期メニューにバージョン情報を表示",
-  "setting.debug.show_version_desc": "有効にすると、バージョン情報が同期メニューに常時表示されます。無効にすると、更新がある場合のみ表示されます。",
+  "setting.debug.show_version_desc": "有効にすると、バージョン情報が同期メニューに常駐します。無効にすると、更新がある場合のみ表示されます。",
 
   // --- setting.remote ---
   "setting.remote.title": "リモート",
@@ -20,13 +20,13 @@ const ja: Partial<LangMap> = {
   "setting.remote.disconnected": "サービス切断済み",
   "setting.remote.setup_title": "リモートサービスの構築と選択",
   "setting.remote.setup_desc": "自分に適したリモートを選択してください",
-  "setting.remote.setup_table": "| 方法 | 詳細リファレンス |\n| --- | --- |\n| セルフホスト | <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>obsidian-fast-note-sync-service</a> 速度良好、自由な設定、プライバシーリスクなし |",
+  "setting.remote.setup_table": "| 方法 | 詳細リファレンス |\n| --- | --- |\n| 自己構築 | <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>obsidian-fast-note-sync-service</a> 速度良好、自由な設定、プライバシーリスクなし |",
   "setting.remote.paste_config": "サーバー認証設定を貼り付け",
   "setting.remote.paste_success": "API設定情報が設定に貼り付けられました！",
   "setting.remote.no_config": "設定情報が検出されませんでした！",
   "setting.remote.api_url": "リモートサービスアドレス",
-  "setting.remote.api_url_desc": "Fast Note Sync Serviceのアドレスを選択してください",
-  "setting.remote.api_url_placeholder": "Fast Note Sync Serviceのアドレスを入力してください",
+  "setting.remote.api_url_desc": "Fast note sync service のアドレスを選択してください",
+  "setting.remote.api_url_placeholder": "Fast note sync service のアドレスを入力してください",
   "setting.remote.api_token": "リモートサービストークン",
   "setting.remote.api_token_desc": "リモートサービスへのアクセス認証トークン",
   "setting.remote.api_token_placeholder": "APIアクセストークンを入力してください",
@@ -54,10 +54,12 @@ const ja: Partial<LangMap> = {
   "setting.sync.manual_sync_desc": "有効にすると、起動時やファイル変更時に同期を自動実行せず、メニューからのみ手動で実行できます。\n(<b>注意して有効にしてください</b>。ユーザー体験に大きく影響します)",
   "setting.sync.readonly_sync": "読み取り専用同期モード",
   "setting.sync.readonly_sync_desc": "有効にすると、このデバイスはサーバーの更新を受信するのみで、ローカルの変更をアップロードしません。<b>手動同期モードよりも優先されます。</b>",
+  "setting.sync.auto_pause_minimized": "最小化時に自動で同期を一時停止",
+  "setting.sync.auto_pause_minimized_desc": "有効にすると、Obsidianウィンドウが最小化された際に、ローカルファイルの変更による自動同期を一時停止します。デフォルトはオフです。",
 
   "setting.sync.exclude": "同期除外",
   "setting.sync.exclude_placeholder": "パスまたは正規表現、1行に1つ",
-  "setting.sync.exclude_desc": "設定されたノート、添付ファイル、ディレクトリは同期対象外となります。\n1行に1つ、正規表現に対応（大文字小文字を区別しない）。\n例： \n1. <b>Folder1/demo1.md</b> 直接一致\n2. <b>Folder1</b> Folder1ディレクトリとその全子ディレクトリ・ファイルを一致\n3. <b>Folder1/(.+)\.jpg</b> Folder1配下の全jpg画像を正規表現で一致",
+  "setting.sync.exclude_desc": "設定されたノート、添付ファイル、ディレクトリは同期対象外となります。\n1行に1つ、正規表現に対応（大文字小文字を区別しない）。\n例： \n1. <b>Folder1/demo1.md</b> 直接一致\n2. <b>Folder1</b> Folder1ディレクトリとその全子ディレクトリ・ファイルを一致\n3. <b>Folder1/(.+)\\.jpg</b> Folder1配下の全jpg画像を正規表現で一致",
   "setting.sync.exclude_extensions": "同期除外拡張子",
   "setting.sync.exclude_extensions_desc": "同期対象外とするファイル形式を設定します。1行に1つ（ドット付き）。例：.tmp",
   "setting.sync.exclude_whitelist": "同期ホワイトリスト",
@@ -76,10 +78,10 @@ const ja: Partial<LangMap> = {
   "setting.general.show_notice_desc": "すべての正常な操作の通知をオフにします。エラーメッセージは通常通り表示されます",
   "setting.sync.config_dirs": "設定同期 - 追加ディレクトリの同期",
   "setting.sync.config_dirs_desc": "コア設定の同期に加え、同期が必要な特殊ディレクトリを追加します（必ず <b>.</b> で始まる必要があります）。1行に1つ。\n注意：<b>.</b> で始まらない行は自動的に無視されます。これらの配下の全ファイルが同期対象となります（例：.claude）。",
-  "setting.sync.config_dirs_placeholder": "同期に追加するパスを入力（例：.claude）",
+  "setting.sync.config_dirs_placeholder": "同期に追加するパスを入力（必ず . で始まる、例：.claude）",
   "setting.sync.config_dirs_must_start_with_dot_warning": "入力されたディレクトリは '.' で始まる必要があります。不正な項目は無視されました。",
   "setting.sync.clear_remote": "リモート設定のクリーンアップ",
-  "setting.sync.clear_remote_desc": "リモートサービスからこの保管庫の設定を削除します。この操作は取り消せません。",
+  "setting.sync.clear_remote_desc": "リモートサービスからこの保管庫の設定を削除します。此操作は取り消せません。",
   "setting.sync.clear_remote_confirm": "リモートサービスからこの保管庫の設定を削除しますか？\nサーバーに保存されているこの保管庫の全設定が物理的に削除され、復元は不可能です。",
   "ui.status.clear_success": "リモート設定が削除されました",
 
@@ -88,10 +90,10 @@ const ja: Partial<LangMap> = {
   "setting.cloud.desc": "有効にすると、<b>添付ファイルの同期（受信）を行わず</b>、画像/動画/音声/PDFなどをオンラインでプレビューします。",
   "setting.cloud.type_limit": "クラウドプレビューのタイプ制限",
   "setting.cloud.type_limit_desc": "有効にすると、画像/音声/動画/PDFのみクラウドプレビューを使用し、他は通常通り同期します。\n注意：無効にすると添付ファイル関連のプラグインが正常に動作しない可能性があります。",
-  "setting.cloud.remote_source": "クラウドプレビュー - 前後方一致によるソース配分",
-  "setting.cloud.remote_source_desc": "特定の前置詞/後置詞に一致する添付ファイルのリモートソースを指定します（複数行ルール対応）。\n書式：<b>接頭辞@拡張子#リモートソース</b>\n<b>接頭辞</b>は省略可能、複数の<b>拡張子</b>は <b>$</b> で区切ります。一致しない場合はデフォルトのFNSソースを使用。変数置換に対応。\n| 変数 | 説明 |\n| --- | --- |\n| {path} | ノート内の添付ファイルパス |\n| {vaultPath} | 保管庫内の相対パス |\n| {vault} | 保管庫名 |\n| {type} | 添付タイプ (image/video/audio/pdf/other) |\n例：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：カスタムソースを使用する場合、CORSおよび必要な認証（必要な場合）をサポートしていることを確認してください。",
+  "setting.cloud.remote_source": "クラウドプレビュー - 接頭辞/接尾辞マッピングによるリモートソース",
+  "setting.cloud.remote_source_desc": "この項目は、接頭辞/接尾辞に一致する添付ファイルのリモートソースを指定するために使用されます（複数行ルール対応）。\n書式：<b>接頭辞@接尾辞#リモートソース</b>\n<b>接頭辞</b>は省略可能、複数の<b>接尾辞</b>は <b>$</b> で区切ります。一致しない場合はデフォルトのFNSソースを使用し、変数置換に対応します。\n| 変数 | 説明 |\n| --- | --- |\n| {path} | ノート内の添付ファイルパス |\n| {vaultPath} | 保管庫内の相対パス |\n| {vault} | 保管庫名 |\n| {type} | 添付タイプ (image/video/audio/pdf/other) |\n例：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：カスタムソースを使用する場合、CORSおよび必要な認証（必要な場合）をサポートしていることを確認してください。",
   "setting.cloud.delete_after_upload": "クラウドプレビュー - アップロード後に削除",
-  "setting.cloud.delete_after_upload_desc": "アップロード成功後、ローカルファイルを自動的に削除して容量を節約します。\n（クラウドプレビューの有効化が必要）\n注意：無効にすると添付ファイル関連のプラグインが正常に動作しない可能性があります。",
+  "setting.cloud.delete_after_upload_desc": "アップロード成功後、ローカルファイルを自動的に削除して容量を節約します。\n（クラウドプレビューの有効化が必要）\n注意：无効にすると添付ファイル関連のプラグインが正常に動作しない可能性があります。",
 
   // --- setting.support ---
   "setting.support.title": "スポンサーとサポート",
@@ -112,7 +114,7 @@ const ja: Partial<LangMap> = {
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
   "setting.support.console_win": "CTRL + SHIFT + I",
   "setting.support.debug_url": "リモートデバッグアドレス",
-  "setting.support.debug_url_desc": "1行に1つのアドレス。接続が2回失敗した場合、自動的にこれらのアドレスを試行します。\n接続成功後は一時的に実行時APIとして使用されます。\n注意：トークン発行サーバー以外を指定すると認証に失敗します。",
+  "setting.support.debug_url_desc": "1行に1つのアドレス。接続が2回失敗した場合、自動的にこれらのアドレスを試行します。\n接続成功後は一時的に実行時APIとして使用されます。\n注意：デバッグアドレスの遠端サービスがトークン発行サーバーでない場合、検証を通過できません。",
   "setting.debug.network_library": "APIリクエストライブラリの選択",
   "setting.debug.network_library_desc": "APIリクエストに使用する基盤ライブラリを選択します。'fetch'はネイティブ実装、'requestUrl'はObsidian公式実装です（推奨）。",
 
@@ -131,7 +133,7 @@ const ja: Partial<LangMap> = {
   "ui.history.content_pre": "変更前の内容",
   "ui.history.page_prev": "前へ",
   "ui.history.page_next": "次へ",
-  "ui.history.page_info": "{page} / {total} ページ",
+  "ui.history.page_info": "第 {page} ページ / 共 {total} ページ",
   "ui.history.copy": "コピー",
   "ui.history.no_history": "履歴なし",
   "ui.history.copied": "コピー済み",
@@ -157,7 +159,7 @@ const ja: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Fast Note Sync プラグインのバージョン番号",
   "ui.menu.server": "サーバーバージョン",
   "ui.menu.server_desc": "Fast Note Sync サーバーのバージョン番号",
-  "ui.menu.settings": "プラグイン設定",
+  "ui.menu.settings": "插件設置",
   "setting.debug.clear_time_desc": "ローカルのすべての同期タイムスタンプをクリアします。リモートデータには影響しません。次回の同期でフル比較が行われます。",
   "setting.debug.clear_hash_desc": "ローカルファイルハッシュマップをクリアします。物理ファイルには影響しません。クリック後すぐに再構築が開始され、一時的な遅延が発生する場合があります。",
   "setting.debug.clear_time_success": "ローカル同期時間がクリアされました",
@@ -172,6 +174,7 @@ const ja: Partial<LangMap> = {
   "ui.status.completed": "同期完了",
   "ui.status.conflict": "同期競合を検出し強制統合されました。${path} を手動で確認してください。",
   "ui.status.no_connection": "サーバーに接続できません。ネットワークを確認してください",
+  "ui.status.config_imported": "認証設定をインポートしました",
   "ui.status.api_connected": "識別されたサービスアドレスに接続しました: ${url}",
   "ui.status.api_redirected": "リモートサービスのアドレス転送を検出し、自動的に更新しました: ${url}",
   "ui.status.last_sync_not_completed": "前回の全同期が完了していません。しばらくお待ちいただくかサーバーを確認してください",
@@ -269,8 +272,18 @@ const ja: Partial<LangMap> = {
   "ui.recycle_bin.clear_success": "ゴミ箱を空にしました",
   "ui.recycle_bin.delete_success": "正常に削除されました",
   "ui.recycle_bin.bulk_restore": "一括復元",
-  "ui.recycle_bin.select_all": "すべて選択"
-}
+  "ui.recycle_bin.select_all": "すべて選択",
+  "ui.share.title": "ノートをシェア",
+  "ui.share.create": "シェアリンクを作成",
+  "ui.share.link": "シェアリンク",
+  "ui.share.copy": "リンクをコピー",
+  "ui.share.success": "シェアリンクが生成されました",
+  "ui.share.button_creating": "作成中...",
+  "ui.share.copy_success": "シェアリンクをクリップボードにコピーしました",
+  "ui.share.cancel": "シェアを解除",
+  "ui.share.cancel_success": "シェアを解除しました",
+  "ui.share.checking": "シェアステータスを確認中...",
+};
 
 
 export default ja;

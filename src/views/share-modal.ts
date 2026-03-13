@@ -15,6 +15,15 @@ export class ShareModal extends Modal {
     }
 
     onOpen() {
+        this.checkShareStatus();
+    }
+
+    private async checkShareStatus() {
+        this.loading = true;
+        this.render();
+        const res = await this.plugin.api.getShare(this.path);
+        this.shareData = res;
+        this.loading = false;
         this.render();
     }
 
@@ -37,6 +46,15 @@ export class ShareModal extends Modal {
         filePathEl.style.marginBottom = "20px";
         filePathEl.style.color = "var(--text-muted)";
         filePathEl.innerText = this.path;
+ 
+        if (this.loading) {
+            const loadingEl = container.createDiv("fns-share-loading");
+            loadingEl.style.textAlign = "center";
+            loadingEl.style.padding = "20px";
+            loadingEl.style.color = "var(--text-muted)";
+            loadingEl.innerText = $("ui.share.checking");
+            return;
+        }
 
         if (this.shareData) {
             this.renderShareResult(container);
@@ -96,7 +114,27 @@ export class ShareModal extends Modal {
                 new Notice($("ui.share.copy_success"));
             });
             
+        const actionContainer = resultContainer.createDiv("fns-share-actions");
+        actionContainer.style.textAlign = "right";
+
+        new ButtonComponent(actionContainer)
+            .setButtonText($("ui.share.cancel"))
+            .setWarning()
+            .setDisabled(this.loading)
+            .onClick(async () => {
+                this.loading = true;
+                this.render();
+                const success = await this.plugin.api.cancelShare(this.path);
+                this.loading = false;
+                if (success) {
+                    this.shareData = null;
+                    new Notice($("ui.share.cancel_success"));
+                }
+                this.render();
+            });
+
         const tipEl = resultContainer.createDiv("fns-share-tip");
+        tipEl.style.marginTop = "20px";
         tipEl.style.fontSize = "0.85em";
         tipEl.style.color = "var(--text-accent)";
         tipEl.style.display = "flex";

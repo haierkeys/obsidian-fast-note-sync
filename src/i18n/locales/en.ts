@@ -25,8 +25,8 @@ const en: Partial<LangMap> = {
   "setting.remote.paste_success": "API configuration info has been pasted into settings!",
   "setting.remote.no_config": "No configuration info detected!",
   "setting.remote.api_url": "Remote Service Address",
-  "setting.remote.api_url_desc": "Select a Fast Note Sync service address",
-  "setting.remote.api_url_placeholder": "Enter your Fast Note Sync service address",
+  "setting.remote.api_url_desc": "Select a Fast note sync service address",
+  "setting.remote.api_url_placeholder": "Enter your Fast note sync service address",
   "setting.remote.api_token": "Remote Service Token",
   "setting.remote.api_token_desc": "Authorization token for accessing remote service",
   "setting.remote.api_token_placeholder": "Enter your API access token",
@@ -156,6 +156,7 @@ const en: Partial<LangMap> = {
   "ui.menu.clear_time": "Clear Local Sync Time",
   "ui.menu.rebuild_hash": "Rebuild File Hash Map",
   "ui.menu.plugin": "Plugin Version",
+  "ui.menu.plugin_desc": "Fast Note Sync plugin version number",
   "ui.menu.server": "Server Version",
   "ui.menu.server_desc": "Fast Note Sync server version number",
   "ui.menu.settings": "Plugin Settings",
@@ -272,7 +273,17 @@ const en: Partial<LangMap> = {
   "ui.recycle_bin.delete_success": "Deleted successfully",
   "ui.recycle_bin.bulk_restore": "Bulk Restore",
   "ui.recycle_bin.select_all": "Select All",
-}
+  "ui.share.title": "Share Note",
+  "ui.share.create": "Create Share Link",
+  "ui.share.link": "Share Link",
+  "ui.share.copy": "Copy Link",
+  "ui.share.success": "Share link generated",
+  "ui.share.button_creating": "Creating...",
+  "ui.share.copy_success": "Share link copied to clipboard",
+  "ui.share.cancel": "Cancel Share",
+  "ui.share.cancel_success": "Share cancelled",
+  "ui.share.checking": "Checking share status...",
+};
 
 
 export default en;

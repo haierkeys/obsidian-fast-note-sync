@@ -488,6 +488,66 @@ export class HttpApiService {
             return null;
         }
     }
+
+    /**
+     * 查询分享状态
+     */
+    async getShare(path: string): Promise<{ id: number, token: string } | null> {
+        const params = new URLSearchParams({
+            vault: this.plugin.settings.vault,
+            path: path,
+            pathHash: hashContent(path)
+        });
+        const endpoint = `/api/share?${params.toString()}`;
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "GET",
+                headers: {
+                    "token": this.plugin.settings.apiToken
+                }
+            });
+
+            if (status !== 200 || !json.status) {
+                return null;
+            }
+            return json.data;
+        } catch (e) {
+            console.error("getShare error:", e);
+            return null;
+        }
+    }
+
+    /**
+     * 取消分享
+     */
+    async cancelShare(path: string): Promise<boolean> {
+        const endpoint = `/api/share`;
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "DELETE",
+                headers: {
+                    "token": this.plugin.settings.apiToken,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    path: path,
+                    pathHash: hashContent(path),
+                    vault: this.plugin.settings.vault
+                })
+            });
+
+            if (status !== 200 || !json.status) {
+                const msg = json?.message || "Failed to cancel share";
+                new Notice(msg);
+                return false;
+            }
+            return true;
+        } catch (e) {
+            console.error("cancelShare error:", e);
+            new Notice("取消分享失败");
+            return false;
+        }
+    }
 }
 
 /**

@@ -44,22 +44,22 @@ const zh_tw: Partial<LangMap> = {
   "setting.sync.pdf_state": "PDF 狀態同步",
   "setting.sync.pdf_state_desc": "開啟後，將同步 PDF 查看器的閱讀狀態。 (本設置需要開啟配置項同步)",
   "setting.sync.merge_strategy": "筆記離線編輯合併策略",
-  "setting.sync.merge_strategy_desc": "Markdown 筆記離線編輯後重連服務端時內容處理方式，僅限本端。\n| 策略 | 策略說明 |\n| --- | --- |\n| 不合併，保留最新 | 不合併，僅保留最後編輯的筆記。若本地筆記編輯時間較舊，同步後本地修改將被丟棄。 |\n| 最新才合併 | 若本地筆記編輯時間較新則合併筆記內容，否則將以服務端為准並丟棄本地修改。 |\n| 強制合併 | 忽略編輯先後順序，強制合併本地與服務端的筆記內容。 |\n注意：合併過程會與共同基礎版本比对，可能會導致已刪除的內容重新出現。",
+  "setting.sync.merge_strategy_desc": "Markdown 筆記離線編輯後重連服務端時內容處理方式，僅限本端。\n| 策略 | 策略說明 |\n| --- | --- |\n| 不合併，保留最新 | 不合併，僅保留最後編輯的筆記。若本地筆記編輯時間較舊，同步後本地修改將被丟棄。 |\n| 最新才合併 | 若本地筆記編輯時間較新則合併筆記內容，否則將以服務端為準並丟棄本地修改。 |\n| 強制合併 | 忽略編輯先後順序，強制合併本地與服務端的筆記內容。 |\n注意：合併過程會與共同基礎版本比對，可能會導致已刪除的內容重新出現。",
   "setting.sync.strategy_default": "不合併，保留最新",
   "setting.sync.strategy_force": "強制合併",
   "setting.sync.strategy_new": "最新才合併",
   "setting.sync.offline_delete": "離線刪除同步",
   "setting.sync.offline_delete_desc": "在離線狀態時對筆記、附件及配置的刪除操作，將在重新連接時同步至服務端。",
   "setting.sync.manual_sync": "手動同步模式",
-  "setting.sync.manual_sync_desc": "開啟後，插件將不會在啟動或文件修改時自動觸發同步，僅可通過菜單手動觸發。\n(<b>請謹慎開啟</b>,該功能會嚴重影響使用體驗)",
+  "setting.sync.manual_sync_desc": "開啟後，插件將不會在啟動或文件修改時自動觸發同步，僅可通過菜單手動觸発。\n(<b>請謹慎開啟</b>,該功能會嚴重影響使用體驗)",
   "setting.sync.readonly_sync": "唯讀同步模式",
-  "setting.sync.readonly_sync_desc": "開啟後，本設備僅接收服務端更新，不上傳任何本地修改。<b>優先級高於手动同步模式。</b>",
+  "setting.sync.readonly_sync_desc": "開啟後，本設備僅接收服務端更新，不上傳任何本地修改。<b>優先級高於手動同步模式。</b>",
   "setting.sync.auto_pause_minimized": "最小化自動暫停同步",
   "setting.sync.auto_pause_minimized_desc": "開啟後，當 Obsidian 視窗最小化時，將自動暫停本地文件變更引發的自動同步，默認關閉。",
 
   "setting.sync.exclude": "同步排除",
   "setting.sync.exclude_placeholder": "路徑或正則，每行一個",
-  "setting.sync.exclude_desc": "設置的筆記、附件、目錄將不參與同步。\n每行一個,支持正則 (忽略大小寫)，\n例如： \n1. <b>Folder1/demo1.md</b> 直接匹配\n2. <b>Folder1</b> 匹配Folder1目錄及其所有子目錄和文件\n3. <b>Folder1/(.+)\.jpg</b> 正則匹配 Folder1 目錄下所有 jpg 圖片",
+  "setting.sync.exclude_desc": "設置的筆記、附件、目錄將不參與同步。\n每行一個,支持正則 (忽略大小寫)，\n例如： \n1. <b>Folder1/demo1.md</b> 直接匹配\n2. <b>Folder1</b> 匹配Folder1目錄及其所有子目錄和文件\n3. <b>Folder1/(.+)\\.jpg</b> 正則匹配 Folder1 目錄下所有 jpg 圖片",
   "setting.sync.exclude_extensions": "同步擴展名排除",
   "setting.sync.exclude_extensions_desc": "設置的文件類型不參與同步，每行一個(帶點)。例如：.tmp",
   "setting.sync.exclude_whitelist": "同步白名單",
@@ -90,8 +90,8 @@ const zh_tw: Partial<LangMap> = {
   "setting.cloud.desc": "啟動後，<b>不再接收附件同步</b>，圖片/視頻/音頻/PDF 等附件將通過網絡在線預覽。",
   "setting.cloud.type_limit": "附件雲預覽類型限制",
   "setting.cloud.type_limit_desc": "開啟後，僅限 圖片/音頻/視頻/PDF 使用雲預覽功能，其他附件正常同步。\n注意：請謹慎關閉，本項可能導致附件關聯插件失效。",
-  "setting.cloud.remote_source": "附件雲預覽 - 前后缀映射遠端源",
-  "setting.cloud.remote_source_desc": "該設置項用於為匹配前綴/后缀的附件指定遠端源，支持多行規則。\n格式：<b>前綴名@后缀名#遠端源</b>，\n<b>前綴</b>可以省略，多個<b>后缀名</b>可用 <b>$</b> 分隔，前後缀均不匹配則使用默認FNS源，遠端源支持變量替換。\n| 變量 | 說明 |\n| --- | --- |\n| {path} | 筆記內的附件路徑 |\n| {vaultPath} | 附件對應倉庫的相對路徑 |\n| {vault} | 倉庫名 |\n| {type} | 附件類型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定義遠端源，確保其支持跨域預覽（CORS）及必要的鑒權（若需要）",
+  "setting.cloud.remote_source": "附件雲預覽 - 前後綴映射遠端源",
+  "setting.cloud.remote_source_desc": "該設置項用於為匹配前綴/後綴的附件指定遠端源，支持多行規則。\n格式：<b>前綴名@後綴名#遠端源</b>，\n<b>前綴</b>可以省略，多個<b>後綴名</b>可用 <b>$</b> 分隔，前後綴均不匹配則使用默認FNS源，遠端源支持變量替換。\n| 變量 | 說明 |\n| --- | --- |\n| {path} | 筆記內的附件路徑 |\n| {vaultPath} | 附件對應倉庫的相對路徑 |\n| {vault} | 倉庫名 |\n| {type} | 附件類型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定義遠端源，確保其支持跨域預覽（CORS）及必要的鑒權（若需要）",
   "setting.cloud.delete_after_upload": "附件雲預覽 - 上傳後刪除",
   "setting.cloud.delete_after_upload_desc": "附件成功上傳後將自動刪除本地文件以節省空間。\n(本設置需要開啟附件雲預覽)\n注意：請謹慎關閉，本項可能導致附件關聯插件失效。",
 
@@ -164,7 +164,7 @@ const zh_tw: Partial<LangMap> = {
   "setting.debug.clear_hash_desc": "清理本地文件哈希映射表，不影響物理文件。點擊後將立即觸發重建，可能產生短暫卡頓。",
   "setting.debug.clear_time_success": "本地同步時間清理完畢",
   "setting.debug.reset_all": "重置設置",
-  "setting.debug.reset_all_desc": "除遠端配置信息之外，將其他設置恢復為默認值，並清理遠端保存的笔记库配置文件。此操作不可逆，請謹慎操作。",
+  "setting.debug.reset_all_desc": "除遠端配置信息之外，將其他設置恢復為默認值，並清理遠端保存的筆記庫配置文件。此操作不可逆，請謹慎操作。",
   "setting.debug.reset_all_success": "所有設置已重置為默認值",
 
   // --- ui.status ---
@@ -174,6 +174,7 @@ const zh_tw: Partial<LangMap> = {
   "ui.status.completed": "同步完成",
   "ui.status.conflict": "檢測到同步衝突，已強制合併，需要手動處理 ${path}。",
   "ui.status.no_connection": "無法連接到服務器，請檢查網絡連接",
+  "ui.status.config_imported": "已導入授權配置",
   "ui.status.api_connected": "已連接到識別後的服務地址: ${url}",
   "ui.status.api_redirected": "檢測到遠端服務地址重定向，已自動更新為: ${url}",
   "ui.status.last_sync_not_completed": "上一次的全部同步尚未完成，請耐心等待或檢查服務端狀態",
@@ -271,8 +272,18 @@ const zh_tw: Partial<LangMap> = {
   "ui.recycle_bin.clear_success": "回收站已清空",
   "ui.recycle_bin.delete_success": "刪除成功",
   "ui.recycle_bin.bulk_restore": "批量恢復",
-  "ui.recycle_bin.select_all": "全選"
-}
+  "ui.recycle_bin.select_all": "全選",
+  "ui.share.title": "分享筆記",
+  "ui.share.create": "創建分享鏈接",
+  "ui.share.link": "分享鏈接",
+  "ui.share.copy": "複製鏈接",
+  "ui.share.success": "分享鏈接已生成",
+  "ui.share.button_creating": "正在創建...",
+  "ui.share.copy_success": "分享鏈接已複製到剪貼板",
+  "ui.share.cancel": "取消分享",
+  "ui.share.cancel_success": "已取消分享",
+  "ui.share.checking": "正在檢查分享狀態...",
+};
 
 
 export default zh_tw;
