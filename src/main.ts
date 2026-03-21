@@ -177,7 +177,6 @@ export default class FastSync extends Plugin {
   }
 
   async onload() {
-    this.manifest.description = $("fns.desc")
     this.localStorageManager = new LocalStorageManager(this)
     this.localStorageManager.startWatch()
 
