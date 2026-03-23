@@ -26,6 +26,16 @@ export interface NoteHistoryDetail {
     createdAt: string;
 }
 
+export interface UserDTO {
+    uid: number;
+    username: string;
+    email: string;
+    avatar: string;
+    token: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
 /**
  * 统一的 HTTP API 服务类
  */
@@ -546,6 +556,28 @@ export class HttpApiService {
             console.error("cancelShare error:", e);
             new Notice("取消分享失败");
             return false;
+        }
+    }
+
+    /**
+     * 获取当前用户信息
+     */
+    async getUserInfo(): Promise<UserDTO> {
+        const endpoint = `/api/user/info`;
+
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "GET",
+                headers: { "token": this.plugin.settings.apiToken }
+            });
+
+            if (status !== 200 || !json.status) {
+                throw new Error(json?.message || "Failed to fetch user info");
+            }
+
+            return json.data;
+        } catch (e) {
+            throw e;
         }
     }
 }

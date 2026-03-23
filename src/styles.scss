@@ -325,6 +325,17 @@
     transition: width 0.05s linear;
   }
 }
+
+.fast-note-sync-progress-check {
+  display: flex;
+  align-items: center;
+  color: var(--text-success);
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
 .setting-item-info {
   margin-bottom: var(--size-4-2);
 

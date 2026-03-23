@@ -22,6 +22,7 @@ export class MenuManager {
   private statusBarText: HTMLElement;
   private statusBarFill: HTMLElement;
   private statusBarProgressBar: HTMLElement;
+  private statusBarCheck: HTMLElement;
 
   constructor(plugin: FastSync) {
     this.plugin = plugin;
@@ -130,6 +131,10 @@ export class MenuManager {
       this.statusBarProgressBar = this.statusBarItem.createDiv("fast-note-sync-progress-bar");
       this.statusBarFill = this.statusBarProgressBar.createDiv("fast-note-sync-progress-fill");
 
+      this.statusBarCheck = this.statusBarItem.createSpan("fast-note-sync-progress-check");
+      setIcon(this.statusBarCheck, "check");
+      this.statusBarCheck.style.display = "none";
+
       this.statusBarText = this.statusBarItem.createDiv("fast-note-sync-progress-text");
     }
 
@@ -149,11 +154,23 @@ export class MenuManager {
       this.statusBarFill.style.width = `${percentage}%`;
       this.statusBarText.setText(`${percentage}%`);
       this.statusBarItem.setAttribute("aria-label", text);
+
+      if (percentage === 100) {
+        this.statusBarProgressBar.style.display = "none";
+        this.statusBarCheck.style.display = "block";
+      } else {
+        this.statusBarProgressBar.style.display = "block";
+        this.statusBarCheck.style.display = "none";
+      }
     } else {
       if (text) {
         this.statusBarItem.style.display = "flex";
-        this.statusBarProgressBar.style.display = "block";
-        this.statusBarFill.style.width = "100%";
+        this.statusBarProgressBar.style.display = "none";
+        if (text === $("ui.status.completed")) {
+          this.statusBarCheck.style.display = "block";
+        } else {
+          this.statusBarCheck.style.display = "none";
+        }
         this.statusBarText.setText(text);
       } else {
         this.statusBarItem.style.display = "none";

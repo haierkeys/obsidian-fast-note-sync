@@ -3,6 +3,7 @@ import { KofiImage, WXImage } from "src/lib/icons";
 import { dump } from "src/lib/helps";
 import { setIcon } from "obsidian";
 import FastSync from "src/main";
+import { UserDTO } from "../lib/api";
 
 import { $ } from "../i18n/lang";
 
@@ -77,6 +78,8 @@ const handleClipboardClick = (plugin: FastSync) => {
 
 export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
   const [isConnected, setIsConnected] = useState<boolean>(plugin.websocket.isConnected());
+  const [userInfo, setUserInfo] = useState<UserDTO | null>(null);
+  const [loadingUserInfo, setLoadingUserInfo] = useState<boolean>(false);
   const iconRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -89,6 +92,24 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
       plugin.websocket.removeStatusListener(listener);
     };
   }, [plugin.websocket]);
+
+  useEffect(() => {
+    if (isConnected && !userInfo && !loadingUserInfo) {
+      setLoadingUserInfo(true);
+      plugin.api.getUserInfo()
+        .then(data => {
+          setUserInfo(data);
+          setLoadingUserInfo(false);
+        })
+        .catch(err => {
+          dump("Failed to fetch user info:", err);
+          setLoadingUserInfo(false);
+        });
+    } else if (!isConnected && (userInfo || loadingUserInfo)) {
+      setUserInfo(null);
+      setLoadingUserInfo(false);
+    }
+  }, [isConnected, plugin.api, userInfo, loadingUserInfo]);
 
   useEffect(() => {
     if (iconRef.current) {
@@ -153,6 +174,21 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
                 />
                 <span style={{ color: 'var(--text-muted)' }}>
                   {isConnected ? $("setting.remote.connected") : $("setting.remote.disconnected")}
+                  {isConnected && loadingUserInfo && (
+                    <span style={{ fontStyle: 'italic', opacity: 0.8 }}>
+                      {$("setting.remote.loading_user_info")}
+                    </span>
+                  )}
+                  {isConnected && userInfo && (
+                    <>
+                      <span style={{ marginLeft: '8px', borderLeft: '1px solid var(--background-modifier-border)', paddingLeft: '8px' }}>
+                        {$("setting.remote.user_uid")}: {userInfo.uid}
+                      </span>
+                      <span style={{ marginLeft: '8px', borderLeft: '1px solid var(--background-modifier-border)', paddingLeft: '8px' }}>
+                        {$("setting.remote.user_account")}: {userInfo.username}
+                      </span>
+                    </>
+                  )}
                 </span>
               </div>
             </div>
