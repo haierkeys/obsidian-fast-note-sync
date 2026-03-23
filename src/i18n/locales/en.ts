@@ -294,6 +294,7 @@ const en: Partial<LangMap> = {
   "ui.share.viewShare": "View Share",
   "ui.common.save": "Save",
   "ui.common.saveSuccess": "Saved successfully",
+  "ui.common.noChange": "No changes made",
   "ui.common.refresh": "Refresh",
 };
 

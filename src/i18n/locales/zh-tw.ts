@@ -294,6 +294,7 @@ const zh_tw: Partial<LangMap> = {
   "ui.share.viewShare": "預覽分享",
   "ui.common.save": "儲存",
   "ui.common.saveSuccess": "儲存成功",
+  "ui.common.noChange": "未做任何修改",
   "ui.common.refresh": "重新整理",
 };
 

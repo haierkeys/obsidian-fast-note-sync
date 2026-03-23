@@ -11,6 +11,7 @@ export class ShareModal extends Modal {
     // 密码状态相关
     private isPasswordVisible: boolean = false;
     private passwordValue: string = "";
+    private isPasswordDirty: boolean = false;
 
     constructor(app: App, plugin: FastSync, path: string) {
         super(app);
@@ -28,6 +29,7 @@ export class ShareModal extends Modal {
         const res = await this.plugin.api.getShare(this.path);
         this.shareData = res;
         this.loading = false;
+        this.isPasswordDirty = false;
         this.render();
     }
 
@@ -238,6 +240,7 @@ export class ShareModal extends Modal {
 
         pwdInputEl.addEventListener("input", (e) => {
             this.passwordValue = (e.target as HTMLInputElement).value;
+            this.isPasswordDirty = true;
         });
 
         // 保存密码按钮
@@ -246,6 +249,10 @@ export class ShareModal extends Modal {
             .setTooltip($("ui.common.save"))
             .setDisabled(this.loading)
             .onClick(async () => {
+                if (!this.isPasswordDirty) {
+                    new Notice($("ui.common.noChange"));
+                    return;
+                }
                 this.loading = true;
                 this.render();
                 const success = await this.plugin.api.updateSharePassword(this.path, this.passwordValue);
@@ -253,6 +260,7 @@ export class ShareModal extends Modal {
                 if (success) {
                     new Notice($("ui.common.saveSuccess"));
                     this.shareData!.isPassword = !!this.passwordValue;
+                    this.isPasswordDirty = false;
                     if (this.passwordValue) {
                         this.passwordValue = "";
                         this.isPasswordVisible = false;
@@ -412,6 +420,7 @@ export class ShareModal extends Modal {
                 this.shareData = null;
                 this.passwordValue = "";
                 this.isPasswordVisible = false;
+                this.isPasswordDirty = false;
                 new Notice($("ui.share.cancel_success"));
             }
             this.render();

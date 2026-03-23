@@ -294,6 +294,7 @@ const ja: Partial<LangMap> = {
   "ui.share.viewShare": "シェアを表示",
   "ui.common.save": "保存",
   "ui.common.saveSuccess": "保存しました",
+  "ui.common.noChange": "変更はありません",
   "ui.common.refresh": "更新",
 };
 

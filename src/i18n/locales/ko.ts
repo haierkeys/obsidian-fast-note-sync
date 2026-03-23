@@ -294,6 +294,7 @@ const ko: Partial<LangMap> = {
   "ui.share.viewShare": "공유 보기",
   "ui.common.save": "저장",
   "ui.common.saveSuccess": "저장 성공",
+  "ui.common.noChange": "변경 사항이 없습니다",
   "ui.common.refresh": "새로고침",
 };
 
