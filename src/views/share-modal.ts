@@ -335,7 +335,7 @@ export class ShareModal extends Modal {
             
             refreshBtn.onClick(async () => {
                 refreshBtn.setDisabled(true);
-                const newShortLink = await this.plugin.api.createShortLink(this.path, true);
+                const newShortLink = await this.plugin.api.createShortLink(this.path, true, shareUrl);
                 if (newShortLink) {
                     this.shareData!.shortLink = newShortLink;
                     this.render();
@@ -359,7 +359,7 @@ export class ShareModal extends Modal {
                 .onClick(async () => {
                     this.loading = true;
                     this.render();
-                    const shortLink = await this.plugin.api.createShortLink(this.path);
+                    const shortLink = await this.plugin.api.createShortLink(this.path, false, shareUrl);
                     this.loading = false;
                     if (shortLink) {
                         this.shareData!.shortLink = shortLink;
