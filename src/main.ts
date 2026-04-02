@@ -18,7 +18,8 @@ import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
 import { HttpApiService } from "./lib/api";
-import { $ } from "./i18n/lang";
+import { $ } from "./i18n/lang"
+import { ShareIndicatorManager } from "./lib/share_indicator_manager";
 
 
 export default class FastSync extends Plugin {
@@ -33,6 +34,7 @@ export default class FastSync extends Plugin {
   lockManager: LockManager // 锁管理器
   eventManager: EventManager // 事件管理器
   menuManager: MenuManager // 菜单管理器
+  shareIndicatorManager: ShareIndicatorManager // 分享指示器管理器 / Share indicator manager
   fileHashManager: FileHashManager // 文件哈希管理器
   configHashManager: ConfigHashManager // 配置哈希管理器
   localStorageManager: LocalStorageManager // 本地存储管理器
@@ -229,6 +231,10 @@ export default class FastSync extends Plugin {
       this.menuManager = new MenuManager(this)
       this.menuManager.init()
 
+      // 初始化分享指示器管理器 / Initialize share indicator manager
+      this.shareIndicatorManager = new ShareIndicatorManager(this)
+      this.shareIndicatorManager.initialize()
+
       // 4. 初始化功能管理器 (实例化)
       this.fileCloudPreview = new FileCloudPreview(this)
       this.fileHashManager = new FileHashManager(this)
@@ -259,6 +265,7 @@ export default class FastSync extends Plugin {
 
   onunload() {
     this.localStorageManager?.stopWatch()
+    this.shareIndicatorManager?.unload()
     // 取消注册文件事件
     this.refreshRuntime(false)
     this.updateStatusBar("")
