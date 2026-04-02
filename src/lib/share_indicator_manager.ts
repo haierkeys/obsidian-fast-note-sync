@@ -2,11 +2,25 @@ import type FastSync from "../main";
 
 // 注入的 <style> 元素 ID / ID of the injected <style> element
 const STYLE_EL_ID = "fns-share-indicator-style";
+// 筛选用的 <style> 元素 ID / ID of the filter <style> element
+const FILTER_STYLE_EL_ID = "fns-share-filter-style";
 
 // Lucide share-2 图标（绿色）SVG 字符串 / Lucide share-2 icon (green) SVG string
 const SVG_STR = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#4caf50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
 // 编码为 CSS background-image 可用的 data URI / Encoded as data URI usable in CSS background-image
 const SVG_URI = `data:image/svg+xml,${encodeURIComponent(SVG_STR)}`;
+
+// 分享图标 CSS 属性（所有视图共用）/ Share icon CSS properties (shared across all views)
+const ICON_CSS_PROPS = `content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-image: url("${SVG_URI}");
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 4px;
+  vertical-align: middle;
+  opacity: 0.85;`;
 
 // 启动后延迟同步，避免与 Obsidian 启动任务竞争网络资源
 // Delay sync after startup to avoid competing with Obsidian startup tasks for network resources
@@ -21,6 +35,10 @@ export class ShareIndicatorManager {
     private sharedPaths: Set<string> = new Set();
     // 已注入的 <style> 元素引用 / Reference to the injected <style> element
     private styleEl: HTMLStyleElement | null = null;
+    // 筛选用的 <style> 元素引用 / Reference to the filter <style> element
+    private filterStyleEl: HTMLStyleElement | null = null;
+    // 筛选是否激活 / Whether the filter is active
+    private _isFilterActive = false;
     // 网络重连处理器引用（用于 removeEventListener）/ Online handler ref for removeEventListener
     private onlineHandler: (() => void) | null = null;
     // 启动延迟定时器 / Startup delay timer
@@ -88,12 +106,16 @@ export class ShareIndicatorManager {
                     await this._fullRefresh();
                 } else {
                     // 应用增量变更 / Apply delta changes
-                    for (const p of changes.removed) this.sharedPaths.delete(p);
-                    for (const p of changes.added) this.sharedPaths.add(p);
-                    this.plugin.settings.sharedPaths = Array.from(this.sharedPaths);
-                    await this.plugin.saveData(this.plugin.settings);
+                    if (changes.removed.length > 0 || changes.added.length > 0) {
+                        for (const p of changes.removed) this.sharedPaths.delete(p);
+                        for (const p of changes.added) this.sharedPaths.add(p);
+                        this.plugin.settings.sharedPaths = Array.from(this.sharedPaths);
+                        await this.plugin.saveData(this.plugin.settings);
+                        this.regenerateCss();
+                    }
+                    // 无论是否有变更，都更新时间戳（缩小下次增量查询范围）
+                    // Always update timestamp regardless of changes (narrow next incremental query range)
                     this.plugin.localStorageManager?.setMetadata("lastShareSyncTime", changes.lastTime);
-                    this.regenerateCss();
                 }
             } else {
                 // 首次同步，全量拉取 / First sync: full fetch
@@ -144,6 +166,138 @@ export class ShareIndicatorManager {
         this.regenerateCss();
         // 同步更新状态栏分享图标颜色 / Sync status bar share icon color
         this.plugin.menuManager?.updateShareIconColor();
+        // 如果筛选激活且没有分享路径了，自动关闭筛选
+        // If filter is active and no shared paths remain, auto-deactivate filter
+        if (this._isFilterActive && this.sharedPaths.size === 0) {
+            this._isFilterActive = false;
+            this.removeFilterCss();
+        } else if (this._isFilterActive) {
+            // 更新筛选 CSS 以反映最新的分享列表
+            // Update filter CSS to reflect the latest shared paths
+            this.injectFilterCss();
+        }
+    }
+
+    /**
+     * 获取当前分享中的路径数量
+     * Get the count of currently shared paths
+     */
+    getSharedCount(): number {
+        return this.sharedPaths.size;
+    }
+
+    /**
+     * 判断指定路径是否正在分享中（O(1) Set 查找）
+     * Check if a given path is currently shared (O(1) Set lookup)
+     */
+    hasPath(path: string): boolean {
+        return this.sharedPaths.has(path);
+    }
+
+    /**
+     * 获取筛选是否激活
+     * Get whether the filter is active
+     */
+    get isFilterActive(): boolean {
+        return this._isFilterActive;
+    }
+
+    /**
+     * 切换筛选状态：激活时注入筛选 CSS 并展开相关文件夹，取消时移除
+     * Toggle filter state: inject filter CSS and expand folders when activating, remove when deactivating
+     */
+    toggleFilter(): void {
+        this._isFilterActive = !this._isFilterActive;
+        if (this._isFilterActive) {
+            const ancestors = this.getAllAncestorFolders();
+            this.injectFilterCss(ancestors);
+            this.expandSharedFolders(ancestors);
+        } else {
+            this.removeFilterCss();
+        }
+    }
+
+    /**
+     * 收集所有分享路径的祖先文件夹路径（去重）
+     * Collect all ancestor folder paths for shared paths (deduplicated)
+     */
+    private getAllAncestorFolders(): Set<string> {
+        const folders = new Set<string>();
+        for (const path of this.sharedPaths) {
+            const parts = path.split("/");
+            // 跳过最后一段（文件名），逐级构建祖先路径
+            // Skip last segment (filename), build ancestor paths level by level
+            for (let i = 1; i < parts.length; i++) {
+                folders.add(parts.slice(0, i).join("/"));
+            }
+        }
+        return folders;
+    }
+
+    /**
+     * 注入筛选 CSS，隐藏原生文件浏览器中非分享文件和空文件夹
+     * Inject filter CSS to hide non-shared files and empty folders in native file explorer
+     */
+    private injectFilterCss(ancestors?: Set<string>): void {
+        document.getElementById(FILTER_STYLE_EL_ID)?.remove();
+        this.filterStyleEl = null;
+
+        if (this.sharedPaths.size === 0) return;
+
+        const rules: string[] = [];
+
+        // 原生文件浏览器：隐藏所有文件项
+        // Native file explorer: hide all file items
+        rules.push(`.nav-file { display: none !important; }`);
+
+        // 隐藏不包含分享文件的文件夹（排除根文件夹）
+        // Hide folders that don't contain shared files (exclude root folder)
+        rules.push(`.nav-folder:not(.mod-root) { display: none !important; }`);
+
+        for (const path of this.sharedPaths) {
+            // 原生文件浏览器：显示分享的文件
+            // Native file explorer: show shared files
+            rules.push(`.nav-file:has(.nav-file-title[data-path="${path}"]) { display: block !important; }`);
+        }
+
+        // 显示所有祖先文件夹（包含分享文件的直接父级及更上层）
+        // Show all ancestor folders (direct parents and higher ancestors of shared files)
+        for (const folderPath of (ancestors ?? this.getAllAncestorFolders())) {
+            rules.push(`.nav-folder:has(> .nav-folder-title[data-path="${folderPath}"]) { display: block !important; }`);
+        }
+
+        const el = document.createElement("style");
+        el.id = FILTER_STYLE_EL_ID;
+        el.textContent = rules.join("\n");
+        document.head.appendChild(el);
+        this.filterStyleEl = el;
+    }
+
+    /**
+     * 移除筛选 CSS，恢复所有文件显示
+     * Remove filter CSS to restore all files display
+     */
+    private removeFilterCss(): void {
+        document.getElementById(FILTER_STYLE_EL_ID)?.remove();
+        this.filterStyleEl = null;
+    }
+
+    /**
+     * 展开包含分享文件的文件夹（原生文件浏览器）
+     * Expand folders that contain shared files (native file explorer)
+     */
+    private expandSharedFolders(ancestors?: Set<string>): void {
+        for (const folderPath of (ancestors ?? this.getAllAncestorFolders())) {
+            // 查找折叠状态的文件夹并展开
+            // Find collapsed folders and expand them
+            const folderEl = document.querySelector(
+                `.nav-folder:has(> .nav-folder-title[data-path="${folderPath}"]).is-collapsed`
+            );
+            if (folderEl) {
+                const titleEl = folderEl.querySelector(".nav-folder-title") as HTMLElement | null;
+                titleEl?.click();
+            }
+        }
     }
 
     /**
@@ -161,6 +315,10 @@ export class ShareIndicatorManager {
         }
         this.styleEl?.remove();
         this.styleEl = null;
+        // 清理筛选样式 / Clean up filter style
+        this.filterStyleEl?.remove();
+        this.filterStyleEl = null;
+        this._isFilterActive = false;
     }
 
     /**
@@ -176,50 +334,14 @@ export class ShareIndicatorManager {
 
         const rules: string[] = [];
         for (const path of this.sharedPaths) {
-            // Notebook Navigator 导航树视图: 图标在标题左侧 via ::before 伪元素
-            // Notebook Navigator nav tree view: icon left of title via ::before pseudo-element
-            rules.push(`[data-drag-path="${path}"] .nn-navitem-name::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background-image: url("${SVG_URI}");
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-  vertical-align: middle;
-  opacity: 0.85;
-}`);
-
-            // Notebook Navigator 笔记列表视图: 图标在标题左侧 via ::before 伪元素
-            // Notebook Navigator file list view: icon left of title via ::before pseudo-element
-            rules.push(`[data-drag-path="${path}"] .nn-file-name::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background-image: url("${SVG_URI}");
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-  vertical-align: middle;
-  opacity: 0.85;
-}`);
-
-            // 原生文件浏览器: 图标在文件名左侧 via ::before 伪元素
-            // Native file explorer: icon left of filename via ::before pseudo-element
-            rules.push(`.nav-file-title[data-path="${path}"] .nav-file-title-content::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  background-image: url("${SVG_URI}");
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-  vertical-align: middle;
-  opacity: 0.85;
-}`);
+            // 三种视图共用相同图标样式，仅选择器不同
+            // All three views share the same icon style, only selectors differ
+            const selectors = [
+                `[data-drag-path="${path}"] .nn-navitem-name::before`,  // Notebook Navigator 导航树 / nav tree
+                `[data-drag-path="${path}"] .nn-file-name::before`,     // Notebook Navigator 笔记列表 / file list
+                `.nav-file-title[data-path="${path}"] .nav-file-title-content::before`, // 原生文件浏览器 / native explorer
+            ];
+            rules.push(`${selectors.join(",\n")} {\n${ICON_CSS_PROPS}\n}`);
         }
 
         const el = document.createElement("style");

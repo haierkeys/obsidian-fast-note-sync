@@ -256,6 +256,30 @@ export class MenuManager {
       (item as any).dom.setAttribute("aria-label", $("ui.recycle_bin.title"));
     });
 
+    // 分享中（X）菜单项，仅在有分享笔记时显示
+    // Sharing (X) menu item, only shown when there are shared notes
+    const sharedCount = this.plugin.shareIndicatorManager?.getSharedCount() ?? 0;
+    if (sharedCount > 0) {
+      menu.addSeparator();
+      menu.addItem((item: MenuItem) => {
+        const isActive = this.plugin.shareIndicatorManager?.isFilterActive ?? false;
+        item
+          .setIcon("share-2")
+          .setTitle($("ui.menu.sharing", { count: sharedCount }))
+          .setChecked(isActive)
+          .onClick(async () => {
+            this.plugin.shareIndicatorManager?.toggleFilter();
+            // 激活原生文件浏览器侧边栏（筛选仅作用于原生文件浏览器）
+            // Reveal native file explorer sidebar (filter only applies to native file explorer)
+            const leaves = this.plugin.app.workspace.getLeavesOfType("file-explorer");
+            if (leaves.length > 0) {
+              this.plugin.app.workspace.revealLeaf(leaves[0]);
+            }
+          });
+        (item as any).dom.setAttribute("aria-label", $("ui.menu.sharing_desc"));
+      });
+    }
+
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
@@ -380,8 +404,7 @@ export class MenuManager {
     if (!this.shareStatusBarItem) return;
     const activeFile = this.plugin.app.workspace.getActiveFile();
     const isShared = activeFile
-      && this.plugin.shareIndicatorManager
-      && this.plugin.settings.sharedPaths?.includes(activeFile.path);
+      && this.plugin.shareIndicatorManager?.hasPath(activeFile.path);
 
     const svg = this.shareStatusBarItem.querySelector("svg");
     if (svg) {

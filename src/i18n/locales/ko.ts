@@ -292,6 +292,8 @@ const ko: Partial<LangMap> = {
   "ui.share.passwordPlaceholder": "비밀번호를 입력하세요...",
   "ui.share.button_creating": "생성 중...",
   "ui.share.viewShare": "공유 보기",
+  "ui.menu.sharing": "공유 중 (${count})",
+  "ui.menu.sharing_desc": "공유 중인 노트만 표시",
   "ui.common.save": "저장",
   "ui.common.saveSuccess": "저장 성공",
   "ui.common.noChange": "변경 사항이 없습니다",

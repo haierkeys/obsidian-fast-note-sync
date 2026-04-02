@@ -292,6 +292,8 @@ const en: Partial<LangMap> = {
   "ui.share.passwordPlaceholder": "Enter password...",
   "ui.share.button_creating": "Creating...",
   "ui.share.viewShare": "View Share",
+  "ui.menu.sharing": "Sharing (${count})",
+  "ui.menu.sharing_desc": "Filter to show only shared notes",
   "ui.common.save": "Save",
   "ui.common.saveSuccess": "Saved successfully",
   "ui.common.noChange": "No changes made",

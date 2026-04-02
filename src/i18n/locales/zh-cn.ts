@@ -292,6 +292,8 @@ const zh_cn: Partial<LangMap> = {
   "ui.share.passwordPlaceholder": "请输入密码...",
   "ui.share.button_creating": "正在开启...",
   "ui.share.viewShare": "预览分享",
+  "ui.menu.sharing": "分享中（${count}）",
+  "ui.menu.sharing_desc": "筛选显示分享中的笔记",
   "ui.common.save": "保存",
   "ui.common.saveSuccess": "保存成功",
   "ui.common.noChange": "未做任何修改",

@@ -292,6 +292,8 @@ const ja: Partial<LangMap> = {
   "ui.share.passwordPlaceholder": "パスワードを入力してください...",
   "ui.share.button_creating": "作成中...",
   "ui.share.viewShare": "シェアを表示",
+  "ui.menu.sharing": "共有中（${count}）",
+  "ui.menu.sharing_desc": "共有中のノートのみ表示",
   "ui.common.save": "保存",
   "ui.common.saveSuccess": "保存しました",
   "ui.common.noChange": "変更はありません",
