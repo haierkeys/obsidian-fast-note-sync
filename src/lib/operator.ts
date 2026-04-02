@@ -1,4 +1,4 @@
-import { TFolder, TFile, Notice, normalizePath } from "obsidian";
+import { TFolder, TFile, Notice, normalizePath, Platform } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear } from "./config_operator";
@@ -10,6 +10,29 @@ import { FileCloudPreview } from "./file_cloud_preview";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 
+/**
+ * 显示同步状态通知（桌面端用标准 Notice，移动端用右上角小型 toast）
+ * Show sync status notification (desktop: standard Notice, mobile: compact floating toast)
+ */
+function showSyncNotice(message: string, duration: number = 2500): void {
+  if (!Platform.isMobile) {
+    new Notice(message);
+    return;
+  }
+  // 移除已有 toast 避免堆叠 / Remove existing toast to avoid stacking
+  const existing = document.querySelector('.fns-mobile-toast');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'fns-mobile-toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('fns-mobile-toast-hiding');
+    toast.addEventListener('animationend', () => toast.remove());
+  }, duration);
+}
 
 export const startupSync = (plugin: FastSync): void => {
   void handleSync(plugin, plugin.localStorageManager.getMetadata("isInitSync"));
@@ -124,7 +147,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
     plugin.uploadedChunksCount = 0;
 
     if (plugin.settings.isShowNotice) {
-      new Notice($("ui.status.completed"));
+      showSyncNotice($("ui.status.completed"));
     }
     plugin.updateStatusBar($("ui.status.completed"));
 
@@ -257,7 +280,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     return;
   }
   if (!plugin.getWatchEnabled()) {
-    new Notice($("ui.status.last_sync_not_completed"));
+    showSyncNotice($("ui.status.last_sync_not_completed"), 4000);
     return;
   }
 
@@ -278,7 +301,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.disableWatch();
 
   if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
-    new Notice($("ui.status.starting"));
+    showSyncNotice($("ui.status.starting"));
   }
   plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
