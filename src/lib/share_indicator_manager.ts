@@ -206,9 +206,9 @@ export class ShareIndicatorManager {
   opacity: 0.85;
 }`);
 
-            // 原生文件浏览器: 图标在文件名右侧 via ::after 伪元素
-            // Native file explorer: icon right of filename via ::after pseudo-element
-            rules.push(`.nav-file-title[data-path="${path}"]::after {
+            // 原生文件浏览器: 图标在文件名左侧 via ::before 伪元素
+            // Native file explorer: icon left of filename via ::before pseudo-element
+            rules.push(`.nav-file-title[data-path="${path}"] .nav-file-title-content::before {
   content: '';
   display: inline-block;
   width: 12px;
@@ -216,7 +216,7 @@ export class ShareIndicatorManager {
   background-image: url("${SVG_URI}");
   background-size: contain;
   background-repeat: no-repeat;
-  margin-left: 4px;
+  margin-right: 4px;
   vertical-align: middle;
   opacity: 0.85;
 }`);
