@@ -311,6 +311,19 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
+  // 预先标记未参与本次同步的模块为已结束，避免 checkSyncCompletion 永远等待它们
+  // Pre-mark modules not participating in this sync as ended to prevent checkSyncCompletion from waiting forever
+  if (!(plugin.settings.syncEnabled && shouldSyncNotes)) {
+    plugin.noteSyncEnd = true;
+    plugin.fileSyncEnd = true;
+    plugin.folderSyncEnd = true;
+  } else if (plugin.settings.cloudPreviewEnabled && !plugin.settings.cloudPreviewTypeRestricted) {
+    plugin.fileSyncEnd = true;
+  }
+  if (!(plugin.settings.configSyncEnabled && shouldSyncConfigs)) {
+    plugin.configSyncEnd = true;
+  }
+
   let expectedCount = 0;
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
     expectedCount += 1; // NoteSync
