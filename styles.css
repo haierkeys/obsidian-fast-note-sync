@@ -848,5 +848,47 @@
     opacity: 0.5;
   }
 }
+/* ===== 移动端同步 Toast / Mobile Sync Toast ===== */
+.fns-mobile-toast {
+  position: fixed;
+  top: 95px;
+  right: 12px;
+  z-index: 9999;
+  max-width: 160px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background-color: var(--background-secondary);
+  opacity: 0.85;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.4;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: fns-toast-fade-in 0.2s ease-out;
+}
+.fns-mobile-toast.fns-mobile-toast-hiding {
+  animation: fns-toast-fade-out 0.3s ease-in forwards;
+}
+
+@keyframes fns-toast-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 0.85;
+    transform: translateX(0);
+  }
+}
+@keyframes fns-toast-fade-out {
+  from {
+    opacity: 0.85;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
 
 /*# sourceMappingURL=styles.css.map */
