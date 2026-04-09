@@ -35,7 +35,7 @@ export const BINARY_PREFIX_FILE_SYNC = "00"
  * 文件（非笔记）修改事件处理
  */
 export const fileModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
-  if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
@@ -82,7 +82,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
  * 文件删除事件处理
  */
 export const fileDelete = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
-  if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
@@ -127,7 +127,7 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
  * 文件重命名事件处理
  */
 export const fileRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
-  if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (file.path.endsWith(".md")) return
   if (!plugin.getWatchEnabled() && eventEnter) return
   if (plugin.isIgnoredFile(file.path) && eventEnter) return

@@ -22,7 +22,7 @@ let reloadTimer: ReturnType<typeof setTimeout> | null = null
 const pendingConfigUpdates: Map<string, string> = new Map()
 
 export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false, content?: string) {
-    if (plugin.settings.configSyncEnabled == false) return
+    if (plugin.settings.configSyncEnabled == false || plugin.settings.readonlySyncEnabled) return
     if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
@@ -102,7 +102,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
 }
 
 export const configDelete = function (path: string, plugin: FastSync, eventEnter: boolean = false) {
-    if (plugin.settings.configSyncEnabled == false) return
+    if (plugin.settings.configSyncEnabled == false || plugin.settings.readonlySyncEnabled) return
     if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && !plugin.getWatchEnabled()) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
