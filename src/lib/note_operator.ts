@@ -162,7 +162,15 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
         const folder = normalizedPath.split("/").slice(0, -1).join("/")
         if (folder != "") {
           const dirExists = plugin.app.vault.getFolderByPath(folder)
-          if (dirExists == null) await plugin.app.vault.createFolder(folder)
+          if (dirExists == null) {
+            try {
+              await plugin.app.vault.createFolder(folder)
+            } catch (e) {
+              // 并发竞争时只有一个调用成功，另一方忽略"已存在"错误
+              // In concurrent race only one call succeeds; ignore "already exists" error
+              if (!plugin.app.vault.getFolderByPath(folder)) throw e
+            }
+          }
         }
         await plugin.app.vault.create(normalizedPath, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
       }

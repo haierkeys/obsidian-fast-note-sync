@@ -566,8 +566,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
 /**
  * 发送同步请求
+ * 先发 FolderSync 并等待文件夹结构在本地落地，再发 NoteSync/FileSync，消除并发 createFolder 竞争
+ * Send FolderSync first and wait for folder structure to be created locally before sending NoteSync/FileSync,
+ * eliminating concurrent createFolder race conditions
  */
-export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode, noteData: NoteSyncData, fileData: FileSyncData, configData: ConfigSyncData, folderData: FolderSyncData) {
+export const handleRequestSend = async function (plugin: FastSync, syncMode: SyncMode, noteData: NoteSyncData, fileData: FileSyncData, configData: ConfigSyncData, folderData: FolderSyncData) {
   const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
@@ -582,7 +585,6 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delNotes: noteData.delNotes } : {}),
       ...(noteData.missingNotes.length > 0 ? { missingNotes: noteData.missingNotes } : {}),
     };
-    plugin.websocket.SendMessage("NoteSync", noteSyncData);
 
     const fileSyncData = {
       vault: plugin.settings.vault,
@@ -592,11 +594,6 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delFiles: fileData.delFiles } : {}),
       ...(fileData.missingFiles.length > 0 ? { missingFiles: fileData.missingFiles } : {}),
     };
-    // 如果启用了云预览且未开启类型限制，则不发送 FileSync 请求，从而关闭启动时的 file 同步
-    // 若开启了类型限制，则需要发送以同步不受限类型的附件1
-    if (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted) {
-      plugin.websocket.SendMessage("FileSync", fileSyncData);
-    }
 
     const folderSyncData = {
       vault: plugin.settings.vault,
@@ -606,7 +603,42 @@ export const handleRequestSend = function (plugin: FastSync, syncMode: SyncMode,
       ...(plugin.settings.offlineDeleteSyncEnabled ? { delFolders: folderData.delFolders } : {}),
       ...(folderData.missingFolders.length > 0 ? { missingFolders: folderData.missingFolders } : {}),
     };
+
+    // 第一步：先发 FolderSync，确保文件夹结构先于笔记/附件在本地建立
+    // Step 1: Send FolderSync first to ensure folder structure is created before notes/files
     plugin.websocket.SendMessage("FolderSync", folderSyncData);
+
+    // 第二步：等待 folderSyncDone（FolderSyncEnd 已收到且所有文件夹任务已完成）
+    // 超时兜底：10s 后无论如何继续，避免网络异常时挂起
+    // Step 2: Wait for folderSyncDone (FolderSyncEnd received and all folder tasks completed)
+    // Fallback timeout: continue after 10s regardless, to avoid hanging on network errors
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(resolve, 10000)
+      const checkInterval = setInterval(() => {
+        if (!plugin.websocket?.isAuth) {
+          clearInterval(checkInterval)
+          clearTimeout(timeout)
+          resolve()
+          return
+        }
+        const folderSyncDone = plugin.folderSyncEnd && plugin.folderSyncTasks.completed >= (plugin.folderSyncTasks.needUpload + plugin.folderSyncTasks.needModify + plugin.folderSyncTasks.needSyncMtime + plugin.folderSyncTasks.needDelete)
+        if (folderSyncDone) {
+          clearInterval(checkInterval)
+          clearTimeout(timeout)
+          resolve()
+        }
+      }, 50)
+    })
+
+    // 第三步：文件夹结构已就绪，发 NoteSync 和 FileSync
+    // Step 3: Folder structure is ready, now send NoteSync and FileSync
+    plugin.websocket.SendMessage("NoteSync", noteSyncData);
+
+    // 如果启用了云预览且未开启类型限制，则不发送 FileSync 请求，从而关闭启动时的 file 同步
+    // 若开启了类型限制，则需要发送以同步不受限类型的附件1
+    if (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted) {
+      plugin.websocket.SendMessage("FileSync", fileSyncData);
+    }
 
     // 清理已删除文件的本地哈希数据,防止重复检测
     if (plugin.settings.offlineDeleteSyncEnabled) {
