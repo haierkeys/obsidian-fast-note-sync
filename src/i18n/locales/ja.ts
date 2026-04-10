@@ -234,6 +234,8 @@ const ja: Partial<LangMap> = {
   "ui.log.action.FileRename": "添付ファイル名前変更",
   "ui.log.action.FileModify": "添付ファイル修正",
   "ui.log.action.FileDelete": "添付ファイル削除",
+  "ui.log.action.FileRenameAck": "添付ファイル名前変更成功",
+  "ui.log.action.FileUploadAck": "添付ファイルアップロード成功",
   "ui.log.action.SettingSync_full": "設定同期 (全量)",
   "ui.log.action.SettingSync_incremental": "設定同期 (増量)",
   "ui.log.action.SettingSyncModify": "設定同期更新",

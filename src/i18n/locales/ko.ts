@@ -234,6 +234,8 @@ const ko: Partial<LangMap> = {
   "ui.log.action.FileRename": "첨부 파일 이름 변경",
   "ui.log.action.FileModify": "첨부 파일 수정",
   "ui.log.action.FileDelete": "첨부 파일 삭제",
+  "ui.log.action.FileRenameAck": "첨부 파일 이름 변경 성공",
+  "ui.log.action.FileUploadAck": "첨부 파일 업로드 성공",
   "ui.log.action.SettingSync_full": "설정 동기화 (전체)",
   "ui.log.action.SettingSync_incremental": "설정 동기화 (증분)",
   "ui.log.action.SettingSyncModify": "설정 동기화 업데이트",

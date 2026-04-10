@@ -1,6 +1,6 @@
 import { TFolder, TFile, Notice, normalizePath, Platform } from "obsidian";
 
-import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename } from "./file_operator";
+import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
@@ -213,6 +213,8 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["FileSyncRename", receiveFileSyncRename],
   ["FileSyncMtime", receiveFileSyncMtime],
   ["FileSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "file")],
+  ["FileRenameAck", receiveFileRenameAck],
+  ["FileUploadAck", receiveFileUploadAck],
   ["SettingSyncModify", receiveConfigSyncModify],
   ["SettingSyncNeedUpload", receiveConfigUpload],
   ["SettingSyncMtime", receiveConfigSyncMtime],
