@@ -20,6 +20,9 @@ data.json
 sync.log
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
-todo.md
 /src/dist
 /src/views/dist
+
+# Claude Code
+CLAUDE.md
+.claude/
