@@ -9,7 +9,7 @@ import type FastSync from "../main";
  * 笔记修改事件处理
  */
 export const noteModify = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
-  if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
@@ -59,7 +59,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
  * 笔记删除事件处理
  */
 export const noteDelete = async function (file: TAbstractFile, plugin: FastSync, eventEnter: boolean = false) {
-  if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return
@@ -96,7 +96,7 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
  * 笔记重命名事件处理
  */
 export const noteRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
-  if (plugin.settings.syncEnabled == false) return
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && !plugin.getWatchEnabled()) return

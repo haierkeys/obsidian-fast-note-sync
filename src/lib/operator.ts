@@ -301,8 +301,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
 
   if (plugin.settings.readonlySyncEnabled) {
-    dump("Read-only mode enabled, skipping sync preparation.");
-    return;
+    dump("Read-only mode: Proceeding with state gathering for remote-to-local sync.");
   }
 
   plugin.currentSyncType = isLoadLastTime ? 'incremental' : 'full';
