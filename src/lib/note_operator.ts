@@ -162,7 +162,15 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
         const folder = normalizedPath.split("/").slice(0, -1).join("/")
         if (folder != "") {
           const dirExists = plugin.app.vault.getFolderByPath(folder)
-          if (dirExists == null) await plugin.app.vault.createFolder(folder)
+          if (dirExists == null) {
+            try {
+              await plugin.app.vault.createFolder(folder)
+            } catch (e) {
+              // 并发竞争时只有一个调用成功，另一方忽略"已存在"错误
+              // In concurrent race only one call succeeds; ignore "already exists" error
+              if (!plugin.app.vault.getFolderByPath(folder)) throw e
+            }
+          }
         }
         await plugin.app.vault.create(normalizedPath, data.content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
       }
@@ -322,10 +330,9 @@ export const receiveNoteSyncEnd = async function (data: any, plugin: FastSync) {
 
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
-  const hasUpdates = (syncData.needUploadCount || 0) + (syncData.needModifyCount || 0) + (syncData.needSyncMtimeCount || 0) + (syncData.needDeleteCount || 0) > 0;
-  if (hasUpdates) {
-    plugin.localStorageManager.setMetadata("lastNoteSyncTime", syncData.lastTime)
-  }
+  // 无条件更新 lastNoteSyncTime，确保包含服务端本轮同步后的所有异步操作（如 SyncResourceFID）
+  // Unconditionally update lastNoteSyncTime to cover all async server-side ops after this sync round (e.g., SyncResourceFID)
+  plugin.localStorageManager.setMetadata("lastNoteSyncTime", syncData.lastTime)
   plugin.syncTypeCompleteCount++
 }
 

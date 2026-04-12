@@ -234,6 +234,8 @@ const en: Partial<LangMap> = {
   "ui.log.action.FileRename": "Attachment Renaming",
   "ui.log.action.FileModify": "Attachment Modification",
   "ui.log.action.FileDelete": "Attachment Deletion",
+  "ui.log.action.FileRenameAck": "Attachment Rename Success",
+  "ui.log.action.FileUploadAck": "Attachment Upload Success",
   "ui.log.action.SettingSync_full": "Config Sync (Full)",
   "ui.log.action.SettingSync_incremental": "Config Sync (Incremental)",
   "ui.log.action.SettingSyncModify": "Config Sync Update",

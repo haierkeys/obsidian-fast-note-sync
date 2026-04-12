@@ -227,9 +227,8 @@ export const receiveFolderSyncEnd = async function (data: any, plugin: FastSync)
     dump(`Receive folder end:`, data)
 
     const syncData = data as SyncEndData
-    const hasUpdates = (syncData.needUploadCount || 0) + (syncData.needModifyCount || 0) + (syncData.needSyncMtimeCount || 0) + (syncData.needDeleteCount || 0) > 0;
-    if (hasUpdates) {
-        plugin.localStorageManager.setMetadata("lastFolderSyncTime", syncData.lastTime)
-    }
+    // 无条件更新 lastFolderSyncTime，确保包含服务端本轮同步后的所有异步操作（如 SyncResourceFID）
+    // Unconditionally update lastFolderSyncTime to cover all async server-side ops after this sync round (e.g., SyncResourceFID)
+    plugin.localStorageManager.setMetadata("lastFolderSyncTime", syncData.lastTime)
     plugin.syncTypeCompleteCount++
 }

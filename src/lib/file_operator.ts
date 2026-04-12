@@ -624,10 +624,9 @@ export const receiveFileSyncEnd = async function (data: any, plugin: FastSync) {
 
   // 从 data 对象中提取任务统计信息
   const syncData = data as SyncEndData
-  const hasUpdates = (syncData.needUploadCount || 0) + (syncData.needModifyCount || 0) + (syncData.needSyncMtimeCount || 0) + (syncData.needDeleteCount || 0) > 0;
-  if (hasUpdates) {
-    plugin.localStorageManager.setMetadata("lastFileSyncTime", syncData.lastTime)
-  }
+  // 无条件更新 lastFileSyncTime，确保包含服务端本轮同步后的所有异步操作（如 SyncResourceFID）
+  // Unconditionally update lastFileSyncTime to cover all async server-side ops after this sync round (e.g., SyncResourceFID)
+  plugin.localStorageManager.setMetadata("lastFileSyncTime", syncData.lastTime)
   plugin.syncTypeCompleteCount++
 }
 
@@ -836,7 +835,15 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
           const folder = normalizedPath.split("/").slice(0, -1).join("/")
           if (folder != "") {
             const dirExists = plugin.app.vault.getFolderByPath(folder)
-            if (dirExists == null) await plugin.app.vault.createFolder(folder)
+            if (dirExists == null) {
+              try {
+                await plugin.app.vault.createFolder(folder)
+              } catch (e) {
+                // 并发竞争时只有一个调用成功，另一方忽略"已存在"错误
+                // In concurrent race only one call succeeds; ignore "already exists" error
+                if (!plugin.app.vault.getFolderByPath(folder)) throw e
+              }
+            }
           }
           await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
         }
@@ -868,6 +875,24 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     const sessionSize = Array.from(session.chunks.values()).reduce((sum, c) => sum + c.byteLength, 0)
     currentDownloadBufferBytes -= sessionSize
     plugin.fileDownloadSessions.delete(session.sessionId)
+  }
+}
+
+// 收到 FileRenameAck，用服务端返回的时间戳更新 lastFileSyncTime
+// Receive FileRenameAck, update lastFileSyncTime with server-returned timestamp
+export const receiveFileRenameAck = function (data: { lastTime?: number }, plugin: FastSync) {
+  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+    plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+    dump(`FileRenameAck: lastFileSyncTime updated to`, data.lastTime)
+  }
+}
+
+// 收到 FileUploadAck，用服务端返回的时间戳更新 lastFileSyncTime
+// Receive FileUploadAck, update lastFileSyncTime with server-returned timestamp
+export const receiveFileUploadAck = function (data: { lastTime?: number }, plugin: FastSync) {
+  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+    plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+    dump(`FileUploadAck: lastFileSyncTime updated to`, data.lastTime)
   }
 }
 
