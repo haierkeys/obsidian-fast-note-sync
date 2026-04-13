@@ -59,6 +59,10 @@ export class FileHashManager {
 
       dump(`FileHashManager: 开始遍历 ${totalFiles} 个文件`);
 
+      // Node.js readBinary 不支持 >2GB 文件 (RangeError)
+      // 跳过这些文件以避免整个同步过程失败
+      const MAX_HASHABLE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+
       for (const file of files) {
         // 跳过已排除的文件
         if (isPathExcluded(file.path, this.plugin)) {
@@ -66,20 +70,34 @@ export class FileHashManager {
           continue;
         }
 
-        let contentHash: string;
+        try {
+          // 跳过过大的文件，避免 readBinary 的 2GB 限制
+          if (file.stat && file.stat.size > MAX_HASHABLE_SIZE) {
+            dump(`FileHashManager: 跳过大文件 (>${(MAX_HASHABLE_SIZE / 1024 / 1024 / 1024).toFixed(0)}GB): ${file.path}, size=${file.stat.size}`);
+            processedFiles++;
+            continue;
+          }
 
-        // 根据文件类型选择不同的哈希计算方式
-        if (file.extension === "md") {
-          // md 文件使用文本内容计算哈希
-          const content = await this.plugin.app.vault.cachedRead(file);
-          contentHash = hashContent(content);
-        } else {
-          // 非 md 文件使用二进制内容计算哈希
-          const buffer = await this.plugin.app.vault.readBinary(file);
-          contentHash = hashArrayBuffer(buffer);
+          let contentHash: string;
+
+          // 根据文件类型选择不同的哈希计算方式
+          if (file.extension === "md") {
+            // md 文件使用文本内容计算哈希
+            const content = await this.plugin.app.vault.cachedRead(file);
+            contentHash = hashContent(content);
+          } else {
+            // 非 md 文件使用二进制内容计算哈希
+            const buffer = await this.plugin.app.vault.readBinary(file);
+            contentHash = hashArrayBuffer(buffer);
+          }
+
+          this.hashMap.set(file.path, contentHash);
+        } catch (error) {
+          // 单个文件哈希计算失败不应中断整个构建过程
+          dump(`FileHashManager: 计算哈希失败，跳过文件: ${file.path}`, error);
+          console.warn(`[FastNoteSync] 跳过文件 ${file.path}: ${error.message}`);
         }
 
-        this.hashMap.set(file.path, contentHash);
         processedFiles++;
 
         // 每处理 100 个文件更新一次进度
