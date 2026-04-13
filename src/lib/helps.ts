@@ -121,6 +121,14 @@ export const parseRules = function (setting: string): SyncRule[] {
 }
 
 /**
+ * 将规则数组序列化为 JSON 字符串
+ */
+export const stringifyRules = function (rules: SyncRule[]): string {
+  if (!rules || rules.length === 0) return "";
+  return JSON.stringify(rules);
+}
+
+/**
  * 检查路径是否被排除 (针对笔记和附件)
  */
 export const isPathExcluded = function (path: string, plugin: FastSync): boolean {

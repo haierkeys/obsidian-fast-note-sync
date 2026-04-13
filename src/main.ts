@@ -5,7 +5,7 @@ import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
 import { LocalStorageManager } from "./lib/local_storage_manager";
-import { dump, setLogEnabled, isPathMatch } from "./lib/helps";
+import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules } from "./lib/helps";
 import { ConfigHashManager } from "./lib/config_hash_manager";
 import { RecycleBinModal } from "./views/recycle-bin-modal";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
@@ -279,35 +279,57 @@ export default class FastSync extends Plugin {
       this.settings.vault = this.app.vault.getName()
     }
 
-    // 数据迁移：将旧的配置排除合并到通用排除中
+    // 数据迁移与清理：统一规则格式为 JSON
     let hasMigration = false
-    if (data) {
-      if (data.configExclude) {
-        const oldConfigExclude = data.configExclude.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
-        const currentExclude = this.settings.syncExcludeFolders.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
-        const merged = Array.from(new Set([...currentExclude, ...oldConfigExclude])).join("\n")
-        if (merged !== this.settings.syncExcludeFolders) {
-          this.settings.syncExcludeFolders = merged
-          hasMigration = true
+    const pluginSelfDir = `${this.app.vault.configDir}/plugins/${this.manifest.id}`
+
+    // 1. 处理同步排除文件夹 (syncExcludeFolders)
+    const folderRules = parseRules(this.settings.syncExcludeFolders)
+    const initialFolderRulesCount = folderRules.length
+
+    // 迁移旧版配置排除 (configExclude)
+    if (data && data.configExclude) {
+      const oldConfigRules = parseRules(data.configExclude)
+      oldConfigRules.forEach(oldRule => {
+        if (!folderRules.some(r => r.pattern === oldRule.pattern)) {
+          folderRules.push(oldRule)
         }
-      }
-      if (data.configExcludeWhitelist) {
-        const oldConfigWhitelist = data.configExcludeWhitelist.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
-        const currentWhitelist = this.settings.syncExcludeWhitelist.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
-        const merged = Array.from(new Set([...currentWhitelist, ...oldConfigWhitelist])).join("\n")
-        if (merged !== this.settings.syncExcludeWhitelist) {
-          this.settings.syncExcludeWhitelist = merged
-          hasMigration = true
-        }
-      }
+      })
     }
 
-    // 默认排除插件自身配置目录 (保持原有逻辑)
-    const pluginSelfDir = `${this.app.vault.configDir}/plugins/${this.manifest.id}`
-    const currentExcludeList = this.settings.syncExcludeFolders.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
-    if (!currentExcludeList.includes(pluginSelfDir)) {
-      currentExcludeList.push(pluginSelfDir)
-      this.settings.syncExcludeFolders = currentExcludeList.join("\n")
+    // 强制添加插件自身目录排除
+    if (!folderRules.some(r => r.pattern === pluginSelfDir)) {
+      folderRules.push({ pattern: pluginSelfDir, caseSensitive: false })
+    }
+
+    if (folderRules.length !== initialFolderRulesCount || !this.settings.syncExcludeFolders.startsWith("[")) {
+      this.settings.syncExcludeFolders = stringifyRules(folderRules)
+      hasMigration = true
+    }
+
+    // 2. 处理同步白名单 (syncExcludeWhitelist)
+    const whitelistRules = parseRules(this.settings.syncExcludeWhitelist)
+    const initialWhitelistCount = whitelistRules.length
+
+    // 迁移旧版白名单 (configExcludeWhitelist)
+    if (data && data.configExcludeWhitelist) {
+      const oldWhitelistRules = parseRules(data.configExcludeWhitelist)
+      oldWhitelistRules.forEach(oldRule => {
+        if (!whitelistRules.some(r => r.pattern === oldRule.pattern)) {
+          whitelistRules.push(oldRule)
+        }
+      })
+    }
+
+    if (whitelistRules.length !== initialWhitelistCount || (this.settings.syncExcludeWhitelist && !this.settings.syncExcludeWhitelist.startsWith("["))) {
+      this.settings.syncExcludeWhitelist = stringifyRules(whitelistRules)
+      hasMigration = true
+    }
+
+    // 3. 处理扩展名排除 (syncExcludeExtensions) - 确保格式统一
+    if (this.settings.syncExcludeExtensions && !this.settings.syncExcludeExtensions.startsWith("[")) {
+      const extRules = parseRules(this.settings.syncExcludeExtensions)
+      this.settings.syncExcludeExtensions = stringifyRules(extRules)
       hasMigration = true
     }
 
