@@ -2,7 +2,7 @@
 import type { LangMap } from "../lang";
 
 
-const ko: Partial<LangMap> = {
+export default {
   "fns.desc": "개인 배포가 가능한, 멀티 터미널 대응의 노트, 첨부 파일, 설정의 실시간 동기화 및 백업 플러그인. Mac, Windows, Android, iOS 플랫폼을 지원하며 다국어 대응을 제공합니다.",
 
   "setting.tab.general": "일반",
@@ -12,7 +12,7 @@ const ko: Partial<LangMap> = {
   "setting.tab.cloud": "첨부 파일 클라우드 미리보기",
   "setting.search.placeholder": "설정 검색...",
   "setting.debug.show_version": "동기화 메뉴에 버전 정보 표시",
-  "setting.debug.show_version_desc": "활성화하면 버전 정보가 동기화 메뉴에 상주합니다. 비활성화하면 업데이트가 있을 때만 표시됩니다.",
+  "setting.debug.show_version_desc": "활성화하면 버전 정보가 동기화 메뉴에 상주합니다. 비활성화하면 업데이트가 있을 때만 표시됩니다。",
 
   // --- setting.remote ---
   "setting.remote.title": "원격",
@@ -35,38 +35,38 @@ const ko: Partial<LangMap> = {
   "setting.remote.api_token_placeholder": "API 액세스 토큰을 입력하세요",
   "setting.remote.vault_name": "원격 보관소 이름",
   "setting.remote.client_name": "클라이언트 이름",
-  "setting.remote.client_name_desc": "멀티 디바이스 동기화 시 장치를 식별할 수 있도록 현재 클라이언트의 이름을 설정합니다.",
+  "setting.remote.client_name_desc": "멀티 디바이스 동기화 시 장치를 식별할 수 있도록 현재 클라이언트의 이름을 설정합니다。",
   "setting.remote.client_name_placeholder": "클라이언트 이름 입력",
 
   // --- setting.sync ---
   "setting.sync.title": "동기화 제어",
   "setting.sync.auto_note": "자동 동기화",
-  "setting.sync.auto_note_desc": "활성화하면 보관소 내의 노트, 이미지, 각종 첨부 파일 및 디렉토리가 동기화됩니다.",
+  "setting.sync.auto_note_desc": "활성화하면 보관소 내의 노트, 이미지, 각종 첨부 파일 및 디렉토리가 동기화됩니다。",
   "setting.sync.auto_config": "설정의 자동 동기화",
-  "setting.sync.auto_config_desc": "활성화하면 <b>.obsidian</b> 디렉토리 내의 핵심 설정, 플러그인, 외관, 테마 등이 동기화됩니다. 처음 설정 시 서버 설정으로 로컬 설정을 덮어씁니다.",
+  "setting.sync.auto_config_desc": "활성화하면 <b>.obsidian</b> 디렉토리 내의 핵심 설정, 플러그인, 외관, 테마 등이 동기화됩니다. 처음 설정 시 서버 설정으로 로컬 설정을 덮어씁니다。",
   "setting.sync.pdf_state": "PDF 상태 동기화",
   "setting.sync.pdf_state_desc": "활성화하면 PDF 뷰어의 읽기 상태가 동기화됩니다. (설정 자동 동기화 활성화 필요)",
   "setting.sync.merge_strategy": "오프라인 편집 시 노트 통합 전략",
-  "setting.sync.merge_strategy_desc": "오프라인 편집 후 서버와 재연결 시 Markdown 노트의 처리 방식입니다 (이 클라이언트에만 적용).\n\n| 전략 | 설명 |\n| --- | --- |\n| 통합하지 않고 최신 유지 | 통합하지 않고 마지막으로 편집된 노트만 유지합니다. 로컬 노트가 더 오래된 경우 로컬 변경 사항은 삭제됩니다. |\n| 로컬이 새로운 경우에만 통합 | 로컬 편집 시간이 더 최신인 경우에만 콘텐츠를 통합합니다. 그렇지 않으면 서버 버전을 우선으로 하고 로컬 변경 사항은 버립니다. |\n| 강제 통합 | 편집 순서를 무시하고 로컬과 서버의 내용을 강제로 통합합니다. |\n주의: 통합 프로세스는 공통 베이스 버전과 비교하므로 삭제된 내용이 다시 나타날 수 있습니다.",
+  "setting.sync.merge_strategy_desc": "오프라인 편집 후 서버와 재연결 시 Markdown 노트의 처리 방식입니다 (이 클라이언트에만 적용).\n\n| 전략 | 설명 |\n| --- | --- |\n| 통합하지 않고 최신 유지 | 통합하지 않고 마지막으로 편집된 노트만 유지합니다. 로컬 노트가 더 오래된 경우 로컬 변경 사항은 삭제됩니다. |\n| 로컬이 새로운 경우에만 통합 | 로컬 편집 시간이 더 최신인 경우에만 콘텐츠를 통합합니다. 그렇지 않으면 서버 버전을 우선으로 하고 로컬 변경 사항은 버립니다. |\n| 강제 통합 | 편집 순서를 무시하고 로컬과 서버의 내용을 강제로 통합합니다. |\n주의: 통합 프로세스는 공통 베이스 버전과 비교하므로 삭제된 내용이 다시 나타날 수 있습니다。",
   "setting.sync.strategy_default": "통합하지 않고 최신 유지",
   "setting.sync.strategy_force": "강제 통합",
   "setting.sync.strategy_new": "로컬이 새로운 경우에만 통합",
   "setting.sync.offline_delete": "오프라인 삭제 동기화",
-  "setting.sync.offline_delete_desc": "오프라인 상태에서 수행한 노트, 첨부 파일, 설정의 삭제 작업은 재연결 시 서버로 동기화됩니다.",
+  "setting.sync.offline_delete_desc": "오프라인 상태에서 수행한 노트, 첨부 파일, 설정의 삭제 작업은 재연결 시 서버로 동기화됩니다。",
   "setting.sync.manual_sync": "수동 동기화 모드",
   "setting.sync.manual_sync_desc": "활성화하면 시작 시 또는 파일 수정 시 동기화가 자동으로 수행되지 않으며 메뉴를 통해 수동으로만 실행할 수 있습니다.\n(<b>주의하여 활성화하세요</b>. 사용자 경험에 큰 영향을 줄 수 있습니다)",
   "setting.sync.readonly_sync": "읽기 전용 동기화 모드",
   "setting.sync.readonly_sync_desc": "활성화하면 이 장치는 서버의 업데이트만 수신하고 로컬 수정 사항은 업로드하지 않습니다. <b>수동 동기화 모드보다 우선순위가 높습니다.</b>",
   "setting.sync.auto_pause_minimized": "최소화 시 자동 동기화 일시 중지",
-  "setting.sync.auto_pause_minimized_desc": "활성화하면 Obsidian 창이 최소화되었을 때 로컬 파일 변경으로 인한 자동 동기화를 일시 중지합니다. 기본값은 꺼짐입니다.",
+  "setting.sync.auto_pause_minimized_desc": "활성화하면 Obsidian 창이 최소화되었을 때 로컬 파일 변경으로 인한 자동 동기화를 일시 중지합니다. 기본값은 꺼짐입니다。",
 
   "setting.sync.exclude": "동기화 제외 (노트/첨부 파일/설정)",
   "setting.sync.exclude_placeholder": "경로 또는 정규식, 한 줄당 하나",
-  "setting.sync.exclude_desc": "설정된 규칙과 일치하는 노트, 첨부 파일, 디렉토리 또는 **.obsidian** 설정 파일은 동기화에서 제외됩니다.\n\n**규칙 설명:**\n- `경로 접두사`(폴더 경로 등) 또는 `정규표현식`을 지원합니다.\n- 각 줄은 하나의 독립적인 규칙을 나타냅니다.\n- 우측의 **Aa** 버튼을 클릭하여 대소문자 구분 여부를 전환할 수 있습니다.\n\n**예시:**\n\n| 규칙 | 매칭 결과 |\n| --- | --- |\n| `Folder1/abc.md` | 해당 파일과 정확히 일치 |\n| `Folder1` | Folder1 디렉토리 및 모든 하위 내용 일치 |\n| `.obsidian/plugins/` | 특정 플러그인 설정 제외 |\n| `.*\\.tmp$` | .tmp로 끝나는 모든 파일을 정규식으로 일치 |",
+  "setting.sync.exclude_desc": "설정된 규칙과 일치하는 노트, 첨부 파일, 디렉토리 또는 **.obsidian** 설정 파일은 동기화에서 제외됩니다.\n\n**규칙 설명:**\n- `경로 접두사`(폴더 경로 등) 또는 `정규표현식`을 지원합니다。\n- 각 줄은 하나의 독립적인 규칙을 나타냅니다。\n- 우측의 **Aa** 버튼을 클릭하여 대소문자 구분 여부를 전환할 수 있습니다。\n\n**예시:**\n\n| 규칙 | 매칭 결과 |\n| --- | --- |\n| `Folder1/abc.md` | 해당 파일과 정확히 일치 |\n| `Folder1` | Folder1 디렉토리 및 모든 하위 내용 일치 |\n| `.obsidian/plugins/` | 특정 플러그인 설정 제외 |\n| `.*\\.tmp$` | .tmp로 끝나는 모든 파일을 정규식으로 일치 |",
   "setting.sync.exclude_extensions": "동기화 확장자 제외",
-  "setting.sync.exclude_extensions_desc": "설정된 파일 형식은 동기화에서 제외됩니다. 한 줄당 하나(점 포함).\n예시: `.tmp`, `.log`.\n주의: 확장자 제외는 일반적으로 대소문자를 구분하지 않습니다.",
+  "setting.sync.exclude_extensions_desc": "설정된 파일 형식은 동기화에서 제외됩니다. 한 줄당 하나(점 포함).\n예시: `.tmp`, `.log`.\n주의: 확장자 제외는 일반적으로 대소문자를 구분하지 않습니다。",
   "setting.sync.exclude_whitelist": "동기화 화이트리스트 (노트/첨부 파일/설정)",
-  "setting.sync.exclude_whitelist_desc": "**동기화 제외** 및 **동기화 확장자 제외** 규칙보다 우선하며, 일치하는 항목을 강제로 동기화합니다. 정규표현식을 지원합니다.\n**Aa** 버튼을 클릭하여 해당 규칙의 대소문자 구분 설정을 전환할 수 있습니다.",
+  "setting.sync.exclude_whitelist_desc": "**동기화 제외** 및 **동기화 확장자 제외** 규칙보다 우선하며, 일치하는 항목을 강제로 동기화합니다. 정규표현식을 지원합니다。\n**Aa** 버튼을 클릭하여 해당 규칙의 대소문자 구분 설정을 전환할 수 있습니다。",
 
   "setting.sync.startup_delay": "시작 지연 (밀리초)",
   "setting.sync.startup_delay_placeholder": "지연 밀리초 입력",
@@ -76,25 +76,25 @@ const ko: Partial<LangMap> = {
   "setting.general.show_notice": "메시지 알림 표시",
   "setting.general.show_notice_desc": "모든 성공적인 작업의 알림을 끕니다. 오류 메시지는 정상적으로 표시됩니다",
   "setting.general.show_share_icon": "공유 아이콘 표시",
-  "setting.general.show_share_icon_desc": "활성화하면 <b>기본 파일 탐색기</b> 및 서드파티 <b>Notebook Navigator</b> 플러그인에 공유된 노트의 아이콘을 표시합니다.",
+  "setting.general.show_share_icon_desc": "활성화하면 <b>기본 파일 탐색기</b> 및 서드파티 <b>Notebook Navigator</b> 플러그인에 공유된 노트의 아이콘을 표시합니다。",
   "setting.sync.config_dirs": "설정 동기화 - 추가 디렉토리 동기화",
-  "setting.sync.config_dirs_desc": "핵심 설정 동기화 외에 추가로 동기화할 특수 디렉토리를 지정합니다 (반드시 <b>.</b>으로 시작해야 함).\n주의: <b>.</b>으로 시작하지 않는 경로는 무시됩니다. 해당 디렉토리의 모든 파일이 동기화됩니다 (예: .claude).",
+  "setting.sync.config_dirs_desc": "핵심 설정 동기화 외에 추가로 동기화할 특수 디렉토리를 지정합니다 (반드시 <b>.</b>으로 시작해야 함).\n주의: <b>.</b>으로 시작하지 않는 경로는 무시됩니다. 해당 디렉토리의 모든 파일이 동기화됩니다 (예: .claude)。",
   "setting.sync.config_dirs_placeholder": "동기화에 추가할 디렉토리 경로 입력 (반드시 . 으로 시작해야 함, 예: .claude)",
-  "setting.sync.config_dirs_must_start_with_dot_warning": "입력한 디렉토리는 '.'으로 시작해야 합니다. 잘못된 항목은 무시되었습니다.",
+  "setting.sync.config_dirs_must_start_with_dot_warning": "입력한 디렉토리는 '.'으로 시작해야 합니다. 잘못된 항목은 무시되었습니다。",
   "setting.sync.clear_remote": "원격 설정 삭제",
-  "setting.sync.clear_remote_desc": "원격 서비스에서 이 저장소의 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
-  "setting.sync.clear_remote_confirm": "원격 서비스에서 저장소 설정을 삭제하시겠습니까?\n서버에 저장된 이 저장소의 모든 설정이 영구적으로 삭제되며 복구할 수 없습니다.",
+  "setting.sync.clear_remote_desc": "원격 서비스에서 이 저장소의 설정을 삭제합니다. 이 작업은 되돌릴 수 없습니다。",
+  "setting.sync.clear_remote_confirm": "원격 서비스에서 저장소 설정을 삭제하시겠습니까?\n서버에 저장된 이 저장소의 모든 설정이 영구적으로 삭제되며 복구할 수 없습니다。",
   "ui.status.clear_success": "원격 설정이 삭제되었습니다",
 
   // --- setting.cloud ---
   "setting.cloud.title": "첨부 파일 클라우드 미리보기",
-  "setting.cloud.desc": "활성화하면 <b>첨부 파일을 동기화(업로드)하지 않고</b> 이미지/비디오/오디오/PDF 등을 온라인으로 미리 봅니다.",
+  "setting.cloud.desc": "활성화하면 <b>첨부 파일을 동기화(업로드)하지 않고</b> 이미지/비디오/오디오/PDF 등을 온라인으로 미리 봅니다。",
   "setting.cloud.type_limit": "클라우드 미리보기 유형 제한",
-  "setting.cloud.type_limit_desc": "활성화하면 이미지/오디오/비디오/PDF만 클라우드 미리보기를 사용하고 나머지는 정상적으로 동기화합니다.\n주의: 비활성화 시 첨부 파일 관련 플러그인이 정상 작동하지 않을 수 있습니다.",
+  "setting.cloud.type_limit_desc": "활성화하면 이미지/오디오/비디오/PDF만 클라우드 미리보기를 사용하고 나머지는 정상적으로 동기화합니다.\n주의: 비활성화 시 첨부 파일 관련 플러그인이 정상 작동하지 않을 수 있습니다。",
   "setting.cloud.remote_source": "클라우드 미리보기 - 접두사/접미사 매핑 소스",
-  "setting.cloud.remote_source_desc": "특정 접두사/접미사와 일치하는 첨부 파일의 원격 소스를 지정합니다 (멀티라인 규칙 지원).\n형식: <b>접두사@접미사#원격_소스</b>\n<b>접두사</b>는 생략 가능하며 여러 <b>접미사</b>는 <b>$</b>로 구분합니다. 일치 항목이 없으면 기본 FNS 소스를 사용하며 변수 치환을 지원합니다.\n\n| 변수 | 설명 |\n| --- | --- |\n| {path} | 노트 내 첨부 파일 경로 |\n| {vaultPath} | 보관소 내 상대 경로 |\n| {vault} | 보관소 이름 |\n| {type} | 첨부 유형 (image/video/audio/pdf/other) |\n예: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\n주의: 사용자 정의 소스를 사용하는 경우 CORS 및 필요한 인증(있는 경우)을 지원하는지 확인하세요.",
+  "setting.cloud.remote_source_desc": "특정 접두사/접미사와 일치하는 첨부 파일의 원격 소스를 지정합니다 (멀티라인 규칙 지원).\n형식: <b>접두사@접미사#원격_소스</b>\n<b>접두사</b>는 생략 가능하며 여러 <b>접미사</b>는 <b>$</b>로 구분합니다. 일치 항목이 없으면 기본 FNS 소스를 사용하며 변수 치환을 지원합니다。\n\n| 변수 | 설명 |\n| --- | --- |\n| {path} | 노트 내 첨부 파일 경로 |\n| {vaultPath} | 보관소 내 상대 경로 |\n| {vault} | 보관소 이름 |\n| {type} | 첨부 유형 (image/video/audio/pdf/other) |\n예: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\n주의: 사용자 정의 소스를 사용하는 경우 CORS 및 필요한 인증(있는 경우)을 지원하는지 확인하세요。",
   "setting.cloud.delete_after_upload": "클라우드 미리보기 - 업로드 후 삭제",
-  "setting.cloud.delete_after_upload_desc": "업로드 성공 후 로컬 파일을 자동 삭제하여 저장 공간을 절약합니다.\n(클라우드 미리보기 활성화 필요)\n주의: 비활성화 시 첨부 파일 관련 플러그인이 정상 작동하지 않을 수 있습니다.",
+  "setting.cloud.delete_after_upload_desc": "업로드 성공 후 로컬 파일을 자동 삭제하여 저장 공간을 절약합니다.\n(클라우드 미리보기 활성화 필요)\n주의: 비활성화 시 첨부 파일 관련 플러그인이 정상 작동하지 않을 수 있습니다。",
 
   // --- setting.support ---
   "setting.support.title": "후원 및 지원",
@@ -115,9 +115,10 @@ const ko: Partial<LangMap> = {
   "setting.support.console_mac": "CMD (⌘) + OPTION (⌥) + I",
   "setting.support.console_win": "CTRL + SHIFT + I",
   "setting.support.debug_url": "원격 디버그 주소",
-  "setting.support.debug_url_desc": "한 줄당 한 주소 입력. 연결에 2회 실패 시 자동으로 이 주소들을 시도합니다.\n연결 성공 시 일시적으로 런타임 API로 사용됩니다.\n주의: 디버그 주소의 원격 서비스가 토큰 발급 서버가 아닌 경우 인증을 통과할 수 없습니다.",
+  "setting.support.debug_url_desc": "한 줄당 한 주소 입력. 연결에 2회 실패 시 자동으로 이 주소들을 시도합니다.\n연결 성공 시 일시적으로 런타임 API로 사용됩니다.\n주의: 디버그 주소의 원격 서비스가 토큰 발급 서버가 아닌 경우 인증을 통과할 수 없습니다。",
+
   "setting.debug.network_library": "API 요청 라이브러리 선택",
-  "setting.debug.network_library_desc": "API 요청에 사용할 기본 라이브러리를 선택합니다. 'fetch'는 네이티브 구현이며, 'requestUrl'은 Obsidian 공식 구현입니다 (권장).",
+  "setting.debug.network_library_desc": "API 요청에 사용할 기본 라이브러리를 선택합니다. 'fetch'는 네이티브 구현이며, 'requestUrl'은 Obsidian 공식 구현입니다 (권장)。",
 
   // --- ui.history ---
   "ui.history.title": "노트 이력",
@@ -138,7 +139,7 @@ const ko: Partial<LangMap> = {
   "ui.history.copy": "복사",
   "ui.history.no_history": "이력 없음",
   "ui.history.copied": "복사됨",
-  "ui.history.restore_confirm": "이 버전으로 복구하시겠습니까? 현재 노트 내용이 덮어씌워집니다.",
+  "ui.history.restore_confirm": "이 버전으로 복구하시겠습니까? 현재 노트 내용이 덮어씌워집니다。",
   "ui.history.restore": "복구",
   "ui.history.restore_success": "복구 성공",
   "ui.history.loading": "로드 중...",
@@ -161,11 +162,11 @@ const ko: Partial<LangMap> = {
   "ui.menu.server": "서버 버전",
   "ui.menu.server_desc": "Fast Note Sync 서버 버전 번호",
   "ui.menu.settings": "플러그인 설정",
-  "setting.debug.clear_time_desc": "로컬의 모든 동기화 타임스탬프를 지웁니다. 원격 데이터에는 영향을 주지 않습니다. 다음 동기화 시 전체 비교가 수행됩니다.",
-  "setting.debug.clear_hash_desc": "로컬 파일 해시 맵을 지웁니다. 실제 파일에는 영향을 주지 않습니다. 클릭 즉시 재구축이 시작되며 일시적인 끊김이 발생할 수 있습니다.",
+  "setting.debug.clear_time_desc": "로컬의 모든 동기화 타임스탬프를 지웁니다. 원격 데이터에는 영향을 주지 않습니다. 다음 동기화 시 전체 비교가 수행됩니다。",
+  "setting.debug.clear_hash_desc": "로컬 파일 해시 맵을 지웁니다. 실제 파일에는 영향을 주지 않습니다. 클릭 즉시 재구축이 시작되며 일시적인 끊김이 발생할 수 있습니다。",
   "setting.debug.clear_time_success": "로컬 동기화 시간이 삭제되었습니다",
   "setting.debug.reset_all": "설정 초기화",
-  "setting.debug.reset_all_desc": "원격 설정 정보를 제외한 다른 모든 설정을 기본값으로 복원하고, 원격 서버에 저장된 보관소 설정 파일을 삭제합니다. 이 작업은 되돌릴 수 없으므로 주의해서 조작하십시오.",
+  "setting.debug.reset_all_desc": "원격 설정 정보를 제외한 다른 모든 설정을 기본값으로 복원하고, 원격 서버에 저장된 보관소 설정 파일을 삭제합니다. 이 작업은 되돌릴 수 없으므로 주의해서 조작하십시오。",
   "setting.debug.reset_all_success": "모든 설정이 기본값으로 초기화되었습니다",
 
   // --- ui.status ---
@@ -173,7 +174,7 @@ const ko: Partial<LangMap> = {
   "ui.status.starting": "동기화 시작",
   "ui.status.new_version": "새 버전 발견: ${version}, 클릭하여 업데이트 페이지로 이동",
   "ui.status.completed": "동기화 완료",
-  "ui.status.conflict": "동기화 충돌이 감지되어 강제 통합되었습니다. ${path}를 수동으로 확인하세요.",
+  "ui.status.conflict": "동기화 충돌이 감지되어 강제 통합되었습니다. ${path}를 수동으로 확인하세요。",
   "ui.status.no_connection": "서버에 연결할 수 없습니다. 네트워크를 확인하세요",
   "ui.status.config_imported": "인증 설정을 가져왔습니다",
   "ui.status.api_connected": "식별된 서비스 주소에 연결되었습니다: ${url}",
@@ -303,7 +304,4 @@ const ko: Partial<LangMap> = {
   "ui.common.saveSuccess": "저장 성공",
   "ui.common.noChange": "변경 사항이 없습니다",
   "ui.common.refresh": "새로고침",
-};
-
-
-export default ko;
+} as Partial<LangMap>;

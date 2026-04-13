@@ -2,7 +2,7 @@
 import type { LangMap } from "../lang";
 
 
-const en: Partial<LangMap> = {
+export default {
   "fns.desc": "A private-deployable, multi-terminal plugin for real-time synchronization and backup of notes, attachments, and configurations. Supports Mac, Windows, Android, iOS, and provides multi-language support.",
 
   "setting.tab.general": "General",
@@ -303,7 +303,5 @@ const en: Partial<LangMap> = {
   "ui.common.saveSuccess": "Saved successfully",
   "ui.common.noChange": "No changes made",
   "ui.common.refresh": "Refresh",
-};
+} as Partial<LangMap>;
 
-
-export default en;

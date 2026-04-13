@@ -2,7 +2,7 @@
 import type { LangMap } from "../lang";
 
 
-const ja: Partial<LangMap> = {
+export default {
   "fns.desc": "プライベートデプロイ可能な、マルチ端末対応のノート、添付ファイル、設定のリアルタイム同期＆バックアッププラグイン。Mac、Windows、Android、iOSプラットフォームをサポートし、多言語対応を提供します。",
 
   "setting.tab.general": "全般",
@@ -102,7 +102,7 @@ const ja: Partial<LangMap> = {
   "setting.support.kofi": "中国国外 ( Ko-fi )",
   "setting.support.wechat": "中国国内 ( 微信 QRコード決済 )",
   "setting.support.or": "または",
-  "setting.support.list": "サポーターリスト",
+  "setting.support.list": "スポンサーリスト",
   "setting.support.log": "ログを有効化",
   "setting.support.log_desc": "有効にするとコンソールにログを出力します",
   "setting.support.debug_copy": "デバッグ情報をコピー",
@@ -160,7 +160,7 @@ const ja: Partial<LangMap> = {
   "ui.menu.plugin_desc": "Fast Note Sync プラグインのバージョン番号",
   "ui.menu.server": "サーバーバージョン",
   "ui.menu.server_desc": "Fast Note Sync サーバーのバージョン番号",
-  "ui.menu.settings": "插件設置",
+  "ui.menu.settings": "プラグイン設定",
   "setting.debug.clear_time_desc": "ローカルのすべての同期タイムスタンプをクリアします。リモートデータには影響しません。次回の同期でフル比較が行われます。",
   "setting.debug.clear_hash_desc": "ローカルファイルハッシュマップをクリアします。物理ファイルには影響しません。クリック後すぐに再構築が開始され、一時的な遅延が発生する場合があります。",
   "setting.debug.clear_time_success": "ローカル同期時間がクリアされました",
@@ -303,7 +303,4 @@ const ja: Partial<LangMap> = {
   "ui.common.saveSuccess": "保存しました",
   "ui.common.noChange": "変更はありません",
   "ui.common.refresh": "更新",
-};
-
-
-export default ja;
+} as Partial<LangMap>;

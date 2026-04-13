@@ -2,8 +2,8 @@
 import type { LangMap } from "../lang";
 
 
-const zh_cn: Partial<LangMap> = {
-  "fns.desc": "可私有化部署，多端笔记,附件,配置实时同步&备份插件， 支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。",
+export default {
+  "fns.desc": "可私有化部署，多端笔记,附件,配置实时同步&备份插件， 支持 Mac、Windows、Android、iOS 等平台，并提供 multi-language 支持。",
 
   "setting.tab.general": "通用",
   "setting.tab.debug": "调试",
@@ -303,7 +303,4 @@ const zh_cn: Partial<LangMap> = {
   "ui.common.saveSuccess": "保存成功",
   "ui.common.noChange": "未做任何修改",
   "ui.common.refresh": "刷新",
-}
-
-
-export default zh_cn;
+} as Partial<LangMap>;

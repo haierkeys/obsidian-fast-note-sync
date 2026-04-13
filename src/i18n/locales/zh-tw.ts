@@ -2,7 +2,7 @@
 import type { LangMap } from "../lang";
 
 
-const zh_tw: Partial<LangMap> = {
+export default {
   "fns.desc": "可私有化部署，多端筆記,附件,配置實時同步&備份插件， 支持 Mac、Windows、Android、iOS 等平台，並提供多語言支持。",
 
   "setting.tab.general": "通用",
@@ -47,7 +47,7 @@ const zh_tw: Partial<LangMap> = {
   "setting.sync.pdf_state": "PDF 狀態同步",
   "setting.sync.pdf_state_desc": "開啟後，將同步 PDF 查看器的閱讀狀態。 (本設置需要開啟配置項同步)",
   "setting.sync.merge_strategy": "筆記離線編輯合併策略",
-  "setting.sync.merge_strategy_desc": "Markdown 筆記離線編輯後重連服務端時內容處理方式，僅限本端。\n| 策略 | 策略說明 |\n| --- | --- |\n| 不合併，保留最新 | 不合併，僅保留最後編輯的筆記。若本地筆記編輯時間較舊，同步後本地修改將被丟棄。 |\n| 最新才合併 | 若本地筆記編輯時間較新則合併筆記內容，否則將以服務端為準並丟棄本地修改。 |\n| 強制合併 | 忽略編輯先後順序，強制合併本地與服務端的筆記內容。 |\n注意：合併過程會與共同基礎版本比對，可能會導致已刪除的內容重新出現。",
+  "setting.sync.merge_strategy_desc": "Markdown 筆記離線編輯後重連服務端時內容處理方式，僅限本端。\n| 策略 | 策略說明 |\n| --- | --- |\n| 不合併，保留最新 | 不合併，僅保留最後編輯的筆記。若本地筆記編輯時間較舊，同步後本地修改將被丟棄。 |\n| 最新才合併 | 若本地筆記編輯時間較新則合併筆記內容，否則將以服務端為准並丟棄本地修改。 |\n| 強制合併 | 忽略編輯先後順序，強制合併本地與服務端的筆記內容。 |\n注意：合併過程會與共同基礎版本比對，可能會導致已刪除的內容重新出現。",
   "setting.sync.strategy_default": "不合併，保留最新",
   "setting.sync.strategy_force": "強制合併",
   "setting.sync.strategy_new": "最新才合併",
@@ -79,7 +79,7 @@ const zh_tw: Partial<LangMap> = {
   "setting.general.show_share_icon_desc": "開啟後，在 <b>原生文件管理器</b> 和 <b>Notebook Navigator</b> 三方插件中顯示已分享筆記的圖標。",
   "setting.sync.config_dirs": "配置同步-增加目錄同步",
   "setting.sync.config_dirs_desc": "在核心配置同步基礎上，增加需要同步的特殊目錄（必須以 <b>.</b> 開頭）。\n注意：不以 <b>.</b> 開頭的路徑將被自動忽略，這些目錄下的所有文件都將參與同步，例如：.claude。",
-  "setting.sync.config_dirs_placeholder": "輸入需要增加同步的目錄路徑，必須以 . 開頭，如：.claude",
+  "setting.sync.config_dirs_placeholder": "輸入需要增加同步的目錄內容，必須以 . 開頭，如：.claude",
   "setting.sync.config_dirs_must_start_with_dot_warning": "輸入的同步目錄必須以 '.' 開頭，已自動為您忽略非法項。",
   "setting.sync.clear_remote": "清理遠端配置",
   "setting.sync.clear_remote_desc": "從遠端服務清理筆記庫的配置。此操作不可逆。",
@@ -228,7 +228,7 @@ const zh_tw: Partial<LangMap> = {
   "ui.log.action.FileDownload": "附件分片下載",
   "ui.log.action.FileChunkDownload": "附件分片下載(請求)",
   "ui.log.action.FileRename": "附件重命名",
-  "ui.log.action.FileModify": "附件修改",
+  "ui.log.action.FileModify": "附件修正",
   "ui.log.action.FileDelete": "附件刪除",
   "ui.log.action.FileRenameAck": "附件重命名成功",
   "ui.log.action.FileUploadAck": "附件上傳成功",
@@ -303,7 +303,4 @@ const zh_tw: Partial<LangMap> = {
   "ui.common.saveSuccess": "儲存成功",
   "ui.common.noChange": "未做任何修改",
   "ui.common.refresh": "重新整理",
-};
-
-
-export default zh_tw;
+} as Partial<LangMap>;
