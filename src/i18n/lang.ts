@@ -1,5 +1,5 @@
-import zhTW from "src/i18n/locales/zh-tw";
-import zhCN from "src/i18n/locales/zh-cn";
+import zhTW from "src/i18n/locales/zh-TW";
+import zhCN from "src/i18n/locales/zh-CN";
 /*
 import ptBR from "src/i18n/locales/pt-br";
 import vi from "src/i18n/locales/vi";

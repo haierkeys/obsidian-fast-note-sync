@@ -1,5 +1,4 @@
 // 简体中文
-import type { LangMap } from "../lang";
 
 
 export default {
@@ -303,4 +302,4 @@ export default {
   "ui.common.saveSuccess": "保存成功",
   "ui.common.noChange": "未做任何修改",
   "ui.common.refresh": "刷新",
-} as Partial<LangMap>;
+};
