@@ -88,7 +88,7 @@ export class FileHashManager {
           } else {
             // 非 md 文件使用二进制内容计算哈希
             const buffer = await this.plugin.app.vault.readBinary(file);
-            contentHash = hashArrayBuffer(buffer);
+            contentHash = await hashArrayBuffer(buffer);
           }
 
           this.hashMap.set(file.path, contentHash);

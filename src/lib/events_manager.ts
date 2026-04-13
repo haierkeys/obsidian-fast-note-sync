@@ -48,13 +48,24 @@ export class EventManager {
 
     // 注册插件卸载时的清理逻辑
     this.plugin.register(() => {
-      dump("EventManager: removing window event listeners")
+      dump("EventManager: cleaning up")
+      this.stop() // 清除所有待处理任务定时器 (Clear all pending task timers)
       window.removeEventListener("focus", this.onWindowFocus)
       window.removeEventListener("blur", this.onWindowBlur)
       window.removeEventListener("visibilitychange", this.onVisibilityChange)
       window.removeEventListener("online", this.onOnline)
       window.removeEventListener("offline", this.onOffline)
     })
+  }
+
+  /**
+   * 停止所有定时器并清除任务状态
+   * Stop all timers and clear task status
+   */
+  public stop() {
+    this.rawEventTimers.forEach(timer => clearTimeout(timer))
+    this.rawEventTimers.clear()
+    this.pendingRenamePaths.clear()
   }
 
   private onOnline = () => {

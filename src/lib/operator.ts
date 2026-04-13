@@ -396,7 +396,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           if (skipSync) continue;
 
           if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) continue;
-          const contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
+          const contentHash = await hashArrayBuffer(await plugin.app.vault.readBinary(file));
           const baseHash = plugin.fileHashManager.getPathHash(file.path);
           let item = {
             path: file.path,
@@ -483,7 +483,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     configs.push({
       path: path,
       pathHash: hashContent(path),
-      contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
+      contentHash: await hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
       mtime: stat.mtime,
       ctime: stat.ctime,
       size: stat.size

@@ -53,7 +53,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
                 if (stat) {
                     const contentBuf = await plugin.app.vault.adapter.readBinary(filePath)
                     contentStr = new TextDecoder().decode(contentBuf)
-                    contentHash = hashArrayBuffer(contentBuf)
+                    contentHash = await hashArrayBuffer(contentBuf)
                     mtime = stat.mtime
                     ctime = getSafeCtime(stat)
                 }
@@ -246,7 +246,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         path: data.path,
         pathHash: hashContent(data.path),
         content: contentStr,
-        contentHash: hashArrayBuffer(contentBuf),
+        contentHash: await hashArrayBuffer(contentBuf),
         mtime: mtime,
         ctime: ctime,
     };

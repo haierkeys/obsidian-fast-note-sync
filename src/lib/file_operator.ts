@@ -46,7 +46,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
     plugin.addIgnoredFile(file.path)
     try {
       const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
-      const contentHash = hashArrayBuffer(content)
+      const contentHash = await hashArrayBuffer(content)
       const baseHash = plugin.fileHashManager.getPathHash(file.path)
       const lastSyncMtime = plugin.lastSyncMtime.get(file.path)
 
@@ -193,7 +193,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
         let contentHash = plugin.fileHashManager.getPathHash(oldfile)
         if (contentHash == null) {
           const content: ArrayBuffer = await plugin.app.vault.readBinary(file)
-          contentHash = hashArrayBuffer(content)
+          contentHash = await hashArrayBuffer(content)
         }
 
         const data = {
@@ -803,7 +803,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
         const sizeMatch = data.size === undefined || targetFile.stat.size === data.size
         if (sizeMatch) {
           const content = await plugin.app.vault.readBinary(targetFile)
-          const localContentHash = hashArrayBuffer(content)
+          const localContentHash = await hashArrayBuffer(content)
           if (localContentHash === data.contentHash) {
             dump(`Target attachment already exists and matches hash, skipping rename: ${data.path}`)
             plugin.fileHashManager.setFileHash(data.path, data.contentHash)
@@ -891,7 +891,7 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
       }
 
       // 下载完成后自动计算哈希并更新缓存
-      const contentHash = hashArrayBuffer(completeFile.buffer)
+      const contentHash = await hashArrayBuffer(completeFile.buffer)
       plugin.fileHashManager.setFileHash(session.path, contentHash)
       // 记录同步后的 mtime
       plugin.lastSyncMtime.set(session.path, session.mtime)

@@ -94,7 +94,7 @@ export class ConfigHashManager {
                         const exists = await this.plugin.app.vault.adapter.exists(filePath);
                         if (exists) {
                             const contentBuf = await this.plugin.app.vault.adapter.readBinary(filePath);
-                            contentHash = hashArrayBuffer(contentBuf);
+                            contentHash = await hashArrayBuffer(contentBuf);
                             this.hashMap.set(path, contentHash);
                         }
                     } catch (error) {
