@@ -124,6 +124,43 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
 }
 
 /**
+ * 按路径字符串发送文件删除消息（用于无法获取 TFile 对象的场景，如 rename 后旧路径已不存在）
+ * Send file delete message by path string (for scenarios where TFile object is unavailable, e.g., old path after rename)
+ */
+export const fileDeleteByPath = async function (filePath: string, plugin: FastSync) {
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
+  if (filePath.endsWith(".md")) return
+  if (isPathExcluded(filePath, plugin)) return
+  if (plugin.lastSyncPathDeleted.has(filePath)) return
+
+  await plugin.lockManager.withLock(filePath, async () => {
+    // 如果该文件正在上传或在队列中，则标记为取消，且不再发送服务端删除消息
+    // If the file is being uploaded or in the queue, cancel and skip server delete
+    if (activeUploadsMap.has(filePath)) {
+      activeUploadsMap.get(filePath)!.cancelled = true;
+      plugin.fileHashManager.removeFileHash(filePath)
+      return
+    }
+
+    plugin.addIgnoredFile(filePath)
+    try {
+      plugin.websocket.SendMessage("FileDelete", {
+        vault: plugin.settings.vault,
+        path: filePath,
+        pathHash: hashContent(filePath),
+      })
+      dump(`File delete by path send`, filePath)
+
+      // WebSocket 消息发送后从哈希表中删除
+      // Remove from hash map after sending WebSocket message
+      plugin.fileHashManager.removeFileHash(filePath)
+    } finally {
+      plugin.removeIgnoredFile(filePath)
+    }
+  }, { maxRetries: 3, retryInterval: 50 });
+}
+
+/**
  * 文件重命名事件处理
  */
 export const fileRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
@@ -418,12 +455,8 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   plugin.websocket.SendMessage("FileChunkDownload", requestData)
   plugin.totalFilesToDownload++
 
-  // 服务端推送文件更新,更新哈希表(使用内容哈希)
-  plugin.fileHashManager.setFileHash(data.path, data.contentHash)
-  // 记录 mtime
-  plugin.lastSyncMtime.set(data.path, data.mtime)
-
   // 更新同步时间
+  // Update sync time
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
     plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
   }

@@ -93,6 +93,35 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
 }
 
 /**
+ * 按路径字符串发送笔记删除消息（用于无法获取 TFile 对象的场景，如 rename 后旧路径已不存在）
+ * Send note delete message by path string (for scenarios where TFile object is unavailable, e.g., old path after rename)
+ */
+export const noteDeleteByPath = async function (filePath: string, plugin: FastSync) {
+  if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
+  if (!filePath.endsWith(".md")) return
+  if (isPathExcluded(filePath, plugin)) return
+  if (plugin.lastSyncPathDeleted.has(filePath)) return
+
+  await plugin.lockManager.withLock(filePath, async () => {
+    plugin.addIgnoredFile(filePath)
+    try {
+      plugin.websocket.SendMessage("NoteDelete", {
+        vault: plugin.settings.vault,
+        path: filePath,
+        pathHash: hashContent(filePath),
+      })
+      dump(`Note delete by path send`, filePath)
+
+      // WebSocket 消息发送后从哈希表中删除
+      // Remove from hash map after sending WebSocket message
+      plugin.fileHashManager.removeFileHash(filePath)
+    } finally {
+      plugin.removeIgnoredFile(filePath)
+    }
+  }, { maxRetries: 3, retryInterval: 50 });
+}
+
+/**
  * 笔记重命名事件处理
  */
 export const noteRename = async function (file: TAbstractFile, oldfile: string, plugin: FastSync, eventEnter: boolean = false) {
