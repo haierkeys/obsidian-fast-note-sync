@@ -2,8 +2,8 @@ import { TAbstractFile, Platform, TFile, TFolder, Menu, MenuItem, normalizePath 
 
 import { folderModify, folderDelete, folderRename } from "./folder_operator";
 import { NoteHistoryModal } from "../views/note-history/history-modal";
-import { noteModify, noteDelete, noteRename } from "./note_operator";
-import { fileModify, fileDelete, fileRename } from "./file_operator";
+import { noteModify, noteDelete, noteRename, noteDeleteByPath } from "./note_operator";
+import { fileModify, fileDelete, fileRename, fileDeleteByPath } from "./file_operator";
 import { dump, isPathInConfigSyncDirs } from "./helps";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
@@ -176,34 +176,22 @@ export class EventManager {
           const oldExt = oldFile.match(/\.([^.]+)$/)?.[1] ?? ''
           let isDiffFileType = file.extension !== oldExt
           if (isDiffFileType) {
-            //获取旧文件的TFile对象
-            const oldTFile = this.plugin.app.vault.getAbstractFileByPath(oldFile) as TAbstractFile
-            this.runWithDelay(oldTFile.path, () => {            
-              //如果旧文件是markdown文件，则发送笔记删除消息，否则发送文件删除消息
-              if(oldTFile.path.endsWith(".md"))
-              {
-                //dump(`rename,now delete old note.`,oldTFile.path)
-                noteDelete(oldTFile, this.plugin, true)
-              }
-              else{
-                //dump(`rename,now delete old file.`,oldTFile.path)
-                fileDelete(oldTFile, this.plugin, true)
-              }
-            },0)
-
-            this.runWithDelay(file.path, () => {            
-              //如果新文件是markdown文件，则发送笔记创建消息，否则发送文件创建消息
-              if(file.path.endsWith(".md"))
-              {
-                //dump(`rename,now modify new note.`,oldTFile.path)
-                noteModify(file, this.plugin, true)
-              }
+            // 修复：rename 完成后旧路径的 TFile 已不存在，直接使用路径字符串避免空指针崩溃
+            // Fix: TFile of old path no longer exists after rename completes, use path string to avoid null pointer crash
+            this.runWithDelay(oldFile, () => {
+              if (oldFile.endsWith(".md"))
+                noteDeleteByPath(oldFile, this.plugin)
               else
-              {
-                //dump(`rename,now modify new file.`,oldTFile.path)
+                fileDeleteByPath(oldFile, this.plugin)
+            }, 0)
+
+            this.runWithDelay(file.path, () => {
+              //如果新文件是markdown文件，则发送笔记创建消息，否则发送文件创建消息
+              if (file.path.endsWith(".md"))
+                noteModify(file, this.plugin, true)
+              else
                 fileModify(file, this.plugin, true)
-              }
-            },0)            
+            }, 0)
           }
           else{
             if (file.path.endsWith(".md")) {
