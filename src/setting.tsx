@@ -21,9 +21,6 @@ export interface PluginSettings {
   apiToken: string
   /** 库（Vault）标识名称 */
   vault: string
-
-  /** 配置文件同步排除项（通常包含本插件自身的配置路径） */
-  configExclude: string
   /** 启动同步延迟时间（毫秒），避免刚启动时大量 IO 冲突 */
   startupDelay: number
   /** 离线同步策略（如 newTimeMerge, ignoreTimeMerge 等） */
@@ -34,8 +31,6 @@ export interface PluginSettings {
   syncExcludeExtensions: string
   /** 笔记/文件同步排除白名单（即使在排除文件夹内也强制同步） */
   syncExcludeWhitelist: string
-  /** 配置文件同步排除白名单 */
-  configExcludeWhitelist: string
   /** 是否启用 PDF 状态同步 */
   pdfSyncEnabled: boolean
   /** 是否启用云端预览功能（减少本地存储占用） */
@@ -92,14 +87,11 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   // API 令牌
   apiToken: "",
   vault: "",
-
-  configExclude: "",
   startupDelay: 500,
   offlineSyncStrategy: "",
   syncExcludeFolders: "",
   syncExcludeExtensions: "",
   syncExcludeWhitelist: "",
-  configExcludeWhitelist: "",
   pdfSyncEnabled: true,
   cloudPreviewEnabled: false,
   cloudPreviewTypeRestricted: true,
@@ -871,31 +863,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_whitelist_desc"))
 
-    new Setting(set).setName($("setting.sync.config_exclude")).addTextArea((text) =>
-      text
-        .setPlaceholder($("setting.sync.config_exclude_placeholder"))
-        .setValue(this.plugin.settings.configExclude)
-        .onChange(async (value) => {
-          if (value != this.plugin.settings.configExclude) {
-            this.plugin.settings.configExclude = value
-            await this.plugin.saveSettings()
-          }
-        }),
-    )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_desc"))
-
-    new Setting(set).setName($("setting.sync.config_exclude_whitelist")).addTextArea((text) =>
-      text
-        .setPlaceholder($("setting.sync.config_exclude_placeholder"))
-        .setValue(this.plugin.settings.configExcludeWhitelist)
-        .onChange(async (value) => {
-          if (value != this.plugin.settings.configExcludeWhitelist) {
-            this.plugin.settings.configExcludeWhitelist = value
-            await this.plugin.saveSettings()
-          }
-        }),
-    )
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_exclude_whitelist_desc"))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_whitelist_desc"))
 
     new Setting(set).setName($("setting.sync.config_dirs")).addTextArea((text) =>
       text

@@ -97,7 +97,7 @@ export const isPathExcluded = function (path: string, plugin: FastSync): boolean
     }
   }
 
-  // 2. 检查目录排除
+  // 2. 检查目录/路径排除 (共享设置)
   if (syncExcludeFolders) {
     const folderList = syncExcludeFolders.split(/\r?\n/).map(f => f.trim()).filter(f => f !== "");
     if (folderList.some(f => isPathMatch(normalizedPath, f))) {
@@ -118,28 +118,33 @@ const CONFIG_EXCLUDE_SET = new Set<string>()
  */
 export const configIsPathExcluded = function (relativePath: string, plugin: FastSync): boolean {
   const normalizedPath = relativePath.replace(/\\/g, "/");
-  // 0. 检查白名单 (优先级最高)
-  const whitelistSetting = plugin.settings.configExcludeWhitelist || ""
-  if (whitelistSetting.trim()) {
-    const whitelist = whitelistSetting.split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
+  const { syncExcludeFolders, syncExcludeWhitelist } = plugin.settings;
+
+  // 0. 检查白名单 (优先级最高 - 使用共享设置)
+  if (syncExcludeWhitelist) {
+    const whitelist = syncExcludeWhitelist.split(/\r?\n/).map((p) => p.trim()).filter((p) => p !== "")
     if (whitelist.some((p) => isPathMatch(normalizedPath, p))) {
       return false
     }
   }
 
-  // 1. 检查内部排除集合 (支持左匹配)
+  // 1. 检查内部排除集合 (支持左匹配) - 重要逻辑保留
   if (Array.from(CONFIG_EXCLUDE_SET).some(p => isPathMatch(normalizedPath, p))) {
     return true
   }
 
-  // 2. 检查用户设置的排除
-  const setting = plugin.settings.configExclude || ""
-  if (!setting.trim()) return false
-  const paths = setting
-    .split(/\r?\n/)
-    .map((p) => p.trim())
-    .filter((p) => p !== "")
-  return paths.some((p) => isPathMatch(normalizedPath, p))
+  // 2. 检查用户设置的排除 (使用共享设置)
+  if (syncExcludeFolders) {
+    const paths = syncExcludeFolders
+      .split(/\r?\n/)
+      .map((p) => p.trim())
+      .filter((p) => p !== "")
+    if (paths.some((p) => isPathMatch(normalizedPath, p))) {
+      return true
+    }
+  }
+
+  return false
 }
 
 /**

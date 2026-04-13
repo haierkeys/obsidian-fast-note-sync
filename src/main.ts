@@ -175,7 +175,7 @@ export default class FastSync extends Plugin {
   }
 
   updateStatusBar(text: string, current?: number, total?: number) {
-    this.menuManager.updateStatusBar(text, current, total)
+    this.menuManager?.updateStatusBar(text, current, total)
   }
 
   async onload() {
@@ -278,9 +278,41 @@ export default class FastSync extends Plugin {
     if (!this.settings.vault) {
       this.settings.vault = this.app.vault.getName()
     }
-    // 仅在首次运行或该设置项不存在时才设置默认值
-    if (!data || data.configExclude === undefined) {
-      this.settings.configExclude = `${this.app.vault.configDir}/plugins/${this.manifest.id}`
+
+    // 数据迁移：将旧的配置排除合并到通用排除中
+    let hasMigration = false
+    if (data) {
+      if (data.configExclude) {
+        const oldConfigExclude = data.configExclude.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
+        const currentExclude = this.settings.syncExcludeFolders.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
+        const merged = Array.from(new Set([...currentExclude, ...oldConfigExclude])).join("\n")
+        if (merged !== this.settings.syncExcludeFolders) {
+          this.settings.syncExcludeFolders = merged
+          hasMigration = true
+        }
+      }
+      if (data.configExcludeWhitelist) {
+        const oldConfigWhitelist = data.configExcludeWhitelist.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
+        const currentWhitelist = this.settings.syncExcludeWhitelist.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
+        const merged = Array.from(new Set([...currentWhitelist, ...oldConfigWhitelist])).join("\n")
+        if (merged !== this.settings.syncExcludeWhitelist) {
+          this.settings.syncExcludeWhitelist = merged
+          hasMigration = true
+        }
+      }
+    }
+
+    // 默认排除插件自身配置目录 (保持原有逻辑)
+    const pluginSelfDir = `${this.app.vault.configDir}/plugins/${this.manifest.id}`
+    const currentExcludeList = this.settings.syncExcludeFolders.split(/\r?\n/).map((p: string) => p.trim()).filter((p: string) => p !== "")
+    if (!currentExcludeList.includes(pluginSelfDir)) {
+      currentExcludeList.push(pluginSelfDir)
+      this.settings.syncExcludeFolders = currentExcludeList.join("\n")
+      hasMigration = true
+    }
+
+    if (hasMigration) {
+      await this.saveSettings()
     }
   }
 
@@ -295,8 +327,8 @@ export default class FastSync extends Plugin {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
     }
     await this.refreshRuntime(true, setItem)
-    this.fileHashManager.cleanupExcludedHashes()
-    this.configHashManager.cleanupExcludedHashes()
+    this.fileHashManager?.cleanupExcludedHashes()
+    this.configHashManager?.cleanupExcludedHashes()
     // 文件夹暂未实现 cleanupExcludedHashes，但 FolderHashManager 初始化时会自动过滤
     await this.saveData(this.settings)
   }
@@ -304,20 +336,20 @@ export default class FastSync extends Plugin {
   async refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
     if (forceRegister && this.settings.api && this.settings.apiToken) {
       // 1. 前置探测跳转，更新 runApi
-      await this.api.probeApiRedirect()
+      await this.api?.probeApiRedirect()
 
       if (this.wsSettingChange) {
-        this.websocket.unRegister()
+        this.websocket?.unRegister()
         this.wsSettingChange = false
       }
 
-      this.websocket.register((status) => this.updateRibbonIcon(status))
+      this.websocket?.register((status) => this.updateRibbonIcon(status))
 
       if (this.syncTimer) {
         clearTimeout(this.syncTimer)
       }
       // 用于首次同步测试
-      if (this.isFirstSync && this.websocket.isAuth) {
+      if (this.isFirstSync && this.websocket?.isAuth) {
         this.syncTimer = setTimeout(() => {
           if (setItem == "syncEnabled" && this.settings.syncEnabled) {
             handleSync(this, false, "note")
@@ -334,7 +366,7 @@ export default class FastSync extends Plugin {
       this.lastSyncPathRenamed = new Set()
       this.fileDownloadSessions = new Map<string, any>()
     } else {
-      this.websocket.unRegister()
+      this.websocket?.unRegister()
       this.isWatchEnabled = false
       this.ignoredFiles = new Set()
       this.ignoredConfigFiles = new Set()
