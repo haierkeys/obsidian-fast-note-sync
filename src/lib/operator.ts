@@ -130,10 +130,10 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
   const divisor = Math.max(1, activeModuleCount);
   const overallPercentage = (totalProgressSum / divisor) * 100;
 
-  // 判断是否强制完成：进度到 100% 且网络空闲，或者是所有模块都标记了 Done
-  const isProgressComplete = overallPercentage >= 100 && bufferCleared && allDownloadsComplete;
+  // 判断是否强制完成：进度到 100% 且网络空闲，所有模块都标记了 Done，且所有请求已发出
+  const isProgressComplete = overallPercentage >= 100 && bufferCleared && allDownloadsComplete && !plugin.isSyncRequesting;
 
-  if ((allSyncDone && allChunksCompleted && allDownloadsComplete && bufferCleared) || isProgressComplete) {
+  if (((allSyncDone && allChunksCompleted && allDownloadsComplete && bufferCleared) || isProgressComplete) && !plugin.isSyncRequesting) {
     if (intervalId) clearInterval(intervalId);
 
     plugin.enableWatch();
@@ -556,7 +556,14 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   configData.context = context;
   folderData.context = context;
 
-  handleRequestSend(plugin, syncMode, noteData, fileData, configData, folderData);
+  // 设置发起请求状态位，防止 checkSyncCompletion 过早判定结束 (Set requesting flag to prevent premature completion detection)
+  plugin.isSyncRequesting = true;
+
+  try {
+    await handleRequestSend(plugin, syncMode, noteData, fileData, configData, folderData);
+  } finally {
+    plugin.isSyncRequesting = false;
+  }
 
   // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
   const progressCheckInterval = setInterval(() => {

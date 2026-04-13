@@ -468,7 +468,7 @@ export class WebSocketClient {
     }
 
     while (this.ws.bufferedAmount > maxBufferSize) {
-      await new Promise(resolve => setTimeout(resolve, 400))
+      await new Promise(resolve => setTimeout(resolve, 50))
     }
   }
 

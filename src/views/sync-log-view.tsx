@@ -178,7 +178,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                                 </div>
                             </div>
                             {log.path && <div className="fns-sync-log-path">{log.path}</div>}
-                            {log.message && !['成功', 'success'].includes(log.message) && <div className="fns-sync-log-message">{log.message}</div>}
+                            {log.message && !['成功', 'success'].includes(log.message.toLowerCase()) && <div className="fns-sync-log-message">{log.message}</div>}
                         </div>
                     ))
                 )}

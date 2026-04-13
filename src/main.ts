@@ -73,6 +73,7 @@ export default class FastSync extends Plugin {
   configSyncEnd: boolean = false // 配置同步是否完成
   folderSyncEnd: boolean = false // 文件夹同步是否完成
   isWaitClearSync: boolean = false // 是否正在等待清理确认以便后续同步
+  isSyncRequesting: boolean = false // 是否正在发起同步请求 (Whether sync request is being initiated)
 
   // 任务统计
   noteSyncTasks = {
