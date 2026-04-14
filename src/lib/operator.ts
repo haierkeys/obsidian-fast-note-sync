@@ -56,7 +56,27 @@ export const rebuildAllHashes = async (plugin: FastSync) => {
 /**
  * 检查同步是否完成
  */
-export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<typeof setTimeout>) {
+export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<typeof setTimeout>, syncStartTime?: number) {
+  // 超时保底：如果同步超过 60 秒仍未完成，强制结束并恢复 watch，防止因任务计数异常导致永远无法发送
+  // Safety timeout: if sync exceeds 60s, force completion and re-enable watch to prevent permanent send blockage
+  const SYNC_TIMEOUT_MS = 60000;
+  if (syncStartTime && Date.now() - syncStartTime > SYNC_TIMEOUT_MS) {
+    if (intervalId) clearInterval(intervalId);
+    dump(`Sync completion timeout after ${SYNC_TIMEOUT_MS}ms, force enabling watch. Tasks: note=${JSON.stringify(plugin.noteSyncTasks)}, file=${JSON.stringify(plugin.fileSyncTasks)}, folder=${JSON.stringify(plugin.folderSyncTasks)}, config=${JSON.stringify(plugin.configSyncTasks)}`)
+    plugin.enableWatch();
+    plugin.syncTypeCompleteCount = 0;
+    plugin.resetSyncTasks();
+    plugin.totalFilesToDownload = 0;
+    plugin.downloadedFilesCount = 0;
+    plugin.totalChunksToDownload = 0;
+    plugin.downloadedChunksCount = 0;
+    plugin.totalChunksToUpload = 0;
+    plugin.uploadedChunksCount = 0;
+    plugin.updateStatusBar($("ui.status.completed"));
+    setTimeout(() => plugin.updateStatusBar(""), 3000);
+    return;
+  }
+
   const ws = plugin.websocket.ws;
   const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
 
@@ -569,8 +589,10 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
 
   // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
+  // 同时记录开始时间，用于超时保底
+  const syncStartTime = Date.now();
   const progressCheckInterval = setInterval(() => {
-    checkSyncCompletion(plugin, progressCheckInterval);
+    checkSyncCompletion(plugin, progressCheckInterval, syncStartTime);
   }, 100);
 };
 
