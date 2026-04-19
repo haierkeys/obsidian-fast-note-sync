@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, Notice, normalizePath, Platform } from "obsidian";
 
 import { ReceiveMessage, ReceiveFileSyncUpdateMessage, FileUploadMessage, FileSyncChunkDownloadMessage, FileDownloadSession, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, hashArrayBuffer, dump, sleep, dumpTable, isPathExcluded, getSafeCtime } from "./helps";
+import { hashContent, hashArrayBuffer, hashFileByStat, MAX_HASHABLE_FILE_SIZE, dump, sleep, dumpTable, isPathExcluded, getSafeCtime } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import { HttpApiService } from "./api";

@@ -219,6 +219,23 @@ export const hashArrayBuffer = function (buffer: ArrayBuffer): string {
 }
 
 /**
+ * Node.js fs.readFile / vault.readBinary 无法处理 ≥2GB 的文件,
+ * 会抛出 RangeError: File size is greater than 2 GiB。
+ * 对超大文件使用 size + mtime 生成伪哈希, 跳过二进制读取。
+ */
+export const MAX_HASHABLE_FILE_SIZE = 2 * 1024 * 1024 * 1024 // 2 GiB
+
+export const hashFileByStat = function (size: number, mtime: number): string {
+  let hash = 0
+  const data = `large-file:${size}:${mtime}`
+  for (let i = 0; i < data.length; i++) {
+    hash = (hash << 5) - hash + data.charCodeAt(i)
+    hash &= hash
+  }
+  return String(hash)
+}
+
+/**
  * 获取安全的 ctime (如果不存在则回退到 mtime)
  */
 export const getSafeCtime = function (stat: { ctime?: number; mtime?: number }): number {

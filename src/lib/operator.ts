@@ -5,7 +5,7 @@ import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, r
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
-import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID } from "./helps";
+import { hashContent, hashArrayBuffer, hashFileByStat, MAX_HASHABLE_FILE_SIZE, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
@@ -394,7 +394,12 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           if (skipSync) continue;
 
           if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) continue;
-          const contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
+          let contentHash: string;
+          if (file.stat.size >= MAX_HASHABLE_FILE_SIZE) {
+            contentHash = hashFileByStat(file.stat.size, file.stat.mtime);
+          } else {
+            contentHash = hashArrayBuffer(await plugin.app.vault.readBinary(file));
+          }
           const baseHash = plugin.fileHashManager.getPathHash(file.path);
           let item = {
             path: file.path,
@@ -478,10 +483,16 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     const stat = await plugin.app.vault.adapter.stat(fullPath);
     if (!stat) continue;
     if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
+    let configHash: string;
+    if (stat.size >= MAX_HASHABLE_FILE_SIZE) {
+      configHash = hashFileByStat(stat.size, stat.mtime);
+    } else {
+      configHash = hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath));
+    }
     configs.push({
       path: path,
       pathHash: hashContent(path),
-      contentHash: hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath)),
+      contentHash: configHash,
       mtime: stat.mtime,
       ctime: stat.ctime,
       size: stat.size

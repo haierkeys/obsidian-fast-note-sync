@@ -1,6 +1,6 @@
 import { TFile, Notice } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
+import { hashContent, hashArrayBuffer, hashFileByStat, MAX_HASHABLE_FILE_SIZE, dump, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 
@@ -75,8 +75,15 @@ export class FileHashManager {
           contentHash = hashContent(content);
         } else {
           // 非 md 文件使用二进制内容计算哈希
-          const buffer = await this.plugin.app.vault.readBinary(file);
-          contentHash = hashArrayBuffer(buffer);
+          // 跳过 ≥2GB 文件的二进制读取 (Node.js readFile 限制),
+          // 改用 size + mtime 生成伪哈希
+          if (file.stat.size >= MAX_HASHABLE_FILE_SIZE) {
+            contentHash = hashFileByStat(file.stat.size, file.stat.mtime);
+            dump(`FileHashManager: 跳过超大文件哈希计算 (>2GB): ${file.path} (${(file.stat.size / 1024 / 1024 / 1024).toFixed(2)} GB)`);
+          } else {
+            const buffer = await this.plugin.app.vault.readBinary(file);
+            contentHash = hashArrayBuffer(buffer);
+          }
         }
 
         this.hashMap.set(file.path, contentHash);
