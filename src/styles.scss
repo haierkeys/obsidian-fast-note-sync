@@ -930,15 +930,15 @@
     }
 
     &.fns-sync-log-category-note {
-      border-left-color: var(--text-success);
+      border-left-color: #08b94e;
     }
-
+ 
     &.fns-sync-log-category-attachment {
-      border-left-color: #eab308; // Yellow
+      border-left-color: #7C4DFF;
     }
-
+ 
     &.fns-sync-log-category-config {
-      border-left-color: #3b82f6; // Blue
+      border-left-color: #FF8A33;
     }
 
     &.fns-sync-log-category-other {
@@ -946,7 +946,7 @@
     }
 
     &.fns-sync-log-category-folder {
-      border-left-color: #f472b6; // Pink
+      border-left-color: #1E88E5;
     }
 
     &.fns-sync-log-status-error {
@@ -955,18 +955,18 @@
 
     // Communication Type Borders and Tag Specifics
     &.fns-sync-log-type-send {
-      border-right-color: var(--interactive-accent);
+      border-right-color: #FF8C00;
       .fns-sync-log-type-tag {
-        background-color: rgba(var(--interactive-accent-rgb), 0.1);
-        color: var(--interactive-accent);
+        background-color: rgba(255, 140, 0, 0.1);
+        color: #FF8C00;
       }
     }
-
+ 
     &.fns-sync-log-type-receive {
-      border-right-color: var(--text-success);
+      border-right-color: #007BFF;
       .fns-sync-log-type-tag {
-        background-color: rgba(var(--text-success-rgb), 0.1);
-        color: var(--text-success);
+        background-color: rgba(0, 123, 255, 0.1);
+        color: #007BFF;
       }
     }
   }
