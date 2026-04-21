@@ -408,7 +408,7 @@ export class RecycleBinModal extends Modal {
             new Notice($("ui.history.load_failed"));
             return;
         }
-        const success = await this.api.clearRecycleBin(this.activeTab, [item.path], [item.pathHash]);
+        const success = await this.api.clearRecycleBin(this.activeTab, item.path, item.pathHash);
         if (success) {
             new Notice($("ui.recycle_bin.delete_success"));
             this.items = this.items.filter(i => i.path !== item.path);
@@ -454,8 +454,13 @@ export class RecycleBinModal extends Modal {
             return;
         }
 
-        const success = await this.api.clearRecycleBin(this.activeTab, paths, hashes);
-        if (success) {
+        let successCount = 0;
+        for (let i = 0; i < paths.length; i++) {
+            const success = await this.api.clearRecycleBin(this.activeTab, paths[i], hashes[i]);
+            if (success) successCount++;
+        }
+
+        if (successCount > 0) {
             new Notice($("ui.recycle_bin.delete_success"));
             this.page = 1;
             this.selectedPaths.clear();

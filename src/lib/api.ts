@@ -436,7 +436,7 @@ export class HttpApiService {
     /**
      * 清除回收站内容（支持批量和一键清空）
      */
-    async clearRecycleBin(type: 'note' | 'file', paths?: string[], pathHashes?: string[]): Promise<boolean> {
+    async clearRecycleBin(type: 'note' | 'file', path?: string, pathHash?: string): Promise<boolean> {
         const endpoint = type === 'note' ? '/api/note/recycle-clear' : '/api/file/recycle-clear';
 
         try {
@@ -444,8 +444,8 @@ export class HttpApiService {
                 method: "DELETE",
                 body: JSON.stringify({
                     vault: this.plugin.settings.vault,
-                    paths: paths || [],
-                    pathHashes: pathHashes || []
+                    path: path || "",
+                    pathHash: pathHash || ""
                 })
             });
 
