@@ -1,6 +1,6 @@
 {
   "name": "Fast Note Sync",
-  "version": "1.20.11",
+  "version": "1.21.1",
   "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
   "main": "main.js",
   "scripts": {
@@ -8,7 +8,10 @@
     "devts": "node esbuild.config.mjs",
     "devcss": "sass --watch src/styles.scss styles.css && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "ver": "node ./scripts/update-version.js"
+    "ver": "node ./scripts/update-version.js",
+    "dist": "npx tsx scripts/copy-dist.ts",
+    "translate": "node scripts/translate-i18n.mjs --model Qwen/Qwen3.6-35B-A3B",
+    "t": "node scripts/translate-i18n.mjs --model Qwen/Qwen3.6-35B-A3B"
   },
   "keywords": [],
   "author": "",

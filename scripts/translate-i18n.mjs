@@ -19,6 +19,24 @@ import fs from "node:fs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = path.resolve(__dirname, "../src/i18n/locales");
 const DICT_FILE = path.resolve(__dirname, "../src/i18n/locales/.translate-dict.json");
+const ENV_FILE = path.resolve(__dirname, "../.env");
+
+// 加载 .env 环境变量
+if (fs.existsSync(ENV_FILE)) {
+  const envContent = fs.readFileSync(ENV_FILE, "utf-8");
+  envContent.split(/\r?\n/).forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const match = trimmed.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const value = match[2].trim().replace(/^(['"])(.*)\1$/, "$2"); // 去除引号
+        if (!process.env[key]) process.env[key] = value;
+      }
+    }
+  });
+}
+
 const SOURCE_LANG = "zh-CN";
 
 const TARGET_LANGS = {
@@ -160,7 +178,7 @@ async function callOpenAIStream(messages, { onToken } = {}) {
       temperature: 0.3,
       stream: true,
       messages,
-      thinking: { type: "disabled" },
+      response_format: { type: "json_object" },
     }),
   });
 
@@ -209,7 +227,7 @@ async function callOpenAI(messages) {
       model: MODEL,
       temperature: 0.3,
       messages,
-      thinking: { type: "disabled" },
+      response_format: { type: "json_object" },
     }),
   });
   if (!res.ok) {
@@ -240,8 +258,18 @@ Output a valid JSON object ONLY.`;
 
 function extractJSON(content) {
   let jsonStr = content.trim();
+  // 1. 尝试匹配 Markdown JS 代码块
   const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenceMatch) jsonStr = fenceMatch[1].trim();
+  if (fenceMatch) {
+    jsonStr = fenceMatch[1].trim();
+  } else {
+    // 2. 尝试寻找第一个 { 和最后一个 }
+    const firstBrace = jsonStr.indexOf("{");
+    const lastBrace = jsonStr.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+    }
+  }
   return JSON.parse(jsonStr);
 }
 
@@ -266,6 +294,8 @@ async function translateBatch(entries, targetLangName) {
       },
     }
   );
+
+  console.log(`     ✅ API 请求已发送，等待流式响应...`);
 
   process.stdout.write("\n");
   try {

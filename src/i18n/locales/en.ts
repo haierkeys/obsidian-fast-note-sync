@@ -12,6 +12,8 @@ export default {
   "setting.search.placeholder": "Search panel settings...",
   "setting.debug.show_version": "Show version info in sync menu",
   "setting.debug.show_version_desc": "When enabled, version info will be permanently displayed in the sync menu; when disabled, it will only appear when an update is available.",
+  "setting.debug.update_source": "Plugin Update Source",
+  "setting.debug.update_source_desc": "Select the download source for manual plugin upgrades. It is recommended to choose CNB first for faster download speeds.",
 
   // --- setting.remote ---
   "setting.remote.title": "Remote",
@@ -76,8 +78,6 @@ export default {
   "setting.general.show_notice_desc": "Disable all success operation notification messages; error messages will still be displayed normally.",
   "setting.general.show_share_icon": "Show Share Icon",
   "setting.general.show_share_icon_desc": "When enabled, icons for shared notes will be displayed in the <b>native file manager</b> and the third-party plugin <b>Notebook Navigator</b>.",
-  "setting.debug.update_source": "Plugin Update Source",
-  "setting.debug.update_source_desc": "Select the download source for manual plugin upgrades. CNB is recommended for faster download speeds in China mainland.",
   "setting.sync.config_dirs": "Config Sync - Add Directory Sync",
   "setting.sync.config_dirs_desc": "In addition to core config sync, add special directories that need to be synced (must start with <b>.</b>).\nNote: Paths not starting with <b>.</b> will be automatically ignored; all files under these directories will participate in sync, e.g., .claude.",
   "setting.sync.config_dirs_placeholder": "Enter directory paths to add for sync, must start with ., e.g., .claude",
@@ -182,7 +182,7 @@ export default {
   "ui.status.last_sync_not_completed": "The previous full sync has not yet completed. Please wait patiently or check the server status.",
 
   // --- ui.version ---
-  "ui.version.title": "Version Info",
+  "ui.version.title": "Version Information",
   "ui.version.plugin": "Plugin",
   "ui.version.server": "Server",
   "ui.version.current": "Current Version",
@@ -193,8 +193,8 @@ export default {
   "ui.version.upgrading": "Upgrading server...",
   "ui.version.downloading_file": "Downloading ${file}...",
   "ui.version.waiting_server": "Waiting for server to restart...",
-  "ui.version.upgrade_success": "Upgrade success and reconnected",
-  "ui.version.upgrade_plugin_success": "Plugin upgrade and reload success",
+  "ui.version.upgrade_success": "Upgrade successful and reconnected",
+  "ui.version.upgrade_plugin_success": "Plugin upgraded and reloaded successfully",
   "ui.version.upgrade_fail": "Upgrade request failed",
   "ui.version.plugin_changelog": "Plugin Changelog",
   "ui.version.server_changelog": "Server Changelog",

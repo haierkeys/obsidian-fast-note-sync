@@ -12,6 +12,8 @@ export default {
   "setting.search.placeholder": "搜尋面板設定...",
   "setting.debug.show_version": "在同步選單中顯示版本資訊",
   "setting.debug.show_version_desc": "開啟後，版本資訊將常駐顯示在同步選單中；關閉後，僅在有更新時顯示。",
+  "setting.debug.update_source": "外掛更新來源",
+  "setting.debug.update_source_desc": "選擇外掛手動升級時的下載來源，建議優先選擇 CNB 以獲得更快的下載速度。",
 
   // --- setting.remote ---
   "setting.remote.title": "遠端",
@@ -179,6 +181,27 @@ export default {
   "ui.status.api_redirected": "檢測到遠端服務地址重定向，已自動更新為: ${url}",
   "ui.status.last_sync_not_completed": "上一次的全部同步尚未完成，請耐心等待或檢查服務端狀態",
 
+  // --- ui.version ---
+  "ui.version.title": "版本資訊",
+  "ui.version.plugin": "外掛",
+  "ui.version.server": "伺服器",
+  "ui.version.current": "目前版本",
+  "ui.version.latest": "最新版本",
+  "ui.version.up_to_date": "已是最新版本",
+  "ui.version.upgrade_server": "立即升級伺服器",
+  "ui.version.upgrade_plugin": "立即升級外掛",
+  "ui.version.upgrading": "正在升級伺服器...",
+  "ui.version.downloading_file": "正在下載 ${file}...",
+  "ui.version.waiting_server": "等待伺服器重新啟動...",
+  "ui.version.upgrade_success": "升級成功並已重新連線",
+  "ui.version.upgrade_plugin_success": "外掛升級並重新載入成功",
+  "ui.version.upgrade_fail": "升級請求失敗",
+  "ui.version.plugin_changelog": "外掛更新日誌",
+  "ui.version.server_changelog": "伺服器更新日誌",
+  "ui.version.upgrading_plugin": "正在升級外掛...",
+  "ui.version.reloading_plugin": "正在重新載入外掛...",
+  "ui.version.upgrade_plugin_fail": "外掛升級失敗",
+
   // --- ui.log ---
   "ui.log.title": "同步日誌",
   "ui.log.clear": "清空日誌",
@@ -302,4 +325,7 @@ export default {
   "ui.common.saveSuccess": "保存成功",
   "ui.common.noChange": "未做任何修改",
   "ui.common.refresh": "刷新",
+  "ui.common.name": "名稱",
+  "ui.common.na": "未知",
+  "ui.system.wsClientName": "用戶端",
 };

@@ -12,6 +12,8 @@ export default {
   "setting.search.placeholder": "패널 설정 검색...",
   "setting.debug.show_version": "동기화 메뉴에 버전 정보 표시",
   "setting.debug.show_version_desc": "활성화하면 버전 정보가 동기화 메뉴에 항상 표시됩니다. 비활성화하면 업데이트가 있을 때만 표시됩니다.",
+  "setting.debug.update_source": "플러그인 업데이트 소스",
+  "setting.debug.update_source_desc": "플러그인 수동 업그레이드 시 다운로드 소스를 선택하세요. 더 빠른 다운로드 속도를 위해 CNB를 우선적으로 선택하는 것이 좋습니다.",
 
   // --- setting.remote ---
   "setting.remote.title": "원격",
@@ -179,6 +181,27 @@ export default {
   "ui.status.api_redirected": "원격 서비스 주소 리디렉션이 감지되어 자동으로 업데이트되었습니다: ${url}",
   "ui.status.last_sync_not_completed": "이전 전체 동기화가 아직 완료되지 않았습니다. 기다리거나 서버 상태를 확인하세요",
 
+  // --- ui.version ---
+  "ui.version.title": "버전 정보",
+  "ui.version.plugin": "플러그인",
+  "ui.version.server": "서버",
+  "ui.version.current": "현재 버전",
+  "ui.version.latest": "최신 버전",
+  "ui.version.up_to_date": "최신 버전입니다",
+  "ui.version.upgrade_server": "서버 즉시 업그레이드",
+  "ui.version.upgrade_plugin": "플러그인 즉시 업그레이드",
+  "ui.version.upgrading": "서버 업그레이드 중...",
+  "ui.version.downloading_file": "${file} 다운로드 중...",
+  "ui.version.waiting_server": "서버 재시작 대기 중...",
+  "ui.version.upgrade_success": "업그레이드 성공 및 재연결 완료",
+  "ui.version.upgrade_plugin_success": "플러그인 업그레이드 및 재로드 성공",
+  "ui.version.upgrade_fail": "업그레이드 요청 실패",
+  "ui.version.plugin_changelog": "플러그인 업데이트 기록",
+  "ui.version.server_changelog": "서버 업데이트 기록",
+  "ui.version.upgrading_plugin": "플러그인 업그레이드 중...",
+  "ui.version.reloading_plugin": "플러그인 재로드 중...",
+  "ui.version.upgrade_plugin_fail": "플러그인 업그레이드 실패",
+
   // --- ui.log ---
   "ui.log.title": "동기화 로그",
   "ui.log.clear": "로그 지우기",
@@ -302,4 +325,7 @@ export default {
   "ui.common.saveSuccess": "저장 성공",
   "ui.common.noChange": "변경 사항 없음",
   "ui.common.refresh": "새로고침",
+  "ui.common.name": "이름",
+  "ui.common.na": "알 수 없음",
+  "ui.system.wsClientName": "클라이언트",
 };

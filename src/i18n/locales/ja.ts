@@ -12,6 +12,8 @@ export default {
   "setting.search.placeholder": "パネル設定を検索...",
   "setting.debug.show_version": "同期メニューにバージョン情報を表示",
   "setting.debug.show_version_desc": "有効にすると、バージョン情報は同期メニューに常に表示されます。無効にすると、更新がある場合のみ表示されます。",
+  "setting.debug.update_source": "プラグイン更新元",
+  "setting.debug.update_source_desc": "プラグインを手動でアップグレードする際のダウンロード元を選択してください。より高速なダウンロード速度を得るため、CNB を優先して選択することを推奨します。",
 
   // --- setting.remote ---
   "setting.remote.title": "リモート",
@@ -179,6 +181,27 @@ export default {
   "ui.status.api_redirected": "リモートサービスアドレスの転送が検出されました。自動的に ${url} に更新しました",
   "ui.status.last_sync_not_completed": "前回の完全同期が完了していません。お待ちいただくか、サーバーの状態を確認してください",
 
+  // --- ui.version ---
+  "ui.version.title": "バージョン情報",
+  "ui.version.plugin": "プラグイン",
+  "ui.version.server": "サーバー",
+  "ui.version.current": "現在のバージョン",
+  "ui.version.latest": "最新バージョン",
+  "ui.version.up_to_date": "最新バージョンです",
+  "ui.version.upgrade_server": "サーバーを今すぐアップグレード",
+  "ui.version.upgrade_plugin": "プラグインを今すぐアップグレード",
+  "ui.version.upgrading": "サーバーをアップグレード中...",
+  "ui.version.downloading_file": "${file} をダウンロード中...",
+  "ui.version.waiting_server": "サーバーの再起動を待機中...",
+  "ui.version.upgrade_success": "アップグレードに成功し、再接続しました",
+  "ui.version.upgrade_plugin_success": "プラグインのアップグレードと再読み込みに成功しました",
+  "ui.version.upgrade_fail": "アップグレードリクエストに失敗しました",
+  "ui.version.plugin_changelog": "プラグインの更新履歴",
+  "ui.version.server_changelog": "サーバーの更新履歴",
+  "ui.version.upgrading_plugin": "プラグインをアップグレード中...",
+  "ui.version.reloading_plugin": "プラグインを再読み込み中...",
+  "ui.version.upgrade_plugin_fail": "プラグインのアップグレードに失敗しました",
+
   // --- ui.log ---
   "ui.log.title": "同期ログ",
   "ui.log.clear": "ログをクリア",
@@ -302,4 +325,7 @@ export default {
   "ui.common.saveSuccess": "保存に成功しました",
   "ui.common.noChange": "変更はありません",
   "ui.common.refresh": "更新",
+  "ui.common.name": "名前",
+  "ui.common.na": "不明",
+  "ui.system.wsClientName": "クライアント",
 };
