@@ -1,26 +1,18 @@
-import { Notice, moment, Platform } from "obsidian";
+import { Notice, moment } from "obsidian";
 
-import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
-import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
-import { dump, isWsUrl, addRandomParam, isPathExcluded } from "./helps";
-import { SyncLogManager } from "./sync_log_manager";
-import type FastSync from "../main";
-import { $ } from "../i18n/lang";
-
-
-// 冲突相关错误码
-const ERROR_SYNC_CONFLICT = 530
-
-
+import { syncReceiveMethodHandlers, StartupFullNotesSync } from "./fs";
+import { dump, isWsUrl } from "./helps";
+import FastSync from "../main";
 
 
 // WebSocket 连接常量
 const RECONNECT_BASE_DELAY = 3000 // 重连基础延迟 (毫秒)
 const CONNECTION_CHECK_INTERVAL = 3000 // 连接检查间隔 (毫秒)
-const WS_COUNT_STORAGE_KEY = "fast-note-sync-ws-count"
+
 
 export class WebSocketClient {
-  public ws: WebSocket
+  private ws: WebSocket
+  private wsApi: string
   private plugin: FastSync
   public isOpen: boolean = false
   public isAuth: boolean = false
@@ -28,49 +20,17 @@ export class WebSocketClient {
   public checkReConnectTimeout: number
   public timeConnect = 0
   public count = 0
-  private currentStartHandleId: number = 0
   //同步全部文件时设置
-
-
+  public isSyncAllFilesInProgress: boolean = false
   public isRegister: boolean = false
-  private statusListeners: Set<(status: boolean) => void> = new Set();
-
-  // Binary message handlers registry
-  private binaryHandlers = new Map<string, (data: ArrayBuffer | Blob, plugin: FastSync) => void>();
+  private messageQueue: { action: string; data: object | string }[] = []
+  private onStatusChange?: (status: boolean) => void
 
   constructor(plugin: FastSync) {
     this.plugin = plugin
-
-    // Load count from local storage
-    const storedCount = localStorage.getItem(WS_COUNT_STORAGE_KEY)
-    this.count = storedCount ? parseInt(storedCount) : 0
-
-    // Register default file sync handler
-    this.registerBinaryHandler(BINARY_PREFIX_FILE_SYNC, (data, plugin) => handleFileChunkDownload(data, plugin));
-  }
-
-  public registerBinaryHandler(prefix: string, handler: (data: ArrayBuffer | Blob, plugin: FastSync) => void) {
-    if (prefix.length !== 2) {
-      console.error("Binary handler prefix must be exactly 2 characters");
-      return;
-    }
-    this.binaryHandlers.set(prefix, handler);
-  }
-
-  public addStatusListener(listener: (status: boolean) => void) {
-    this.statusListeners.add(listener);
-    // Notify immediately of current state if already registered
-    if (this.isRegister) {
-      listener(this.isOpen);
-    }
-  }
-
-  public removeStatusListener(listener: (status: boolean) => void) {
-    this.statusListeners.delete(listener);
-  }
-
-  private notifyStatusChange(status: boolean) {
-    this.statusListeners.forEach(listener => listener(status));
+    this.wsApi = plugin.settings.wsApi
+      .replace(/^http/, "ws")
+      .replace(/\/+$/, '') // 去除尾部斜杠
   }
 
   public isConnected(): boolean {
@@ -78,50 +38,21 @@ export class WebSocketClient {
   }
 
   public register(onStatusChange?: (status: boolean) => void) {
-    if (onStatusChange) this.statusListeners.add(onStatusChange)
+    if (onStatusChange) this.onStatusChange = onStatusChange
 
-    // Prevent duplicate connection if already connecting or open
-    if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
-      dump("WebSocket already connecting or open, skipping register");
-      return;
-    }
-
-    // Clean up existing closed socket if any
-    if (this.ws) {
-      this.cleanupWebSocket(this.ws);
-    }
-
-    if (isWsUrl(this.plugin.runWsApi)) {
+    if ((!this.ws || this.ws.readyState !== WebSocket.OPEN) && isWsUrl(this.wsApi)) {
       this.isRegister = true
-      const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count);
-      this.ws = new WebSocket(wsUrl)
+      this.ws = new WebSocket(this.wsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count)
       this.count++
-      localStorage.setItem(WS_COUNT_STORAGE_KEY, this.count.toString())
-
       this.ws.onerror = (error) => {
-        dump("WebSocket error:", {
-          timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          url: wsUrl,
-          readyState: this.ws.readyState,
-          error: error
-        })
-        this.notifyStatusChange(false)
+        dump("WebSocket error:", error)
+        if (this.onStatusChange) this.onStatusChange(false)
       }
-
       this.ws.onopen = (e: Event): void => {
         this.timeConnect = 0
-        this.isAuth = false
         this.isOpen = true
-        dump("Service connected", {
-          timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          url: wsUrl
-        })
-        this.notifyStatusChange(true)
-        if (this.plugin.runApi !== this.plugin.settings.api) {
-          if (this.plugin.settings.isShowNotice) {
-            new Notice($("ui.status.api_connected", { url: this.plugin.runApi }), 5000)
-          }
-        }
+        dump("Service connected")
+        if (this.onStatusChange) this.onStatusChange(true)
         this.Send("Authorization", this.plugin.settings.apiToken)
         dump("Service authorization")
         this.OnlineStatusCheck()
@@ -129,72 +60,20 @@ export class WebSocketClient {
       this.ws.onclose = (e) => {
         this.isAuth = false
         this.isOpen = false
-        this.notifyStatusChange(false)
+        if (this.onStatusChange) this.onStatusChange(false)
         window.clearInterval(this.checkConnection)
-
-        dump("Service close details:", {
-          timestamp: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          code: e.code,
-          reason: e.reason,
-          wasClean: e.wasClean,
-          timeConnect: this.timeConnect,
-          isRegister: this.isRegister
-        })
-
         if (e.reason == "AuthorizationFaild") {
           new Notice("Remote Service Connection Closed: " + e.reason)
         } else if (e.reason == "ClientClose") {
           new Notice("Remote Service Connection Closed: " + e.reason)
         }
-
-        // Only reconnect if we differ intended to be registered
-        if (this.isRegister && e.reason != "AuthorizationFaild" && e.reason != "ClientClose") {
+        if (this.isRegister && (e.reason != "AuthorizationFaild" && e.reason != "ClientClose")) {
           this.checkReConnect()
         }
-        clearUploadQueue()
         dump("Service close")
       }
       this.ws.onmessage = (event) => {
-        // 处理二进制消息(文件分片下载)
-
-        if (event.data instanceof ArrayBuffer || event.data instanceof Blob) {
-          // Dynamic Binary Message Dispatch
-          let binaryData: ArrayBuffer | Blob = event.data;
-          let prefix = "";
-
-          // Extract prefix (first 2 bytes)
-          if (binaryData instanceof Blob) {
-            if (binaryData.size < 2) return;
-          }
-
-          (async () => {
-            let buf: ArrayBuffer;
-            if (event.data instanceof Blob) {
-              buf = await event.data.arrayBuffer();
-            } else {
-              buf = event.data;
-            }
-
-            if (buf.byteLength < 2) return;
-
-            const prefixBytes = new Uint8Array(buf.slice(0, 2));
-            const prefixStr = new TextDecoder().decode(prefixBytes);
-
-            const handler = this.binaryHandlers.get(prefixStr);
-            if (handler) {
-              // Pass the rest of the data
-              const rest = buf.slice(2);
-              handler(rest, this.plugin);
-            } else {
-              dump("No handler for binary prefix:", prefixStr);
-            }
-          })();
-
-          return
-        }
-
-        // 处理文本消息
-        // 使用字符串 of indexOf 找到第一个分隔符的位置
+        // 使用字符串的 indexOf 找到第一个分隔符的位置
         let msgData: string = event.data
         let msgAction: string = ""
         const index = event.data.indexOf("|")
@@ -203,63 +82,21 @@ export class WebSocketClient {
           msgAction = event.data.slice(0, index)
         }
         const data = JSON.parse(msgData)
-
-        // 记录接收到的消息
-        if (msgAction) {
-          SyncLogManager.getInstance().logReceivedMessage(msgAction, data, this.plugin.currentSyncType);
-        }
-
-
         if (msgAction == "Authorization") {
           if (data.code == 0 || data.code > 200) {
             new Notice("Service Authorization Error: Code=" + data.code + " Msg=" + data.msg + data.details)
             return
           } else {
             this.isAuth = true
-            if (data.data) {
-              this.plugin.localStorageManager.setMetadata("serverVersion", data.data.version ?? this.plugin.localStorageManager.getMetadata("serverVersion"))
-            }
             dump("Service authorization success")
-
-            this.sendClientInfo()
+            this.FlushQueue()
             this.StartHandle()
           }
         }
-
-        if (msgAction == "ClientInfo") {
-          if (data.code == 0 || data.code > 200) {
-
-            return
-          } else {
-            if (data.data) {
-              this.plugin.localStorageManager.setMetadata("serverVersionIsNew", data.data.versionIsNew ?? this.plugin.localStorageManager.getMetadata("serverVersionIsNew"))
-              this.plugin.localStorageManager.setMetadata("serverVersionNewName", data.data.versionNewName ?? this.plugin.localStorageManager.getMetadata("serverVersionNewName"))
-              this.plugin.localStorageManager.setMetadata("serverVersionNewLink", data.data.versionNewLink ?? this.plugin.localStorageManager.getMetadata("serverVersionNewLink"))
-              this.plugin.localStorageManager.setMetadata("pluginVersionIsNew", data.data.pluginVersionIsNew ?? this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"))
-              this.plugin.localStorageManager.setMetadata("pluginVersionNewName", data.data.pluginVersionNewName ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewName"))
-              this.plugin.localStorageManager.setMetadata("pluginVersionNewLink", data.data.pluginVersionNewLink ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewLink"))
-            }
-          }
-          return
-        }
-
         if (data.code == 0 || data.code > 200) {
-          // 处理冲突相关错误码
-          if (data.code === ERROR_SYNC_CONFLICT) {
-            this.handleConflictError(data)
-          } else {
-            new Notice("Service Error: Code=" + data.code + " Message=" + data.message + " Details=" + data.details)
-          }
+          new Notice("Service Error: Code=" + data.code + " Msg=" + data.msg + data.details)
         } else {
-
-          if (typeof data === 'object' && 'vault' in data && data.vault != null && data.vault != this.plugin.settings.vault) {
-            dump("Service vault " + data.vault + " not match " + this.plugin.settings.vault)
-            return
-          }
-          if (data.code == "") {
-            return
-          }
-          const handler = receiveOperators.get(msgAction)
+          const handler = syncReceiveMethodHandlers.get(msgAction)
           if (handler) {
             handler(data.data, this.plugin)
           }
@@ -267,77 +104,28 @@ export class WebSocketClient {
       }
     }
   }
-
-  private cleanupWebSocket(ws: WebSocket) {
-    if (!ws) return;
-
-    // Remove listeners to prevent "ghost" events
-    ws.onopen = null;
-    ws.onmessage = null;
-    ws.onerror = null;
-    ws.onclose = null;
-
-    try {
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        ws.close(1000, "Cleanup");
-      }
-    } catch (e) {
-      console.error("Error closing WebSocket:", e);
-    }
-  }
-
   public unRegister() {
     window.clearInterval(this.checkConnection)
     window.clearTimeout(this.checkReConnectTimeout)
     this.isOpen = false
     this.isAuth = false
     this.isRegister = false
-
     if (this.ws) {
-      // Use helper to cleanly close and remove listeners
-      this.cleanupWebSocket(this.ws);
-      this.ws = null as any; // Clear reference
+      this.ws.close(1000, "unRegister")
     }
-
-    clearUploadQueue()
-    this.notifyStatusChange(false)
     dump("Service unregister")
   }
 
   //ddd
   public checkReConnect() {
     window.clearTimeout(this.checkReConnectTimeout)
-    if (this.timeConnect > 15) {
-      // Max attempts hardcoded or use constant
+    if (this.timeConnect > 15) { // Max attempts hardcoded or use constant
       return
     }
     if (this.ws && this.ws.readyState === WebSocket.CLOSED) {
       this.timeConnect++
       // Exponential backoff: 3s, 6s, 12s, 24s...
-      let delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
-
-      // 调试地址回退逻辑
-      const debugUrls = this.plugin.settings.debugRemoteUrls ? this.plugin.settings.debugRemoteUrls.split("\n").filter(u => u.trim() !== "") : []
-      if (debugUrls.length > 0) {
-        // 从第2次重试开始尝试调试地址
-        if (this.timeConnect >= 2 && this.timeConnect < 2 + debugUrls.length) {
-          const index = this.timeConnect - 2
-          const url = debugUrls[index].trim()
-          if (url) {
-            dump(`Trying debug URL [${index + 1}/${debugUrls.length}]: ${url}`)
-            // 更新运行时 API
-            this.plugin.runApi = url.replace(/\/+$/, "")
-            this.plugin.runWsApi = url.replace(/^http/, "ws").replace(/\/+$/, "")
-
-            // 调试尝试使用较短延迟
-            delay = 1000
-            new Notice(`[FastSync] 尝试连接调试地址: ${url}`)
-          }
-          this.plugin.updateRuntimeApi(this.plugin.settings.api);
-          dump(`Debug URLs failed, reverting to settings API`)
-        }
-      }
-
+      const delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
       dump(`Service waiting reconnect: ${this.timeConnect}, delay: ${delay}ms`)
 
       this.checkReConnectTimeout = window.setTimeout(() => {
@@ -345,62 +133,8 @@ export class WebSocketClient {
       }, delay)
     }
   }
-
-  public triggerReconnect() {
-    dump("Triggering manual reconnect due to network change")
-    // Reset connection time to allow immediate retry
-    this.timeConnect = 0
-    // Clear any existing reconnect timers
-    window.clearTimeout(this.checkReConnectTimeout)
-    // Force register
-    this.register()
-  }
-
-  public async StartHandle() {
-    const handleId = ++this.currentStartHandleId
-    dump(`Service start handle, id: ${handleId}`)
-
-    if (this.plugin.settings.startupDelay > 0) {
-      dump(`Startup delay: ${this.plugin.settings.startupDelay}ms`)
-      await new Promise((resolve) => setTimeout(resolve, this.plugin.settings.startupDelay))
-    }
-
-    if (handleId !== this.currentStartHandleId) {
-      dump(`Service start handle cancelled, id: ${handleId}`)
-      return
-    }
-
-    // 等待 fileHashManager 初始化完成
-    if (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
-      dump(`Waiting for fileHashManager to be ready...`)
-
-      // 最多等待 30 秒
-      const maxWaitTime = 30000
-      const startTime = Date.now()
-
-      while (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
-        if (Date.now() - startTime > maxWaitTime) {
-          dump(`FileHashManager initialization timeout after ${maxWaitTime}ms`)
-          new Notice("文件哈希管理器初始化超时,同步可能不稳定")
-          break
-        }
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      }
-
-      if (this.plugin.fileHashManager && this.plugin.fileHashManager.isReady()) {
-        dump(`FileHashManager is ready, proceeding with sync`)
-      }
-    }
-
-    this.plugin.isFirstSync = true
-    this.plugin.isWatchEnabled = true
-
-    if (this.plugin.settings.manualSyncEnabled) {
-      dump("Full Manual Sync Mode enabled, skipping startup sync")
-      return
-    }
-
-    startupSync(this.plugin)
+  public StartHandle() {
+    StartupFullNotesSync(this.plugin)
   }
 
   public OnlineStatusCheck() {
@@ -414,153 +148,40 @@ export class WebSocketClient {
     }, CONNECTION_CHECK_INTERVAL)
   }
 
-
-
-  /**
-   * 发送客户端信息到服务端
-   * 用于更新客户端名称、版本、离线同步策略等信息
-   */
-  public sendClientInfo() {
-    if (!this.isAuth) {
+  public MsgSend(action: string, data: object | string, isSync: boolean = false) {
+    if (!this.isAuth || (this.isSyncAllFilesInProgress && !isSync)) {
+      dump(`Service not ready or sync in progress, queuing message: ${action}`)
+      this.messageQueue.push({ action, data })
       return
     }
-
-    let clientName = ""
-    if (Platform.isDesktopApp && Platform.isMacOS) {
-      clientName += "Mac"
-    } else if (Platform.isDesktopApp && Platform.isWin) {
-      clientName += "Win"
-    } else if (Platform.isDesktopApp && Platform.isLinux) {
-      clientName += "Linux"
-    } else if (Platform.isIosApp && Platform.isTablet) {
-      clientName += "iPad"
-    } else if (Platform.isIosApp && Platform.isPhone) {
-      clientName += "iPhone"
-    } else if (Platform.isAndroidApp && Platform.isTablet) {
-      clientName += "Android"
-    } else if (Platform.isAndroidApp && Platform.isPhone) {
-      clientName += "Android"
-    }
-    const clientMetadata = this.plugin.localStorageManager.getMetadata("clientName");
-    clientName = clientMetadata + (clientMetadata != "" ? " " + clientName : clientName)
-
-    this.Send("ClientInfo", JSON.stringify({
-      name: clientName,
-      version: this.plugin.manifest.version,
-      type: "obsidianPlugin",
-      isDesktop: Platform.isDesktop,
-      isMobile: Platform.isMobile,
-      isPhone: Platform.isPhone,
-      isTablet: Platform.isTablet,
-      isMacOS: Platform.isMacOS,
-      isWin: Platform.isWin,
-      isLinux: Platform.isLinux,
-      offlineSyncStrategy: this.plugin.settings.offlineSyncStrategy
-    }))
-  }
-  /**
-    * 等待发送缓冲区清空
-    * @param maxBufferSize 最大缓冲区大小(字节),默认 1MB
-    */
-  private async waitForBufferDrain(maxBufferSize: number = 5 * 1024 * 1024): Promise<void> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      return
-    }
-
-    while (this.ws.bufferedAmount > maxBufferSize) {
-      await new Promise(resolve => setTimeout(resolve, 400))
-    }
+    this.Send(action, data)
   }
 
-  public async SendMessage(action: string, data: object | string, before?: () => boolean, after?: () => void) {
-    if (!this.isAuth || !this.plugin.isFirstSync) {
-      return
-    }
-
-    // 在发送前执行 before 回调,如果返回 true 则取消发送
-    if (before && before()) {
-      return true; // 返回 true 表示被取消
-    }
-
-    // 等待缓冲区有足够空间
-    await this.waitForBufferDrain()
-
-    this.Send(action, data, () => {
-      SyncLogManager.getInstance().logSentMessage(action, data, this.plugin.currentSyncType);
-      after?.()
-    })
-
-  }
-
-
-  public Send(action: string, data: object | string, after?: () => void) {
+  public Send(action: string, data: object | string) {
     if (this.ws.readyState !== WebSocket.OPEN) {
       dump(`Service not connected, queuing message: ${action}`)
+      this.messageQueue.push({ action, data })
       return
     }
+
+    dump(`Sending message: ${action}`)
     if (typeof data === "string") {
       this.ws.send(action + "|" + data)
     } else {
       this.ws.send(action + "|" + JSON.stringify(data))
     }
-    after?.()
-
   }
 
+  public FlushQueue() {
+    if (this.messageQueue.length === 0) return
 
-  public async SendBinary(data: ArrayBuffer | Uint8Array, prefix: string, before?: () => boolean, after?: () => void): Promise<boolean> {
-    if (this.ws.readyState !== WebSocket.OPEN) {
-      return false
-    }
-
-    if (!prefix || prefix.length !== 2) {
-      return false;
-    }
-
-    // 在发送前执行 before 回调,如果返回 true 则取消发送
-    if (before && before()) {
-      return true; // 返回 true 表示被取消
-    }
-
-    // 等待缓冲区有足够空间
-    await this.waitForBufferDrain()
-
-    // 增加二进制消息管理层: 增加前两位字符
-    const prefixBytes = new TextEncoder().encode(prefix);
-    let dataToSend: Uint8Array;
-
-    if (data instanceof Uint8Array) {
-      dataToSend = new Uint8Array(prefixBytes.length + data.length);
-      dataToSend.set(prefixBytes);
-      dataToSend.set(data, prefixBytes.length);
-    } else {
-      // ArrayBuffer
-      const dataView = new Uint8Array(data);
-      dataToSend = new Uint8Array(prefixBytes.length + dataView.length);
-      dataToSend.set(prefixBytes);
-      dataToSend.set(dataView, prefixBytes.length);
-    }
-
-    this.ws.send(dataToSend)
-    after?.()
-    return false; // 返回 false 表示正常发送
-  }
-
-
-
-  /**
-   * 处理冲突相关错误
-   * 当服务端检测到合并冲突或创建冲突文件时调用
-   */
-  private handleConflictError(data: { code: number; data?: { Path?: string }; message?: string; }) {
-    const path = data.data?.Path
-
-
-    dump("Conflict detected:", { code: data.code, Path: path, message: data.message })
-
-    if (data.code === ERROR_SYNC_CONFLICT && path) {
-      // 冲突文件已创建，显示详细通知
-      new Notice($("ui.status.conflict", { path: path }), 10000)
+    dump(`Flushing ${this.messageQueue.length} queued messages`)
+    while (this.messageQueue.length > 0) {
+      const msg = this.messageQueue.shift()
+      dump(`Flushing message: `, msg)
+      if (msg) {
+        this.Send(msg.action, msg.data)
+      }
     }
   }
 }
