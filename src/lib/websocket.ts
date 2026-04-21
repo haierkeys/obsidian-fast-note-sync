@@ -425,24 +425,7 @@ export class WebSocketClient {
       return
     }
 
-    let clientName = ""
-    if (Platform.isDesktopApp && Platform.isMacOS) {
-      clientName += "Mac"
-    } else if (Platform.isDesktopApp && Platform.isWin) {
-      clientName += "Win"
-    } else if (Platform.isDesktopApp && Platform.isLinux) {
-      clientName += "Linux"
-    } else if (Platform.isIosApp && Platform.isTablet) {
-      clientName += "iPad"
-    } else if (Platform.isIosApp && Platform.isPhone) {
-      clientName += "iPhone"
-    } else if (Platform.isAndroidApp && Platform.isTablet) {
-      clientName += "Android"
-    } else if (Platform.isAndroidApp && Platform.isPhone) {
-      clientName += "Android"
-    }
-    const clientMetadata = this.plugin.localStorageManager.getMetadata("clientName");
-    clientName = clientMetadata + (clientMetadata != "" ? " " + clientName : clientName)
+    const clientName = this.plugin.getClientName();
 
     this.Send("ClientInfo", JSON.stringify({
       name: clientName,

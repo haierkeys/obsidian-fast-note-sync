@@ -55,7 +55,15 @@ export class HttpApiService {
 
         try {
             // 默认优先用 fetch 探测以获取 301/302 后的最终路径
-            const res = await fetch(probeUrl, { method: 'GET', redirect: 'follow' });
+            const res = await fetch(probeUrl, {
+                method: 'GET',
+                redirect: 'follow',
+                headers: {
+                    "x-client": "obsidian-plugin",
+                    "x-client-name": encodeURIComponent(this.plugin.getClientName()),
+                    "x-client-version": this.plugin.manifest.version || ""
+                }
+            });
             if (res.url) {
                 const healthIndex = res.url.indexOf("/api/health");
                 if (healthIndex !== -1) {
@@ -82,13 +90,16 @@ export class HttpApiService {
 
         // 默认 Header 标准化
         const headers: Record<string, string> = {
-            ...options.headers
+            ...options.headers,
+            "x-client": "obsidian-plugin",
+            "x-client-name": encodeURIComponent(this.plugin.getClientName()),
+            "x-client-version": this.plugin.manifest.version || ""
         };
 
         if (this.plugin.settings.apiToken) {
             headers["Authorization"] = `Bearer ${this.plugin.settings.apiToken}`;
         }
-        
+
         if (options.body && !headers["Content-Type"]) {
             headers["Content-Type"] = "application/json";
         }

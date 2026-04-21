@@ -1,5 +1,6 @@
-import { Plugin, WorkspaceLeaf } from "obsidian";
+import { Plugin, WorkspaceLeaf, Platform } from "obsidian";
 import { Notice } from "obsidian";
+
 
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
@@ -145,6 +146,32 @@ export default class FastSync extends Plugin {
 
   disableWatch() {
     this.isWatchEnabled = false
+  }
+
+  /**
+   * 获取统一的客户端名称
+   * 格式: [自定义名称] [平台标识] (例如: "我的测试 Mac")
+   */
+  getClientName(): string {
+    let platformName = "";
+    if (Platform.isDesktopApp && Platform.isMacOS) {
+      platformName = "Mac";
+    } else if (Platform.isDesktopApp && Platform.isWin) {
+      platformName = "Win";
+    } else if (Platform.isDesktopApp && Platform.isLinux) {
+      platformName = "Linux";
+    } else if (Platform.isIosApp && Platform.isTablet) {
+      platformName = "iPad";
+    } else if (Platform.isIosApp && Platform.isPhone) {
+      platformName = "iPhone";
+    } else if (Platform.isAndroidApp && Platform.isTablet) {
+      platformName = "Android";
+    } else if (Platform.isAndroidApp && Platform.isPhone) {
+      platformName = "Android";
+    }
+
+    const clientMetadata = this.localStorageManager.getMetadata("clientName") || "";
+    return clientMetadata + (clientMetadata !== "" && platformName !== "" ? " " + platformName : platformName);
   }
 
   addIgnoredFile(path: string) {

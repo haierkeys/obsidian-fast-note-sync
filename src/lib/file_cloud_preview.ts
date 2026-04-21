@@ -462,7 +462,14 @@ export class FileCloudPreview {
     (async () => {
       try {
         const pdfjs = await loadPdfJs();
-        const response = await requestUrl({ url: cloudUrl });
+        const response = await requestUrl({
+          url: cloudUrl,
+          headers: {
+            "x-client": "obsidian",
+            "x-client-name": encodeURIComponent(this.plugin.getClientName()),
+            "x-client-version": this.plugin.manifest.version || ""
+          }
+        });
         const data = response.arrayBuffer;
 
         const loadingTask = pdfjs.getDocument(data);
