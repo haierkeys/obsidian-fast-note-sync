@@ -63,7 +63,7 @@ export class HttpApiService {
                 method: 'GET',
                 redirect: 'follow',
                 headers: {
-                    "x-client": "obsidian-plugin",
+                    "x-client": "ObsidianPlugin",
                     "x-client-name": encodeURIComponent(this.plugin.getClientName()),
                     "x-client-version": this.plugin.manifest.version || ""
                 }
@@ -95,7 +95,7 @@ export class HttpApiService {
         // 默认 Header 标准化
         const headers: Record<string, string> = {
             ...options.headers,
-            "x-client": "obsidian-plugin",
+            "x-client": "ObsidianPlugin",
             "x-client-name": encodeURIComponent(this.plugin.getClientName()),
             "x-client-version": this.plugin.manifest.version || ""
         };
@@ -454,7 +454,7 @@ export class HttpApiService {
             });
 
             if (status !== 200 || json.code <= 0) {
-                const msg = json?.message || (paths && paths.length > 0 ? "批量永久删除失败" : "清空回收站失败");
+                const msg = json?.message || (path ? "永久删除失败" : "清空回收站失败");
                 new Notice(msg);
                 return false;
             }
