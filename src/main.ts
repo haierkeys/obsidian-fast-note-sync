@@ -325,8 +325,8 @@ export default class FastSync extends Plugin {
       })
     }
 
-    // 强制添加插件自身目录排除
-    if (!folderRules.some(r => r.pattern === pluginSelfDir)) {
+    // 仅在首次安装（无旧数据）时自动添加插件自身目录排除
+    if (!data && !folderRules.some(r => r.pattern === pluginSelfDir)) {
       folderRules.push({ pattern: pluginSelfDir, caseSensitive: false })
     }
 
