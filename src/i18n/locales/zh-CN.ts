@@ -302,4 +302,7 @@ export default {
   "ui.common.saveSuccess": "保存成功",
   "ui.common.noChange": "未做任何修改",
   "ui.common.refresh": "刷新",
+  "ui.common.name": "名称",
+  "ui.common.na": "未知",
+  "ui.system.wsClientName": "客户端",
 };

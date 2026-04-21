@@ -117,10 +117,24 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ plugin, filePath }) =>
                                     <tr key={item.id} className={selectedHistory?.id === item.id ? "is-selected" : ""}>
                                         <td>v{item.version}</td>
                                         <td>
-                                            <span className="client-info">
-                                                {item.clientName || "Unknown"}
+                                            <div className="fns-tooltip-container" style={{ cursor: 'help' }}>
+                                                <span className="fns-badge">{item.clientType || item.clientName || $("ui.common.na")}</span>
                                                 <LucideIcon icon={getClientIcon(item.clientName)} size={14} />
-                                            </span>
+                                                <div className="fns-tooltip">
+                                                    <div className="fns-tooltip-row">
+                                                        <span className="fns-tooltip-label">{$("ui.system.wsClientName")}</span>
+                                                        <span className="fns-tooltip-value" style={{ textTransform: 'capitalize' }}>{item.clientType || $("ui.common.na")}</span>
+                                                    </div>
+                                                    <div className="fns-tooltip-row">
+                                                        <span className="fns-tooltip-label">{$("ui.history.version")}</span>
+                                                        <span className="fns-tooltip-value" style={{ fontFamily: 'var(--font-monospace)' }}>{item.clientVersion ? `v${item.clientVersion}` : $("ui.common.na")}</span>
+                                                    </div>
+                                                    <div className="fns-tooltip-row">
+                                                        <span className="fns-tooltip-label">{$("ui.common.name")}</span>
+                                                        <span className="fns-tooltip-value">{item.clientName || $("ui.common.na")}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td>{item.createdAt}</td>
                                         <td>

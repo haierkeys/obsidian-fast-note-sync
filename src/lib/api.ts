@@ -9,6 +9,8 @@ export interface NoteHistoryItem {
     noteId: number;
     vaultId: number;
     path: string;
+    clientType: string;
+    clientVersion: string;
     clientName: string;
     version: number;
     createdAt: string;
@@ -21,6 +23,8 @@ export interface NoteHistoryDetail {
     path: string;
     content: string;
     diffs: { Type: number; Text: string }[];
+    clientType: string;
+    clientVersion: string;
     clientName: string;
     version: number;
     createdAt: string;

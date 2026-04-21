@@ -302,4 +302,7 @@ export default {
   "ui.common.saveSuccess": "Saved successfully",
   "ui.common.noChange": "No changes made",
   "ui.common.refresh": "Refresh",
+  "ui.common.name": "Name",
+  "ui.common.na": "Unknown",
+  "ui.system.wsClientName": "Client",
 };
