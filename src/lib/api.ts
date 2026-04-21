@@ -82,6 +82,63 @@ export class HttpApiService {
     }
 
     /**
+     * 服务端自动升级
+     * 调用 /api/admin/upgrade
+     */
+    async adminUpgrade(): Promise<boolean> {
+        const endpoint = `/api/admin/upgrade`;
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "POST"
+            });
+            return status === 200 && json.code > 0;
+        } catch (e) {
+            console.error("adminUpgrade error:", e);
+            return false;
+        }
+    }
+
+    /**
+     * 检查当前用户是否具有管理员权限
+     * GET /api/admin/check
+     */
+    async checkAdmin(): Promise<boolean> {
+        const endpoint = `/api/admin/check`;
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "GET"
+            });
+            // 根据用户提供的结构，isAdmin 位于 data 中
+            return status === 200 && json.data?.isAdmin === true;
+        } catch (e) {
+            console.error("checkAdmin error:", e);
+            return false;
+        }
+    }
+
+    /**
+     * 简单的健康检查探测
+     * 用于升级后的轮询
+     */
+    async checkHealth(): Promise<boolean> {
+        const base = (this.plugin.runApi || this.plugin.settings.api).replace(/\/+$/, "");
+        const url = addRandomParam(base + "/api/health");
+        try {
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    "x-client": "ObsidianPlugin",
+                    "x-client-name": encodeURIComponent(this.plugin.getClientName()),
+                    "x-client-version": this.plugin.manifest.version || ""
+                }
+            });
+            return res.ok;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /**
      * 内部通用请求方法，支持网络库切换
      * @param endpoint 接口相对路径（如 /api/notes，不包含主机名）
      * @param options 请求选项

@@ -179,6 +179,21 @@ export default {
   "ui.status.api_redirected": "Remote service address redirection detected, automatically updated to: ${url}",
   "ui.status.last_sync_not_completed": "The previous full sync has not yet completed. Please wait patiently or check the server status.",
 
+  // --- ui.version ---
+  "ui.version.title": "Version Info",
+  "ui.version.plugin": "Plugin",
+  "ui.version.server": "Server",
+  "ui.version.current": "Current Version",
+  "ui.version.latest": "Latest Version",
+  "ui.version.up_to_date": "Up to date",
+  "ui.version.upgrade_server": "Upgrade Server",
+  "ui.version.upgrading": "Upgrading server...",
+  "ui.version.waiting_server": "Waiting for server to restart...",
+  "ui.version.upgrade_success": "Upgrade success and reconnected",
+  "ui.version.upgrade_fail": "Upgrade request failed",
+  "ui.version.plugin_changelog": "Plugin Changelog",
+  "ui.version.server_changelog": "Server Changelog",
+
   // --- ui.log ---
   "ui.log.title": "Sync Log",
   "ui.log.clear": "Clear Log",

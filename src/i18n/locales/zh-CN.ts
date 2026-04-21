@@ -179,6 +179,21 @@ export default {
   "ui.status.api_redirected": "检测到远端服务地址重定向，已自动更新为: ${url}",
   "ui.status.last_sync_not_completed": "上一次的全部同步尚未完成，请耐心等待或检查服务端状态",
 
+  // --- ui.version ---
+  "ui.version.title": "版本信息",
+  "ui.version.plugin": "插件",
+  "ui.version.server": "服务端",
+  "ui.version.current": "当前版本",
+  "ui.version.latest": "最新版本",
+  "ui.version.up_to_date": "已是最新版本",
+  "ui.version.upgrade_server": "升级服务端",
+  "ui.version.upgrading": "正在升级服务端...",
+  "ui.version.waiting_server": "等待服务端重启...",
+  "ui.version.upgrade_success": "升级成功并已重连",
+  "ui.version.upgrade_fail": "升级请求失败",
+  "ui.version.plugin_changelog": "插件更新日志",
+  "ui.version.server_changelog": "服务端更新日志",
+
   // --- ui.log ---
   "ui.log.title": "同步日志",
   "ui.log.clear": "清空日志",

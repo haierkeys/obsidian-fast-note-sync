@@ -218,6 +218,7 @@ export class WebSocketClient {
             this.isAuth = true
             if (data.data) {
               this.plugin.localStorageManager.setMetadata("serverVersion", data.data.version ?? this.plugin.localStorageManager.getMetadata("serverVersion"))
+              this.plugin.localStorageManager.setMetadata("serverChangelog", data.data.changelog ?? this.plugin.localStorageManager.getMetadata("serverChangelog"))
             }
             dump("Service authorization success")
 
@@ -235,9 +236,13 @@ export class WebSocketClient {
               this.plugin.localStorageManager.setMetadata("serverVersionIsNew", data.data.versionIsNew ?? this.plugin.localStorageManager.getMetadata("serverVersionIsNew"))
               this.plugin.localStorageManager.setMetadata("serverVersionNewName", data.data.versionNewName ?? this.plugin.localStorageManager.getMetadata("serverVersionNewName"))
               this.plugin.localStorageManager.setMetadata("serverVersionNewLink", data.data.versionNewLink ?? this.plugin.localStorageManager.getMetadata("serverVersionNewLink"))
+              this.plugin.localStorageManager.setMetadata("serverVersionNewChangelogContent", data.data.versionNewChangelogContent ?? this.plugin.localStorageManager.getMetadata("serverVersionNewChangelogContent"))
+              this.plugin.localStorageManager.setMetadata("serverVersionChangelogContent", data.data.versionChangelogContent ?? this.plugin.localStorageManager.getMetadata("serverVersionChangelogContent"))
               this.plugin.localStorageManager.setMetadata("pluginVersionIsNew", data.data.pluginVersionIsNew ?? this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"))
               this.plugin.localStorageManager.setMetadata("pluginVersionNewName", data.data.pluginVersionNewName ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewName"))
               this.plugin.localStorageManager.setMetadata("pluginVersionNewLink", data.data.pluginVersionNewLink ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewLink"))
+              this.plugin.localStorageManager.setMetadata("pluginVersionNewChangelogContent", data.data.pluginVersionNewChangelogContent ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewChangelogContent"))
+              this.plugin.localStorageManager.setMetadata("pluginVersionChangelogContent", data.data.pluginVersionChangelogContent ?? this.plugin.localStorageManager.getMetadata("pluginVersionChangelogContent"))
             }
           }
           return
