@@ -5,7 +5,8 @@ import { handleSync, resetSettingSyncTime, rebuildAllHashes } from "./lib/operat
 import { SettingsView, SupportView } from "./views/settings-view";
 import { ConfirmModal } from "./views/confirm-modal";
 import { RuleEditorModal } from "./views/rule-editor-modal";
-import { parseRules } from "./lib/helps";
+import { RuleEditor } from "./views/rule-editor";
+import { parseRules, SyncRule } from "./lib/helps";
 import { $ } from "./i18n/lang";
 import FastSync from "./main";
 
@@ -843,83 +844,79 @@ export class SettingTab extends PluginSettingTab {
 
 
 
-    new Setting(set).setName($("setting.sync.exclude")).addButton((btn) => {
-      btn.setButtonText($("ui.button.edit_rule")).onClick(() => {
-        new RuleEditorModal(
-          this.app,
-          $("setting.sync.exclude"),
-          $("setting.sync.exclude_desc"),
-          parseRules(this.plugin.settings.syncExcludeFolders),
-          async (rules) => {
-            this.plugin.settings.syncExcludeFolders = JSON.stringify(rules);
-            await this.plugin.saveSettings();
-          }
-        ).open();
-      });
-    })
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_desc"))
+    this.addRuleSetting(
+      set,
+      $("setting.sync.exclude"),
+      $("setting.sync.exclude_desc"),
+      () => parseRules(this.plugin.settings.syncExcludeFolders),
+      async (rules) => {
+        this.plugin.settings.syncExcludeFolders = JSON.stringify(rules);
+        await this.plugin.saveSettings();
+      },
+      true,
+      $("ui.button.add_rule"),
+      $("setting.sync.exclude_placeholder"),
+      $("ui.button.edit_exclude"),
+      true
+    );
 
-    new Setting(set).setName($("setting.sync.exclude_extensions")).addButton((btn) => {
-      btn.setButtonText($("ui.button.edit_rule")).onClick(() => {
-        new RuleEditorModal(
-          this.app,
-          $("setting.sync.exclude_extensions"),
-          $("setting.sync.exclude_extensions_desc"),
-          parseRules(this.plugin.settings.syncExcludeExtensions),
-          async (rules) => {
-            this.plugin.settings.syncExcludeExtensions = JSON.stringify(rules);
-            await this.plugin.saveSettings();
-          }
-        ).open();
-      });
-    })
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_extensions_desc"))
+    this.addRuleSetting(
+      set,
+      $("setting.sync.exclude_extensions"),
+      $("setting.sync.exclude_extensions_desc"),
+      () => parseRules(this.plugin.settings.syncExcludeExtensions),
+      async (rules) => {
+        this.plugin.settings.syncExcludeExtensions = JSON.stringify(rules);
+        await this.plugin.saveSettings();
+      },
+      false,
+      $("ui.button.add_rule"),
+      $("setting.sync.exclude_extensions_placeholder"),
+      $("ui.button.edit_extension")
+    );
 
-    new Setting(set).setName($("setting.sync.exclude_whitelist")).addButton((btn) => {
-      btn.setButtonText($("ui.button.edit_rule")).onClick(() => {
-        new RuleEditorModal(
-          this.app,
-          $("setting.sync.exclude_whitelist"),
-          $("setting.sync.exclude_whitelist_desc"),
-          parseRules(this.plugin.settings.syncExcludeWhitelist),
-          async (rules) => {
-            this.plugin.settings.syncExcludeWhitelist = JSON.stringify(rules);
-            await this.plugin.saveSettings();
-          }
-        ).open();
-      });
-    })
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.exclude_whitelist_desc"))
+    this.addRuleSetting(
+      set,
+      $("setting.sync.exclude_whitelist"),
+      $("setting.sync.exclude_whitelist_desc"),
+      () => parseRules(this.plugin.settings.syncExcludeWhitelist),
+      async (rules) => {
+        this.plugin.settings.syncExcludeWhitelist = JSON.stringify(rules);
+        await this.plugin.saveSettings();
+      },
+      true,
+      $("ui.button.add_rule"),
+      $("setting.sync.exclude_placeholder"),
+      $("ui.button.edit_whitelist"),
+      true
+    );
 
-    new Setting(set).setName($("setting.sync.config_dirs")).addButton((btn) => {
-      btn.setButtonText($("ui.button.add_dir")).onClick(() => {
-        new RuleEditorModal(
-          this.app,
-          $("setting.sync.config_dirs"),
-          $("setting.sync.config_dirs_desc"),
-          parseRules(this.plugin.settings.configSyncOtherDirs),
-          async (rules) => {
-            const lines = rules.map(r => r.pattern.trim()).filter(l => l !== "");
-            const hasInvalid = lines.some(l => !l.startsWith("."));
+    this.addRuleSetting(
+      set,
+      $("setting.sync.config_dirs"),
+      $("setting.sync.config_dirs_desc"),
+      () => parseRules(this.plugin.settings.configSyncOtherDirs),
+      async (rules) => {
+        const lines = rules.map(r => r.pattern.trim()).filter(l => l !== "");
+        const hasInvalid = lines.some(l => !l.startsWith("."));
 
-            let finalValue = "";
-            if (hasInvalid) {
-              new Notice($("setting.sync.config_dirs_must_start_with_dot_warning"));
-              finalValue = lines.filter(l => l.startsWith(".")).join("\n");
-            } else {
-              finalValue = lines.join("\n");
-            }
+        let finalValue = "";
+        if (hasInvalid) {
+          new Notice($("setting.sync.config_dirs_must_start_with_dot_warning"));
+          finalValue = lines.filter(l => l.startsWith(".")).join("\n");
+        } else {
+          finalValue = lines.join("\n");
+        }
 
-            this.plugin.settings.configSyncOtherDirs = finalValue;
-            await this.plugin.saveSettings();
-          },
-          false,
-          $("ui.button.add_dir"),
-          $("setting.sync.config_dirs_placeholder")
-        ).open();
-      });
-    })
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_dirs_desc"))
+        this.plugin.settings.configSyncOtherDirs = finalValue;
+        await this.plugin.saveSettings();
+      },
+      false,
+      $("ui.button.add_dir"),
+      $("setting.sync.config_dirs_placeholder"),
+      $("ui.button.edit_dir"),
+      true
+    );
 
 
     new Setting(set).setName($("setting.sync.sync_delay")).addText((text) =>
@@ -1015,5 +1012,67 @@ export class SettingTab extends PluginSettingTab {
       descEl.addClass("fns-setting-desc-markdown");
       MarkdownRenderer.render(this.app, desc, descEl, "", this.plugin);
     }
+  }
+
+  private addRuleSetting(
+    set: HTMLElement,
+    name: string,
+    desc: string,
+    getRules: () => SyncRule[],
+    onSave: (rules: SyncRule[]) => Promise<void>,
+    showCaseSensitive: boolean = true,
+    addButtonText?: string,
+    inputPlaceholder?: string,
+    editButtonText?: string,
+    usePathSuggest: boolean = false
+  ) {
+    const setting = new Setting(set).setName(name);
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, desc);
+
+    const inlineContainer = setting.settingEl.createDiv("fns-rule-editor-inline");
+    inlineContainer.hide();
+
+    const defaultEditBtnText = editButtonText || $("ui.button.edit_rule");
+
+    setting.addButton((btn) => {
+      btn.setButtonText(defaultEditBtnText).onClick(() => {
+        if (Platform.isMobile) {
+          if (inlineContainer.isShown()) {
+            inlineContainer.hide();
+            btn.setButtonText(defaultEditBtnText);
+            inlineContainer.empty();
+          } else {
+            inlineContainer.show();
+            btn.setButtonText($("ui.button.collapse") || "收起");
+            const editor = new RuleEditor(
+              inlineContainer,
+              this.app,
+              name,
+              "",
+              getRules(),
+              onSave,
+              showCaseSensitive,
+              addButtonText,
+              inputPlaceholder,
+              usePathSuggest
+            );
+            editor.load();
+            editor.render();
+          }
+        } else {
+          new RuleEditorModal(
+            this.app,
+            name,
+            desc,
+            getRules(),
+            onSave,
+            showCaseSensitive,
+            addButtonText,
+            inputPlaceholder,
+            usePathSuggest
+          ).open();
+        }
+      });
+    });
   }
 }
