@@ -287,6 +287,14 @@ export default class FastSync extends Plugin {
 
       // 7. 刷新运行时设置 (包含网络探测，不阻塞主流程)
       this.refreshRuntime()
+
+      // 8. 监听外观变更 (Listen for CSS/Theme changes)
+      this.registerEvent(
+        this.app.workspace.on("css-change", () => {
+          this.menuManager?.updateRibbonIcon(this.websocket.isAuth)
+          this.shareIndicatorManager?.regenerateCss()
+        })
+      )
     })
   }
 
