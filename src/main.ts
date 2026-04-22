@@ -322,9 +322,19 @@ export default class FastSync extends Plugin {
       })
     }
 
-    // 仅在首次安装（无旧数据）时自动添加插件自身目录排除
-    if (!data && !folderRules.some(r => r.pattern === pluginSelfDir)) {
-      folderRules.push({ pattern: pluginSelfDir, caseSensitive: false })
+    // 仅在首次安装（无旧数据）时自动添加插件自身目录及核心配置排除
+    if (!data) {
+      const defaultExcludes = [
+        `${pluginSelfDir}/data.json`,
+        `${this.app.vault.configDir}/community-plugins.json`,
+        `${this.app.vault.configDir}/appearance.json`,
+        `${this.app.vault.configDir}/app.json`
+      ];
+      defaultExcludes.forEach(pattern => {
+        if (!folderRules.some(r => r.pattern === pattern)) {
+          folderRules.push({ pattern: pattern, caseSensitive: false });
+        }
+      });
     }
 
     if (folderRules.length !== initialFolderRulesCount || !this.settings.syncExcludeFolders.startsWith("[")) {
