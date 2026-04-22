@@ -1083,9 +1083,9 @@
 
   @media (max-width: 768px) {
     max-height: 80vh;
-    
+
     .modal-content {
-      padding-bottom: 40px; // 为移动端键盘预留更多滚动空间
+      padding-bottom: 40px; // 为移动端键盘预留更多滚动空间 
     }
   }
 }
@@ -1097,7 +1097,7 @@
   .fns-rule-list {
     margin: 10px 0;
     overflow-y: visible; /* 让外部容器处理滚动 */
-    
+
     @media (max-width: 768px) {
       padding-bottom: 20px;
     }
