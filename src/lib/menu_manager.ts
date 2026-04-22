@@ -191,6 +191,13 @@ export class MenuManager {
    * Cleanup UI elements
    */
   unload() {
+    this.ribbonIcon?.remove();
+    this.statusBarItem?.remove();
+    this.historyStatusBarItem?.remove();
+    this.shareStatusBarItem?.remove();
+    this.logStatusBarItem?.remove();
+    this.recycleBinStatusBarItem?.remove();
+
     if (this.mobileStatusDot) {
       this.mobileStatusDot.remove();
       this.mobileStatusDot = null;

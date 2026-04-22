@@ -238,6 +238,9 @@ export default class FastSync extends Plugin {
 
     // 大部分初始化逻辑移动到 onLayoutReady 之后，避免阻塞 Obsidian 启动
     this.app.workspace.onLayoutReady(async () => {
+      // 防止重复初始化 (Prevent duplicate initialization)
+      if (this.menuManager) return;
+
       // 1. 初始化统计和日志 (UI)
       SyncLogManager.getInstance().init(this)
       this.registerView(SYNC_LOG_VIEW_TYPE, (leaf) => new SyncLogView(leaf, this))
