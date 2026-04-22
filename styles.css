@@ -1,7 +1,7 @@
 @charset "UTF-8";
 .fast-note-sync-ribbon-icon {
   animation: rotate 2s linear infinite;
-  /* 旋转动画：2秒一圈，线性，无限循环 */
+  /* 旋转动画：2秒一圈，线性，无限循环 1 */
 }
 
 @keyframes rotate {
@@ -954,6 +954,14 @@
   flex: 1;
   overflow-y: auto;
 }
+@media (max-width: 768px) {
+  .fns-rule-editor-modal-container {
+    max-height: 80vh;
+  }
+  .fns-rule-editor-modal-container .modal-content {
+    padding-bottom: 40px;
+  }
+}
 
 .fns-rule-editor-modal {
   display: flex;
@@ -962,6 +970,11 @@
 .fns-rule-editor-modal .fns-rule-list {
   margin: 10px 0;
   overflow-y: visible; /* 让外部容器处理滚动 */
+}
+@media (max-width: 768px) {
+  .fns-rule-editor-modal .fns-rule-list {
+    padding-bottom: 20px;
+  }
 }
 .fns-rule-editor-modal .fns-rule-row {
   display: flex;
@@ -1036,20 +1049,6 @@
   display: flex;
   align-items: center;
 }
-.fns-rule-editor-modal .fns-rule-editor-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 25px;
-  padding-top: 20px;
-  border-top: 1px solid var(--background-modifier-border);
-}
-.fns-rule-editor-modal .fns-rule-editor-footer button {
-  min-width: 90px;
-  height: 32px;
-  border-radius: 6px;
-  font-size: var(--font-ui-small);
-}
 
 /* Tooltip and Badge Styles */
 .fns-tooltip-container {
@@ -1121,143 +1120,3 @@
 }
 
 /*# sourceMappingURL=styles.css.map */
-
-/* Version Modal Styles */
-.fns-about-modal-container .modal {
-    max-width: 600px;
-}
-
-.fns-about-view {
-    padding: 10px;
-}
-
-.fns-version-section {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.fns-version-item {
-    background-color: var(--background-secondary);
-    border-radius: 12px;
-    padding: 20px;
-    border: 1px solid var(--background-modifier-border);
-}
-
-.fns-version-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-}
-
-.fns-version-header h3 {
-    margin: 0;
-    color: var(--text-accent);
-}
-
-.fns-tag {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 600;
-}
-
-.fns-tag-new {
-    background-color: var(--interactive-accent);
-    color: white;
-}
-
-.fns-version-info {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.fns-version-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.fns-version-row-between {
-    justify-content: space-between;
-    width: 100%;
-}
-
-.fns-version-left, .fns-version-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.fns-version-number {
-    font-weight: 700;
-    color: var(--text-normal);
-    font-family: var(--font-monospace);
-}
-
-.fns-new-v {
-    color: var(--text-success);
-}
-
-.fns-divider {
-    height: 1px;
-    background-color: var(--background-modifier-border);
-}
-
-.fns-changelog-container {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px dashed var(--background-modifier-border);
-}
-
-.fns-changelog-title {
-    font-size: 0.9em;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-}
-
-.fns-changelog-content {
-    font-size: 0.9em;
-    max-height: 200px;
-    overflow-y: auto;
-    padding-right: 10px;
-    color: var(--text-muted);
-}
-
-.fns-changelog-content h1, 
-.fns-changelog-content h2, 
-.fns-changelog-content h3 {
-    font-size: 1.1em;
-    margin-top: 10px;
-}
-
-.fns-upgrade-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.fns-upgrade-btn {
-    min-width: 120px;
-}
-
-.fns-upgrade-btn.is-loading {
-    opacity: 0.8;
-    cursor: wait;
-}
-
-.fns-version-uptodate {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-success);
-    font-size: 0.9em;
-}
-
-.fns-icon-check {
-    font-weight: bold;
-}

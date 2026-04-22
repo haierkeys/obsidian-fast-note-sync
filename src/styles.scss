@@ -1080,6 +1080,14 @@
     flex: 1;
     overflow-y: auto;
   }
+
+  @media (max-width: 768px) {
+    max-height: 80vh;
+    
+    .modal-content {
+      padding-bottom: 40px; // 为移动端键盘预留更多滚动空间
+    }
+  }
 }
 
 .fns-rule-editor-modal {
@@ -1089,6 +1097,10 @@
   .fns-rule-list {
     margin: 10px 0;
     overflow-y: visible; /* 让外部容器处理滚动 */
+    
+    @media (max-width: 768px) {
+      padding-bottom: 20px;
+    }
   }
 
   .fns-rule-row {
@@ -1171,22 +1183,6 @@
       height: 32px;
       display: flex;
       align-items: center;
-    }
-  }
-
-  .fns-rule-editor-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid var(--background-modifier-border);
-
-    button {
-      min-width: 90px;
-      height: 32px;
-      border-radius: 6px;
-      font-size: var(--font-ui-small);
     }
   }
 }

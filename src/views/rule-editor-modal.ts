@@ -1,4 +1,4 @@
-import { App, Modal, Setting, setIcon, MarkdownRenderer, Component } from "obsidian";
+import { App, Modal, Setting, setIcon, MarkdownRenderer, Component, Platform } from "obsidian";
 import { SyncRule } from "../lib/helps";
 import { $ } from "../i18n/lang";
 
@@ -62,6 +62,15 @@ export class RuleEditorModal extends Modal {
       });
       inputEl.onchange = (e) => {
         this.rules[index].pattern = (e.target as HTMLInputElement).value;
+        this.save();
+      };
+      inputEl.onfocus = () => {
+        if (Platform.isMobile) {
+          // 延迟等待键盘弹出
+          setTimeout(() => {
+            inputEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 400);
+        }
       };
 
       // 大小写敏感开关 (Aa)
@@ -74,6 +83,7 @@ export class RuleEditorModal extends Modal {
         caseBtn.onclick = () => {
           this.rules[index].caseSensitive = !this.rules[index].caseSensitive;
           caseBtn.toggleClass("is-active", this.rules[index].caseSensitive);
+          this.save();
         };
       }
 
@@ -85,6 +95,7 @@ export class RuleEditorModal extends Modal {
       });
       deleteBtn.onclick = () => {
         this.rules.splice(index, 1);
+        this.save();
         this.render();
       };
     });
@@ -99,25 +110,10 @@ export class RuleEditorModal extends Modal {
       this.rules.push({ pattern: "", caseSensitive: false });
       this.render();
     };
+  }
 
-    // 底部操作按钮
-    const footerEl = contentEl.createDiv("fns-rule-editor-footer");
-    
-    const saveBtn = footerEl.createEl("button", {
-      text: $("ui.button.save") || "Save",
-      cls: "mod-cta"
-    });
-    saveBtn.onclick = () => {
-      this.onSave(this.rules.filter((r: SyncRule) => r.pattern.trim() !== ""));
-      this.close();
-    };
-
-    const cancelBtn = footerEl.createEl("button", {
-      text: $("ui.button.cancel") || "Cancel"
-    });
-    cancelBtn.onclick = () => {
-      this.close();
-    };
+  private save() {
+    this.onSave(this.rules.filter((r: SyncRule) => r.pattern.trim() !== ""));
   }
 
   onClose() {
