@@ -47,11 +47,26 @@ export class SyncLogView extends ItemView {
 const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
     const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
+    const [hasUpgrade, setHasUpgrade] = React.useState<boolean>(
+        plugin.localStorageManager.getMetadata("pluginVersionIsNew") ||
+        plugin.localStorageManager.getMetadata("serverVersionIsNew")
+    );
     const scrollRef = React.useRef<HTMLDivElement>(null);
     const iconRef = React.useRef<HTMLSpanElement>(null);
     const settingsIconRef = React.useRef<HTMLSpanElement>(null);
     const throttleTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingLogsRef = React.useRef<SyncLog[] | null>(null);
+
+    React.useEffect(() => {
+        const checkUpgrade = () => {
+            const hasNew = plugin.localStorageManager.getMetadata("pluginVersionIsNew") ||
+                plugin.localStorageManager.getMetadata("serverVersionIsNew");
+            setHasUpgrade(hasNew);
+        };
+        checkUpgrade();
+        const timer = setInterval(checkUpgrade, 3000); // 每3秒检查一次
+        return () => clearInterval(timer);
+    }, [plugin.localStorageManager]);
 
     React.useEffect(() => {
         const manager = SyncLogManager.getInstance();
@@ -119,7 +134,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <h3 style={{ margin: 0 }}>{$("ui.log.title")}</h3>
                     <div
-                        className="connection-status-container clickable-icon"
+                        className="connection-status-container clickable-icon fns-ribbon-container"
                         onClick={(e) => plugin.menuManager.showRibbonMenu(e.nativeEvent as MouseEvent)}
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                     >
@@ -132,6 +147,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                                 color: isConnected ? '#4caf50' : '#f44336'
                             }}
                         />
+                        {hasUpgrade && <span className="fns-ribbon-badge" style={{ display: 'block', top: '5px', right: '3px' }} />}
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>

@@ -16,7 +16,8 @@ test:
 
 dev:
 	pnpm run dev
-
+devcss:
+	pnpm run devcss
 air:
 	pnpm run dev
 

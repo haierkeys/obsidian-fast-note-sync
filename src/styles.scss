@@ -3,6 +3,35 @@
   /* 旋转动画：2秒一圈，线性，无限循环 1 */
 }
 
+.fns-ribbon-container {
+  position: relative;
+}
+
+.fns-ribbon-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--text-error);
+  border-radius: 50%;
+  border: 1.5px solid var(--background-primary);
+  pointer-events: none;
+  z-index: 10;
+  display: none;
+}
+
+.fns-menu-badge {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: var(--text-error);
+  border-radius: 50%;
+  vertical-align: top;
+  margin-left: -2px;
+  margin-top: -2px;
+}
+
 @keyframes rotate {
   from {
     transform: rotate(0deg);

@@ -243,6 +243,7 @@ export class WebSocketClient {
               this.plugin.localStorageManager.setMetadata("pluginVersionNewLink", data.data.pluginVersionNewLink ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewLink"))
               this.plugin.localStorageManager.setMetadata("pluginVersionNewChangelogContent", data.data.pluginVersionNewChangelogContent ?? this.plugin.localStorageManager.getMetadata("pluginVersionNewChangelogContent"))
               this.plugin.localStorageManager.setMetadata("pluginVersionChangelogContent", data.data.pluginVersionChangelogContent ?? this.plugin.localStorageManager.getMetadata("pluginVersionChangelogContent"))
+              this.plugin.menuManager?.refreshUpgradeBadge();
             }
           }
           return

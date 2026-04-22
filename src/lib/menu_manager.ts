@@ -14,6 +14,7 @@ export class MenuManager {
 
   public ribbonIcon: HTMLElement;
   public ribbonIconStatus: boolean = false;
+  public badgeEl: HTMLElement | null = null;
   public statusBarItem: HTMLElement;
   public historyStatusBarItem: HTMLElement;
   public shareStatusBarItem: HTMLElement;
@@ -31,10 +32,11 @@ export class MenuManager {
 
   init() {
     // 初始化 Ribbon 图标
-    this.ribbonIcon = this.plugin.addRibbonIcon("wifi", $("ui.menu.ribbon_title"), (event: MouseEvent) => {
+    this.ribbonIcon = this.plugin.addRibbonIcon("wifi-off", $("ui.menu.ribbon_title"), (event: MouseEvent) => {
       this.showRibbonMenu(event);
     });
-    setIcon(this.ribbonIcon, "wifi-off");
+    this.ribbonIcon.addClass("fns-ribbon-container");
+    this.updateRibbonIcon(false);
 
     // 初始化状态栏进度
     this.statusBarItem = this.plugin.addStatusBarItem();
@@ -124,12 +126,29 @@ export class MenuManager {
   updateRibbonIcon(status: boolean) {
     this.ribbonIconStatus = status;
     if (!this.ribbonIcon) return;
+
+    // 关键：先清空，防止图标重叠 (Fix overlapping icons)
+    this.ribbonIcon.empty();
+
+    const iconId = status ? "wifi" : "wifi-off";
+    setIcon(this.ribbonIcon, iconId);
+
+    // 重新创建红点，因为 empty() 会把它删掉 (Re-create badge as empty() removes it)
+    this.badgeEl = this.ribbonIcon.createDiv("fns-ribbon-badge");
+
     if (status) {
-      setIcon(this.ribbonIcon, "wifi");
       this.ribbonIcon.setAttribute("aria-label", $("ui.menu.ribbon_title") + " (" + $("setting.remote.connected") + ")");
     } else {
-      setIcon(this.ribbonIcon, "wifi-off");
       this.ribbonIcon.setAttribute("aria-label", $("ui.menu.ribbon_title") + " (" + $("setting.remote.disconnected") + ")");
+    }
+    this.refreshUpgradeBadge();
+  }
+
+  refreshUpgradeBadge() {
+    const pluginNew = this.plugin.localStorageManager.getMetadata("pluginVersionIsNew");
+    const serverNew = this.plugin.localStorageManager.getMetadata("serverVersionIsNew");
+    if (this.badgeEl) {
+      this.badgeEl.style.display = (pluginNew || serverNew) ? "block" : "none";
     }
   }
 
@@ -329,6 +348,9 @@ export class MenuManager {
             iconSpan.style.height = "14px";
             iconSpan.style.display = "inline-flex";
             iconSpan.style.verticalAlign = "top";
+
+            // Add red dot after text (文字后面右上红点)
+            titleEl.createSpan({ cls: "fns-menu-badge" });
           }
         } else {
           (item as any).dom.setAttribute("aria-label", $("ui.menu.plugin_desc"));
@@ -365,6 +387,9 @@ export class MenuManager {
             iconSpan.style.height = "12px";
             iconSpan.style.display = "inline-flex";
             iconSpan.style.verticalAlign = "top";
+
+            // Add red dot after text (文字后面右上红点)
+            titleEl.createSpan({ cls: "fns-menu-badge" });
           }
         } else {
           (item as any).dom.setAttribute("aria-label", $("ui.menu.server_desc"));

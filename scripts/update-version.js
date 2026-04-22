@@ -27,14 +27,28 @@ function writeJsonWithBackup(filePath, obj) {
     fs.writeFileSync(filePath, txt, 'utf8');
 }
 function isValidSemver(v) {
-    return /^\d+\.\d+\.\d+$/.test(v);
+    return /^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$/.test(v);
 }
 function bumpVersion(current, part) {
-    if (!isValidSemver(current)) throw new Error('当前版本不是 x.y.z 格式: ' + current);
-    const [maj, min, pat] = current.split('.').map(n => parseInt(n, 10));
-    if (part === 'major') return `${maj + 1}.0.0`;
-    if (part === 'minor') return `${maj}.${min + 1}.0`;
-    if (part === 'patch') return `${maj}.${min}.${pat + 1}`;
+    if (!isValidSemver(current)) throw new Error('当前版本格式不合法: ' + current);
+    
+    const firstHyphen = current.indexOf('-');
+    const base = firstHyphen === -1 ? current : current.slice(0, firstHyphen);
+    const hasSuffix = firstHyphen !== -1;
+    const [maj, min, pat] = base.split('.').map(n => parseInt(n, 10));
+
+    if (part === 'major') {
+        if (hasSuffix && min === 0 && pat === 0) return base;
+        return `${maj + 1}.0.0`;
+    }
+    if (part === 'minor') {
+        if (hasSuffix && pat === 0) return base;
+        return `${maj}.${min + 1}.0`;
+    }
+    if (part === 'patch') {
+        if (hasSuffix) return base;
+        return `${maj}.${min}.${pat + 1}`;
+    }
     throw new Error('未知的增量类型: ' + part);
 }
 function updateFileVersion(filePath, targetVersion, bumpOption) {

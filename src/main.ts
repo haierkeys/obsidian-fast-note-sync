@@ -1,12 +1,12 @@
 import { Plugin, WorkspaceLeaf, Platform } from "obsidian";
 import { Notice } from "obsidian";
 
-
+import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules } from "./lib/helps";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
+import { ShareIndicatorManager } from "./lib/share_indicator_manager";
 import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
 import { LocalStorageManager } from "./lib/local_storage_manager";
-import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules } from "./lib/helps";
 import { ConfigHashManager } from "./lib/config_hash_manager";
 import { RecycleBinModal } from "./views/recycle-bin-modal";
 import { FileCloudPreview } from "./lib/file_cloud_preview";
@@ -19,8 +19,7 @@ import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
 import { handleSync } from "./lib/operator";
 import { HttpApiService } from "./lib/api";
-import { $ } from "./i18n/lang"
-import { ShareIndicatorManager } from "./lib/share_indicator_manager";
+import { $ } from "./i18n/lang";
 
 
 export default class FastSync extends Plugin {
@@ -215,6 +214,7 @@ export default class FastSync extends Plugin {
     this.localStorageManager.setMetadata("serverVersionNewLink", "")
     this.localStorageManager.setMetadata("pluginVersionIsNew", false)
     this.localStorageManager.setMetadata("pluginVersionNewLink", "")
+    this.menuManager?.refreshUpgradeBadge()
 
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
@@ -373,6 +373,7 @@ export default class FastSync extends Plugin {
   }
 
   async saveSettings(setItem: string = "") {
+    dump("saveSettings")
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
     }
