@@ -210,10 +210,6 @@ export default class FastSync extends Plugin {
     this.localStorageManager.startWatch()
 
     await this.loadSettings()
-    this.localStorageManager.setMetadata("serverVersionIsNew", false)
-    this.localStorageManager.setMetadata("serverVersionNewLink", "")
-    this.localStorageManager.setMetadata("pluginVersionIsNew", false)
-    this.localStorageManager.setMetadata("pluginVersionNewLink", "")
     this.menuManager?.refreshUpgradeBadge()
 
     this.settingTab = new SettingTab(this.app, this)
@@ -373,7 +369,7 @@ export default class FastSync extends Plugin {
   }
 
   async saveSettings(setItem: string = "") {
-    dump("saveSettings")
+    dump("saveSettings12")
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
     }

@@ -32,7 +32,8 @@ export class MenuManager {
 
   init() {
     // 初始化 Ribbon 图标
-    this.ribbonIcon = this.plugin.addRibbonIcon("wifi-off", $("ui.menu.ribbon_title"), (event: MouseEvent) => {
+    const initialIcon = Platform.isMobile ? "wifi" : "wifi-off";
+    this.ribbonIcon = this.plugin.addRibbonIcon(initialIcon, $("ui.menu.ribbon_title"), (event: MouseEvent) => {
       this.showRibbonMenu(event);
     });
     this.ribbonIcon.addClass("fns-ribbon-container");
@@ -130,7 +131,9 @@ export class MenuManager {
     // 关键：先清空，防止图标重叠 (Fix overlapping icons)
     this.ribbonIcon.empty();
 
-    const iconId = status ? "wifi" : "wifi-off";
+    // 手机端固定使用 wifi 图标，桌面端根据状态切换
+    // Mobile uses "wifi" fixedly, desktop switches based on status
+    const iconId = Platform.isMobile ? "wifi" : (status ? "wifi" : "wifi-off");
     setIcon(this.ribbonIcon, iconId);
 
     // 重新创建红点，因为 empty() 会把它删掉 (Re-create badge as empty() removes it)
