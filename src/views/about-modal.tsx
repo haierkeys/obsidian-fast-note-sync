@@ -5,6 +5,7 @@ import JSZip from "jszip";
 
 import type FastSync from "../main";
 import { dump } from "../lib/helps";
+import { showSyncNotice } from "../lib/operator";
 import { $ } from "../i18n/lang";
 
 
@@ -75,7 +76,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
             // 2. 发起升级请求
             const success = await plugin.api.adminUpgrade();
             if (!success) {
-                new Notice($("ui.version.upgrade_fail"));
+                showSyncNotice($("ui.version.upgrade_fail"));
                 setIsUpgrading(false);
                 plugin.websocket.register(); // 尝试恢复连接
                 return;
@@ -92,7 +93,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
 
                     // 4. 重连并完成
                     plugin.websocket.register();
-                    new Notice($("ui.version.upgrade_success"));
+                    showSyncNotice($("ui.version.upgrade_success"));
                     closeModal();
                 }
             }, 2000);
@@ -102,13 +103,13 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
                 window.clearInterval(pollInterval);
                 if (isUpgrading) {
                     setIsUpgrading(false);
-                    new Notice("Upgrade timeout or failed to detect server restart.");
+                    showSyncNotice("Upgrade timeout or failed to detect server restart.");
                 }
             }, 120000);
 
         } catch (e) {
             console.error("Upgrade process error:", e);
-            new Notice($("ui.version.upgrade_fail"));
+            showSyncNotice($("ui.version.upgrade_fail"));
             setIsUpgrading(false);
             plugin.websocket.register();
         }
@@ -122,7 +123,7 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
         const latest = pluginNew;
         if (!latest) {
             dump("Error: Latest version info not found");
-            new Notice("Latest version information not found.");
+            showSyncNotice("Latest version information not found.");
             setIsUpgrading(false);
             return;
         }
@@ -214,12 +215,12 @@ const AboutView = ({ plugin, type, closeModal }: { plugin: FastSync; type: 'plug
             await plugins.loadManifests();
             await plugins.enablePlugin(id);
 
-            new Notice($("ui.version.upgrade_plugin_success"), 10000);
+            showSyncNotice($("ui.version.upgrade_plugin_success"), 10000);
             closeModal();
         } catch (e) {
             dump(`Upgrade failed: ${e.message}`, e);
             console.error("Plugin upgrade error:", e);
-            new Notice($("ui.version.upgrade_fail") + ": " + e.message);
+            showSyncNotice($("ui.version.upgrade_fail") + ": " + e.message);
         } finally {
             setIsUpgrading(false);
         }

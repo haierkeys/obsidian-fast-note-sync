@@ -14,7 +14,7 @@ import { $ } from "../i18n/lang";
  * 显示同步状态通知（桌面端用标准 Notice，移动端用右上角小型 toast）
  * Show sync status notification (desktop: standard Notice, mobile: compact floating toast)
  */
-function showSyncNotice(message: string, duration: number = 2500): void {
+export function showSyncNotice(message: string, duration: number = 2500): void {
   if (!Platform.isMobile) {
     new Notice(message);
     return;
