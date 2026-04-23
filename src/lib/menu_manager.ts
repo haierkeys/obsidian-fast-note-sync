@@ -38,7 +38,25 @@ export class MenuManager {
       this.showRibbonMenu(event);
     });
     this.ribbonIcon.addClass("fns-ribbon-container");
+
     this.updateRibbonIcon(false);
+
+    // 终极护城河：直接监听 ribbonIcon 自身的 DOM 变化。
+    // Obsidian 拖动重新排序时，可能会清理该元素的 innerHTML 并重新应用初始注册的 wifi-off 图标，
+    // 导致我们的动态状态和红点（badge）丢失。
+    // 如果发现预期的图标或红点丢失，立刻自我修复。
+    const observer = new MutationObserver(() => {
+      if (!this.ribbonIcon) return;
+      const expectedIconId = Platform.isMobile ? "wifi" : (this.ribbonIconStatus ? "wifi" : "wifi-off");
+      const hasCorrectIcon = this.ribbonIcon.querySelector(`.lucide-${expectedIconId}`);
+      const hasBadge = this.badgeEl && this.badgeEl.parentElement === this.ribbonIcon;
+      
+      // 只要预期图标和红点还在，就不干涉（比如 iconic 追加了另一个 SVG，不影响我们的存在）
+      if (!hasCorrectIcon || !hasBadge) {
+        this.updateRibbonIcon(this.ribbonIconStatus);
+      }
+    });
+    observer.observe(this.ribbonIcon, { childList: true, subtree: true });
 
     // 初始化状态栏进度
     this.statusBarItem = this.plugin.addStatusBarItem();
@@ -129,15 +147,32 @@ export class MenuManager {
     this.ribbonIconStatus = status;
     if (!this.ribbonIcon) return;
 
-    // 关键：先清空，防止图标重叠 (Fix overlapping icons)
-    this.ribbonIcon.empty();
-
     // 手机端固定使用 wifi 图标，桌面端根据状态切换
     // Mobile uses "wifi" fixedly, desktop switches based on status
     const iconId = Platform.isMobile ? "wifi" : (status ? "wifi" : "wifi-off");
+
+    // 性能优化：避免频繁触发（如 layout-change 引起的重复刷新导致闪烁）
+    // 如果存在预期的 SVG 图标，且我们自己的红点没被 Obsidian 重排时清理掉，说明状态依然是对的，无需重绘
+    const hasCorrectIcon = this.ribbonIcon.querySelector(`.lucide-${iconId}`);
+    if (hasCorrectIcon && this.badgeEl && this.badgeEl.parentElement === this.ribbonIcon) {
+      if (status) {
+        this.ribbonIcon.setAttribute("aria-label", $("ui.menu.ribbon_title") + " (" + $("setting.remote.connected") + ")");
+      } else {
+        this.ribbonIcon.setAttribute("aria-label", $("ui.menu.ribbon_title") + " (" + $("setting.remote.disconnected") + ")");
+      }
+      return;
+    }
+
+    // 只移除我们自己的 SVG 和 badge，避免破坏 iconic 等插件的自定义内容
+    this.ribbonIcon.querySelectorAll("svg").forEach(el => el.remove());
+    if (this.badgeEl) {
+      this.badgeEl.remove();
+      this.badgeEl = null;
+    }
+
     setIcon(this.ribbonIcon, iconId);
 
-    // 重新创建红点，因为 empty() 会把它删掉 (Re-create badge as empty() removes it)
+    // 重新创建红点 / Re-create badge
     this.badgeEl = this.ribbonIcon.createDiv("fns-ribbon-badge");
 
     if (status) {

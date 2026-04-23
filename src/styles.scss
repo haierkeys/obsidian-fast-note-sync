@@ -5,6 +5,16 @@
 
 .fns-ribbon-container {
   position: relative;
+
+  // 兼容 iconic 插件的终极方案：
+  // iconic 拖动时会直接 append 新的 SVG 而不删旧的，导致出现 2 个 SVG。
+  // 利用 :first-of-type:not(:last-of-type) 规则：
+  // - 只有 1 个 SVG 时（正常情况），它是 first 也是 last，不会被隐藏。
+  // - 有 2 个 SVG 时（iconic 介入），隐藏第 1 个（FNS 的），保留最后 1 个（iconic 的自定义图标）。
+  // 这样既解决了双图标问题，又让用户能正常看到他们在 iconic 里设置的自定义图标！
+  svg:first-of-type:not(:last-of-type) {
+    display: none !important;
+  }
 }
 
 .fns-ribbon-badge {

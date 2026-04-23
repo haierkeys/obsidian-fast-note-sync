@@ -7,6 +7,9 @@
 .fns-ribbon-container {
   position: relative;
 }
+.fns-ribbon-container svg:first-of-type:not(:last-of-type) {
+  display: none !important;
+}
 
 .fns-ribbon-badge {
   position: absolute;

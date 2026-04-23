@@ -300,7 +300,7 @@ export default class FastSync extends Plugin {
       // 8. 监听外观变更 (Listen for CSS/Theme changes)
       this.registerEvent(
         this.app.workspace.on("css-change", () => {
-          this.menuManager?.updateRibbonIcon(this.websocket.isAuth)
+          this.menuManager?.refreshUpgradeBadge()
           this.shareIndicatorManager?.regenerateCss()
         })
       )
