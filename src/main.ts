@@ -257,6 +257,9 @@ export default class FastSync extends Plugin {
       // 3. 初始化 UI 管理器
       this.menuManager = new MenuManager(this)
       this.menuManager.init()
+      
+      // 注册 WebSocket 状态监听 (Register WebSocket status listener)
+      this.websocket.addStatusListener((status) => this.updateRibbonIcon(status))
 
       // 初始化分享指示器管理器 / Initialize share indicator manager
       this.shareIndicatorManager = new ShareIndicatorManager(this)
@@ -412,7 +415,7 @@ export default class FastSync extends Plugin {
         this.wsSettingChange = false
       }
 
-      this.websocket?.register((status) => this.updateRibbonIcon(status))
+      this.websocket?.register()
 
       if (this.syncTimer) {
         clearTimeout(this.syncTimer)

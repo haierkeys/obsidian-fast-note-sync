@@ -41,8 +41,9 @@ export class RuleEditorModal extends Modal {
 
     // 延迟处理以抵消 Obsidian Modal 默认的自动聚焦行为
     setTimeout(() => {
-      if (document.activeElement instanceof HTMLInputElement && this.contentEl.contains(document.activeElement)) {
-        document.activeElement.blur();
+      const activeEl = document.activeElement;
+      if ((activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) && this.contentEl.contains(activeEl)) {
+        (activeEl as HTMLElement).blur();
       }
     }, 50);
   }

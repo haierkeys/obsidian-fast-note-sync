@@ -77,8 +77,7 @@ export class WebSocketClient {
     return this.isOpen
   }
 
-  public register(onStatusChange?: (status: boolean) => void) {
-    if (onStatusChange) this.statusListeners.add(onStatusChange)
+  public register() {
 
     // Prevent duplicate connection if already connecting or open
     if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {

@@ -160,11 +160,18 @@ export class MenuManager {
   updateMobileStatusDot(status: boolean) {
     const pos = this.plugin.settings.mobileStatusDotPosition || 'top-right';
 
+    // 尝试寻找 DOM 中已经存在的点，防止重复创建 (Try to find existing dot in DOM to prevent duplicates)
+    if (!this.mobileStatusDot) {
+      this.mobileStatusDot = document.body.querySelector(".fns-mobile-status-dot") as HTMLElement;
+    }
+
     if (pos === 'hidden') {
       if (this.mobileStatusDot) {
         this.mobileStatusDot.remove();
         this.mobileStatusDot = null;
       }
+      // 确保彻底清理 DOM 中可能残留的其它的点 (Ensure thorough cleanup of any remaining dots in DOM)
+      document.body.querySelectorAll(".fns-mobile-status-dot").forEach(el => el.remove());
       return;
     }
 
@@ -172,7 +179,18 @@ export class MenuManager {
       this.mobileStatusDot = document.body.createDiv("fns-mobile-status-dot");
     }
 
+    // 检查是否有多个点存在（可能由于插件重载或意外情况产生），只保留一个
+    // Check for multiple dots and keep only one
+    const allDots = document.body.querySelectorAll(".fns-mobile-status-dot");
+    if (allDots.length > 1) {
+      allDots.forEach(el => {
+        if (el !== this.mobileStatusDot) el.remove();
+      });
+    }
+
     // 更新位置类 / Update position classes
+    // 注意：这里需要移除所有可能的位置类，而不仅仅是重置 className
+    // Note: Need to remove all possible position classes, not just reset className
     this.mobileStatusDot.className = "fns-mobile-status-dot"; // 重置 / Reset
     const posClass = pos === 'top-right' ? 'pos-tr' :
       pos === 'top-left' ? 'pos-tl' :
@@ -202,6 +220,8 @@ export class MenuManager {
       this.mobileStatusDot.remove();
       this.mobileStatusDot = null;
     }
+    // 确保彻底清理 DOM 中可能残留的其它的点 (Ensure thorough cleanup of any remaining dots in DOM)
+    document.body.querySelectorAll(".fns-mobile-status-dot").forEach(el => el.remove());
   }
 
   refreshUpgradeBadge() {
@@ -287,7 +307,7 @@ export class MenuManager {
           .setIcon("play")
           .setTitle($("ui.menu.enable_sync"))
           .onClick(async () => {
-            this.plugin.websocket.register((status) => this.updateRibbonIcon(status));
+            this.plugin.websocket.register();
             new Notice($("ui.menu.enable_sync_desc"));
           });
         (item as any).dom.setAttribute("aria-label", $("ui.menu.enable_sync_desc"));

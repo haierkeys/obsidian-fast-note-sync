@@ -61,32 +61,66 @@ export class RuleEditor {
         const rowEl = listEl.createDiv("fns-rule-row");
 
         // 输入框
-        const inputEl = rowEl.createEl("input", {
-          type: "text",
-          value: rule.pattern,
-          cls: "fns-rule-input",
-          placeholder: this.inputPlaceholder
+        const inputEl = rowEl.createEl("textarea", {
+          cls: "fns-rule-input fns-rule-textarea",
+          placeholder: this.inputPlaceholder,
+          attr: { rows: "1", wrap: "off" }
         });
-        inputEl.oninput = (e) => {
-          this.rules[index].pattern = (e.target as HTMLInputElement).value;
-          this.save();
+        inputEl.value = rule.pattern;
+
+        const updateHeight = (el: HTMLTextAreaElement, forceExpand: boolean) => {
+          if (forceExpand && (el.scrollWidth > el.clientWidth || el.scrollHeight > 32)) {
+            el.setAttr("wrap", "soft");
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+          } else {
+            el.setAttr("wrap", "off");
+            el.style.height = '32px';
+          }
         };
 
-        if (this.usePathSuggest) {
-          new PathSuggest(this.app, inputEl, (val) => {
-            this.rules[index].pattern = val;
-            this.save();
-          }, this.pathSuggestOptions);
-        }
-        
-        // 在行内模式下，可能不需要复杂的 scrollIntoView，但保留它也无妨
-        inputEl.onfocus = () => {
+        inputEl.addEventListener("input", (e) => {
+          this.rules[index].pattern = (e.target as HTMLTextAreaElement).value;
+          updateHeight(inputEl, true);
+          this.save();
+        });
+
+        inputEl.addEventListener("focus", () => {
+          updateHeight(inputEl, true);
           if (Platform.isMobile) {
             setTimeout(() => {
               inputEl.scrollIntoView({ behavior: "smooth", block: "center" });
             }, 300);
           }
-        };
+        });
+
+        inputEl.addEventListener("blur", () => {
+          updateHeight(inputEl, false);
+        });
+
+        inputEl.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            // 如果建议菜单没打开，才执行失去焦点逻辑
+            const suggestContainer = document.querySelector(".suggestion-container");
+            const isSuggestVisible = suggestContainer && (suggestContainer as HTMLElement).style.display !== "none";
+            
+            if (!isSuggestVisible) {
+              e.preventDefault();
+              inputEl.blur();
+            }
+          }
+        });
+
+        // 初始高度调整
+        setTimeout(() => updateHeight(inputEl, false), 50);
+
+        if (this.usePathSuggest) {
+          new PathSuggest(this.app, inputEl, (val) => {
+            this.rules[index].pattern = val;
+            updateHeight(inputEl, true);
+            this.save();
+          }, this.pathSuggestOptions);
+        }
 
         // 大小写敏感开关 (Aa)
         if (this.showCaseSensitive) {
@@ -127,10 +161,18 @@ export class RuleEditor {
       this.render();
     };
 
-    // 确保打开时不自动聚焦输入框
-    if (document.activeElement instanceof HTMLInputElement && containerEl.contains(document.activeElement)) {
-      document.activeElement.blur();
-    }
+    // 确保打开时不自动聚焦输入框，防止移动端键盘弹出
+    const preventAutoFocus = () => {
+      const activeEl = document.activeElement;
+      if ((activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) && containerEl.contains(activeEl)) {
+        activeEl.blur();
+      }
+    };
+    
+    preventAutoFocus();
+    // 延迟执行一次，捕获某些组件初始化后的自动聚焦行为
+    setTimeout(preventAutoFocus, 50);
+    setTimeout(preventAutoFocus, 150);
   }
 
   private save() {

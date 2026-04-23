@@ -964,7 +964,10 @@ export class SettingTab extends PluginSettingTab {
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.sync_delay_desc"))
 
 
-    new Setting(set).setName($("setting.sync.merge_strategy")).addDropdown((dropdown) =>
+    new Setting(set)
+      .setName($("setting.sync.merge_strategy"))
+      .setClass("fns-setting-item-vertical")
+      .addDropdown((dropdown) =>
       dropdown
         .addOption("", $("setting.sync.strategy_default"))
         .addOption("newTimeMerge", $("setting.sync.strategy_new"))
@@ -1057,7 +1060,7 @@ export class SettingTab extends PluginSettingTab {
     usePathSuggest: boolean = false,
     pathSuggestOptions: any = {}
   ) {
-    const setting = new Setting(set).setName(name);
+    const setting = new Setting(set).setName(name).setClass("fns-setting-item-vertical");
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, desc);
 
     const inlineContainer = setting.settingEl.createDiv("fns-rule-editor-inline");

@@ -388,6 +388,24 @@
     }
   }
 }
+
+/* 使设置项垂直排列，控件位于描述下方 */
+.fns-setting-item-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  .setting-item-info {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .setting-item-control {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0;
+  }
+}
 .note-history-modal {
   .modal {
     width: 900px;
@@ -1053,10 +1071,18 @@
   transition: all 0.3s ease;
   opacity: 0.8;
 
-  &.pos-tr { top: 60px; right: 25px; }
-  &.pos-tl { top: 60px; left: 25px; }
-  &.pos-br { bottom: 20px; right: 25px; }
-  &.pos-bl { bottom: 20px; left: 25px; }
+  &.pos-tr { top: 77px; right: 2px; }
+  &.pos-tl { top: 77px; left: 2px; }
+  &.pos-br { bottom: 54px; right: 2px; }
+  &.pos-bl { bottom: 54px; left: 4px; }
+
+  // 平板端位置微调 / Tablet position fine-tuning
+  .is-tablet & {
+    &.pos-tr { top: 48px; right: 2px; }
+    &.pos-tl { top: 48px; left: 10px; }
+    &.pos-br { bottom: 10px; right: 2px; }
+    &.pos-bl { bottom: 10px; left: 2px; }
+  }
 }
 
 .fns-mobile-status-dot.is-connected {
@@ -1161,7 +1187,7 @@
   border: 1px solid var(--background-modifier-border);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
   animation: fns-rule-editor-slide-down 0.25s ease-out;
-  
+
   .fns-rule-editor {
     .fns-rule-list {
       margin: 0 0 12px 0;
@@ -1196,19 +1222,33 @@
 
   .fns-rule-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-start; /* 改为顶端对齐，适应多行文本 */
+    gap: 8px; /* 稍微缩小间距 */
     margin-bottom: 12px;
     width: 100%;
+
+    @media screen and (max-width: 480px) {
+      flex-wrap: wrap;
+    }
 
     .fns-rule-input {
       flex: 1;
       height: 32px;
+      min-height: 32px;
       border-radius: 6px;
       border: 1px solid var(--background-modifier-border);
       background-color: var(--background-primary);
-      padding: 0 12px;
+      padding: 5px 12px;
       font-size: var(--font-ui-small);
+      line-height: 20px;
+      resize: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+      transition: border-color 0.2s ease;
+
+      @media screen and (max-width: 480px) {
+        flex: 1 1 100%;
+      }
 
       &:focus {
         border-color: var(--interactive-accent);
@@ -1218,6 +1258,7 @@
     .fns-case-toggle {
       width: 44px;
       height: 32px;
+      flex-shrink: 0;
       padding: 0;
       display: flex;
       justify-content: center;
@@ -1229,6 +1270,10 @@
       border-radius: 6px;
       transition: all 0.2s ease;
       box-shadow: none;
+
+      @media screen and (max-width: 480px) {
+        flex: 1;
+      }
 
       &.is-active {
         color: var(--interactive-accent);
@@ -1243,6 +1288,7 @@
 
     .fns-rule-delete {
       height: 32px;
+      flex-shrink: 0;
       padding: 0 12px;
       display: flex;
       justify-content: center;
@@ -1254,6 +1300,10 @@
       font-size: var(--font-ui-small);
       box-shadow: none;
       white-space: nowrap;
+
+      @media screen and (max-width: 480px) {
+        flex: 1;
+      }
 
       &:hover {
         background-color: var(--background-modifier-hover);
@@ -1305,11 +1355,11 @@
   border-radius: 8px !important;
   margin: 2px 0 !important;
   transition: all 0.2s ease;
-  
+
   &.is-selected {
     background-color: var(--interactive-accent) !important;
     color: white !important;
-    
+
     .fns-suggest-icon {
       color: white !important;
     }
@@ -1323,7 +1373,7 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  
+
   svg {
     width: 16px;
     height: 16px;
@@ -1356,17 +1406,17 @@
   opacity: 0.7;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
-  
+
   svg {
     width: 14px;
     height: 14px;
   }
-  
+
   &:hover {
     opacity: 1;
     transform: scale(1.1) rotate(90deg);
   }
-  
+
   &:active {
     transform: scale(0.9);
   }

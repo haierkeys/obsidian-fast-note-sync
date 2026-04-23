@@ -8,12 +8,12 @@ export interface PathSuggestOptions {
 
 export class PathSuggest extends AbstractInputSuggest<string> {
   private onSelectCb: (value: string) => void;
-  private inputEl: HTMLInputElement;
+  private inputEl: HTMLInputElement | HTMLTextAreaElement;
   // @ts-ignore
   public suggestEl: HTMLElement;
   private options: PathSuggestOptions;
 
-  constructor(app: App, inputEl: HTMLInputElement, onSelectCb: (value: string) => void, options: PathSuggestOptions = {}) {
+  constructor(app: App, inputEl: HTMLInputElement | HTMLTextAreaElement, onSelectCb: (value: string) => void, options: PathSuggestOptions = {}) {
     super(app, inputEl);
     this.inputEl = inputEl;
     this.onSelectCb = onSelectCb;
@@ -32,7 +32,9 @@ export class PathSuggest extends AbstractInputSuggest<string> {
       };
     }
 
-    const lowerQuery = query.toLowerCase();
+    // 强制使用完整的输入值作为查询条件，解决 textarea 模式下 query 提取不准的问题
+    const actualQuery = this.inputEl.value;
+    const lowerQuery = actualQuery.toLowerCase();
     const suggestions: Set<string> = new Set();
 
     // 1. 获取常规已加载文件
@@ -57,7 +59,7 @@ export class PathSuggest extends AbstractInputSuggest<string> {
         displayPath += "/";
       }
 
-      if (displayPath.toLowerCase().includes(lowerQuery)) {
+      if (displayPath.toLowerCase().startsWith(lowerQuery)) {
         suggestions.add(displayPath);
       }
     }
@@ -93,7 +95,7 @@ export class PathSuggest extends AbstractInputSuggest<string> {
         if (this.options.onlyHidden && !fileName.startsWith(".")) continue;
         if (this.options.excludeConfigDir && filePath === configDir) continue;
 
-        if (filePath.toLowerCase().includes(query)) {
+        if (filePath.toLowerCase().startsWith(query)) {
           suggestions.add(filePath);
         }
         if (suggestions.size >= 100) return;
@@ -116,7 +118,7 @@ export class PathSuggest extends AbstractInputSuggest<string> {
       if (this.options.onlyHidden && !folderName.startsWith(".")) shouldAdd = false;
       if (this.options.excludeConfigDir && (normalizedDirPath === normalizedConfigDir || normalizedDirPath.startsWith(normalizedConfigDir + "/"))) shouldAdd = false;
 
-      if (shouldAdd && displayPath.toLowerCase().includes(query)) {
+      if (shouldAdd && displayPath.toLowerCase().startsWith(query)) {
         suggestions.add(displayPath);
       }
       if (suggestions.size >= 100) return;

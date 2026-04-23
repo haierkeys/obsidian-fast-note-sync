@@ -349,6 +349,22 @@
   resize: vertical;
 }
 
+/* 使设置项垂直排列，控件位于描述下方 */
+.fns-setting-item-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.fns-setting-item-vertical .setting-item-info {
+  width: 100%;
+  margin-bottom: 8px;
+}
+.fns-setting-item-vertical .setting-item-control {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0;
+}
+
 .note-history-modal .modal {
   width: 900px;
   max-width: 90vw;
@@ -917,20 +933,36 @@
   opacity: 0.8;
 }
 .fns-mobile-status-dot.pos-tr {
-  top: 60px;
-  right: 25px;
+  top: 77px;
+  right: 2px;
 }
 .fns-mobile-status-dot.pos-tl {
-  top: 60px;
-  left: 25px;
+  top: 77px;
+  left: 2px;
 }
 .fns-mobile-status-dot.pos-br {
-  bottom: 20px;
-  right: 25px;
+  bottom: 54px;
+  right: 2px;
 }
 .fns-mobile-status-dot.pos-bl {
-  bottom: 20px;
-  left: 25px;
+  bottom: 54px;
+  left: 4px;
+}
+.is-tablet .fns-mobile-status-dot.pos-tr {
+  top: 48px;
+  right: 2px;
+}
+.is-tablet .fns-mobile-status-dot.pos-tl {
+  top: 48px;
+  left: 10px;
+}
+.is-tablet .fns-mobile-status-dot.pos-br {
+  bottom: 10px;
+  right: 2px;
+}
+.is-tablet .fns-mobile-status-dot.pos-bl {
+  bottom: 10px;
+  left: 2px;
 }
 
 .fns-mobile-status-dot.is-connected {
@@ -1073,19 +1105,35 @@
 }
 .fns-rule-editor .fns-rule-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start; /* 改为顶端对齐，适应多行文本 */
+  gap: 8px; /* 稍微缩小间距 */
   margin-bottom: 12px;
   width: 100%;
+}
+@media screen and (max-width: 480px) {
+  .fns-rule-editor .fns-rule-row {
+    flex-wrap: wrap;
+  }
 }
 .fns-rule-editor .fns-rule-row .fns-rule-input {
   flex: 1;
   height: 32px;
+  min-height: 32px;
   border-radius: 6px;
   border: 1px solid var(--background-modifier-border);
   background-color: var(--background-primary);
-  padding: 0 12px;
+  padding: 5px 12px;
   font-size: var(--font-ui-small);
+  line-height: 20px;
+  resize: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  transition: border-color 0.2s ease;
+}
+@media screen and (max-width: 480px) {
+  .fns-rule-editor .fns-rule-row .fns-rule-input {
+    flex: 1 1 100%;
+  }
 }
 .fns-rule-editor .fns-rule-row .fns-rule-input:focus {
   border-color: var(--interactive-accent);
@@ -1093,6 +1141,7 @@
 .fns-rule-editor .fns-rule-row .fns-case-toggle {
   width: 44px;
   height: 32px;
+  flex-shrink: 0;
   padding: 0;
   display: flex;
   justify-content: center;
@@ -1105,6 +1154,11 @@
   transition: all 0.2s ease;
   box-shadow: none;
 }
+@media screen and (max-width: 480px) {
+  .fns-rule-editor .fns-rule-row .fns-case-toggle {
+    flex: 1;
+  }
+}
 .fns-rule-editor .fns-rule-row .fns-case-toggle.is-active {
   color: var(--interactive-accent);
   background-color: var(--background-modifier-hover);
@@ -1115,6 +1169,7 @@
 }
 .fns-rule-editor .fns-rule-row .fns-rule-delete {
   height: 32px;
+  flex-shrink: 0;
   padding: 0 12px;
   display: flex;
   justify-content: center;
@@ -1126,6 +1181,11 @@
   font-size: var(--font-ui-small);
   box-shadow: none;
   white-space: nowrap;
+}
+@media screen and (max-width: 480px) {
+  .fns-rule-editor .fns-rule-row .fns-rule-delete {
+    flex: 1;
+  }
 }
 .fns-rule-editor .fns-rule-row .fns-rule-delete:hover {
   background-color: var(--background-modifier-hover);
