@@ -62,11 +62,6 @@ export class ConfigManager {
 
     // 相对目录
     const relativePath = path
-    if (configIsPathExcluded(relativePath, this.plugin)) return
-    if (this.plugin.settings.logEnabled && relativePath.startsWith(this.pluginDir)) {
-      dump("plugin.settings.logEnabled true Skip", relativePath)
-      return
-    }
 
     const fileName = getFileName(path)
     let shouldCheck = false
@@ -176,7 +171,6 @@ export class ConfigManager {
         configModify(relativePath, this.plugin, eventEnter)
         dump("Config Modify", relativePath)
       }
-      dump("Config Modify mtime no change, skip", relativePath)
     } catch (e) { }
   }
 

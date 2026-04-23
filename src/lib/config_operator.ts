@@ -77,7 +77,9 @@ export const configModify = async function (path: string, plugin: FastSync, even
     if (savedHash === contentHash && (lastSyncMtime !== undefined && lastSyncMtime === mtime)) {
         plugin.removeIgnoredConfigFile(path)
         // 顺便更新一下 ConfigManager 的状态，防止下次误判
-        plugin.configManager.updateFileState(normalizePath(path), mtime)
+        if (plugin.configManager) {
+            plugin.configManager.updateFileState(normalizePath(path), mtime)
+        }
         dump(`Config modify intercepted (hash & mtime match): ${path}`)
         return
     }
@@ -532,10 +534,12 @@ export const configReload = async function (path: string, plugin: FastSync, even
             } else if (p === `${configDir}/community-plugins.json`) {
                 try {
                     const newP = JSON.parse(d)
-                    const oldP = Array.from(plugin.configManager.enabledPlugins)
+                    const oldP = plugin.configManager ? Array.from(plugin.configManager.enabledPlugins) : []
                     const toE = newP.filter((p: string) => !oldP.includes(p))
                     const toD = oldP.filter((p: string) => !newP.includes(p))
-                    plugin.configManager.enabledPlugins = new Set(newP)
+                    if (plugin.configManager) {
+                        plugin.configManager.enabledPlugins = new Set(newP)
+                    }
                     for (const id of toE) {
                         if (id != "hot-reload" && id != "fast-note-sync") {
                             pluginsToReload.add(id)
@@ -578,7 +582,7 @@ export const configReload = async function (path: string, plugin: FastSync, even
                 }
             }
 
-            if (plugin.configManager.enabledPlugins.has(id)) {
+            if (plugin.configManager && plugin.configManager.enabledPlugins.has(id)) {
                 await app.plugins.disablePlugin(id)
                 await app.plugins.enablePlugin(id)
             }

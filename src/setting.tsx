@@ -3,10 +3,10 @@ import { createRoot, Root } from "react-dom/client";
 
 import { handleSync, resetSettingSyncTime, rebuildAllHashes } from "./lib/operator";
 import { SettingsView, SupportView } from "./views/settings-view";
-import { ConfirmModal } from "./views/confirm-modal";
-import { RuleEditorModal } from "./views/rule-editor-modal";
-import { RuleEditor } from "./views/rule-editor";
 import { parseRules, SyncRule, getPluginDir } from "./lib/helps";
+import { RuleEditorModal } from "./views/rule-editor-modal";
+import { ConfirmModal } from "./views/confirm-modal";
+import { RuleEditor } from "./views/rule-editor";
 import { $ } from "./i18n/lang";
 import FastSync from "./main";
 
@@ -569,8 +569,6 @@ export class SettingTab extends PluginSettingTab {
             const defaultExcludes = [
               `${getPluginDir(this.plugin)}/data.json`,
               `${this.app.vault.configDir}/community-plugins.json`,
-              `${this.app.vault.configDir}/appearance.json`,
-              `${this.app.vault.configDir}/app.json`
             ];
             this.plugin.settings.syncExcludeFolders = JSON.stringify(defaultExcludes.map(pattern => ({ pattern, caseSensitive: false })));
 

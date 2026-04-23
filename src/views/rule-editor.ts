@@ -16,6 +16,8 @@ export class RuleEditor {
   private component: Component;
   private usePathSuggest: boolean;
   private pathSuggestOptions: any;
+  private saveTimer: any = null;
+  private lastSavedJson: string = "";
 
   constructor(
     containerEl: HTMLElement,
@@ -42,6 +44,16 @@ export class RuleEditor {
     this.component = new Component();
     this.usePathSuggest = usePathSuggest;
     this.pathSuggestOptions = pathSuggestOptions;
+    
+    // 初始化最后一次保存的状态
+    // Initialize the last saved state
+    this.lastSavedJson = JSON.stringify(this.getFilteredRules());
+  }
+
+  private getFilteredRules(): SyncRule[] {
+    return this.rules
+      .filter((r: SyncRule) => r.pattern && r.pattern.trim() !== "")
+      .map((r: SyncRule) => ({ ...r }));
   }
 
   render() {
@@ -60,7 +72,7 @@ export class RuleEditor {
       this.rules.forEach((rule: SyncRule, index: number) => {
         const rowEl = listEl.createDiv("fns-rule-row");
 
-        // 输入框
+        // 输入框 / Input field
         const inputEl = rowEl.createEl("textarea", {
           cls: "fns-rule-input fns-rule-textarea",
           placeholder: this.inputPlaceholder,
@@ -79,11 +91,15 @@ export class RuleEditor {
           }
         };
 
-        inputEl.addEventListener("input", (e) => {
-          this.rules[index].pattern = (e.target as HTMLTextAreaElement).value;
+        const handleInput = () => {
+          const val = inputEl.value;
+          this.rules[index].pattern = val;
           updateHeight(inputEl, true);
-          this.save();
-        });
+          this.save(false); // 延时保存 / Delayed save
+        };
+
+        inputEl.addEventListener("input", handleInput);
+        inputEl.addEventListener("change", handleInput);
 
         inputEl.addEventListener("focus", () => {
           updateHeight(inputEl, true);
@@ -96,11 +112,13 @@ export class RuleEditor {
 
         inputEl.addEventListener("blur", () => {
           updateHeight(inputEl, false);
+          // 失去焦点时，如果有变更且计时器在跑，立即执行保存 / Save immediately on blur if there are changes and timer is running
+          this.save(true);
         });
 
-        inputEl.addEventListener("keydown", (e) => {
+        inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
           if (e.key === "Enter") {
-            // 如果建议菜单没打开，才执行失去焦点逻辑
+            // 如果建议菜单没打开，才执行失去焦点逻辑 / Only execute blur logic if the suggestion menu is not open
             const suggestContainer = document.querySelector(".suggestion-container");
             const isSuggestVisible = suggestContainer && (suggestContainer as HTMLElement).style.display !== "none";
             
@@ -111,18 +129,18 @@ export class RuleEditor {
           }
         });
 
-        // 初始高度调整
+        // 初始高度调整 / Initial height adjustment
         setTimeout(() => updateHeight(inputEl, false), 50);
 
         if (this.usePathSuggest) {
           new PathSuggest(this.app, inputEl, (val) => {
             this.rules[index].pattern = val;
             updateHeight(inputEl, true);
-            this.save();
+            this.save(true); // 补全选择后立即保存比较好 / Better to save immediately after completion selection
           }, this.pathSuggestOptions);
         }
 
-        // 大小写敏感开关 (Aa)
+        // 大小写敏感开关 (Aa) / Case sensitive toggle (Aa)
         if (this.showCaseSensitive) {
           const caseBtn = rowEl.createEl("button", {
             text: "Aa",
@@ -132,11 +150,11 @@ export class RuleEditor {
           caseBtn.onclick = () => {
             this.rules[index].caseSensitive = !this.rules[index].caseSensitive;
             caseBtn.toggleClass("is-active", this.rules[index].caseSensitive);
-            this.save();
+            this.save(true); // 切换开关立即保存 / Save immediately after toggling
           };
         }
 
-        // 删除按钮
+        // 删除按钮 / Delete button
         const deleteBtn = rowEl.createEl("button", {
           text: $("ui.button.delete") || "Delete",
           cls: "fns-rule-delete",
@@ -144,13 +162,13 @@ export class RuleEditor {
         });
         deleteBtn.onclick = () => {
           this.rules.splice(index, 1);
-          this.save();
+          this.save(true); // 删除后立即保存 / Save immediately after deletion
           this.render();
         };
       });
     }
 
-    // 添加规则按钮
+    // 添加规则按钮 / Add rule button
     const addContainer = containerEl.createDiv("fns-rule-add-container");
     const addBtn = addContainer.createEl("button", {
       text: this.addButtonText,
@@ -161,22 +179,45 @@ export class RuleEditor {
       this.render();
     };
 
-    // 确保打开时不自动聚焦输入框，防止移动端键盘弹出
+    // 确保打开时不自动聚焦输入框，防止移动端键盘弹出 / Ensure no auto-focus on opening to prevent mobile keyboard from popping up
     const preventAutoFocus = () => {
       const activeEl = document.activeElement;
       if ((activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement) && containerEl.contains(activeEl)) {
-        activeEl.blur();
+        (activeEl as HTMLElement).blur();
       }
     };
     
     preventAutoFocus();
-    // 延迟执行一次，捕获某些组件初始化后的自动聚焦行为
+    // 延迟执行一次，捕获某些组件初始化后的自动聚焦行为 / Execute once with delay to catch auto-focus behavior after some components initialize
     setTimeout(preventAutoFocus, 50);
     setTimeout(preventAutoFocus, 150);
   }
 
-  private save() {
-    this.onSave(this.rules.filter((r: SyncRule) => r.pattern.trim() !== ""));
+  private save(immediate: boolean = false) {
+    const rulesToSave = this.getFilteredRules();
+    const currentJson = JSON.stringify(rulesToSave);
+    
+    // 如果没有实质性修改，不执行保存
+    if (currentJson === this.lastSavedJson) {
+      return;
+    }
+
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+
+    const performSave = () => {
+      this.lastSavedJson = currentJson;
+      this.onSave(rulesToSave);
+      this.saveTimer = null;
+    };
+
+    if (immediate) {
+      performSave();
+    } else {
+      this.saveTimer = setTimeout(performSave, 2000); // 延时 2s 保存
+    }
   }
   
   load() {

@@ -221,22 +221,28 @@ export default class FastSync extends Plugin {
     // 初始化锁管理器 (必须在事件管理器和操作模块之前)
     this.lockManager = new LockManager()
 
-    // 注册协议处理器 (核心功能)
-    this.registerObsidianProtocolHandler("fast-note-sync/sso", async (data) => {
-      if (data?.pushApi) {
-        this.settings.api = data.pushApi
-        this.settings.apiToken = data.pushApiToken
-        if (data?.pushVault) {
-          this.settings.vault = data.pushVault
-        }
-        this.wsSettingChange = true
-        this.localStorageManager.setMetadata("isInitSync", false)
-        await this.saveSettings()
-        new Notice($("ui.status.config_imported"), 5000)
-      }
-    })
 
-    // 大部分初始化逻辑移动到 onLayoutReady 之后，避免阻塞 Obsidian 启动
+    // 注册协议处理器 (核心功能)
+    const ssoAction = "fast-note-sync/sso";
+    try {
+      this.registerObsidianProtocolHandler(ssoAction, async (data) => {
+        if (data?.pushApi) {
+          this.settings.api = data.pushApi
+          this.settings.apiToken = data.pushApiToken
+          if (data?.pushVault) {
+            this.settings.vault = data.pushVault
+          }
+          this.wsSettingChange = true
+          this.localStorageManager.setMetadata("isInitSync", false)
+          await this.saveSettings()
+          new Notice($("ui.status.config_imported"), 5000)
+        }
+      })
+    } catch (e) {
+      console.warn(`Fast Note Sync: Protocol handler ${ssoAction} registration skipped or already exists. / 协议处理器注册跳过或已存在:`, e);
+    }
+
+    // 大部分初始化逻辑移动到 onLayoutReady 之后，避免阻塞 Obsidian 启动16
     this.app.workspace.onLayoutReady(async () => {
       // 防止重复初始化 (Prevent duplicate initialization)
       if (this.menuManager) return;
@@ -257,7 +263,7 @@ export default class FastSync extends Plugin {
       // 3. 初始化 UI 管理器
       this.menuManager = new MenuManager(this)
       this.menuManager.init()
-      
+
       // 注册 WebSocket 状态监听 (Register WebSocket status listener)
       this.websocket.addStatusListener((status) => this.updateRibbonIcon(status))
 
@@ -341,8 +347,6 @@ export default class FastSync extends Plugin {
       const defaultExcludes = [
         `${pluginSelfDir}/data.json`,
         `${this.app.vault.configDir}/community-plugins.json`,
-        `${this.app.vault.configDir}/appearance.json`,
-        `${this.app.vault.configDir}/app.json`
       ];
       defaultExcludes.forEach(pattern => {
         if (!folderRules.some(r => r.pattern === pattern)) {
@@ -394,7 +398,6 @@ export default class FastSync extends Plugin {
   }
 
   async saveSettings(setItem: string = "") {
-    dump("saveSettings12")
     if (this.settings.api && this.settings.apiToken) {
       this.settings.api = this.settings.api.replace(/\/+$/, "") // 去除尾部斜杠
     }

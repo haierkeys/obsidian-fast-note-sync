@@ -246,7 +246,9 @@ export class EventManager {
     if (!isPathInConfigSyncDirs(path, this.plugin)) return
 
     this.runWithDelay(path, () => {
-      this.plugin.configManager.handleRawEvent(normalizePath(path), true)
+      if (this.plugin.configManager) {
+        this.plugin.configManager.handleRawEvent(normalizePath(path), true)
+      }
     }, 300)
   }
 
