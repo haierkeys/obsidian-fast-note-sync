@@ -47,6 +47,7 @@ export default {
   "setting.remote.mobile_status_dot_pos_br": "오른쪽 아래",
   "setting.remote.mobile_status_dot_pos_bl": "왼쪽 아래",
   "setting.remote.mobile_status_dot_pos_hint": "⚠️ 이 설정은 모바일에서만 적용되며, 모바일 기기에서 설정해 주세요.",
+  "setting.remote.mobile_status_dot_pos_menu": "우측 상단 (메뉴바)",
 
   // --- setting.sync ---
   "setting.sync.title": "동기화 제어",

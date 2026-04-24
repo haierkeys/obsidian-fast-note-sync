@@ -21,6 +21,7 @@ export class MenuManager {
   public logStatusBarItem: HTMLElement;
   public recycleBinStatusBarItem: HTMLElement;
   private mobileStatusDot: HTMLElement | null = null;
+  private mobileHeaderIconStatus: boolean = false;
 
   private statusBarText: HTMLElement;
   private statusBarFill: HTMLElement;
@@ -76,6 +77,10 @@ export class MenuManager {
     this.plugin.registerEvent(
       this.plugin.app.workspace.on("active-leaf-change", () => {
         this.updateShareIconColor();
+        // 切换笔记时重新注入 menu-bar 图标 / Re-inject menu-bar icon on leaf change
+        if (Platform.isMobile && this.plugin.settings.mobileStatusDotPosition === 'menu-bar') {
+          this.updateMobileHeaderIcon(this.mobileHeaderIconStatus);
+        }
       })
     );
 
@@ -160,6 +165,20 @@ export class MenuManager {
   updateMobileStatusDot(status: boolean) {
     const pos = this.plugin.settings.mobileStatusDotPosition || 'top-right';
 
+    // menu-bar 模式：注入到 view-actions，不使用浮动点 / Menu-bar mode: inject into view-actions, skip floating dot
+    if (pos === 'menu-bar') {
+      if (this.mobileStatusDot) {
+        this.mobileStatusDot.remove();
+        this.mobileStatusDot = null;
+      }
+      document.body.querySelectorAll(".fns-mobile-status-dot").forEach(el => el.remove());
+      this.updateMobileHeaderIcon(status);
+      return;
+    }
+
+    // 切换回其他模式时清理注入的按钮 / Clean up injected icons when switching to other modes
+    this.cleanupMobileHeaderIcons();
+
     // 尝试寻找 DOM 中已经存在的点，防止重复创建 (Try to find existing dot in DOM to prevent duplicates)
     if (!this.mobileStatusDot) {
       this.mobileStatusDot = document.body.querySelector(".fns-mobile-status-dot") as HTMLElement;
@@ -205,6 +224,44 @@ export class MenuManager {
   }
 
   /**
+   * 注入或更新 view-actions 中的 FNS 状态图标（menu-bar 模式）
+   * Inject or update FNS status icon in view-actions (menu-bar mode)
+   */
+  updateMobileHeaderIcon(status: boolean) {
+    this.mobileHeaderIconStatus = status;
+    this.plugin.app.workspace.iterateRootLeaves((leaf) => {
+      // containerEl 通常是 .workspace-leaf-content，直接向下查询 .view-actions
+      // containerEl is usually .workspace-leaf-content, query .view-actions downward
+      const viewActions = (leaf.view.containerEl.querySelector('.view-actions')
+        ?? leaf.view.containerEl.closest?.('.workspace-leaf-content')?.querySelector('.view-actions')) as HTMLElement | null;
+      if (!viewActions) return;
+
+      let btn = viewActions.querySelector('.fns-status-action') as HTMLElement | null;
+      if (!btn) {
+        btn = viewActions.createEl('button', {
+          cls: 'clickable-icon view-action fns-status-action fns-ribbon-container',
+          attr: { 'aria-label': $("ui.menu.ribbon_title") }
+        });
+        viewActions.prepend(btn);
+      }
+
+      btn.empty();
+      setIcon(btn, status ? 'wifi' : 'wifi-off');
+      btn.createDiv("fns-ribbon-badge");
+      btn.onclick = (e) => this.showRibbonMenu(e as MouseEvent);
+    });
+    this.refreshUpgradeBadge();
+  }
+
+  /**
+   * 清理所有注入到 view-actions 中的 FNS 状态图标
+   * Remove all injected FNS status icons from view-actions
+   */
+  cleanupMobileHeaderIcons() {
+    document.querySelectorAll('.fns-status-action').forEach(el => el.remove());
+  }
+
+  /**
    * 清理 UI 元素
    * Cleanup UI elements
    */
@@ -222,14 +279,21 @@ export class MenuManager {
     }
     // 确保彻底清理 DOM 中可能残留的其它的点 (Ensure thorough cleanup of any remaining dots in DOM)
     document.body.querySelectorAll(".fns-mobile-status-dot").forEach(el => el.remove());
+    // 清理注入到 view-actions 中的图标 (Clean up icons injected into view-actions)
+    this.cleanupMobileHeaderIcons();
   }
 
   refreshUpgradeBadge() {
     const pluginNew = this.plugin.localStorageManager.getMetadata("pluginVersionIsNew");
     const serverNew = this.plugin.localStorageManager.getMetadata("serverVersionIsNew");
+    const show = (pluginNew || serverNew) ? "block" : "none";
     if (this.badgeEl) {
-      this.badgeEl.style.display = (pluginNew || serverNew) ? "block" : "none";
+      this.badgeEl.style.display = show;
     }
+    // 同步更新 view-actions 状态图标上的红点 / Sync badge on view-actions status icon
+    document.querySelectorAll('.fns-status-action .fns-ribbon-badge').forEach((el) => {
+      (el as HTMLElement).style.display = show;
+    });
   }
 
   updateStatusBar(text: string, current?: number, total?: number) {

@@ -47,6 +47,7 @@ export default {
   "setting.remote.mobile_status_dot_pos_br": "Bottom Right",
   "setting.remote.mobile_status_dot_pos_bl": "Bottom Left",
   "setting.remote.mobile_status_dot_pos_hint": "⚠️ This setting only applies to the mobile client. Please configure it on your mobile device.",
+  "setting.remote.mobile_status_dot_pos_menu": "Top Right (Menu Bar)",
 
   // --- setting.sync ---
   "setting.sync.title": "Sync Control",

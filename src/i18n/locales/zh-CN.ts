@@ -47,6 +47,7 @@ export default {
   "setting.remote.mobile_status_dot_pos_br": "右下",
   "setting.remote.mobile_status_dot_pos_bl": "左下",
   "setting.remote.mobile_status_dot_pos_hint": "⚠️ 此项仅在手机端生效，请在手机端进行设置。",
+  "setting.remote.mobile_status_dot_pos_menu": "右上菜单旁",
 
   // --- setting.sync ---
   "setting.sync.title": "同步控制",

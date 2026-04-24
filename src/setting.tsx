@@ -73,7 +73,7 @@ export interface PluginSettings {
   /** 插件更新源 */
   updateSource: 'github' | 'cnb'
   /** 手机端状态点位置 */
-  mobileStatusDotPosition: 'hidden' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+  mobileStatusDotPosition: 'hidden' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'menu-bar'
 }
 
 /**
@@ -694,6 +694,7 @@ export class SettingTab extends PluginSettingTab {
         .addOption("top-left", $("setting.remote.mobile_status_dot_pos_tl"))
         .addOption("bottom-right", $("setting.remote.mobile_status_dot_pos_br"))
         .addOption("bottom-left", $("setting.remote.mobile_status_dot_pos_bl"))
+        .addOption("menu-bar", $("setting.remote.mobile_status_dot_pos_menu"))
         .setValue(this.plugin.settings.mobileStatusDotPosition || "top-right")
         .setDisabled(!Platform.isMobile)
         .onChange(async (value: any) => {
