@@ -33,8 +33,9 @@ export class MenuManager {
     this.plugin = plugin;
   }
 
-  init() {
-    // 初始化 Ribbon 图标
+  // 必须在 onLayoutReady 之前调用，确保 Obsidian 恢复 ribbon 排序时按钮已存在
+  // Must be called before onLayoutReady so Obsidian can correctly restore ribbon order
+  initRibbon() {
     const initialIcon = Platform.isMobile ? "wifi" : "wifi-off";
     this.ribbonIcon = this.plugin.addRibbonIcon(initialIcon, $("ui.menu.ribbon_title"), (event: MouseEvent) => {
       this.showRibbonMenu(event);
@@ -47,19 +48,25 @@ export class MenuManager {
     // Obsidian 拖动重新排序时，可能会清理该元素的 innerHTML 并重新应用初始注册的 wifi-off 图标，
     // 导致我们的动态状态和红点（badge）丢失。
     // 如果发现预期的图标或红点丢失，立刻自我修复。
+    // Ultimate guard: directly observe DOM changes on the ribbonIcon element.
+    // When Obsidian re-orders ribbon via drag, it may clear innerHTML and re-apply the initially registered icon,
+    // causing our dynamic state and badge to be lost. Self-repair immediately if expected icon or badge is missing.
     const observer = new MutationObserver(() => {
       if (!this.ribbonIcon) return;
       const expectedIconId = Platform.isMobile ? "wifi" : (this.ribbonIconStatus ? "wifi" : "wifi-off");
       const hasCorrectIcon = this.ribbonIcon.querySelector(`.lucide-${expectedIconId}`);
       const hasBadge = this.badgeEl && this.badgeEl.parentElement === this.ribbonIcon;
-      
+
       // 只要预期图标和红点还在，就不干涉（比如 iconic 追加了另一个 SVG，不影响我们的存在）
+      // Only repair if expected icon or badge is missing (e.g. iconic appending another SVG is fine)
       if (!hasCorrectIcon || !hasBadge) {
         this.updateRibbonIcon(this.ribbonIconStatus);
       }
     });
     observer.observe(this.ribbonIcon, { childList: true, subtree: true });
+  }
 
+  init() {
     // 初始化状态栏进度
     this.statusBarItem = this.plugin.addStatusBarItem();
 

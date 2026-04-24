@@ -34,6 +34,7 @@ export default class FastSync extends Plugin {
   lockManager: LockManager // 锁管理器
   eventManager: EventManager // 事件管理器
   menuManager: MenuManager // 菜单管理器
+  private menuManagerInitialized: boolean = false // 防止 onLayoutReady 重复初始化 / Guard against duplicate onLayoutReady init
   shareIndicatorManager: ShareIndicatorManager // 分享指示器管理器 / Share indicator manager
   fileHashManager: FileHashManager // 文件哈希管理器
   configHashManager: ConfigHashManager // 配置哈希管理器
@@ -242,10 +243,18 @@ export default class FastSync extends Plugin {
       console.warn(`Fast Note Sync: Protocol handler ${ssoAction} registration skipped or already exists. / 协议处理器注册跳过或已存在:`, e);
     }
 
-    // 大部分初始化逻辑移动到 onLayoutReady 之后，避免阻塞 Obsidian 启动16
+    // 提前创建 MenuManager 并初始化 ribbon，必须在 onLayoutReady 之前完成，
+    // 这样 Obsidian 应用保存的 ribbon 排序配置时按钮已存在，用户调整的位置才能被正确恢复。
+    // Create MenuManager and init ribbon before onLayoutReady so that when Obsidian
+    // applies the saved ribbon order config, the button already exists and its position is preserved.
+    this.menuManager = new MenuManager(this)
+    this.menuManager.initRibbon()
+
+    // 大部分初始化逻辑移动到 onLayoutReady 之后，避免阻塞 Obsidian 启动
     this.app.workspace.onLayoutReady(async () => {
       // 防止重复初始化 (Prevent duplicate initialization)
-      if (this.menuManager) return;
+      if (this.menuManagerInitialized) return;
+      this.menuManagerInitialized = true
 
       // 1. 初始化统计和日志 (UI)
       SyncLogManager.getInstance().init(this)
@@ -260,8 +269,8 @@ export default class FastSync extends Plugin {
         },
       });
 
-      // 3. 初始化 UI 管理器
-      this.menuManager = new MenuManager(this)
+      // 3. 初始化 UI 管理器（ribbon 已在 onLayoutReady 之前创建，这里只完成其余初始化）
+      // UI manager: ribbon was already created before onLayoutReady; finish the rest here
       this.menuManager.init()
 
       // 注册 WebSocket 状态监听 (Register WebSocket status listener)
