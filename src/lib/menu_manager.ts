@@ -11,6 +11,7 @@ import FastSync from '../main';
 
 export class MenuManager {
   private plugin: FastSync;
+  private activeMenu: Menu | null = null;
 
   public ribbonIcon: HTMLElement;
   public ribbonIconStatus: boolean = false;
@@ -140,6 +141,31 @@ export class MenuManager {
       callback: () => {
         this.plugin.activateLogView()
       },
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "Q" }]
+    })
+
+    this.plugin.addCommand({
+      id: "open-sync-menu",
+      name: $("ui.menu.ribbon_title"),
+      callback: () => {
+        this.showRibbonMenu()
+      },
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "W" }]
+    })
+
+    this.plugin.addCommand({
+      id: "open-settings",
+      name: $("ui.menu.settings"),
+      callback: () => {
+        const setting = (this.plugin.app as any).setting
+        if (setting.containerEl.parentElement !== null) {
+          setting.close()
+        } else {
+          setting.open()
+          setting.openTabById(this.plugin.manifest.id)
+        }
+      },
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "S" }]
     })
   }
 
@@ -322,8 +348,22 @@ export class MenuManager {
     }
   }
 
-  showRibbonMenu(event: MouseEvent) {
+  showRibbonMenu(event?: MouseEvent) {
+    if (this.activeMenu) {
+      this.activeMenu.hide();
+      this.activeMenu = null;
+      return;
+    }
+
     const menu = new Menu();
+    this.activeMenu = menu;
+
+    // 监听菜单关闭事件以便重置引用
+    const originalHide = menu.hide.bind(menu);
+    menu.hide = () => {
+      this.activeMenu = null;
+      return originalHide();
+    };
 
     if (this.plugin.websocket.isRegister) {
       menu.addItem((item: MenuItem) => {
@@ -512,7 +552,14 @@ export class MenuManager {
       });
     }
 
-    menu.showAtMouseEvent(event);
+    if (event) {
+      menu.showAtMouseEvent(event);
+    } else if (this.ribbonIcon) {
+      const rect = this.ribbonIcon.getBoundingClientRect();
+      menu.showAtPosition({ x: rect.left, y: rect.bottom });
+    } else {
+      menu.showAtPosition({ x: 0, y: 0 });
+    }
   }
 
   /**

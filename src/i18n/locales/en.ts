@@ -10,6 +10,7 @@ export default {
   "setting.tab.sync": "Sync Control",
   "setting.tab.cloud": "Attachment Cloud Preview",
   "setting.tab.display": "Display UI",
+  "setting.tab.shortcut": "Shortcuts",
   "setting.search.placeholder": "Search panel settings...",
   "setting.debug.show_version": "Show version info in sync menu",
   "setting.debug.show_version_desc": "When enabled, version info will be permanently displayed in the sync menu; when disabled, it will only appear when an update is available.",
@@ -106,6 +107,16 @@ export default {
   "setting.cloud.remote_source_desc": "This setting is used to specify a remote source for attachments matching specific prefixes/suffixes, supporting multi-line rules.\nFormat: <b>prefix@suffix#remote_source</b>,\n<b>prefix</b> can be omitted, multiple <b>suffixes</b> can be separated by <b>$</b>. If neither prefix nor suffix matches, the default FNS source is used. Remote sources support variable replacement.\n\n| Variable | Description |\n| --- | --- |\n| {path} | Attachment path within the note |\n| {vaultPath} | Relative path of the vault corresponding to the attachment |\n| {vault} | Vault name |\n| {type} | Attachment type (image/video/audio/pdf/other) |\nExample: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\nNote: If using a custom remote source, ensure it supports cross-origin preview (CORS) and necessary authentication (if required).",
   "setting.cloud.delete_after_upload": "Attachment Cloud Preview - Delete After Upload",
   "setting.cloud.delete_after_upload_desc": "Local files will be automatically deleted after successful attachment upload to save space.\n(This setting requires Attachment Cloud Preview to be enabled)\nNote: Please disable with caution; this may cause attachment-related plugins to fail.",
+
+  // --- setting.shortcut ---
+  "setting.shortcut.title": "Shortcut Settings",
+  "setting.shortcut.title_desc": "Shortcuts configured here will sync with Obsidian's system settings, and vice versa.",
+  "setting.shortcut.open_log": "Open Sync Log",
+  "setting.shortcut.open_log_desc": "Set the shortcut to open the sync log panel. Click the input field and press the key combination.",
+  "setting.shortcut.open_menu": "Open Sync Menu",
+  "setting.shortcut.open_menu_desc": "Set the shortcut to open the sync menu. Click the input field and press the key combination.",
+  "setting.shortcut.open_settings": "Open Plugin Settings",
+  "setting.shortcut.open_settings_desc": "Set the shortcut to quickly open the plugin settings panel. Click the input field and press the key combination.",
 
   // --- setting.support ---
   "setting.support.title": "Sponsorship & Support",
@@ -283,6 +294,7 @@ export default {
   "ui.button.confirm": "Confirm",
   "ui.button.save": "Save",
   "ui.button.cancel": "Cancel",
+  "ui.button.reset": "Reset",
   "ui.button.delete": "Delete",
   "ui.button.collapse": "Collapse",
   "ui.button.add_rule": "Add Rule",

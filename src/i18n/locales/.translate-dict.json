@@ -311,5 +311,15 @@
   "setting.remote.mobile_status_dot_pos_tl": "f3296f64a8a1330d7a07f1d269a1db92",
   "setting.remote.mobile_status_dot_pos_br": "9cd707caffdfb314d939298f2f2c267c",
   "setting.remote.mobile_status_dot_pos_bl": "d429ffb093e9aa3bf80da125f1be318c",
-  "setting.remote.mobile_status_dot_pos_hint": "f51e5082de5d0ea1f094e871c26a8ff1"
+  "setting.remote.mobile_status_dot_pos_hint": "f51e5082de5d0ea1f094e871c26a8ff1",
+  "setting.tab.shortcut": "f7d2996639d97b4a03fc0e40e2eb853a",
+  "setting.shortcut.title": "628884d9492812dab4634ac0b30c0e4f",
+  "setting.shortcut.title_desc": "6d17def6b79c5bc32796c9c9a028c949",
+  "setting.shortcut.open_log": "021bd79a6caa530d091236ab0786aaa5",
+  "setting.shortcut.open_log_desc": "626ab563f42fdb4474995daa97f164af",
+  "setting.shortcut.open_menu": "48876a0ffe948aae532e808b527bd339",
+  "setting.shortcut.open_menu_desc": "e6e7cdee1d35af16a2ede2d71c8de381",
+  "setting.shortcut.open_settings": "b20122106cc1145795a1dea12a54ab26",
+  "setting.shortcut.open_settings_desc": "84cb4ec98348592b54f54ca48d6e9d57",
+  "ui.button.reset": "4b9c3271dc2f299dc3aeffb369187513"
 }

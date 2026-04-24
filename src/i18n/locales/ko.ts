@@ -10,6 +10,7 @@ export default {
   "setting.tab.sync": "동기화 제어",
   "setting.tab.cloud": "첨부파일 클라우드 미리보기",
   "setting.tab.display": "UI 표시",
+  "setting.tab.shortcut": "단축키",
   "setting.search.placeholder": "패널 설정 검색...",
   "setting.debug.show_version": "동기화 메뉴에 버전 정보 표시",
   "setting.debug.show_version_desc": "활성화하면 버전 정보가 동기화 메뉴에 항상 표시됩니다. 비활성화하면 업데이트가 있을 때만 표시됩니다.",
@@ -106,6 +107,16 @@ export default {
   "setting.cloud.remote_source_desc": "이 설정은 접두사/접미사와 일치하는 첨부 파일에 대해 원격 소스를 지정하는 데 사용됩니다. 여러 줄의 규칙을 지원합니다.\n형식: <b>접두사@접미사#원격 소스</b>,\n<b>접두사</b>는 생략할 수 있으며, 여러 <b>접미사</b>는 <b>$</b>로 구분할 수 있습니다. 접두사와 접미사 모두 일치하지 않으면 기본 FNS 소스를 사용하며, 원격 소스는 변수 대체를 지원합니다.\n\n| 변수 | 설명 |\n| --- | --- |\n| {path} | 노트 내 첨부 파일 경로 |\n| {vaultPath} | 첨부 파일에 해당하는 저장소의 상대 경로 |\n| {vault} | 저장소 이름 |\n| {type} | 첨부 파일 유형 (image/video/audio/pdf/other) |\n예: <b>prefix@.jpg$.png#http://domain.com/{path}</b>\n주의: 사용자 정의 원격 소스를 사용하는 경우 해당 소스가 CORS(크로스 오리진 리소스 공유) 미리보기 및 필요한 인증을 지원하도록 하세요.",
   "setting.cloud.delete_after_upload": "첨부 파일 클라우드 미리보기 - 업로드 후 삭제",
   "setting.cloud.delete_after_upload_desc": "첨부 파일이 성공적으로 업로드되면 공간을 절약하기 위해 로컬 파일이 자동으로 삭제됩니다.\n(이 설정을 사용하려면 첨부 파일 클라우드 미리보기를 활성화해야 합니다)\n주의: 이 항목을 비활성화할 때는 신중하게 하세요. 첨부 파일 관련 플러그인이 작동하지 않을 수 있습니다.",
+
+  // --- setting.shortcut ---
+  "setting.shortcut.title": "단축키 설정",
+  "setting.shortcut.title_desc": "여기서 설정한 단축키는 Obsidian 시스템 설정의 단축키와 동기화되며, 그 반대도 동일하게 적용됩니다.",
+  "setting.shortcut.open_log": "동기화 로그 열기",
+  "setting.shortcut.open_log_desc": "동기화 로그 패널을 열 단축키를 설정합니다. 입력란을 클릭한 후 키 조합을 누르면 설정할 수 있습니다.",
+  "setting.shortcut.open_menu": "동기화 메뉴 열기",
+  "setting.shortcut.open_menu_desc": "동기화 메뉴를 열 단축키를 설정합니다. 입력란을 클릭한 후 키 조합을 누르면 설정할 수 있습니다.",
+  "setting.shortcut.open_settings": "플러그인 설정 빠르게 열기",
+  "setting.shortcut.open_settings_desc": "플러그인 설정 패널을 빠르게 열 단축키를 설정합니다. 입력란을 클릭한 후 키 조합을 누르면 설정할 수 있습니다.",
 
   // --- setting.support ---
   "setting.support.title": "후원 및 지원",
@@ -283,6 +294,7 @@ export default {
   "ui.button.confirm": "확인",
   "ui.button.save": "저장",
   "ui.button.cancel": "취소",
+  "ui.button.reset": "초기화",
   "ui.button.delete": "삭제",
   "ui.button.collapse": "접기",
   "ui.button.add_rule": "규칙 추가",

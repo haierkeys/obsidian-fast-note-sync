@@ -2,8 +2,8 @@ import { App, PluginSettingTab, Notice, Setting, Platform, SearchComponent, Mark
 import { createRoot, Root } from "react-dom/client";
 
 import { handleSync, resetSettingSyncTime, rebuildAllHashes } from "./lib/operator";
-import { SettingsView, SupportView } from "./views/settings-view";
 import { parseRules, SyncRule, getPluginDir, debounce } from "./lib/helps";
+import { SettingsView, SupportView } from "./views/settings-view";
 import { RuleEditorModal } from "./views/rule-editor-modal";
 import { ConfirmModal } from "./views/confirm-modal";
 import { RuleEditor } from "./views/rule-editor";
@@ -122,7 +122,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 
 
 
-export type TabId = "GENERAL" | "DISPLAY" | "DEBUG" | "REMOTE" | "SYNC" | "CLOUD";
+export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG";
 
 export class SettingTab extends PluginSettingTab {
   plugin: FastSync
@@ -131,6 +131,7 @@ export class SettingTab extends PluginSettingTab {
   // 设置当前活动选项卡，默认为通用
   activeTab: TabId = "GENERAL"
   searchQuery: string = ""
+  headerScrollLeft: number = 0
 
   // 缓存结构，避免频繁重绘导致卡顿
   private contentEl: HTMLElement | null = null
@@ -203,6 +204,7 @@ export class SettingTab extends PluginSettingTab {
           case "SYNC": this.renderSyncSettings(contentEl); break
           case "CLOUD": this.renderCloudSettings(contentEl); break
           case "DISPLAY": this.renderDisplaySettings(contentEl); break
+          case "SHORTCUT": this.renderShortcutSettings(contentEl); break
         }
       }
       this.lastViewMode = currentMode
@@ -241,7 +243,7 @@ export class SettingTab extends PluginSettingTab {
     const threshold = 50
 
     if (Math.abs(deltaX) > threshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-      const tabs: TabId[] = ["GENERAL", "DISPLAY", "REMOTE", "SYNC", "CLOUD", "DEBUG"]
+      const tabs: TabId[] = ["GENERAL", "DISPLAY", "REMOTE", "SYNC", "SHORTCUT", "CLOUD", "DEBUG"]
       const currentIndex = tabs.indexOf(this.activeTab)
 
       if (deltaX > 0) {
@@ -284,6 +286,7 @@ export class SettingTab extends PluginSettingTab {
     this.renderDisplaySettings(contentEl)
     this.renderRemoteSettings(contentEl)
     this.renderSyncSettings(contentEl)
+    this.renderShortcutSettings(contentEl)
     this.renderCloudSettings(contentEl)
     this.renderDebugSettings(contentEl)
   }
@@ -345,6 +348,7 @@ export class SettingTab extends PluginSettingTab {
       { id: "DISPLAY", label: $("setting.tab.display") },
       { id: "REMOTE", label: $("setting.tab.remote") },
       { id: "SYNC", label: $("setting.tab.sync") },
+      { id: "SHORTCUT", label: $("setting.tab.shortcut") },
       { id: "CLOUD", label: $("setting.tab.cloud") },
       { id: "DEBUG", label: $("setting.tab.debug") },
     ]
@@ -368,6 +372,9 @@ export class SettingTab extends PluginSettingTab {
     })
 
     headerEl.scrollLeft = this.headerScrollLeft
+    headerEl.onscroll = () => {
+      this.headerScrollLeft = headerEl.scrollLeft
+    }
 
     if (activeTabEl) {
       requestAnimationFrame(() => {
@@ -405,7 +412,7 @@ export class SettingTab extends PluginSettingTab {
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.update_source_desc"))
 
     new Setting(set)
-      .setName("| " + $("setting.support.title"))
+      .setName($("setting.support.title"))
       .setHeading()
       .setClass("fast-note-sync-settings-tag")
 
@@ -661,10 +668,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDebugSettings(set: HTMLElement) {
-    new Setting(set)
-      .setName("| " + $("setting.tab.debug"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+
 
     new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
@@ -701,10 +705,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDisplaySettings(set: HTMLElement) {
-    new Setting(set)
-      .setName("| " + $("setting.tab.display"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+
 
     new Setting(set).setName($("setting.general.show_notice")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.isShowNotice).onChange(async (value) => {
@@ -758,10 +759,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderRemoteSettings(set: HTMLElement) {
-    new Setting(set)
-      .setName("| " + $("setting.remote.title"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+
 
     const apiSet = set.createDiv()
     apiSet.addClass("fast-note-sync-settings")
@@ -827,11 +825,181 @@ export class SettingTab extends PluginSettingTab {
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.client_name_desc"))
   }
 
-  private renderSyncSettings(set: HTMLElement) {
+  private renderShortcutSettings(set: HTMLElement) {
     new Setting(set)
-      .setName("| " + $("setting.sync.title"))
+      .setDesc($("setting.shortcut.title_desc"))
       .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+      .setClass("fast-note-sync-settings-tag-desc")
+
+    const shortcutSetting = new Setting(set)
+      .setName($("setting.shortcut.open_log"))
+      .setDesc($("setting.shortcut.open_log_desc"))
+
+    const displayShortcut = (val: string) => {
+      if (!val) return ""
+      let display = val
+      if (Platform.isMacOS) {
+        display = display.replace(/Mod/g, "Cmd").replace(/Ctrl/g, "Control")
+      } else {
+        display = display.replace(/Mod/g, "Ctrl")
+      }
+      return display
+    }
+
+    shortcutSetting.addText((text) => {
+      text
+        .setPlaceholder("Ctrl+Shift+Q")
+        .setValue(displayShortcut(this.plugin.getCommandHotkey("open-sync-log")))
+
+      text.inputEl.addEventListener("keydown", async (e: KeyboardEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const modifiers = []
+        if (e.ctrlKey) modifiers.push(Platform.isMacOS ? "Control" : "Ctrl")
+        if (e.metaKey) modifiers.push(Platform.isMacOS ? "Cmd" : "Meta")
+        if (e.altKey) modifiers.push("Alt")
+        if (e.shiftKey) modifiers.push("Shift")
+
+        let key = e.key
+        if (["Control", "Meta", "Alt", "Shift"].includes(key)) {
+          key = ""
+        }
+
+        if (modifiers.length > 0 || key) {
+          let shortcutStr = modifiers.join("+")
+          if (key) {
+            if (shortcutStr) shortcutStr += "+"
+            shortcutStr += key.toUpperCase()
+          }
+
+          let storageStr = shortcutStr
+          if (Platform.isMacOS) {
+            storageStr = storageStr.replace(/Cmd/g, "Mod").replace(/Control/g, "Ctrl")
+          } else {
+            storageStr = storageStr.replace(/Ctrl/g, "Mod")
+          }
+
+          text.setValue(shortcutStr)
+          await this.plugin.setCommandHotkey("open-sync-log", storageStr)
+        }
+      })
+    })
+
+    shortcutSetting.addButton((btn) => {
+      btn.setButtonText($("ui.button.reset")).onClick(async () => {
+        await this.plugin.setCommandHotkey("open-sync-log", "Ctrl+Shift+Q")
+        this.lastViewMode = "" // 强制重新渲染内容
+        this.display()
+      })
+    })
+
+    const menuShortcutSetting = new Setting(set)
+      .setName($("setting.shortcut.open_menu"))
+      .setDesc($("setting.shortcut.open_menu_desc"))
+
+    menuShortcutSetting.addText((text) => {
+      text
+        .setPlaceholder("Ctrl+Shift+W")
+        .setValue(displayShortcut(this.plugin.getCommandHotkey("open-sync-menu")))
+
+      text.inputEl.addEventListener("keydown", async (e: KeyboardEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const modifiers = []
+        if (e.ctrlKey) modifiers.push(Platform.isMacOS ? "Control" : "Ctrl")
+        if (e.metaKey) modifiers.push(Platform.isMacOS ? "Cmd" : "Meta")
+        if (e.altKey) modifiers.push("Alt")
+        if (e.shiftKey) modifiers.push("Shift")
+
+        let key = e.key
+        if (["Control", "Meta", "Alt", "Shift"].includes(key)) {
+          key = ""
+        }
+
+        if (modifiers.length > 0 || key) {
+          let shortcutStr = modifiers.join("+")
+          if (key) {
+            if (shortcutStr) shortcutStr += "+"
+            shortcutStr += key.toUpperCase()
+          }
+
+          let storageStr = shortcutStr
+          if (Platform.isMacOS) {
+            storageStr = storageStr.replace(/Cmd/g, "Mod").replace(/Control/g, "Ctrl")
+          } else {
+            storageStr = storageStr.replace(/Ctrl/g, "Mod")
+          }
+
+          text.setValue(shortcutStr)
+          await this.plugin.setCommandHotkey("open-sync-menu", storageStr)
+        }
+      })
+    })
+
+    menuShortcutSetting.addButton((btn) => {
+      btn.setButtonText($("ui.button.reset")).onClick(async () => {
+        await this.plugin.setCommandHotkey("open-sync-menu", "Ctrl+Shift+W")
+        this.lastViewMode = "" // 强制重新渲染内容
+        this.display()
+      })
+    })
+
+    const settingShortcutSetting = new Setting(set)
+      .setName($("setting.shortcut.open_settings"))
+      .setDesc($("setting.shortcut.open_settings_desc"))
+
+    settingShortcutSetting.addText((text) => {
+      text
+        .setPlaceholder("Ctrl+Shift+S")
+        .setValue(displayShortcut(this.plugin.getCommandHotkey("open-settings")))
+
+      text.inputEl.addEventListener("keydown", async (e: KeyboardEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        const modifiers = []
+        if (e.ctrlKey) modifiers.push(Platform.isMacOS ? "Control" : "Ctrl")
+        if (e.metaKey) modifiers.push(Platform.isMacOS ? "Cmd" : "Meta")
+        if (e.altKey) modifiers.push("Alt")
+        if (e.shiftKey) modifiers.push("Shift")
+
+        let key = e.key
+        if (["Control", "Meta", "Alt", "Shift"].includes(key)) {
+          key = ""
+        }
+
+        if (modifiers.length > 0 || key) {
+          let shortcutStr = modifiers.join("+")
+          if (key) {
+            if (shortcutStr) shortcutStr += "+"
+            shortcutStr += key.toUpperCase()
+          }
+
+          let storageStr = shortcutStr
+          if (Platform.isMacOS) {
+            storageStr = storageStr.replace(/Cmd/g, "Mod").replace(/Control/g, "Ctrl")
+          } else {
+            storageStr = storageStr.replace(/Ctrl/g, "Mod")
+          }
+
+          text.setValue(shortcutStr)
+          await this.plugin.setCommandHotkey("open-settings", storageStr)
+        }
+      })
+    })
+
+    settingShortcutSetting.addButton((btn) => {
+      btn.setButtonText($("ui.button.reset")).onClick(async () => {
+        await this.plugin.setCommandHotkey("open-settings", "Ctrl+Shift+S")
+        this.lastViewMode = "" // 强制重新渲染内容
+        this.display()
+      })
+    })
+  }
+
+  private renderSyncSettings(set: HTMLElement) {
 
     new Setting(set).setName($("setting.sync.auto_note")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
@@ -1031,10 +1199,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderCloudSettings(set: HTMLElement) {
-    new Setting(set)
-      .setName("| " + $("setting.cloud.title"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+
 
     new Setting(set).setName($("setting.cloud.title")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {

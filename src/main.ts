@@ -456,6 +456,41 @@ export default class FastSync extends Plugin {
   }
 
   /**
+   * 获取命令当前的快捷键字符串 (Linkage with system hotkeys)
+   */
+  getCommandHotkey(commandId: string): string {
+    const fullId = `${this.manifest.id}:${commandId}`;
+    const hotkeyManager = (this.app as any).hotkeyManager;
+    let hotkeys = hotkeyManager?.getHotkeys(fullId);
+
+    // 如果没有自定义热键，尝试获取默认热键
+    if (!hotkeys || hotkeys.length === 0) {
+      hotkeys = hotkeyManager?.getDefaultHotkeys(fullId);
+    }
+    
+    if (hotkeys && hotkeys.length > 0) {
+      const { modifiers, key } = hotkeys[0];
+      const parts = [...modifiers];
+      if (key) parts.push(key.toUpperCase());
+      return parts.join("+");
+    }
+    return "";
+  }
+
+  /**
+   * 设置命令的快捷键 (Linkage with system hotkeys)
+   */
+  async setCommandHotkey(commandId: string, shortcutStr: string) {
+    const fullId = `${this.manifest.id}:${commandId}`;
+    const parts = shortcutStr.split("+");
+    const modifiers = parts.filter(p => ["Mod", "Ctrl", "Alt", "Shift", "Meta"].includes(p)) as any[];
+    const key = parts.find(p => !["Mod", "Ctrl", "Alt", "Shift", "Meta"].includes(p));
+
+    const hotkey = { modifiers, key: key || "" };
+    await (this.app as any).hotkeyManager?.setHotkeys(fullId, [hotkey]);
+  }
+
+  /**
    * 更新运行时 API 地址
    * 当检测到 301/302 重定向时调用
    * @param newBaseUrl 新的基准地址（http/https）
@@ -474,18 +509,25 @@ export default class FastSync extends Plugin {
   async activateLogView() {
     const { workspace } = this.app
 
-    let leaf: WorkspaceLeaf | null = null
     const leaves = workspace.getLeavesOfType(SYNC_LOG_VIEW_TYPE)
 
     if (leaves.length > 0) {
-      leaf = leaves[0]
-    } else {
-      leaf = workspace.getRightLeaf(false)
-      await leaf?.setViewState({ type: SYNC_LOG_VIEW_TYPE, active: true })
-    }
-
-    if (leaf) {
+      const leaf = leaves[0]
+      // 如果已经打开，判断是否处于当前视图且可见，如果是则关闭
+      if (leaf === workspace.activeLeaf || (leaf as any).view?.containerEl?.isShown()) {
+        leaf.detach()
+        return
+      }
+      // 否则显示它
       workspace.revealLeaf(leaf)
+    } else {
+      // 否则创建新的
+      const leaf = workspace.getRightLeaf(false)
+      await leaf?.setViewState({ type: SYNC_LOG_VIEW_TYPE, active: true })
+      if (leaf) {
+        workspace.revealLeaf(leaf)
+      }
     }
   }
+
 }

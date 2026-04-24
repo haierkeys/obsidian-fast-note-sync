@@ -10,6 +10,7 @@ export default {
   "setting.tab.sync": "同期制御",
   "setting.tab.cloud": "添付ファイルのクラウドプレビュー",
   "setting.tab.display": "UIの表示",
+  "setting.tab.shortcut": "ショートカット",
   "setting.search.placeholder": "パネル設定を検索...",
   "setting.debug.show_version": "同期メニューにバージョン情報を表示",
   "setting.debug.show_version_desc": "有効にすると、バージョン情報は同期メニューに常に表示されます。無効にすると、更新がある場合のみ表示されます。",
@@ -106,6 +107,16 @@ export default {
   "setting.cloud.remote_source_desc": "この設定項目は、プレフィックス/サフィックスに一致する添付ファイルにリモートソースを指定するために使用されます。複数行のルールをサポートします。\n形式：<b>プレフィックス名@サフィックス名#リモートソース</b>、\n<b>プレフィックス</b>は省略可能で、複数の<b>サフィックス名</b>は <b>$</b> で区切ることができます。プレフィックスとサフィックスの両方が一致しない場合は、デフォルトの FNS ソースが使用されます。リモートソースは変数置換をサポートします。\n\n| 変数 | 説明 |\n| --- | --- |\n| {path} | ノート内の添付ファイルパス |\n| {vaultPath} | 添付ファイルに対応するリポジトリの相対パス |\n| {vault} | リポジトリ名 |\n| {type} | 添付ファイルタイプ (image/video/audio/pdf/other) |\n例：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：カスタムリモートソースを使用する場合は、クロスオリジンプレビュー（CORS）および必要な認証（必要な場合）をサポートしていることを確認してください。",
   "setting.cloud.delete_after_upload": "添付ファイルのクラウドプレビュー - アップロード後に削除",
   "setting.cloud.delete_after_upload_desc": "添付ファイルが正常にアップロードされると、スペースを節約するためにローカルファイルが自動的に削除されます。\n（この設定には添付ファイルのクラウドプレビューを有効にする必要があります）\n注意：無効にする場合は慎重に行ってください。この項目により、添付ファイルに関連するプラグインが機能しなくなる可能性があります。",
+
+  // --- setting.shortcut ---
+  "setting.shortcut.title": "ショートカットキーの設定",
+  "setting.shortcut.title_desc": "ここで設定したショートカットキーは、Obsidian のシステム設定と同期して変更されます。その逆も同様です。",
+  "setting.shortcut.open_log": "同期ログを開く",
+  "setting.shortcut.open_log_desc": "同期ログパネルを開くショートカットキーを設定します。入力フィールドをクリックし、キーの組み合わせを押して設定してください。",
+  "setting.shortcut.open_menu": "同期メニューを開く",
+  "setting.shortcut.open_menu_desc": "同期メニューを開くショートカットキーを設定します。入力フィールドをクリックし、キーの組み合わせを押して設定してください。",
+  "setting.shortcut.open_settings": "プラグイン設定をすばやく開く",
+  "setting.shortcut.open_settings_desc": "プラグイン設定パネルをすばやく開くショートカットキーを設定します。入力フィールドをクリックし、キーの組み合わせを押して設定してください。",
 
   // --- setting.support ---
   "setting.support.title": "スポンサーシップとサポート",
@@ -283,6 +294,7 @@ export default {
   "ui.button.confirm": "確認",
   "ui.button.save": "保存",
   "ui.button.cancel": "キャンセル",
+  "ui.button.reset": "リセット",
   "ui.button.delete": "削除",
   "ui.button.collapse": "折りたたむ",
   "ui.button.add_rule": "ルールを追加",

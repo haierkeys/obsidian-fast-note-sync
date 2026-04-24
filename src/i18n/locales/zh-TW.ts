@@ -10,6 +10,7 @@ export default {
   "setting.tab.sync": "同步控制",
   "setting.tab.cloud": "附件雲預覽",
   "setting.tab.display": "顯示UI",
+  "setting.tab.shortcut": "快捷鍵",
   "setting.search.placeholder": "搜尋面板設定...",
   "setting.debug.show_version": "在同步選單中顯示版本資訊",
   "setting.debug.show_version_desc": "開啟後，版本資訊將常駐顯示在同步選單中；關閉後，僅在有更新時顯示。",
@@ -106,6 +107,16 @@ export default {
   "setting.cloud.remote_source_desc": "該設置項用於為匹配前綴/後綴的附件指定遠端源，支援多行規則。\n格式：<b>前綴名@後綴名#遠端源</b>，\n<b>前綴</b>可以省略，多個<b>後綴名</b>可用 <b>$</b> 分隔，前後綴均不匹配則使用預設 FNS 源，遠端源支援變量替換。\n\n| 變量 | 說明 |\n| --- | --- |\n| {path} | 筆記內的附件路徑 |\n| {vaultPath} | 附件對應倉庫的相對路徑 |\n| {vault} | 倉庫名 |\n| {type} | 附件類型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定義遠端源，確保其支援跨域預覽（CORS）及必要的鑑權（若需要）",
   "setting.cloud.delete_after_upload": "附件雲預覽 - 上傳後刪除",
   "setting.cloud.delete_after_upload_desc": "附件成功上傳後將自動刪除本地檔案以節省空間。\n(本設置需要開啟附件雲預覽)\n注意：請謹慎關閉，本項可能導致附件關聯插件失效。",
+
+  // --- setting.shortcut ---
+  "setting.shortcut.title": "快捷鍵設定",
+  "setting.shortcut.title_desc": "在此設定的快捷鍵會同步修改 Obsidian 系統設定中的快捷鍵；反之亦然。",
+  "setting.shortcut.open_log": "開啟同步日誌",
+  "setting.shortcut.open_log_desc": "設定開啟同步日誌面板的快捷鍵。點擊輸入框後按下鍵盤組合鍵即可設定。",
+  "setting.shortcut.open_menu": "開啟同步選單",
+  "setting.shortcut.open_menu_desc": "設定開啟同步選單的快捷鍵。點擊輸入框後按下鍵盤組合鍵即可設定。",
+  "setting.shortcut.open_settings": "快速開啟外掛程式設定",
+  "setting.shortcut.open_settings_desc": "設定快速開啟外掛程式設定面板的快捷鍵。點擊輸入框後按下鍵盤組合鍵即可設定。",
 
   // --- setting.support ---
   "setting.support.title": "贊助與支援",
@@ -283,6 +294,7 @@ export default {
   "ui.button.confirm": "確認",
   "ui.button.save": "保存",
   "ui.button.cancel": "取消",
+  "ui.button.reset": "重置",
   "ui.button.delete": "刪除",
   "ui.button.collapse": "收起",
   "ui.button.add_rule": "添加規則",
