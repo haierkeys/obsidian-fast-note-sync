@@ -25,7 +25,7 @@ export default {
   "setting.remote.user_account": "连接用户账号",
   "setting.remote.loading_user_info": " (正在加载用户信息...)",
   "setting.remote.setup_desc": "远端服务搭建与选择: 选择一个适合自己的远端服务",
-  "setting.remote.setup_table": "\n| 方式 | 详情参考 |\n| --- | --- |\n| 私有服务器自行搭建  |  速度好, 自由配置, 无隐私风险, 访问 <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>Fast Note Sync Service</a> 获取搭建帮助 |",
+  "setting.remote.setup_table": "\n| 方式 | 详情参考 |\n| --- | --- |\n| 私有服务器自行搭建  |  速度好, 自由配置, 无隐私风险, 访问 <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>https://github.com/haierkeys/fast-note-sync-service</a> 获取搭建帮助 |",
   "setting.remote.paste_config": "粘贴服务端授权配置",
   "setting.remote.paste_success": "接口配置信息已经粘贴到设置中!",
   "setting.remote.no_config": "未检测到配置信息!",

@@ -25,7 +25,7 @@ export default {
   "setting.remote.user_account": "연결 사용자 계정",
   "setting.remote.loading_user_info": " (사용자 정보 로딩 중...)",
   "setting.remote.setup_desc": "원격 서비스 설정 및 선택: 자신에게 적합한 원격 서비스를 선택하세요",
-  "setting.remote.setup_table": "\n| 방법 | 상세 참고 |\n| --- | --- |\n| 사설 서버 직접 구축  |  <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>Fast Note Sync Service</a> 속도 빠름, 자유로운 설정, 개인정보 유출 위험 없음 |",
+  "setting.remote.setup_table": "\n| 구축 방식 | 상세 참고 |\n| --- | --- |\n| 사설 서버 직접 구축  |  속도 빠름, 자유로운 설정, 개인정보 유출 위험 없음, <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>https://github.com/haierkeys/fast-note-sync-service</a> 방문하여 구축 방법 참고 |",
   "setting.remote.paste_config": "서버 권한 설정 붙여넣기",
   "setting.remote.paste_success": "API 설정 정보가 설정에 붙여넣어졌습니다!",
   "setting.remote.no_config": "설정 정보를 감지하지 못했습니다!",

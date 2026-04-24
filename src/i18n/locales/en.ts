@@ -25,7 +25,7 @@ export default {
   "setting.remote.user_account": "Connected User Account",
   "setting.remote.loading_user_info": " (Loading user info...)",
   "setting.remote.setup_desc": "Remote Service Setup and Selection: Choose a remote service that suits your needs",
-  "setting.remote.setup_table": "\n| Method | Details |\n| --- | --- |\n| Self-hosted on private server | <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>Fast Note Sync Service</a> Fast performance, flexible configuration, no privacy risks |",
+  "setting.remote.setup_table": "\n| Method | Details |\n| --- | --- |\n| Self-hosted on Private Server |  Fast speed, fully configurable, no privacy risks. Visit <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>https://github.com/haierkeys/fast-note-sync-service</a> for setup assistance. |",
   "setting.remote.paste_config": "Paste server authorization config",
   "setting.remote.paste_success": "Interface configuration info has been pasted into settings!",
   "setting.remote.no_config": "No configuration info detected!",

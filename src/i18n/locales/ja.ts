@@ -25,7 +25,7 @@ export default {
   "setting.remote.user_account": "接続ユーザーアカウント",
   "setting.remote.loading_user_info": " (ユーザー情報を読み込み中...)",
   "setting.remote.setup_desc": "リモートサービスの構築と選択: 自分に合ったリモートサービスを選択してください",
-  "setting.remote.setup_table": "\n| 方法 | 詳細・参考 |\n| --- | --- |\n| プライベートサーバーでの自己構築  |  <a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>Fast Note Sync Service</a> 高速、自由な設定、プライバシーリスクなし |",
+  "setting.remote.setup_table": "\n| 方法 | 詳細・参考 |\n| --- | --- |\n| プライベートサーバーの独自構築  |  速度が速く、自由に設定可能、プライバシーリスクなし、<a href='https://github.com/haierkeys/obsidian-fast-note-sync-service'>https://github.com/haierkeys/fast-note-sync-service</a> にアクセスして構築手順を参照 |",
   "setting.remote.paste_config": "サーバーの認証設定を貼り付け",
   "setting.remote.paste_success": "インターフェース設定情報が設定に貼り付けられました!",
   "setting.remote.no_config": "設定情報が検出されませんでした!",

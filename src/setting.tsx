@@ -190,25 +190,25 @@ export class SettingTab extends PluginSettingTab {
     // 3. 根据搜索状态或标签页渲染内容
     const currentMode = this.searchQuery ? "SEARCH" : this.activeTab
 
-    if (currentMode !== this.lastViewMode) {
-      contentEl.empty()
-      this.unmountRoots()
+    // 关键修正：每次 display 时都清空并重新渲染，除非是在极高频的搜索过滤中
+    // 之前因为判断 lastViewMode 导致重新打开窗口时内容为空
+    contentEl.empty()
+    this.unmountRoots()
 
-      if (this.searchQuery) {
-        this.renderAllSettings(contentEl)
-      } else {
-        switch (this.activeTab) {
-          case "GENERAL": this.renderGeneralSettings(contentEl); break
-          case "DEBUG": this.renderDebugSettings(contentEl); break
-          case "REMOTE": this.renderRemoteSettings(contentEl); break
-          case "SYNC": this.renderSyncSettings(contentEl); break
-          case "CLOUD": this.renderCloudSettings(contentEl); break
-          case "DISPLAY": this.renderDisplaySettings(contentEl); break
-          case "SHORTCUT": this.renderShortcutSettings(contentEl); break
-        }
+    if (this.searchQuery) {
+      this.renderAllSettings(contentEl)
+    } else {
+      switch (this.activeTab) {
+        case "GENERAL": this.renderGeneralSettings(contentEl); break
+        case "DEBUG": this.renderDebugSettings(contentEl); break
+        case "REMOTE": this.renderRemoteSettings(contentEl); break
+        case "SYNC": this.renderSyncSettings(contentEl); break
+        case "CLOUD": this.renderCloudSettings(contentEl); break
+        case "DISPLAY": this.renderDisplaySettings(contentEl); break
+        case "SHORTCUT": this.renderShortcutSettings(contentEl); break
       }
-      this.lastViewMode = currentMode
     }
+    this.lastViewMode = currentMode
 
     // 4. 执行搜索过滤 (如果是搜索模式)
     if (this.searchQuery) {
@@ -772,7 +772,11 @@ export class SettingTab extends PluginSettingTab {
 
     const root = createRoot(apiSet)
     this.roots.push(root)
-    root.render(<SettingsView plugin={this.plugin} />)
+    // 预设一个小文本，防止被搜索逻辑判定为“空元素”而隐藏
+    apiSet.setText(" ") 
+    setTimeout(() => {
+      root.render(<SettingsView plugin={this.plugin} />)
+    }, 50)
 
     new Setting(set).setName($("setting.remote.api_url")).addText((text) =>
       text

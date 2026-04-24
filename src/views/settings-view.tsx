@@ -128,10 +128,18 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
     const headerRow = parseRow(tableData[0]);
     const bodyRows = tableData.slice(2).map(parseRow);
 
+    // 解析链接并在新窗口打开
+    const handleMethodClick = (htmlContent: string) => {
+      const match = htmlContent.match(/href=['"]([^'"]+)['"]/);
+      if (match && match[1]) {
+        window.open(match[1], '_blank');
+      }
+    };
+
     return (
       <div className="fns-setup-methods">
         {bodyRows.map((row, i) => (
-          <div key={i} className="fns-method-card">
+          <div key={i} className="fns-method-card" onClick={() => handleMethodClick(row[1])}>
             <div className="fns-method-icon">
               <span dangerouslySetInnerHTML={{ __html: i === 0 ? "🛠️" : "☁️" }} />
             </div>

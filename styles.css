@@ -1663,14 +1663,14 @@
 
 /* ===== 极致美化远端配置 / Premium Remote Config ===== */
 .fns-remote-config-container {
+  display: block;
+  width: 100%;
+  min-height: 100px;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  /* 补偿父级 .fast-note-sync-settings 的 padding，并对齐快捷键页面的 16px 间距 */
 }
 .fns-remote-config-container .fns-first-tag-desc {
-  margin-top: -4px;
+  margin-top: 0;
+  margin-bottom: 24px;
 }
 
 .fns-setup-content {
@@ -1792,14 +1792,15 @@
 
 /* 呼吸状态胶囊 / Breathing Status Pill */
 .fns-status-pill {
-  align-self: center;
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 6px 14px;
+  padding: 8px 14px;
   background-color: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
-  border-radius: 20px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   font-size: 12px;
   font-weight: 500;
