@@ -264,6 +264,9 @@ export const configAddPathExcluded = function (relativePath: string, plugin: Fas
 /**
  * 对字符串内容进行哈希
  */
+/**
+ * 对字符串内容进行哈希 (同步版本，适用于小字符串如路径)
+ */
 export const hashContent = function (content: string): string {
   let hash = 0
   for (let i = 0; i < content.length; i++) {
@@ -275,22 +278,51 @@ export const hashContent = function (content: string): string {
 }
 
 /**
- * 对 ArrayBuffer 进行哈希
+ * 对字符串内容进行异步哈希 (支持大字符串分段处理，防止 UI 挂起)
+ * Async version of hashContent that yields the thread for large strings
  */
+export const hashContentAsync = async function (content: string): Promise<string> {
+  let hash = 0
+  const len = content.length
+  // 每 256K 字符让出一次主线程
+  const yieldSize = 256 * 1024;
+
+  for (let i = 0; i < len; i++) {
+    const char = content.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash &= hash
+
+    if (i > 0 && i % yieldSize === 0) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+  return String(hash)
+}
+
 /**
  * 对 ArrayBuffer 进行哈希 (统一采用 JS 数字滚动哈希以保持一致性)
- * Hash ArrayBuffer (using JS numeric rolling hash for consistency)
+ * 分段计算并适时让出主线程，防止大文件导致 UI 卡顿 (Processed in chunks to yield main thread)
  */
 export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<string> {
-  // 不再使用 Web Crypto API (SubtleCrypto)，以保证哈希计算在所有平台和读取模式下都产出数字字符串格式
   let hash = 0
-  const view = new Uint8Array(buffer)
-  for (let i = 0; i < view.length; i++) {
+  let view: Uint8Array | null = new Uint8Array(buffer)
+  const len = view.length
+  
+  // 每 512KB 让出一次主线程 (Yield every 512KB)
+  const yieldSize = 512 * 1024;
+  
+  for (let i = 0; i < len; i++) {
     const byte = view[i]
     hash = (hash << 5) - hash + byte
     hash &= hash
+    
+    if (i > 0 && i % yieldSize === 0) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
   }
-  return String(hash)
+  const result = String(hash);
+  view = null; // 显式释放引用，加速垃圾回收 (Explicitly release reference to help GC)
+  return result;
 }
 
 /**

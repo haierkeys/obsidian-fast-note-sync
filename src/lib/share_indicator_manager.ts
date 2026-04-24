@@ -37,6 +37,10 @@ export class ShareIndicatorManager {
     private _isFilterActive = false;
     // 网络重连处理器引用（用于 removeEventListener）/ Online handler ref for removeEventListener
     private onlineHandler: (() => void) | null = null;
+    // 上一次生成的 CSS 内容，用于变更检测防止无限循环 (Last generated CSS content for change detection to prevent infinite loops)
+    private lastGeneratedCss: string = "";
+    // 防抖定时器 / Debounce timer
+    private regenerateTimer: ReturnType<typeof setTimeout> | null = null;
     // 启动延迟定时器 / Startup delay timer
     private startupTimer: ReturnType<typeof setTimeout> | null = null;
     // 并发同步守卫，防止多个 syncWithServer 同时执行 / Concurrent sync guard to prevent multiple syncWithServer calls running simultaneously
@@ -53,6 +57,10 @@ export class ShareIndicatorManager {
         if (this.startupTimer !== null) {
             clearTimeout(this.startupTimer);
             this.startupTimer = null;
+        }
+        if (this.regenerateTimer !== null) {
+            clearTimeout(this.regenerateTimer);
+            this.regenerateTimer = null;
         }
         if (this.onlineHandler) {
             window.removeEventListener('online', this.onlineHandler);
@@ -203,12 +211,12 @@ export class ShareIndicatorManager {
      * Inject filter CSS to hide non-shared files and empty folders in native file explorer
      */
     private injectFilterCss(ancestors?: Set<string>): void {
-        document.getElementById(FILTER_STYLE_EL_ID)?.remove();
-        this.filterStyleEl = null;
-
-        if (this.sharedPaths.size === 0) return;
-
         const rules: string[] = [];
+
+        if (this.sharedPaths.size === 0) {
+            this.removeFilterCss();
+            return;
+        }
 
         // 原生文件浏览器：隐藏所有文件项
         // Native file explorer: hide all file items
@@ -230,11 +238,19 @@ export class ShareIndicatorManager {
             rules.push(`.nav-folder:has(> .nav-folder-title[data-path="${folderPath}"]) { display: block !important; }`);
         }
 
-        const el = document.createElement("style");
-        el.id = FILTER_STYLE_EL_ID;
-        el.textContent = rules.join("\n");
-        document.head.appendChild(el);
-        this.filterStyleEl = el;
+        const newCss = rules.join("\n");
+        const existingEl = document.getElementById(FILTER_STYLE_EL_ID) as HTMLStyleElement;
+        
+        if (existingEl) {
+            if (existingEl.textContent === newCss) return;
+            existingEl.textContent = newCss;
+        } else {
+            const el = document.createElement("style");
+            el.id = FILTER_STYLE_EL_ID;
+            el.textContent = newCss;
+            document.head.appendChild(el);
+            this.filterStyleEl = el;
+        }
     }
 
     /**
@@ -273,12 +289,17 @@ export class ShareIndicatorManager {
             clearTimeout(this.startupTimer);
             this.startupTimer = null;
         }
+        if (this.regenerateTimer !== null) {
+            clearTimeout(this.regenerateTimer);
+            this.regenerateTimer = null;
+        }
         if (this.onlineHandler) {
             window.removeEventListener("online", this.onlineHandler);
             this.onlineHandler = null;
         }
         this.styleEl?.remove();
         this.styleEl = null;
+        this.lastGeneratedCss = "";
         // 清理筛选样式 / Clean up filter style
         this.filterStyleEl?.remove();
         this.filterStyleEl = null;
@@ -290,11 +311,32 @@ export class ShareIndicatorManager {
      * Regenerate CSS rules and inject into document.head
      */
     public regenerateCss(): void {
-        // 移除旧的 style 元素 / Remove old style element
-        document.getElementById(STYLE_EL_ID)?.remove();
-        this.styleEl = null;
+        // 使用防抖，防止高频触发（尤其是 css-change 事件引起的递归循环）
+        // Use debounce to prevent high-frequency triggers (especially recursive loops caused by css-change events)
+        if (this.regenerateTimer !== null) {
+            clearTimeout(this.regenerateTimer);
+        }
 
-        if (!this.plugin.settings.showShareIcon || this.sharedPaths.size === 0) return;
+        this.regenerateTimer = setTimeout(() => {
+            this.performRegenerateCss();
+            this.regenerateTimer = null;
+        }, 50);
+    }
+
+    /**
+     * 执行真正的 CSS 重建逻辑
+     * Execute actual CSS regeneration logic
+     */
+    private performRegenerateCss(): void {
+        // 如果未开启分享图标显示，或没有分享路径，则清理并退出
+        if (!this.plugin.settings.showShareIcon || this.sharedPaths.size === 0) {
+            if (this.lastGeneratedCss !== "") {
+                document.getElementById(STYLE_EL_ID)?.remove();
+                this.styleEl = null;
+                this.lastGeneratedCss = "";
+            }
+            return;
+        }
 
         const rules: string[] = [];
         for (const path of this.sharedPaths) {
@@ -308,10 +350,22 @@ export class ShareIndicatorManager {
             rules.push(`${selectors.join(",\n")} {\n${ICON_CSS_PROPS}\n}`);
         }
 
-        const el = document.createElement("style");
-        el.id = STYLE_EL_ID;
-        el.textContent = rules.join("\n");
-        document.head.appendChild(el);
-        this.styleEl = el;
+        const newCss = rules.join("\n");
+
+        // 变更检测：如果内容未变，不执行 DOM 操作，彻底切断 css-change 无限循环
+        // Change detection: If content unchanged, skip DOM ops to break css-change infinite loop
+        if (newCss === this.lastGeneratedCss) return;
+
+        const existingEl = document.getElementById(STYLE_EL_ID) as HTMLStyleElement;
+        if (existingEl) {
+            existingEl.textContent = newCss;
+        } else {
+            const el = document.createElement("style");
+            el.id = STYLE_EL_ID;
+            el.textContent = newCss;
+            document.head.appendChild(el);
+            this.styleEl = el;
+        }
+        this.lastGeneratedCss = newCss;
     }
 }

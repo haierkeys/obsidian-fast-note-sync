@@ -1,6 +1,6 @@
 import { Notice, normalizePath } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, configIsPathExcluded, getConfigSyncCustomDirs } from "./helps";
+import { hashContent, hashContentAsync, hashArrayBuffer, dump, configIsPathExcluded, getConfigSyncCustomDirs } from "./helps";
 import { configAllPaths } from "./config_operator";
 import type FastSync from "../main";
 
@@ -80,10 +80,11 @@ export class ConfigHashManager {
                 if (path.startsWith(this.plugin.localStorageManager.syncPathPrefix)) {
                     const key = this.plugin.localStorageManager.pathToKey(path);
                     if (key) {
-                        const value = this.plugin.localStorageManager.getItemValue(key);
+                        let value: string | null = this.plugin.localStorageManager.getItemValue(key);
                         if (value) {
-                            contentHash = hashContent(value);
+                            contentHash = await hashContentAsync(value);
                             this.hashMap.set(path, contentHash);
+                            value = null; // 显式释放引用 (Explicitly release reference)
                         }
                     }
                 } else {
@@ -93,9 +94,10 @@ export class ConfigHashManager {
                     try {
                         const exists = await this.plugin.app.vault.adapter.exists(filePath);
                         if (exists) {
-                            const contentBuf = await this.plugin.app.vault.adapter.readBinary(filePath);
+                            let contentBuf: ArrayBuffer | null = await this.plugin.app.vault.adapter.readBinary(filePath);
                             contentHash = await hashArrayBuffer(contentBuf);
                             this.hashMap.set(path, contentHash);
+                            contentBuf = null; // 显式释放引用 (Explicitly release reference)
                         }
                     } catch (error) {
                         console.error("读取配置文件出错:", error);

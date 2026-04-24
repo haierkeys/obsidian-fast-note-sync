@@ -23,6 +23,7 @@ export class MenuManager {
   public recycleBinStatusBarItem: HTMLElement;
   private mobileStatusDot: HTMLElement | null = null;
   private mobileHeaderIconStatus: boolean = false;
+  private ribbonMutationTimer: ReturnType<typeof setTimeout> | null = null;
 
   private statusBarText: HTMLElement;
   private statusBarFill: HTMLElement;
@@ -53,15 +54,20 @@ export class MenuManager {
     // causing our dynamic state and badge to be lost. Self-repair immediately if expected icon or badge is missing.
     const observer = new MutationObserver(() => {
       if (!this.ribbonIcon) return;
-      const expectedIconId = Platform.isMobile ? "wifi" : (this.ribbonIconStatus ? "wifi" : "wifi-off");
-      const hasCorrectIcon = this.ribbonIcon.querySelector(`.lucide-${expectedIconId}`);
-      const hasBadge = this.badgeEl && this.badgeEl.parentElement === this.ribbonIcon;
+      if (this.ribbonMutationTimer) clearTimeout(this.ribbonMutationTimer);
 
-      // 只要预期图标和红点还在，就不干涉（比如 iconic 追加了另一个 SVG，不影响我们的存在）
-      // Only repair if expected icon or badge is missing (e.g. iconic appending another SVG is fine)
-      if (!hasCorrectIcon || !hasBadge) {
-        this.updateRibbonIcon(this.ribbonIconStatus);
-      }
+      this.ribbonMutationTimer = setTimeout(() => {
+        const expectedIconId = Platform.isMobile ? "wifi" : (this.ribbonIconStatus ? "wifi" : "wifi-off");
+        const hasCorrectIcon = this.ribbonIcon.querySelector(`.lucide-${expectedIconId}`);
+        const hasBadge = this.badgeEl && this.badgeEl.parentElement === this.ribbonIcon;
+
+        // 只要预期图标和红点还在，就不干涉（比如 iconic 追加了另一个 SVG，不影响我们的存在）
+        // Only repair if expected icon or badge is missing (e.g. iconic appending another SVG is fine)
+        if (!hasCorrectIcon || !hasBadge) {
+          this.updateRibbonIcon(this.ribbonIconStatus);
+        }
+        this.ribbonMutationTimer = null;
+      }, 100);
     });
     observer.observe(this.ribbonIcon, { childList: true, subtree: true });
   }

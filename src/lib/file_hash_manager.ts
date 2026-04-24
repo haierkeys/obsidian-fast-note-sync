@@ -1,6 +1,6 @@
 import { TFile, Notice } from "obsidian";
 
-import { hashContent, hashArrayBuffer, dump, isPathExcluded } from "./helps";
+import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded } from "./helps";
 import type FastSync from "../main";
 
 
@@ -83,12 +83,14 @@ export class FileHashManager {
           // 根据文件类型选择不同的哈希计算方式
           if (file.extension === "md") {
             // md 文件使用文本内容计算哈希
-            const content = await this.plugin.app.vault.cachedRead(file);
-            contentHash = hashContent(content);
+            let content: string | null = await this.plugin.app.vault.cachedRead(file);
+            contentHash = await hashContentAsync(content);
+            content = null; // 显式释放引用 (Explicitly release reference)
           } else {
             // 非 md 文件使用二进制内容计算哈希
-            const buffer = await this.plugin.app.vault.readBinary(file);
+            let buffer: ArrayBuffer | null = await this.plugin.app.vault.readBinary(file);
             contentHash = await hashArrayBuffer(buffer);
+            buffer = null; // 显式释放引用 (Explicitly release reference)
           }
 
           this.hashMap.set(file.path, contentHash);
@@ -100,8 +102,8 @@ export class FileHashManager {
 
         processedFiles++;
 
-        // 每处理 100 个文件更新一次进度
-        if (processedFiles % 100 === 0) {
+        // 每处理 50 个文件更新一次进度 (Update progress every 50 files)
+        if (processedFiles % 50 === 0) {
           notice.setMessage(`正在初始化文件哈希映射... (${processedFiles}/${totalFiles})`);
           // 让出主线程,避免阻塞 UI
           await new Promise(resolve => setTimeout(resolve, 0));
