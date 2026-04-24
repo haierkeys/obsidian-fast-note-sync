@@ -1,6 +1,5 @@
 import { Plugin, WorkspaceLeaf, Platform } from "obsidian";
 
-
 import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice } from "./lib/helps";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
@@ -349,6 +348,8 @@ export default class FastSync extends Plugin {
           folderRules.push(oldRule)
         }
       })
+      delete (this.settings as any).configExclude
+      hasMigration = true
     }
 
     // 仅在首次安装（无旧数据）时自动添加插件自身目录及核心配置排除
@@ -381,6 +382,8 @@ export default class FastSync extends Plugin {
           whitelistRules.push(oldRule)
         }
       })
+      delete (this.settings as any).configExcludeWhitelist
+      hasMigration = true
     }
 
     if (whitelistRules.length !== initialWhitelistCount || (this.settings.syncExcludeWhitelist && !this.settings.syncExcludeWhitelist.startsWith("["))) {
@@ -392,6 +395,15 @@ export default class FastSync extends Plugin {
     if (this.settings.syncExcludeExtensions && !this.settings.syncExcludeExtensions.startsWith("[")) {
       const extRules = parseRules(this.settings.syncExcludeExtensions)
       this.settings.syncExcludeExtensions = stringifyRules(extRules)
+      hasMigration = true
+    }
+
+    // 4. 迁移旧版通知设置 (showSyncNotice)
+    if (data && data.showSyncNotice !== undefined) {
+      if (data.isShowNotice === undefined) {
+        this.settings.isShowNotice = data.showSyncNotice
+      }
+      delete (this.settings as any).showSyncNotice
       hasMigration = true
     }
 
@@ -476,7 +488,7 @@ export default class FastSync extends Plugin {
     if (!hotkeys || hotkeys.length === 0) {
       hotkeys = hotkeyManager?.getDefaultHotkeys(fullId);
     }
-    
+
     if (hotkeys && hotkeys.length > 0) {
       const { modifiers, key } = hotkeys[0];
       const parts = [...modifiers];

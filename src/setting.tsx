@@ -1,8 +1,8 @@
 import { App, PluginSettingTab, Setting, Platform, SearchComponent, MarkdownRenderer, Component } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
-import { handleSync, resetSettingSyncTime, rebuildAllHashes } from "./lib/operator";
 import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice } from "./lib/helps";
+import { handleSync, resetSettingSyncTime, rebuildAllHashes } from "./lib/operator";
 import { SettingsView, SupportView } from "./views/settings-view";
 import { RuleEditorModal } from "./views/rule-editor-modal";
 import { ConfirmModal } from "./views/confirm-modal";
@@ -761,6 +761,11 @@ export class SettingTab extends PluginSettingTab {
 
   private renderRemoteSettings(set: HTMLElement) {
 
+
+    new Setting(set)
+    .setDesc($("setting.remote.setup_desc"))
+    .setHeading()
+      .setClass("fast-note-sync-settings-tag-desc")
 
     const apiSet = set.createDiv()
     apiSet.addClass("fast-note-sync-settings")

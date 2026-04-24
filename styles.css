@@ -96,7 +96,7 @@
   border: 1px solid var(--background-modifier-border-faint);
   border-left: 4px solid var(--interactive-accent);
   padding: 14px 20px;
-  margin: 16px 0 28px 0;
+  margin: 16px 0 8px 0;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
@@ -291,7 +291,8 @@
 }
 
 .fast-note-sync-settings {
-  padding: 0.75em 0;
+  margin-top: 10px;
+  padding: 0 0 0.75em 0;
 }
 .fast-note-sync-settings table {
   width: 100%;
@@ -1658,6 +1659,239 @@
   right: 4px;
   width: 11px;
   height: 11px;
+}
+
+/* ===== 极致美化远端配置 / Premium Remote Config ===== */
+.fns-remote-config-container {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* 补偿父级 .fast-note-sync-settings 的 padding，并对齐快捷键页面的 16px 间距 */
+}
+.fns-remote-config-container .fns-first-tag-desc {
+  margin-top: -4px;
+}
+
+.fns-setup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 整体卡片包装 / Setup Group Card */
+.fns-setup-group-card {
+  background-color: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* 选项卡片 / Method Cards */
+.fns-setup-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fns-method-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border-faint);
+  border-radius: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.fns-method-card:hover {
+  background-color: var(--background-secondary-alt);
+  border-color: var(--interactive-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.fns-method-card .fns-method-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-primary);
+  border-radius: 10px;
+  font-size: 20px;
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-faint);
+}
+.fns-method-card .fns-method-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fns-method-card .fns-method-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.fns-method-card .fns-method-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.fns-method-card .fns-method-desc a {
+  color: var(--interactive-accent);
+  text-decoration: none;
+  pointer-events: auto;
+}
+.fns-method-card .fns-method-desc a:hover {
+  text-decoration: underline;
+}
+.fns-method-card .fns-method-arrow {
+  color: var(--text-faint);
+  font-size: 14px;
+  opacity: 0.5;
+}
+
+/* 操作组 / Action Group */
+.fns-action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+/* 高级按钮 / Premium Button */
+.fns-premium-btn {
+  background: var(--interactive-accent) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(var(--interactive-accent-rgb), 0.35) !important;
+  transition: all 0.2s ease !important;
+  width: 100%;
+}
+.fns-premium-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.01);
+}
+.fns-premium-btn:active {
+  transform: scale(0.98);
+}
+.fns-premium-btn .fns-btn-icon {
+  font-size: 16px;
+}
+
+/* 呼吸状态胶囊 / Breathing Status Pill */
+.fns-status-pill {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  font-size: 12px;
+  font-weight: 500;
+}
+.fns-status-pill.is-connected {
+  border-color: rgba(76, 175, 80, 0.2);
+}
+.fns-status-pill.is-connected .fns-status-dot {
+  background-color: #4caf50;
+  box-shadow: 0 0 8px #4caf50;
+  animation: fns-breathing 2s infinite ease-in-out;
+}
+.fns-status-pill.is-disconnected {
+  border-color: rgba(244, 67, 54, 0.2);
+}
+.fns-status-pill.is-disconnected .fns-status-dot {
+  background-color: #f44336;
+}
+
+.fns-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fns-status-account {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+.fns-status-account .fns-sep {
+  color: var(--text-faint);
+}
+.fns-status-account .fns-account-name {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.fns-uid-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  background-color: var(--background-modifier-border-faint);
+  border-radius: 4px;
+  color: var(--text-faint);
+}
+
+/* 提示通知 / Toast */
+.fns-paste-toast {
+  text-align: center;
+  font-size: 12px;
+  color: var(--interactive-accent);
+  background-color: rgba(var(--interactive-accent-rgb), 0.08);
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--interactive-accent);
+  animation: fns-pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fns-breathing {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+@keyframes fns-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@media screen and (max-width: 480px) {
+  .fns-method-card {
+    padding: 12px;
+  }
+  .fns-status-pill {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

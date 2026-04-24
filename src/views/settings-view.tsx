@@ -3,8 +3,8 @@ import { KofiImage, WXImage } from "src/lib/icons";
 import { dump } from "src/lib/helps";
 import { setIcon } from "obsidian";
 import FastSync from "src/main";
-import { UserDTO } from "../lib/api";
 
+import { UserDTO } from "../lib/api";
 import { $ } from "../i18n/lang";
 
 
@@ -118,7 +118,7 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
     }
   }, [isConnected]);
 
-  // 简单的 Markdown 表格渲染函数
+  // 现代化的 Markdown 表格渲染，移动端自动转为卡片列表
   const renderMarkdownTable = (content: string) => {
     const lines = content.split('\n');
     const tableData = lines.filter(line => line.trim().startsWith('|') && line.trim().endsWith('|'));
@@ -129,75 +129,56 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
     const bodyRows = tableData.slice(2).map(parseRow);
 
     return (
-      <table className="fast-note-sync-settings-openapi">
-        <thead>
-          <tr>
-            {headerRow.map((h, i) => <th key={i}>{h}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {bodyRows.map((row, i) => (
-            <tr key={i}>
-              {row.map((cell, j) => {
-                return <td key={j} dangerouslySetInnerHTML={{ __html: cell }} />;
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="fns-setup-methods">
+        {bodyRows.map((row, i) => (
+          <div key={i} className="fns-method-card">
+            <div className="fns-method-icon">
+              <span dangerouslySetInnerHTML={{ __html: i === 0 ? "🛠️" : "☁️" }} />
+            </div>
+            <div className="fns-method-info">
+              <div className="fns-method-title">{row[0]}</div>
+              <div className="fns-method-desc" dangerouslySetInnerHTML={{ __html: row[1] }} />
+            </div>
+            <div className="fns-method-arrow">→</div>
+          </div>
+        ))}
+      </div>
     );
   };
 
   return (
-    <>
-      <div className="setting-item" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-        <div className="setting-item-info">
-          <div className="setting-item-name">{$("setting.remote.setup_title")}</div>
-          <div className="setting-item-description">{$("setting.remote.setup_desc")}</div>
-        </div>
-        <div style={{ width: '100%', marginTop: '0px' }}>
+    <div className="fns-remote-config-container">
+      <div className="fns-setup-group-card">
+        <div className="fns-setup-content">
           {renderMarkdownTable($("setting.remote.setup_table"))}
-          <div className="clipboard-read">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button className="clipboard-read-button" onClick={() => handleClipboardClick(plugin)}>
-                {$("setting.remote.paste_config")}
-              </button>
-              <div className="connection-status-container" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                <span
-                  ref={iconRef}
-                  className="connection-status-icon"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: isConnected ? '#4caf50' : '#f44336'
-                  }}
-                />
-                <span style={{ color: 'var(--text-muted)' }}>
-                  {isConnected ? $("setting.remote.connected") : $("setting.remote.disconnected")}
-                  {isConnected && loadingUserInfo && (
-                    <span style={{ fontStyle: 'italic', opacity: 0.8 }}>
-                      {$("setting.remote.loading_user_info")}
-                    </span>
-                  )}
-                  {isConnected && userInfo && (
-                    <>
-                      <span style={{ marginLeft: '8px', borderLeft: '1px solid var(--background-modifier-border)', paddingLeft: '8px' }}>
-                        {$("setting.remote.user_uid")}: {userInfo.uid}
-                      </span>
-                      <span style={{ marginLeft: '8px', borderLeft: '1px solid var(--background-modifier-border)', paddingLeft: '8px' }}>
-                        {$("setting.remote.user_account")}: {userInfo.username}
-                      </span>
-                    </>
-                  )}
-                </span>
-              </div>
+
+          <div className="fns-action-group">
+            <button className="fns-premium-btn" onClick={() => handleClipboardClick(plugin)}>
+              <span className="fns-btn-icon">📋</span>
+              {$("setting.remote.paste_config")}
+            </button>
+
+            <div className={`fns-status-pill ${isConnected ? 'is-connected' : 'is-disconnected'}`}>
+              <div className="fns-status-dot" />
+              <span className="fns-status-label">
+                {isConnected ? $("setting.remote.connected") : $("setting.remote.disconnected")}
+              </span>
+              {isConnected && userInfo && (
+                <div className="fns-status-account">
+                  <span className="fns-sep">/</span>
+                  <span className="fns-account-name">{userInfo.username}</span>
+                  <span className="fns-uid-badge">ID:{userInfo.uid}</span>
+                </div>
+              )}
             </div>
-            <div className="clipboard-read-description">{plugin.clipboardReadTip}</div>
+
+            {plugin.clipboardReadTip && (
+              <div className="fns-paste-toast">{plugin.clipboardReadTip}</div>
+            )}
           </div>
         </div>
       </div>
-
-    </>
+    </div>
   )
 }
 
