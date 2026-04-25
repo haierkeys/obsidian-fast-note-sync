@@ -53,6 +53,9 @@ export default class FastSync extends Plugin {
   // 待确认的文件重命名队列，等待服务端 FileRenameAck 后再更新 hashManager
   // Pending file rename queue, wait for server FileRenameAck before updating hashManager
   pendingFileRenames: { oldPath: string; newPath: string; contentHash: string }[] = []
+  // 待确认的文件上传 hash 映射，等待服务端 FileUploadAck 后再写入 hashManager
+  // Pending upload hash map, update hashManager only after server FileUploadAck
+  pendingUploadHashes: Map<string, string> = new Map()
 
   syncTypeCompleteCount: number = 0 // 已完成同步的类型计数
   expectedSyncCount: number = 0 // 预期的同步类型计数

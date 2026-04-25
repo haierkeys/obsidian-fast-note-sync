@@ -397,8 +397,12 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
           if (skipSync) continue;
 
-          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
-          if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) && plugin.fileHashManager.getPathHash(file.path) !== null) continue;
+          // 优化增量同步过滤：仅在文件已追踪、mtime 未超过上次同步时间且无待确认上传时跳过
+          // Skip only if file is tracked, mtime not newer than last sync time, and no pending upload
+          if (isLoadLastTime
+            && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))
+            && plugin.fileHashManager.getPathHash(file.path) !== null
+            && !plugin.pendingUploadHashes.has(file.path)) continue;
           const contentHash = await hashArrayBuffer(await plugin.app.vault.readBinary(file));
           const baseHash = plugin.fileHashManager.getPathHash(file.path);
           let item = {
