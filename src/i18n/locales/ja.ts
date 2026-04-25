@@ -277,6 +277,8 @@ export default {
   "ui.log.action.FileDelete": "添付ファイル削除",
   "ui.log.action.FileRenameAck": "添付ファイルリネーム成功",
   "ui.log.action.FileUploadAck": "添付ファイルアップロード成功",
+  "ui.log.action.NoteModifyAck": "ノート変更同期済み",
+  "ui.log.action.NoteRenameAck": "ノートリネーム確認済み",
   "ui.log.action.NoteDeleteAck": "ノート削除確認済み",
   "ui.log.action.FileDeleteAck": "添付ファイル削除確認済み",
   "ui.log.action.SettingSync_full": "設定同期（完全）",

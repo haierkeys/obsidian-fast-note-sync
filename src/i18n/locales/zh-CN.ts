@@ -277,6 +277,8 @@ export default {
   "ui.log.action.FileDelete": "附件删除",
   "ui.log.action.FileRenameAck": "附件重命名成功",
   "ui.log.action.FileUploadAck": "附件上传成功",
+  "ui.log.action.NoteModifyAck": "笔记修改已同步",
+  "ui.log.action.NoteRenameAck": "笔记重命名已确认",
   "ui.log.action.NoteDeleteAck": "笔记删除已确认",
   "ui.log.action.FileDeleteAck": "附件删除已确认",
   "ui.log.action.SettingSync_full": "配置同步(全量)",

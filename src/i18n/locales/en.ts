@@ -277,6 +277,8 @@ export default {
   "ui.log.action.FileDelete": "Attachment Delete",
   "ui.log.action.FileRenameAck": "Attachment Rename Successful",
   "ui.log.action.FileUploadAck": "Attachment Upload Successful",
+  "ui.log.action.NoteModifyAck": "Note Modify Synced",
+  "ui.log.action.NoteRenameAck": "Note Rename Confirmed",
   "ui.log.action.NoteDeleteAck": "Note Delete Confirmed",
   "ui.log.action.FileDeleteAck": "Attachment Delete Confirmed",
   "ui.log.action.SettingSync_full": "Config Sync (Full)",
