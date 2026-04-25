@@ -50,6 +50,9 @@ export default class FastSync extends Plugin {
   lastSyncMtime: Map<string, number> = new Map() // 最后同步的修改时间
   lastSyncPathDeleted: Set<string> = new Set() // 通过同步删除的路径
   lastSyncPathRenamed: Set<string> = new Set() // 通过同步重命名的路径
+  // 待确认的文件重命名队列，等待服务端 FileRenameAck 后再更新 hashManager
+  // Pending file rename queue, wait for server FileRenameAck before updating hashManager
+  pendingFileRenames: { oldPath: string; newPath: string; contentHash: string }[] = []
 
   syncTypeCompleteCount: number = 0 // 已完成同步的类型计数
   expectedSyncCount: number = 0 // 预期的同步类型计数

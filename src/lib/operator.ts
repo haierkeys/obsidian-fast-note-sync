@@ -310,6 +310,9 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.downloadedChunksCount = 0;
   plugin.totalChunksToUpload = 0;
   plugin.uploadedChunksCount = 0;
+  // 清空上一次连接的未完成 rename 队列，由 hashManager 旧路径进 delFiles 自然处理
+  // Clear pending renames from previous connection; old paths in hashManager will naturally go into delFiles
+  plugin.pendingFileRenames = []
   plugin.disableWatch();
 
   if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {

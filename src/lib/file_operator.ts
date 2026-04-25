@@ -203,10 +203,10 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
           path: file.path,
           pathHash: hashContent(file.path),
         }
-        plugin.websocket.SendMessage("FileRename", data, undefined, () => {
-          plugin.fileHashManager.setFileHash(file.path, contentHash)
-          plugin.fileHashManager.removeFileHash(oldfile)
-        })
+        // 将重命名推入待确认队列，等待服务端 FileRenameAck 后再更新 hashManager
+        // Push rename to pending queue; hashManager will be updated after server FileRenameAck
+        plugin.pendingFileRenames.push({ oldPath: oldfile, newPath: file.path, contentHash })
+        plugin.websocket.SendMessage("FileRename", data)
       }
     } finally {
       plugin.removeIgnoredFile(file.path)
@@ -911,9 +911,16 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
   }
 }
 
-// 收到 FileRenameAck，用服务端返回的时间戳更新 lastFileSyncTime
-// Receive FileRenameAck, update lastFileSyncTime with server-returned timestamp
+// 收到 FileRenameAck，服务端确认后更新 hashManager（FIFO 出队）并更新 lastFileSyncTime
+// Receive FileRenameAck, update hashManager after server confirmation (FIFO dequeue) and update lastFileSyncTime
 export const receiveFileRenameAck = function (data: { lastTime?: number }, plugin: FastSync) {
+  // 服务端确认重命名成功，FIFO 出队并更新 hashManager
+  // Server confirmed rename success, dequeue FIFO and update hashManager
+  const pending = plugin.pendingFileRenames.shift()
+  if (pending) {
+    plugin.fileHashManager.setFileHash(pending.newPath, pending.contentHash)
+    plugin.fileHashManager.removeFileHash(pending.oldPath)
+  }
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
     plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
     dump(`FileRenameAck: lastFileSyncTime updated to`, data.lastTime)
