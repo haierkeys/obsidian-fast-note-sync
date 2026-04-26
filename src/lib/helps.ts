@@ -299,30 +299,46 @@ export const hashContentAsync = async function (content: string): Promise<string
   return String(hash)
 }
 
+const FILE_HASH_THRESHOLD = 100 * 1024 * 1024 // 100MB
+const FILE_HASH_SLICE_SIZE = 50 * 1024 * 1024 // 50MB
+
 /**
  * 对 ArrayBuffer 进行哈希 (统一采用 JS 数字滚动哈希以保持一致性)
+ * 对于超过 100MB 的数据，仅计算前 50MB 和后 50MB 的哈希值。
  * 分段计算并适时让出主线程，防止大文件导致 UI 卡顿 (Processed in chunks to yield main thread)
  */
 export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<string> {
+  const size = buffer.byteLength
+  let view: Uint8Array | null
+
+  if (size <= FILE_HASH_THRESHOLD) {
+    view = new Uint8Array(buffer)
+  } else {
+    // 大文件优化：拼接前 50MB 和后 50MB (Optimize for large files: slice first and last 50MB)
+    view = new Uint8Array(FILE_HASH_SLICE_SIZE * 2)
+    const fullView = new Uint8Array(buffer)
+    view.set(fullView.subarray(0, FILE_HASH_SLICE_SIZE), 0)
+    view.set(fullView.subarray(size - FILE_HASH_SLICE_SIZE), FILE_HASH_SLICE_SIZE)
+  }
+
   let hash = 0
-  let view: Uint8Array | null = new Uint8Array(buffer)
   const len = view.length
-  
+
   // 每 512KB 让出一次主线程 (Yield every 512KB)
-  const yieldSize = 512 * 1024;
-  
+  const yieldSize = 512 * 1024
+
   for (let i = 0; i < len; i++) {
     const byte = view[i]
     hash = (hash << 5) - hash + byte
     hash &= hash
-    
+
     if (i > 0 && i % yieldSize === 0) {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0))
     }
   }
-  const result = String(hash);
-  view = null; // 显式释放引用，加速垃圾回收 (Explicitly release reference to help GC)
-  return result;
+  const result = String(hash)
+  view = null // 显式释放引用 (Explicitly release reference)
+  return result
 }
 
 /**

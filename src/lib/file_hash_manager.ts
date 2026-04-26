@@ -59,10 +59,6 @@ export class FileHashManager {
 
       dump(`FileHashManager: 开始遍历 ${totalFiles} 个文件`);
 
-      // Node.js readBinary 不支持 >2GB 文件 (RangeError)
-      // 跳过这些文件以避免整个同步过程失败
-      const MAX_HASHABLE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
-
       for (const file of files) {
         // 跳过已排除的文件
         if (isPathExcluded(file.path, this.plugin)) {
@@ -71,13 +67,6 @@ export class FileHashManager {
         }
 
         try {
-          // 跳过过大的文件，避免 readBinary 的 2GB 限制
-          if (file.stat && file.stat.size > MAX_HASHABLE_SIZE) {
-            dump(`FileHashManager: 跳过大文件 (>${(MAX_HASHABLE_SIZE / 1024 / 1024 / 1024).toFixed(0)}GB): ${file.path}, size=${file.stat.size}`);
-            processedFiles++;
-            continue;
-          }
-
           let contentHash: string;
 
           // 根据文件类型选择不同的哈希计算方式
