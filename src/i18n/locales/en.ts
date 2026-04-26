@@ -234,6 +234,15 @@ export default {
   "ui.log.type_info": "Info",
   "ui.log.type_error": "Error",
   "ui.log.view_log": "View Sync Log",
+  "ui.log.filter": "Filter Logs",
+  "ui.log.filter_category": "Category Filter",
+  "ui.log.filter_type": "Direction Filter",
+  "ui.log.filter_all": "All",
+  "ui.log.category_note": "Note",
+  "ui.log.category_attachment": "Attachment",
+  "ui.log.category_folder": "Folder",
+  "ui.log.category_config": "Config",
+  "ui.log.category_other": "Other",
 
   // --- ui.log.action ---
   "ui.log.action.FolderSync_full": "Folder Sync (Full)",

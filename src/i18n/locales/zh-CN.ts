@@ -234,6 +234,15 @@ export default {
   "ui.log.type_info": "信息",
   "ui.log.type_error": "错误",
   "ui.log.view_log": "查看同步日志",
+  "ui.log.filter": "筛选日志",
+  "ui.log.filter_category": "类别筛选",
+  "ui.log.filter_type": "方向筛选",
+  "ui.log.filter_all": "全部",
+  "ui.log.category_note": "笔记",
+  "ui.log.category_attachment": "附件",
+  "ui.log.category_folder": "目录",
+  "ui.log.category_config": "配置",
+  "ui.log.category_other": "其他",
 
   // --- ui.log.action ---
   "ui.log.action.FolderSync_full": "文件夹同步(全量)",

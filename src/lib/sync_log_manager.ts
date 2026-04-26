@@ -23,7 +23,7 @@ export interface SyncLog {
 export class SyncLogManager {
     private static instance: SyncLogManager;
     private logs: SyncLog[] = [];
-    private readonly MAX_LOGS = 200;
+    private readonly MAX_LOGS = 500;
     private listeners: Set<(logs: SyncLog[]) => void> = new Set();
     private plugin: FastSync | null = null;
     private logFilePath: string = "";
