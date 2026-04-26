@@ -1,8 +1,8 @@
 import { TFolder, TFile, Notice, normalizePath, Platform } from "obsidian";
 
-import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck } from "./file_operator";
+import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck, receiveFileDeleteAck } from "./file_operator";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear } from "./config_operator";
-import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename } from "./note_operator";
+import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
 import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice } from "./helps";
@@ -202,6 +202,9 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["NoteSyncMtime", receiveNoteSyncMtime],
   ["NoteSyncDelete", receiveNoteSyncDelete],
   ["NoteSyncRename", receiveNoteSyncRename],
+  ["NoteModifyAck", (data, plugin) => receiveNoteModifyAck(data, plugin)],
+  ["NoteRenameAck", (data, plugin) => receiveNoteRenameAck(data, plugin)],
+  ["NoteDeleteAck", (data, plugin) => receiveNoteDeleteAck(data, plugin)],
   ["NoteSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "note")],
   ["FileUpload", receiveFileUpload],
   ["FileSyncUpdate", receiveFileSyncUpdate],
@@ -212,6 +215,7 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["FileSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "file")],
   ["FileRenameAck", receiveFileRenameAck],
   ["FileUploadAck", receiveFileUploadAck],
+  ["FileDeleteAck", (data, plugin) => receiveFileDeleteAck(data, plugin)],
   ["SettingSyncModify", receiveConfigSyncModify],
   ["SettingSyncNeedUpload", receiveConfigUpload],
   ["SettingSyncMtime", receiveConfigSyncMtime],
@@ -250,6 +254,24 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
 
   // 1.1 注意：v1.1 协议中 End 消息不再携带 messages 列表。
   // 排除项的处理将依赖于后端是否推送相关通知。
+
+  // 2. SyncEnd 到达说明服务端已处理本轮同步（含删除），将 pending 删除路径从 hashManager 移除
+  // SyncEnd means server processed this sync round (including deletes); remove pending delete paths from hashManager
+  if (type === "note") {
+    for (const path of plugin.pendingDeleteNotePaths) plugin.fileHashManager.removeFileHash(path)
+    plugin.pendingDeleteNotePaths.clear()
+  } else if (type === "file") {
+    for (const path of plugin.pendingDeleteFilePaths) plugin.fileHashManager.removeFileHash(path)
+    plugin.pendingDeleteFilePaths.clear()
+  } else if (type === "folder") {
+    for (const path of plugin.pendingDeleteFolderPaths) plugin.folderSnapshotManager.removeFolder(path)
+    plugin.pendingDeleteFolderPaths.clear()
+  } else if (type === "config") {
+    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+      for (const path of plugin.pendingDeleteConfigPaths) plugin.configHashManager.removeFileHash(path)
+    }
+    plugin.pendingDeleteConfigPaths.clear()
+  }
 
   // 3. 调用原始 End 处理函数 (更新时间戳等)
   if (type === "note") {
@@ -310,6 +332,22 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.downloadedChunksCount = 0;
   plugin.totalChunksToUpload = 0;
   plugin.uploadedChunksCount = 0;
+  // 清空上一次连接的未完成 rename 队列，由 hashManager 旧路径进 delFiles 自然处理
+  // Clear pending renames from previous connection; old paths in hashManager will naturally go into delFiles
+  plugin.pendingFileRenames = []
+  // 清空上一次连接的未完成笔记 rename 队列，由 hashManager 旧路径进 delNotes 自然处理
+  // Clear pending note renames from previous connection; old paths in hashManager will naturally go into delNotes
+  plugin.pendingNoteRenames = []
+  // 清空 pending 删除路径集合，避免旧的 pending 条目干扰本次同步
+  // Clear pending delete path sets to avoid stale entries interfering with this sync
+  plugin.pendingDeleteNotePaths.clear()
+  plugin.pendingDeleteFilePaths.clear()
+  plugin.pendingDeleteFolderPaths.clear()
+  plugin.pendingDeleteConfigPaths.clear()
+  // 重连时清空 pending Ack 集合；路径保留在 hashManager，将自然进入 delNotes
+  // On reconnect clear pending Ack sets; paths remain in hashManager and flow into delNotes naturally
+  plugin.pendingNoteDeleteAcks.clear()
+  plugin.pendingFileDeleteAcks.clear()
   plugin.disableWatch();
 
   if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
@@ -374,8 +412,12 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
       if (file instanceof TFile) {
         if (file.extension === "md") {
-          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
-          if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime")) && plugin.fileHashManager.getPathHash(file.path) !== null) continue;
+          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间，且无待确认上传时跳过
+          // Skip only if file is tracked, mtime not newer than last sync time, and no pending note modify
+          if (isLoadLastTime
+            && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))
+            && plugin.fileHashManager.getPathHash(file.path) !== null
+            && !plugin.pendingNoteModifies.has(file.path)) continue;
           const contentHash = hashContent(await plugin.app.vault.cachedRead(file));
           const baseHash = plugin.fileHashManager.getPathHash(file.path);
           let item = {
@@ -394,8 +436,12 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
           if (skipSync) continue;
 
-          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
-          if (isLoadLastTime && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime")) && plugin.fileHashManager.getPathHash(file.path) !== null) continue;
+          // 优化增量同步过滤：仅在文件已追踪、mtime 未超过上次同步时间且无待确认上传时跳过
+          // Skip only if file is tracked, mtime not newer than last sync time, and no pending upload
+          if (isLoadLastTime
+            && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))
+            && plugin.fileHashManager.getPathHash(file.path) !== null
+            && !plugin.pendingUploadHashes.has(file.path)) continue;
           const contentHash = await hashArrayBuffer(await plugin.app.vault.readBinary(file));
           const baseHash = plugin.fileHashManager.getPathHash(file.path);
           let item = {
@@ -658,11 +704,12 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
       plugin.websocket.SendMessage("FileSync", fileSyncData);
     }
 
-    // 清理已删除文件的本地哈希数据,防止重复检测
+    // 将已删除路径加入 pending set，等待 SyncEnd 确认服务端已处理后再从 hashManager 移除
+    // Populate pending delete sets; remove from hashManager only after SyncEnd confirms server processed
     if (plugin.settings.offlineDeleteSyncEnabled) {
-      for (const item of noteData.delNotes) plugin.fileHashManager.removeFileHash(item.path);
-      for (const item of fileData.delFiles) plugin.fileHashManager.removeFileHash(item.path);
-      for (const item of folderData.delFolders) plugin.folderSnapshotManager.removeFolder(item.path);
+      plugin.pendingDeleteNotePaths = new Set(noteData.delNotes.map(i => i.path))
+      plugin.pendingDeleteFilePaths = new Set(fileData.delFiles.map(i => i.path))
+      plugin.pendingDeleteFolderPaths = new Set(folderData.delFolders.map(i => i.path))
     }
   }
 
@@ -682,9 +729,10 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
       }
     });
 
-    // 清理已删除配置的本地哈希数据,防止重复检测
+    // 将已删除配置路径加入 pending set，等待 SettingSyncEnd 确认服务端已处理后再移除
+    // Populate pending config delete set; remove from hashManager only after SettingSyncEnd
     if (plugin.settings.offlineDeleteSyncEnabled && plugin.configHashManager && plugin.configHashManager.isReady()) {
-      for (const item of configData.delConfigs) plugin.configHashManager.removeFileHash(item.path);
+      plugin.pendingDeleteConfigPaths = new Set(configData.delConfigs.map(i => i.path))
     }
   }
 };

@@ -42,12 +42,15 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
         // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
         ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
       }
-      plugin.websocket.SendMessage("NoteModify", data, undefined, () => {
-        // WebSocket 消息发送后更新哈希表(使用内容哈希)
-        if (contentHash != baseHash) {
-          plugin.fileHashManager.setFileHash(file.path, contentHash)
-        }
-      })
+      // 将 hash 暂存到 pending map，等待服务端 NoteModifyAck 后再写入 hashManager
+      // Temporarily store hash in pending map, update hashManager only after server NoteModifyAck
+      if (contentHash != baseHash) {
+        // 新建操作覆盖删除意图，清除 pending 防止晚到的 Ack 错误删除新文件 hash
+        // New create supersedes delete intent; clear pending to prevent stale Ack from removing new hash
+        plugin.pendingNoteDeleteAcks.delete(file.path)
+        plugin.pendingNoteModifies.set(file.path, contentHash)
+      }
+      plugin.websocket.SendMessage("NoteModify", data)
       dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
     } finally {
       plugin.removeIgnoredFile(file.path)
@@ -73,6 +76,9 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
   }
 
   await plugin.lockManager.withLock(file.path, async () => {
+    // 清理可能存在的待确认上传记录，避免 pending map 内存泄漏
+    // Clean up any pending note modify record to avoid memory leak
+    plugin.pendingNoteModifies.delete(file.path)
     plugin.addIgnoredFile(file.path)
     try {
       const data = {
@@ -81,8 +87,9 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
         pathHash: hashContent(file.path),
       }
       plugin.websocket.SendMessage("NoteDelete", data, undefined, () => {
-        // WebSocket 消息发送后从哈希表中删除
-        plugin.fileHashManager.removeFileHash(file.path)
+        // 消息真正写入 TCP 缓冲区后加入 pending set，等待 NoteDeleteAck 再删 hash
+        // Add to pending set only after message is actually buffered; remove hash only on NoteDeleteAck
+        plugin.pendingNoteDeleteAcks.add(file.path)
       })
 
       dump(`Note delete send`, file.path)
@@ -103,6 +110,9 @@ export const noteDeleteByPath = async function (filePath: string, plugin: FastSy
   if (plugin.lastSyncPathDeleted.has(filePath)) return
 
   await plugin.lockManager.withLock(filePath, async () => {
+    // 清理可能存在的待确认上传记录，避免 pending map 内存泄漏
+    // Clean up any pending note modify record to avoid memory leak
+    plugin.pendingNoteModifies.delete(filePath)
     plugin.addIgnoredFile(filePath)
     try {
       plugin.websocket.SendMessage("NoteDelete", {
@@ -110,9 +120,9 @@ export const noteDeleteByPath = async function (filePath: string, plugin: FastSy
         path: filePath,
         pathHash: hashContent(filePath),
       }, undefined, () => {
-        // WebSocket 消息发送后从哈希表中删除
-        // Remove from hash map after sending WebSocket message
-        plugin.fileHashManager.removeFileHash(filePath)
+        // 消息真正写入 TCP 缓冲区后加入 pending set，等待 NoteDeleteAck 再删 hash
+        // Add to pending set only after message is actually buffered; remove hash only on NoteDeleteAck
+        plugin.pendingNoteDeleteAcks.add(filePath)
       })
       dump(`Note delete by path send`, filePath)
     } finally {
@@ -156,11 +166,10 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
         oldPathHash: hashContent(oldfile),
       }
 
-      plugin.websocket.SendMessage("NoteRename", data, undefined, () => {
-        // 删除旧路径,添加新路径(使用内容哈希)
-        plugin.fileHashManager.removeFileHash(oldfile)
-        plugin.fileHashManager.setFileHash(file.path, contentHash)
-      })
+      // 将重命名信息推入 FIFO 队列，等待服务端 NoteRenameAck 后再更新 hashManager
+      // Push rename info to FIFO queue, update hashManager only after server NoteRenameAck
+      plugin.pendingNoteRenames.push({ oldPath: oldfile, newPath: file.path, contentHash })
+      plugin.websocket.SendMessage("NoteRename", data)
       dump(`Note rename send`, data.path, data.pathHash)
     } finally {
       plugin.removeIgnoredFile(file.path)
@@ -211,6 +220,12 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
       plugin.fileHashManager.setFileHash(data.path, data.contentHash)
       // 记录同步后的 mtime 用于拦截
       plugin.lastSyncMtime.set(data.path, data.mtime)
+      // 服务端版本已覆盖本地，清理 pending 避免增量过滤器旁路导致该笔记无限重传
+      // Server version overrides local; clear pending to avoid incremental filter bypass loop
+      plugin.pendingNoteModifies.delete(data.path)
+      // 服务端推送新内容说明该路径已被创建/更新，清理可能残留的 deleteAck pending
+      // Server push means path was created/updated; clear any stale deleteAck pending
+      plugin.pendingNoteDeleteAcks.delete(data.path)
     } finally {
       setTimeout(() => {
         plugin.removeIgnoredFile(normalizedPath)
@@ -267,8 +282,12 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
     // 始终传递 baseHash 信息，如果不可用则标记 baseHashMissing
     ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
   }
+  // 将 hash 写入 pending map，等待 NoteModifyAck 确认后再写 hashManager
+  // 若此路径已有旧 pending（来自中断的 noteModify），覆盖为最新 hash
+  // Store hash in pending map; hashManager is written only after NoteModifyAck arrives.
+  // Overwrites any stale pending entry left by a previously interrupted noteModify.
+  plugin.pendingNoteModifies.set(file.path, contentHash)
   plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
-    plugin.fileHashManager.setFileHash(file.path, contentHash)
     plugin.removeIgnoredFile(file.path)
     plugin.noteSyncTasks.completed++
   })
@@ -297,6 +316,13 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
         await plugin.app.vault.modify(file, content, { ...(data.ctime > 0 && { ctime: data.ctime }), ...(data.mtime > 0 && { mtime: data.mtime }) })
         // 记录 mtime
         plugin.lastSyncMtime.set(data.path, data.mtime)
+        // 服务端走 UpdateMtime 说明内容 hash 与客户端发送的一致，提交 pending hash 到 hashManager
+        // Server UpdateMtime means content hash matches what client sent; commit pending hash to hashManager
+        const pendingHash = plugin.pendingNoteModifies.get(data.path)
+        if (pendingHash !== undefined) {
+          plugin.fileHashManager.setFileHash(data.path, pendingHash)
+          plugin.pendingNoteModifies.delete(data.path)
+        }
         // 更新同步时间
         if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
           plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
@@ -333,6 +359,9 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath)
         plugin.lastSyncMtime.delete(normalizedPath)
+        // 清理 pending，避免已删除路径的 pending 条目泄漏
+        // Clean up pending to prevent memory leak for deleted path
+        plugin.pendingNoteModifies.delete(normalizedPath)
         // 更新同步时间
         if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
           plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
@@ -448,4 +477,50 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
   }, { maxRetries: 10, retryInterval: 100 });
 
   plugin.noteSyncTasks.completed++
+}
+
+// 收到 NoteModifyAck，将 pending hash 转移到正式 hashManager 并更新 lastNoteSyncTime
+// Receive NoteModifyAck, move pending hash to formal hashManager and update lastNoteSyncTime
+export const receiveNoteModifyAck = function (data: { lastTime?: number; path?: string }, plugin: FastSync) {
+  // 服务端确认笔记写入成功，将 pending hash 转移到正式 hashManager
+  // Server confirmed note write success, move pending hash to formal hashManager
+  if (data.path) {
+    const contentHash = plugin.pendingNoteModifies.get(data.path)
+    if (contentHash !== undefined) {
+      plugin.fileHashManager.setFileHash(data.path, contentHash)
+      plugin.pendingNoteModifies.delete(data.path)
+    } else {
+      dump(`NoteModifyAck received for non-pending path: ${data.path}`)
+    }
+  }
+  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
+    plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
+  }
+}
+
+// 收到 NoteRenameAck，从 FIFO 队列取出待确认条目并更新 hashManager
+// Receive NoteRenameAck, shift from FIFO queue and update hashManager
+export const receiveNoteRenameAck = function (data: { lastTime?: number }, plugin: FastSync) {
+  // TCP 保证有序，FIFO 匹配正确
+  // TCP guarantees ordering, FIFO matching is correct
+  const pending = plugin.pendingNoteRenames.shift()
+  if (pending) {
+    plugin.fileHashManager.removeFileHash(pending.oldPath)
+    plugin.fileHashManager.setFileHash(pending.newPath, pending.contentHash)
+  }
+  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
+    plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
+  }
+}
+
+// 收到 NoteDeleteAck，仅当路径仍在 pending set 中时才从 hashManager 移除
+// Receive NoteDeleteAck; only remove from hashManager if path is still pending
+export const receiveNoteDeleteAck = function (data: { lastTime?: number; path?: string }, plugin: FastSync) {
+  if (data.path && plugin.pendingNoteDeleteAcks.has(data.path)) {
+    plugin.fileHashManager.removeFileHash(data.path)
+    plugin.pendingNoteDeleteAcks.delete(data.path)
+  }
+  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
+    plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
+  }
 }
