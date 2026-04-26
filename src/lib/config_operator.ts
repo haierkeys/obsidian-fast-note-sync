@@ -93,12 +93,11 @@ export const configModify = async function (path: string, plugin: FastSync, even
         mtime: mtime,
         ctime: ctime,
     }
-    plugin.websocket.SendMessage("SettingModify", data, undefined, () => {
-        // 更新配置哈希表
-        if (plugin.configHashManager && plugin.configHashManager.isReady()) {
-            plugin.configHashManager.setFileHash(path, contentHash)
-        }
-    })
+    // 将 hash 暂存到 pending map，等待服务端 SettingModifyAck 后再写入 configHashManager
+    // Temporarily store hash in pending map, update configHashManager only after server SettingModifyAck
+    plugin.pendingConfigDeleteAcks.delete(path)
+    plugin.pendingConfigModifies.set(path, contentHash)
+    plugin.websocket.SendMessage("SettingModify", data)
 
     plugin.removeIgnoredConfigFile(path)
 }
@@ -122,7 +121,11 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
         path: path,
         pathHash: hashContent(path),
     }
-    plugin.websocket.SendMessage("SettingDelete", data)
+    plugin.websocket.SendMessage("SettingDelete", data, undefined, () => {
+        // 消息真正写入 TCP 缓冲区后加入 pending set，等待 SettingDeleteAck 再删 hash
+        // Add to pending set only after message is actually buffered; remove hash only on SettingDeleteAck
+        plugin.pendingConfigDeleteAcks.add(path)
+    })
     plugin.removeIgnoredConfigFile(path)
 }
 
@@ -254,14 +257,11 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
         mtime: mtime,
         ctime: ctime,
     };
+    // 将 hash 暂存到 pending map，等待服务端 SettingModifyAck 后再写入 configHashManager
+    // Temporarily store hash in pending map, update configHashManager only after server SettingModifyAck
+    plugin.pendingConfigModifies.set(data.path, contentHash)
     plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
-
-        // 更新配置哈希表
-        if (plugin.configHashManager && plugin.configHashManager.isReady()) {
-            plugin.configHashManager.setFileHash(data.path, sendData.contentHash);
-        }
-
         plugin.configSyncTasks.completed++;
     });
 };
@@ -362,6 +362,41 @@ export const receiveConfigSyncClear = async function (data: any, plugin: FastSyn
         plugin.isWaitClearSync = false
         const { handleSync } = await import("./operator");
         handleSync(plugin, false, "config")
+    }
+}
+
+/**
+ * 收到 SettingModifyAck，将 pending hash 转移到正式 configHashManager 并更新 lastConfigSyncTime
+ * Receive SettingModifyAck, move pending hash to formal configHashManager and update lastConfigSyncTime
+ */
+export const receiveConfigModifyAck = function (data: { lastTime?: number; path?: string }, plugin: FastSync) {
+    if (data.path) {
+        const contentHash = plugin.pendingConfigModifies.get(data.path)
+        if (contentHash !== undefined) {
+            if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+                plugin.configHashManager.setFileHash(data.path, contentHash)
+            }
+            plugin.pendingConfigModifies.delete(data.path)
+        }
+    }
+    if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
+        plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
+    }
+}
+
+/**
+ * 收到 SettingDeleteAck，仅当路径仍在 pending set 中时才从 configHashManager 移除并更新 lastConfigSyncTime
+ * Receive SettingDeleteAck; only remove from configHashManager if path is still pending and update lastConfigSyncTime
+ */
+export const receiveConfigDeleteAck = function (data: { lastTime?: number; path?: string }, plugin: FastSync) {
+    if (data.path && plugin.pendingConfigDeleteAcks.has(data.path)) {
+        if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+            plugin.configHashManager.removeFileHash(data.path)
+        }
+        plugin.pendingConfigDeleteAcks.delete(data.path)
+    }
+    if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
+        plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
 }
 

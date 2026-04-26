@@ -263,6 +263,11 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file)
       if (!content) return;
 
+      const contentHash = await hashArrayBuffer(content)
+      // 将 hash 暂存到 pending map，等待服务端 FileUploadAck 后再写入 hashManager
+      // Temporarily store hash in pending map, update hashManager only after server FileUploadAck
+      plugin.pendingUploadHashes.set(data.path, contentHash)
+
       // 如果是空文件，强制设置分片数量为 1，发送一个空分片以通知服务端上传完成
       const actualTotalChunks = content.byteLength === 0 ? 1 : Math.ceil(content.byteLength / chunkSize)
 

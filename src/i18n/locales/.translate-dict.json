@@ -204,8 +204,8 @@
   "ui.log.action.FileRename": "2da7f33bd159f7a569e2fc1a214bb9cc",
   "ui.log.action.FileModify": "c03604906cd61022c6d6ff8566bbd725",
   "ui.log.action.FileDelete": "c6405a105eafa789a8b74ee0be1b3596",
-  "ui.log.action.FileRenameAck": "280df26c721a59494badc5cb29acc36f",
-  "ui.log.action.FileUploadAck": "724577371b45bf08bf54e3401a4b0798",
+  "ui.log.action.FileRenameAck": "34ef2b3c3f5cd38eafead74155c1610a",
+  "ui.log.action.FileUploadAck": "4bfa7e38e6b82d55afb1f61bb7e8778d",
   "ui.log.action.SettingSync_full": "8773a14d5f6da4e12b7334bb21fff776",
   "ui.log.action.SettingSync_incremental": "d462a7af8e781bfe09641693a0ac2292",
   "ui.log.action.SettingSyncModify": "704173b4e375b71d726c763df5b1caed",
@@ -324,5 +324,11 @@
   "ui.button.reset": "4b9c3271dc2f299dc3aeffb369187513",
   "setting.remote.mobile_status_dot_pos_menu": "9f7dbcc22133ccacf95ed3858b7e04d0",
   "setting.general.show_upgrade_badge": "bf5ff4a34bfd254b45cbf8616485926f",
-  "setting.general.show_upgrade_badge_desc": "ee0ebb2f71e46f60c56449f15f3544c8"
+  "setting.general.show_upgrade_badge_desc": "ee0ebb2f71e46f60c56449f15f3544c8",
+  "ui.log.action.NoteModifyAck": "ad0f6544d2c103f0d1fb480029e7d7fc",
+  "ui.log.action.NoteRenameAck": "af96f6cdaecef642111594893edb1de0",
+  "ui.log.action.NoteDeleteAck": "6dd903be3031ae3f7c669d684222931b",
+  "ui.log.action.FileDeleteAck": "c7a08a9bb5eca03b5897a9a7ec7380a8",
+  "ui.log.action.SettingModifyAck": "8861966e50a6c1757fa0bd81e3e04d28",
+  "ui.log.action.SettingDeleteAck": "109eb8733151a7d97ced4105b8bcdddd"
 }

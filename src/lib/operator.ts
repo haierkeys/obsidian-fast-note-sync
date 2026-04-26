@@ -1,7 +1,7 @@
 import { TFolder, TFile, Notice, normalizePath, Platform } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck, receiveFileDeleteAck } from "./file_operator";
-import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear } from "./config_operator";
+import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear, receiveConfigModifyAck, receiveConfigDeleteAck } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
@@ -222,6 +222,8 @@ export const receiveOperators: Map<string, ReceiveOperator> = new Map([
   ["SettingSyncDelete", receiveConfigSyncDelete],
   ["SettingSyncEnd", (data, plugin) => receiveSyncEndWrapper(data, plugin, "config")],
   ["SettingSyncClear", receiveConfigSyncClear],
+  ["SettingModifyAck", receiveConfigModifyAck],
+  ["SettingDeleteAck", receiveConfigDeleteAck],
   ["FolderSyncModify", receiveFolderSyncModify],
   ["FolderSyncDelete", receiveFolderSyncDelete],
   ["FolderSyncRename", receiveFolderSyncRename],
@@ -260,17 +262,32 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
   if (type === "note") {
     for (const path of plugin.pendingDeleteNotePaths) plugin.fileHashManager.removeFileHash(path)
     plugin.pendingDeleteNotePaths.clear()
+    // 同步结束，提交本轮同步中可能产生的待确认上传 hash
+    for (const [path, hash] of plugin.pendingNoteModifies) {
+      plugin.fileHashManager.setFileHash(path, hash)
+    }
+    plugin.pendingNoteModifies.clear()
   } else if (type === "file") {
     for (const path of plugin.pendingDeleteFilePaths) plugin.fileHashManager.removeFileHash(path)
     plugin.pendingDeleteFilePaths.clear()
+    // 同步结束，提交本轮同步中可能产生的待确认上传 hash
+    for (const [path, hash] of plugin.pendingUploadHashes) {
+      plugin.fileHashManager.setFileHash(path, hash)
+    }
+    plugin.pendingUploadHashes.clear()
   } else if (type === "folder") {
     for (const path of plugin.pendingDeleteFolderPaths) plugin.folderSnapshotManager.removeFolder(path)
     plugin.pendingDeleteFolderPaths.clear()
   } else if (type === "config") {
     if (plugin.configHashManager && plugin.configHashManager.isReady()) {
       for (const path of plugin.pendingDeleteConfigPaths) plugin.configHashManager.removeFileHash(path)
+      // 同步结束，提交本轮同步中可能产生的待确认上传 hash
+      for (const [path, hash] of plugin.pendingConfigModifies) {
+        plugin.configHashManager.setFileHash(path, hash)
+      }
     }
     plugin.pendingDeleteConfigPaths.clear()
+    plugin.pendingConfigModifies.clear()
   }
 
   // 3. 调用原始 End 处理函数 (更新时间戳等)
@@ -348,6 +365,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   // On reconnect clear pending Ack sets; paths remain in hashManager and flow into delNotes naturally
   plugin.pendingNoteDeleteAcks.clear()
   plugin.pendingFileDeleteAcks.clear()
+  plugin.pendingConfigDeleteAcks.clear()
+  plugin.pendingConfigModifies.clear()
   plugin.disableWatch();
 
   if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
@@ -694,7 +713,11 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
     // Step 3: Folder structure is ready, now send NoteSync and FileSync
     plugin.websocket.SendMessage("NoteSync", noteSyncData, undefined, () => {
       for (const note of noteSyncData.notes) {
-        plugin.fileHashManager.setFileHash(note.path, note.contentHash);
+        // 将同步发送的 hash 加入 pending，等待服务端可能发送的消息后再确定
+        // 在 batch 同步中，如果没有收到对应 Ack 而是收到了 End，则 End 包装器会处理
+        // 不过由于 NoteSync 通常不触发 NoteModifyAck，这里可能需要保持原样
+        // 但为了符合 "ACK 之后才保存" 的原则，我们还是加入 pending
+        plugin.pendingNoteModifies.set(note.path, note.contentHash);
       }
     });
 
@@ -725,7 +748,7 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
     };
     plugin.websocket.SendMessage("SettingSync", configSyncData, undefined, () => {
       for (const config of configSyncData.settings) {
-        plugin.configHashManager.setFileHash(config.path, config.contentHash);
+        plugin.pendingConfigModifies.set(config.path, config.contentHash);
       }
     });
 
