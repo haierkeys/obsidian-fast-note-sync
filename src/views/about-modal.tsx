@@ -22,7 +22,7 @@ export class AboutModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        contentEl.addClass("fns-about-modal-container");
+        this.containerEl.addClass("fns-about-modal-container");
         this.titleEl.setText(this.type === 'plugin' ? "插件版本" : "服务器版本");
 
         this.root = createRoot(contentEl);
@@ -32,6 +32,7 @@ export class AboutModal extends Modal {
     }
 
     onClose() {
+        this.containerEl.removeClass("fns-about-modal-container");
         if (this.root) {
             this.root.unmount();
             this.root = null;
