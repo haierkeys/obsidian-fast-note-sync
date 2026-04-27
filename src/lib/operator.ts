@@ -167,6 +167,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
     // Refresh share indicator state after sync completion
     plugin.shareIndicatorManager?.syncWithServer();
 
+    plugin.isSyncing = false;
     setTimeout(() => plugin.updateStatusBar(""), 3000);
   } else {
     // --- 强制完成逻辑与 90% 补偿 ---
@@ -330,7 +331,12 @@ async function processSyncMessages(messages: any[], plugin: FastSync) {
 /**
  * 启动全量/增量同步
  */
-export const handleSync = async function (plugin: FastSync, isLoadLastTime: boolean = false, syncMode: SyncMode = "auto") {
+export const handleSync = async function (plugin: FastSync, isLoadLastTime: boolean = true, syncMode: SyncMode = "auto") {
+  if (plugin.isSyncing) {
+    dump("Sync already in progress, skipping");
+    return;
+  }
+  plugin.isSyncing = true;
   const context = generateUUID();
   dump(`Sync context generated: ${context}`);
   if (!plugin.menuManager.ribbonIconStatus) {
