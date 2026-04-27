@@ -1,7 +1,7 @@
 import { Plugin, WorkspaceLeaf, Platform, addIcon } from "obsidian";
 
 import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice } from "./lib/helps";
-import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
+import { SettingTab, PluginSettings, DEFAULT_SETTINGS, encryptString, decryptString } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { ShareIndicatorManager } from "./lib/share_indicator_manager";
 import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
@@ -375,6 +375,11 @@ export default class FastSync extends Plugin {
     const data = await this.loadData()
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data)
 
+    // 解密存储的 apiToken
+    if (this.settings.apiToken) {
+      this.settings.apiToken = await decryptString(this.app, this.settings.apiToken);
+    }
+
     if (!this.settings.vault) {
       this.settings.vault = this.app.vault.getName()
     }
@@ -508,6 +513,12 @@ export default class FastSync extends Plugin {
       ...this.settings,
       syncExcludeFolders: stringifyRules(externalRules)
     };
+
+    // 加密存储 apiToken
+    if (settingsToSave.apiToken) {
+      settingsToSave.apiToken = await encryptString(this.app, settingsToSave.apiToken);
+    }
+
     await this.saveData(settingsToSave)
   }
 
