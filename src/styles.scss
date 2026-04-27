@@ -1831,6 +1831,16 @@
   .modal {
     width: 50vw;
     max-width: 90vw;
+
+    .is-phone & {
+      width: 90vw;
+      max-width: 95vw;
+    }
+
+    .is-tablet & {
+      width: 75vw;
+      max-width: 90vw;
+    }
   }
 }
 
@@ -1956,6 +1966,14 @@
   overflow-y: auto !important;
   padding-right: 12px !important;
   color: var(--text-muted);
+
+  .is-phone & {
+    max-height: 40vh !important;
+  }
+
+  .is-tablet & {
+    max-height: 65vh !important;
+  }
 
   /* Webkit 滚动条：始终保留宽度并默认透明 */
   &::-webkit-scrollbar {

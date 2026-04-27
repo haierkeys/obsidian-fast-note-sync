@@ -205,8 +205,8 @@
   padding: 0;
 }
 .is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control button,
-.is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control input[type="text"],
-.is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control input[type="number"],
+.is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control input[type=text],
+.is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control input[type=number],
 .is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control textarea,
 .is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) .setting-item-control select {
   width: 100%;
@@ -464,8 +464,8 @@
   padding: 0;
 }
 .fns-setting-item-vertical .setting-item-control button,
-.fns-setting-item-vertical .setting-item-control input[type="text"],
-.fns-setting-item-vertical .setting-item-control input[type="number"],
+.fns-setting-item-vertical .setting-item-control input[type=text],
+.fns-setting-item-vertical .setting-item-control input[type=number],
 .fns-setting-item-vertical .setting-item-control textarea,
 .fns-setting-item-vertical .setting-item-control select {
   width: 100%;
@@ -912,10 +912,10 @@
   border-color: var(--interactive-accent);
   box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.3);
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip.is-active span[class^="fns-dot-"] {
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip.is-active span[class^=fns-dot-] {
   border-color: white;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"] {
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-] {
   display: inline-block;
   width: 8px;
   height: 8px;
@@ -923,26 +923,26 @@
   border: 1px solid var(--background-modifier-border);
   flex-shrink: 0;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-note {
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-note {
   background-color: #08b94e;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-attachment {
-  background-color: #7c4dff;
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-attachment {
+  background-color: #7C4DFF;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-folder {
-  background-color: #1e88e5;
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-folder {
+  background-color: #1E88E5;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-config {
-  background-color: #ff8a33;
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-config {
+  background-color: #FF8A33;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-other {
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-other {
   background-color: #999999;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-send {
-  background-color: #ff8c00;
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-send {
+  background-color: #FF8C00;
 }
-.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^="fns-dot-"].fns-dot-receive {
-  background-color: #007bff;
+.fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-receive {
+  background-color: #007BFF;
 }
 .fns-sync-log-container .fns-sync-log-filter-panel .filter-footer {
   display: flex;
@@ -1075,33 +1075,33 @@
   border-left-color: #08b94e;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-attachment {
-  border-left-color: #7c4dff;
+  border-left-color: #7C4DFF;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-config {
-  border-left-color: #ff8a33;
+  border-left-color: #FF8A33;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-other {
   border-left-color: var(--text-faint);
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-folder {
-  border-left-color: #1e88e5;
+  border-left-color: #1E88E5;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-status-error {
   background-color: rgba(255, 0, 0, 0.05);
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-send {
-  border-right-color: #ff8c00;
+  border-right-color: #FF8C00;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-send .fns-sync-log-type-tag {
   background-color: rgba(255, 140, 0, 0.1);
-  color: #ff8c00;
+  color: #FF8C00;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-receive {
-  border-right-color: #007bff;
+  border-right-color: #007BFF;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-receive .fns-sync-log-type-tag {
   background-color: rgba(0, 123, 255, 0.1);
-  color: #007bff;
+  color: #007BFF;
 }
 .fns-sync-log-container .fns-sync-log-pagination {
   display: flex;
@@ -1203,9 +1203,7 @@
   background-color: rgba(40, 40, 40, 0.7);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    0 0 12px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(255, 255, 255, 0.08);
 }
 .is-tablet .fns-mobile-toast {
   top: 126px;
@@ -1620,9 +1618,7 @@
   min-width: 150px;
   z-index: 100;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  transition:
-    opacity 0.2s,
-    transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -1671,6 +1667,14 @@
 /* Version Modal Styles */
 .fns-about-modal-container .modal {
   width: 50vw;
+  max-width: 90vw;
+}
+.is-phone .fns-about-modal-container .modal {
+  width: 90vw;
+  max-width: 95vw;
+}
+.is-tablet .fns-about-modal-container .modal {
+  width: 75vw;
   max-width: 90vw;
 }
 
@@ -1790,6 +1794,14 @@
   overflow-y: auto !important;
   padding-right: 12px !important;
   color: var(--text-muted);
+}
+.is-phone .fns-about-modal-container .fns-changelog-content {
+  max-height: 40vh !important;
+}
+.is-tablet .fns-about-modal-container .fns-changelog-content {
+  max-height: 65vh !important;
+}
+.fns-about-modal-container .fns-changelog-content {
   /* Webkit 滚动条：始终保留宽度并默认透明 */
 }
 .fns-about-modal-container .fns-changelog-content::-webkit-scrollbar {
