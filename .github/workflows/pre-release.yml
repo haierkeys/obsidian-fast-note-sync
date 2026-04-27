@@ -1,4 +1,4 @@
-﻿name: Pre-release Build
+name: Pre-release Build
 
 # 触发条件配置
 on:
@@ -14,6 +14,7 @@ permissions:
 
 env:
   NAME: ${{ github.event.repository.name }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -27,7 +28,7 @@ jobs:
           # 获取所有历史记录，为了确保能获取到 git tags
           fetch-depth: 0 # Required to fetch tags
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -117,7 +118,7 @@ jobs:
 
       - name: Create Release
         if: steps.check_version.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.check_version.outputs.release_tag }}-alpha
           name: ${{ steps.check_version.outputs.release_tag }}-alpha
