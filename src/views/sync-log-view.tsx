@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, moment, setIcon } from "obsidian";
+import { ItemView, WorkspaceLeaf, moment, setIcon, Platform } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import * as React from "react";
 
@@ -44,6 +44,17 @@ export class SyncLogView extends ItemView {
     }
 }
 
+const ObsidianIcon = ({ icon, className, style }: { icon: string, className?: string, style?: React.CSSProperties }) => {
+    const ref = React.useRef<HTMLSpanElement>(null);
+    React.useEffect(() => {
+        if (ref.current) {
+            ref.current.empty();
+            setIcon(ref.current, icon);
+        }
+    }, [icon]);
+    return <span ref={ref} className={className} style={{ display: 'flex', alignItems: 'center', ...style }} />;
+};
+
 const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
     const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
@@ -56,6 +67,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     // 筛选与分页状态
     const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
     const [typeFilter, setTypeFilter] = React.useState<string>('all');
+    const [showMobileFilters, setShowMobileFilters] = React.useState<boolean>(false);
     const [currentPage, setCurrentPage] = React.useState<number>(1);
     const pageSize = 20;
 
@@ -70,13 +82,6 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     }, [plugin]);
 
     const scrollRef = React.useRef<HTMLDivElement>(null);
-    const iconRef = React.useRef<HTMLSpanElement>(null);
-    const settingsIconRef = React.useRef<HTMLSpanElement>(null);
-    const filterIconRef = React.useRef<HTMLSpanElement>(null);
-    const prevPageIconRef = React.useRef<HTMLSpanElement>(null);
-    const nextPageIconRef = React.useRef<HTMLSpanElement>(null);
-    const firstPageIconRef = React.useRef<HTMLSpanElement>(null);
-    const lastPageIconRef = React.useRef<HTMLSpanElement>(null);
     const throttleTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const pendingLogsRef = React.useRef<SyncLog[] | null>(null);
 
@@ -128,43 +133,6 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     }, [plugin.websocket]);
 
     React.useEffect(() => {
-        if (iconRef.current) {
-            iconRef.current.empty();
-            setIcon(iconRef.current, isConnected ? "wifi" : "wifi-off");
-        }
-    }, [isConnected]);
-
-    React.useEffect(() => {
-        if (settingsIconRef.current) {
-            settingsIconRef.current.empty();
-            setIcon(settingsIconRef.current, "settings");
-        }
-        if (filterIconRef.current) {
-            filterIconRef.current.empty();
-            setIcon(filterIconRef.current, "filter");
-        }
-    }, []);
-
-    React.useEffect(() => {
-        if (prevPageIconRef.current) {
-            prevPageIconRef.current.empty();
-            setIcon(prevPageIconRef.current, "chevron-left");
-        }
-        if (nextPageIconRef.current) {
-            nextPageIconRef.current.empty();
-            setIcon(nextPageIconRef.current, "chevron-right");
-        }
-        if (firstPageIconRef.current) {
-            firstPageIconRef.current.empty();
-            setIcon(firstPageIconRef.current, "chevrons-left");
-        }
-        if (lastPageIconRef.current) {
-            lastPageIconRef.current.empty();
-            setIcon(lastPageIconRef.current, "chevrons-right");
-        }
-    }, [logs]); // Re-render when logs change to ensure icons are there if the pagination bar appears
-
-    React.useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = 0; // 切换筛选/分页时回到顶部
         }
@@ -197,7 +165,27 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
         setCurrentPage(1);
     };
 
+    const categories = [
+        { id: 'all', label: $("ui.log.filter_all") },
+        { id: 'note', label: $("ui.log.category_note") },
+        { id: 'attachment', label: $("ui.log.category_attachment") },
+        { id: 'folder', label: $("ui.log.category_folder") },
+        { id: 'config', label: $("ui.log.category_config") },
+        { id: 'other', label: $("ui.log.category_other") },
+    ];
+
+    const types = [
+        { id: 'all', label: $("ui.log.filter_all") },
+        { id: 'send', label: $("ui.log.type_send") },
+        { id: 'receive', label: $("ui.log.type_receive") },
+    ];
+
     const showFilterMenu = (e: React.MouseEvent) => {
+        if (Platform.isMobile) {
+            setShowMobileFilters(!showMobileFilters);
+            return;
+        }
+
         const { Menu } = require("obsidian");
         const menu = new Menu();
 
@@ -208,15 +196,6 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                 .setSection("category");
             
             const subMenu = item.setSubmenu();
-            const categories = [
-                { id: 'all', label: $("ui.log.filter_all") },
-                { id: 'note', label: $("ui.log.category_note") },
-                { id: 'attachment', label: $("ui.log.category_attachment") },
-                { id: 'folder', label: $("ui.log.category_folder") },
-                { id: 'config', label: $("ui.log.category_config") },
-                { id: 'other', label: $("ui.log.category_other") },
-            ];
-
             categories.forEach(cat => {
                 subMenu.addItem((subItem: any) => {
                     subItem.setTitle(cat.label)
@@ -237,12 +216,6 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                 .setSection("type");
             
             const subMenu = item.setSubmenu();
-            const types = [
-                { id: 'all', label: $("ui.log.filter_all") },
-                { id: 'send', label: $("ui.log.type_send") },
-                { id: 'receive', label: $("ui.log.type_receive") },
-            ];
-
             types.forEach(t => {
                 subMenu.addItem((subItem: any) => {
                     subItem.setTitle(t.label)
@@ -279,14 +252,10 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         onClick={(e) => plugin.menuManager.showRibbonMenu(e.nativeEvent as MouseEvent)}
                         style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                     >
-                        <span
-                            ref={iconRef}
+                        <ObsidianIcon 
+                            icon={isConnected ? "wifi" : "wifi-off"} 
                             className="connection-status-icon"
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                color: isConnected ? '#4caf50' : '#f44336'
-                            }}
+                            style={{ color: isConnected ? '#4caf50' : '#f44336' }}
                         />
                         {hasUpgrade && showUpgradeBadge && <span className="fns-ribbon-badge" style={{ display: 'block', top: '5px', right: '3px' }} />}
                     </div>
@@ -301,21 +270,74 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
                         title={$("ui.menu.settings")}
                     >
-                        <span ref={settingsIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        <ObsidianIcon icon="settings" />
                     </button>
                     <button
                         onClick={showFilterMenu}
-                        className="fns-sync-log-clear-btn clickable-icon"
+                        className={`fns-sync-log-clear-btn clickable-icon ${showMobileFilters ? 'is-active' : ''}`}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
                         title={$("ui.log.filter")}
                     >
-                        <span ref={filterIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        <ObsidianIcon icon="filter" />
                     </button>
                     <button onClick={clearLogs} className="fns-sync-log-clear-btn">
                         {$("ui.log.clear")}
                     </button>
                 </div>
             </div>
+
+            {/* 移动端筛选面板 */}
+            {Platform.isMobile && showMobileFilters && (
+                <div className="fns-sync-log-filter-panel">
+                    <div className="filter-group">
+                        <div className="filter-label">{$("ui.log.filter_category")}</div>
+                        <div className="filter-chips">
+                            {categories.map(cat => (
+                                <div
+                                    key={cat.id}
+                                    className={`filter-chip ${categoryFilter === cat.id ? 'is-active' : ''}`}
+                                    onClick={() => setCategoryFilter(cat.id)}
+                                >
+                                    {cat.id !== 'all' && <span className={`fns-dot-${cat.id}`} style={{ marginRight: '6px' }} />}
+                                    {cat.label}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="filter-group">
+                        <div className="filter-label">{$("ui.log.filter_type")}</div>
+                        <div className="filter-chips">
+                            {types.map(t => (
+                                <div
+                                    key={t.id}
+                                    className={`filter-chip ${typeFilter === t.id ? 'is-active' : ''}`}
+                                    onClick={() => setTypeFilter(t.id)}
+                                >
+                                    {t.id !== 'all' && <span className={`fns-dot-${t.id}`} style={{ marginRight: '6px' }} />}
+                                    {t.label}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="filter-footer">
+                        <button 
+                            className="filter-reset-btn"
+                            onClick={() => {
+                                setCategoryFilter('all');
+                                setTypeFilter('all');
+                            }}
+                        >
+                            {$("ui.button.reset")}
+                        </button>
+                        <button 
+                            className="filter-close-btn"
+                            onClick={() => setShowMobileFilters(false)}
+                        >
+                            {$("ui.button.collapse")}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="fns-sync-log-list" ref={scrollRef}>
                 {paginatedLogs.length === 0 ? (
@@ -359,7 +381,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         onClick={() => setCurrentPage(1)}
                         title={$("ui.history.page_first")}
                     >
-                        <span ref={firstPageIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        <ObsidianIcon icon="chevrons-left" />
                     </button>
                     <button
                         className="pagination-btn clickable-icon"
@@ -367,7 +389,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                         title={$("ui.history.page_prev")}
                     >
-                        <span ref={prevPageIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        <ObsidianIcon icon="chevron-left" />
                     </button>
                     <div className="pagination-info">
                         <span className="page-current">{currentPage}</span>
@@ -380,7 +402,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         title={$("ui.history.page_next")}
                     >
-                        <span ref={nextPageIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        <ObsidianIcon icon="chevron-right" />
                     </button>
                     <button
                         className="pagination-btn clickable-icon"
@@ -388,7 +410,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         onClick={() => setCurrentPage(totalPages)}
                         title={$("ui.history.page_last")}
                     >
-                        <span ref={lastPageIconRef} style={{ display: 'flex', alignItems: 'center' }}></span>
+                        <ObsidianIcon icon="chevrons-right" />
                     </button>
                 </div>
             )}
