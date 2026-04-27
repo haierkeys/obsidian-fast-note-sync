@@ -31,7 +31,7 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
   const clipboardReadTipTipSave = async (tip: string) => {
     plugin.clipboardReadTip = tip
 
-    await plugin.saveData(plugin.settings)
+    await plugin.saveSettings()
     plugin.settingTab.display()
 
     setTimeout(() => {
