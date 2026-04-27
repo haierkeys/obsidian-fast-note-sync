@@ -130,7 +130,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   mobileStatusDotPosition: "menu-bar",
   showUpgradeBadge: true,
   concurrencyControlEnabled: false,
-  maxConcurrentUploads: 50,
+  maxConcurrentUploads: 20,
   showConcurrencyIndicator: true,
 }
 
@@ -817,8 +817,8 @@ export class SettingTab extends PluginSettingTab {
 
 
     new Setting(set)
-    .setDesc($("setting.remote.setup_desc"))
-    .setHeading()
+      .setDesc($("setting.remote.setup_desc"))
+      .setHeading()
       .setClass("fast-note-sync-settings-tag-desc")
 
     const apiSet = set.createDiv()
@@ -1277,17 +1277,17 @@ export class SettingTab extends PluginSettingTab {
       .setName($("setting.sync.merge_strategy"))
       .setClass("fns-setting-item-vertical")
       .addDropdown((dropdown) =>
-      dropdown
-        .addOption("", $("setting.sync.strategy_default"))
-        .addOption("newTimeMerge", $("setting.sync.strategy_new"))
-        .addOption("ignoreTimeMerge", $("setting.sync.strategy_force"))
-        .setValue(this.plugin.settings.offlineSyncStrategy || "")
-        .onChange(async (value) => {
-          this.plugin.settings.offlineSyncStrategy = value
-          await this.plugin.saveSettings("offlineSyncStrategy")
-          this.plugin.websocket.sendClientInfo()
-        }),
-    )
+        dropdown
+          .addOption("", $("setting.sync.strategy_default"))
+          .addOption("newTimeMerge", $("setting.sync.strategy_new"))
+          .addOption("ignoreTimeMerge", $("setting.sync.strategy_force"))
+          .setValue(this.plugin.settings.offlineSyncStrategy || "")
+          .onChange(async (value) => {
+            this.plugin.settings.offlineSyncStrategy = value
+            await this.plugin.saveSettings("offlineSyncStrategy")
+            this.plugin.websocket.sendClientInfo()
+          }),
+      )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.merge_strategy_desc"))
   }
 
