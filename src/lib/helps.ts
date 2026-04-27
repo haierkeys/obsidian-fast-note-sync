@@ -250,9 +250,10 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
  */
 export const getConfigSyncCustomDirs = function (plugin: FastSync): string[] {
   const setting = plugin.settings.configSyncOtherDirs || ""
-  return setting
-    .split(/\r?\n/)
-    .map((p) => p.trim())
+  // 支持 JSON 格式（UI 保存格式）和旧版换行分隔格式
+  const rules = parseRules(setting)
+  return rules
+    .map((r) => r.pattern.trim().replace(/\/+$/, ""))  // 提取 pattern 并移除尾部斜杠
     .filter((p) => p !== "" && p.startsWith("."))
 }
 
