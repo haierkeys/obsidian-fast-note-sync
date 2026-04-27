@@ -99,6 +99,13 @@ export default {
   "setting.sync.clear_remote_desc": "원격 서비스에서 노트 라이브러리 설정을 정리합니다. 이 작업은 되돌릴 수 없습니다.",
   "setting.sync.clear_remote_confirm": "원격 서비스에서 노트 라이브러리 설정을 정리하시겠습니까?\n이 작업은 원격 서비스에 저장된 이 저장소의 모든 설정을 물리적으로 삭제하며 복구할 수 없습니다.",
   "ui.status.clear_success": "원격 설정이 정리되었습니다",
+  "setting.sync.concurrency_control": "동시 업로드 제어",
+  "setting.sync.concurrency_control_desc": "활성화하면 서버에서 응답하는 ACK 메시지를 통해 업로드 큐를 정밀하게 제어하여 순간적인 요청 폭주로 인한 클라이언트 지연을 방지합니다. 기본값은 비활성화입니다.",
+  "setting.sync.max_concurrency": "최대 동시 업로드 수",
+  "setting.sync.max_concurrency_desc": "동시에 진행할 업로드 작업 수를 설정합니다. 권장 범위는 3~10 입니다. 동시 업로드 제어를 활성화한 경우에만 적용됩니다.",
+  "setting.sync.show_concurrency_indicator": "동시 업로드 제어 아이콘 표시",
+  "setting.sync.show_concurrency_indicator_desc": "활성화하면 동시 업로드 제어가 활성화된 경우 오른쪽 하단 상태 표시줄에 상태 아이콘이 표시됩니다.",
+  "setting.sync.concurrency_limit_tip": "동시 업로드 제한 수: ${count}",
 
   // --- setting.cloud ---
   "setting.cloud.title": "첨부 파일 클라우드 미리보기",

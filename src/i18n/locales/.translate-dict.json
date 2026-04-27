@@ -348,5 +348,12 @@
   "ui.log.action.VaultScanning_incremental": "92d181adce84046aac08d7a2735cb48e",
   "ui.log.action.FolderModifyAck": "e40a967c402e097da15f284bb1354541",
   "ui.log.action.FolderRenameAck": "ebcf22ff751de890790619ec1c720964",
-  "ui.log.action.FolderDeleteAck": "cfb0732a5ec727669cfe7a05f04d4550"
+  "ui.log.action.FolderDeleteAck": "cfb0732a5ec727669cfe7a05f04d4550",
+  "setting.sync.concurrency_control": "d9306f0cd1e52c5218992802623586c5",
+  "setting.sync.concurrency_control_desc": "b9b52567d16d28a783edf9ce6d201e06",
+  "setting.sync.max_concurrency": "06e9260e7cc1a4aa4f8423413f438405",
+  "setting.sync.max_concurrency_desc": "75a0f27dba24b7a9567cb692046bfb19",
+  "setting.sync.show_concurrency_indicator": "90f457cc1fa563f716eae3d37a771fdd",
+  "setting.sync.show_concurrency_indicator_desc": "7b01e6fd449126dac17b65ee65211bef",
+  "setting.sync.concurrency_limit_tip": "1df6c8a79602fb5a74bef39a0906f423"
 }

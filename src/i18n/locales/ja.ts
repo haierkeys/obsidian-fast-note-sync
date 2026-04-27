@@ -99,6 +99,13 @@ export default {
   "setting.sync.clear_remote_desc": "リモートサービスからノートライブラリの設定を削除します。この操作は元に戻せません。",
   "setting.sync.clear_remote_confirm": "リモートサービスからノートライブラリの設定を削除してもよろしいですか？\nこの操作により、リモートサービスに保存されているこのリポジトリのすべての設定が物理的に削除され、復元できません。",
   "ui.status.clear_success": "リモート設定がクリアされました",
+  "setting.sync.concurrency_control": "同時アップロード制御",
+  "setting.sync.concurrency_control_desc": "有効にすると、サーバーからのACK応答メッセージを使用してアップロードキューを正確に制御し、瞬間的な大量リクエストの蓄積によるクライアントの動作遅滞を防止します。デフォルトは無効です。",
+  "setting.sync.max_concurrency": "最大同時アップロード数",
+  "setting.sync.max_concurrency_desc": "同時に実行するアップロードタスクの数を設定します。推奨範囲は3〜10です。この設定は、同時アップロード制御を有効にした場合にのみ適用されます。",
+  "setting.sync.show_concurrency_indicator": "同時制御アイコンを表示する",
+  "setting.sync.show_concurrency_indicator_desc": "有効にすると、同時アップロード制御が有効な場合に右下のステータスバーにインジケーターアイコンを表示します。",
+  "setting.sync.concurrency_limit_tip": "同時アップロード数制限: ${count}",
 
   // --- setting.cloud ---
   "setting.cloud.title": "添付ファイルのクラウドプレビュー",

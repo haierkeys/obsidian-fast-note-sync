@@ -99,6 +99,13 @@ export default {
   "setting.sync.clear_remote_desc": "從遠端服務清理筆記庫的配置。此操作不可逆。",
   "setting.sync.clear_remote_confirm": "確認從遠端服務清理筆記庫的配置嗎？\n該操作將物理刪除遠端服務儲存的本倉庫所有配置，且不可恢復。",
   "ui.status.clear_success": "遠端配置已清理",
+  "setting.sync.concurrency_control": "並發上傳控制",
+  "setting.sync.concurrency_control_desc": "開啟後，將通過服務端回覆的 ACK 訊息精確控制上行佇列，防止瞬間大量請求堆積導致客戶端卡頓。預設關閉。",
+  "setting.sync.max_concurrency": "最大並發上傳數量",
+  "setting.sync.max_concurrency_desc": "設定同時進行的上傳任務數量，推薦範圍 3-10。僅在開啟並發上傳控制時生效。",
+  "setting.sync.show_concurrency_indicator": "顯示並發控制圖示",
+  "setting.sync.show_concurrency_indicator_desc": "開啟後，當啟用並發上傳控制時，在右下角狀態列顯示指示圖示。",
+  "setting.sync.concurrency_limit_tip": "上傳並發數量限制為: ${count}",
 
   // --- setting.cloud ---
   "setting.cloud.title": "附件雲預覽",
