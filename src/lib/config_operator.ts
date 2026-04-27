@@ -122,12 +122,12 @@ export const configDelete = async function (path: string, plugin: FastSync, even
         path: path,
         pathHash: hashContent(path),
     }
+    await plugin.concurrencyManager.waitForSlot(path)
     plugin.websocket.SendMessage("SettingDelete", data, undefined, () => {
         // 消息真正写入 TCP 缓冲区后加入 pending set，等待 SettingDeleteAck 再删 hash
         // Add to pending set only after message is actually buffered; remove hash only on SettingDeleteAck
         plugin.pendingConfigDeleteAcks.add(path)
     })
-    await plugin.concurrencyManager.waitForSlot(path)
     plugin.removeIgnoredConfigFile(path)
 }
 
@@ -339,6 +339,7 @@ export const receiveConfigSyncDelete = async function (data: any, plugin: FastSy
     if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
         plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
+    if (data.path) { plugin.concurrencyManager.releaseSlot(data.path) }
 
     plugin.configSyncTasks.completed++
 }

@@ -103,6 +103,9 @@ export default {
   "setting.sync.concurrency_control_desc": "When enabled, the uplink queue will be precisely controlled via ACK messages from the server, preventing sudden bursts of requests from congesting the network. Default is disabled.",
   "setting.sync.max_concurrency": "Max Concurrent Uploads",
   "setting.sync.max_concurrency_desc": "Set the number of simultaneous upload tasks, recommended range 3-10. Only takes effect when Concurrency Upload Control is enabled.",
+  "setting.sync.show_concurrency_indicator": "Show Concurrency Indicator",
+  "setting.sync.show_concurrency_indicator_desc": "When enabled, a gauge icon will be shown in the status bar if upload concurrency control is active.",
+  "setting.sync.concurrency_limit_tip": "Upload concurrency limit: ${count}",
 
   // --- setting.cloud ---
   "setting.cloud.title": "Attachment Cloud Preview",

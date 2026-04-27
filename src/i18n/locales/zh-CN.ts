@@ -103,6 +103,9 @@ export default {
   "setting.sync.concurrency_control_desc": "开启后，将通过服务端回复的 ACK 消息精确控制上行队列，防止瞬间大量请求堆积导致客户端卡顿。默认关闭。",
   "setting.sync.max_concurrency": "最大并发上传数量",
   "setting.sync.max_concurrency_desc": "设置同时进行的上传任务数量，推荐范围 3-10。仅在开启并发上传控制时生效。",
+  "setting.sync.show_concurrency_indicator": "显示并发控制图标",
+  "setting.sync.show_concurrency_indicator_desc": "开启后，当启用并发上传控制时，在右下角状态栏显示指示图标。",
+  "setting.sync.concurrency_limit_tip": "上传并发数量限制为: ${count}",
 
   // --- setting.cloud ---
   "setting.cloud.title": "附件云预览",

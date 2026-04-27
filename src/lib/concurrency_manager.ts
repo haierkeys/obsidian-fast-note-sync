@@ -92,9 +92,15 @@ export class ConcurrencyManager {
      * 处理等待队列
      */
     private processQueue(): void {
+        const activeCount = this.activeKeys.size;
+        const queueCount = this.queue.length;
+        if (queueCount > 0) {
+            dump(`Concurrency: Processing queue. Active: ${activeCount}, Queued: ${queueCount}`);
+        }
         while (this.activeKeys.size < this.plugin.settings.maxConcurrentUploads && this.queue.length > 0) {
             const next = this.queue.shift();
             if (next) {
+                dump(`Concurrency: Resuming task ${next.key} from queue.`);
                 next.resolve();
             }
         }

@@ -120,12 +120,12 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
         path: file.path,
         pathHash: hashContent(file.path),
       }
+      await plugin.concurrencyManager.waitForSlot(file.path)
       plugin.websocket.SendMessage("FileDelete", data, undefined, () => {
         // 消息真正写入 TCP 缓冲区后加入 pending set，等待 FileDeleteAck 再删 hash
         // Add to pending set only after message is actually buffered; remove hash only on FileDeleteAck
         plugin.pendingFileDeleteAcks.add(file.path)
       })
-      await plugin.concurrencyManager.waitForSlot(file.path)
       dump(`File delete send`, file.path)
     } finally {
       plugin.removeIgnoredFile(file.path)
@@ -159,6 +159,7 @@ export const fileDeleteByPath = async function (filePath: string, plugin: FastSy
 
     plugin.addIgnoredFile(filePath)
     try {
+      await plugin.concurrencyManager.waitForSlot(filePath)
       plugin.websocket.SendMessage("FileDelete", {
         vault: plugin.settings.vault,
         path: filePath,
@@ -168,7 +169,6 @@ export const fileDeleteByPath = async function (filePath: string, plugin: FastSy
         // Add to pending set only after message is actually buffered; remove hash only on FileDeleteAck
         plugin.pendingFileDeleteAcks.add(filePath)
       })
-      await plugin.concurrencyManager.waitForSlot(filePath)
       dump(`File delete by path send`, filePath)
     } finally {
       plugin.removeIgnoredFile(filePath)
@@ -264,6 +264,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   const runUpload = async () => {
     // 标记该路径进入活跃上传状态
     activeUploadsMap.set(data.path, { cancelled: false });
+    await plugin.concurrencyManager.waitForSlot(data.path)
 
     try {
       // 延迟到任务排到时才读取文件内容, 减少内存积压

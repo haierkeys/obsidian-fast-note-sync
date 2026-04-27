@@ -80,6 +80,8 @@ export interface PluginSettings {
   concurrencyControlEnabled: boolean
   /** 最大并发上传数量 */
   maxConcurrentUploads: number
+  /** 是否在状态栏显示并发控制图标 */
+  showConcurrencyIndicator: boolean
 }
 
 
@@ -128,7 +130,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   mobileStatusDotPosition: "menu-bar",
   showUpgradeBadge: true,
   concurrencyControlEnabled: false,
-  maxConcurrentUploads: 10,
+  maxConcurrentUploads: 50,
+  showConcurrencyIndicator: true,
 }
 
 
@@ -768,6 +771,17 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.show_upgrade_badge_desc"))
 
+    new Setting(set).setName($("setting.sync.show_concurrency_indicator")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.showConcurrencyIndicator).onChange(async (value) => {
+        if (value != this.plugin.settings.showConcurrencyIndicator) {
+          this.plugin.settings.showConcurrencyIndicator = value
+          this.plugin.menuManager.refreshConcurrencyIndicator()
+          await this.plugin.saveSettings("showConcurrencyIndicator")
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.show_concurrency_indicator_desc"))
+
     new Setting(set).setName($("setting.debug.show_version")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showVersionInfo).onChange(async (value) => {
         this.plugin.settings.showVersionInfo = value
@@ -1112,6 +1126,7 @@ export class SettingTab extends PluginSettingTab {
       toggle.setValue(this.plugin.settings.concurrencyControlEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.concurrencyControlEnabled) {
           this.plugin.settings.concurrencyControlEnabled = value
+          this.plugin.menuManager.refreshConcurrencyIndicator()
           this.display()
           await this.plugin.saveSettings("concurrencyControlEnabled")
         }
@@ -1128,6 +1143,7 @@ export class SettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             if (value != this.plugin.settings.maxConcurrentUploads) {
               this.plugin.settings.maxConcurrentUploads = value
+              this.plugin.menuManager.refreshConcurrencyIndicator()
               await this.plugin.saveSettings("maxConcurrentUploads")
             }
           }),

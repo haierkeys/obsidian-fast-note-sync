@@ -22,6 +22,7 @@ export class MenuManager {
   public shareStatusBarItem: HTMLElement;
   public logStatusBarItem: HTMLElement;
   public recycleBinStatusBarItem: HTMLElement;
+  public concurrencyStatusBarItem: HTMLElement;
   private mobileStatusDot: HTMLElement | null = null;
   private mobileHeaderIconStatus: boolean = false;
   private ribbonMutationTimer: ReturnType<typeof setTimeout> | null = null;
@@ -76,6 +77,14 @@ export class MenuManager {
   init() {
     // 初始化状态栏进度
     this.statusBarItem = this.plugin.addStatusBarItem();
+
+    // 初始化并发控制状态栏指示器 / Initialize concurrency control status bar indicator
+    this.concurrencyStatusBarItem = this.plugin.addStatusBarItem();
+    setIcon(this.concurrencyStatusBarItem, "gauge");
+    this.concurrencyStatusBarItem.addClass("mod-clickable");
+    this.concurrencyStatusBarItem.addEventListener("click", () => {
+      // 点击图标跳转到设置面板的相关位置? 暂时只是个提示
+    });
 
     // 初始化 笔记历史 状态栏入口
     this.historyStatusBarItem = this.plugin.addStatusBarItem();
@@ -134,6 +143,8 @@ export class MenuManager {
     this.recycleBinStatusBarItem.addEventListener("click", () => {
       new RecycleBinModal(this.plugin.app, this.plugin).open();
     });
+    
+    this.refreshConcurrencyIndicator();
 
     this.plugin.addCommand({
       id: "start-full-sync",
@@ -428,6 +439,25 @@ export class MenuManager {
         this.statusBarItem.style.display = "none";
         this.statusBarText.setText("");
       }
+    }
+  }
+
+  /**
+   * 刷新并发控制状态栏指示器的显示状态
+   * Refresh the visibility of the concurrency control status bar indicator
+   */
+  public refreshConcurrencyIndicator() {
+    if (!this.concurrencyStatusBarItem) return;
+    
+    const isEnabled = this.plugin.settings.concurrencyControlEnabled;
+    const isShow = this.plugin.settings.showConcurrencyIndicator;
+    
+    if (isEnabled && isShow) {
+        this.concurrencyStatusBarItem.style.display = "inline-flex";
+        const limit = this.plugin.settings.maxConcurrentUploads;
+        this.concurrencyStatusBarItem.setAttribute("aria-label", $("setting.sync.concurrency_limit_tip", { count: limit }));
+    } else {
+        this.concurrencyStatusBarItem.style.display = "none";
     }
   }
 
