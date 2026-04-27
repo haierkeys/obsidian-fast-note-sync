@@ -1829,7 +1829,8 @@
 /* Version Modal Styles */
 .fns-about-modal-container {
   .modal {
-    max-width: 600px;
+    width: 50vw;
+    max-width: 90vw;
   }
 }
 
@@ -1951,7 +1952,7 @@
 
 .fns-about-modal-container .fns-changelog-content {
   font-size: 0.9em;
-  max-height: 120px !important;
+  max-height: 450px !important;
   overflow-y: auto !important;
   padding-right: 12px !important;
   color: var(--text-muted);
