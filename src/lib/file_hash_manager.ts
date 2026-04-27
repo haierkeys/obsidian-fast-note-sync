@@ -25,9 +25,9 @@ export class FileHashManager {
 
   constructor(plugin: FastSync) {
     this.plugin = plugin;
-    // 根据仓库名生成唯一的存储键
+    // 根据仓库名生成唯一的存储键 (格式: fns-[VaultName]-fileHashMap)
     const vaultName = this.plugin.app.vault.getName();
-    this.storageKey = `fast-note-sync-file-hash-map-${vaultName}`;
+    this.storageKey = `fns-${vaultName}-fileHashMap`;
   }
 
   /**
@@ -176,9 +176,34 @@ export class FileHashManager {
    */
   private loadFromStorage(): boolean {
     try {
-      const data = localStorage.getItem(this.storageKey);
+      let data = localStorage.getItem(this.storageKey);
+
+      // 迁移逻辑：如果新键无数据，尝试读取旧键
       if (!data) {
-        return false;
+        const vaultName = this.plugin.app.vault.getName();
+
+        // 1. 尝试上一个格式: fast-note-sync-[Vault]-fileHashMap
+        const prevKey1 = `fast-note-sync-${vaultName}-fileHashMap`;
+        data = localStorage.getItem(prevKey1);
+
+        // 2. 尝试更早格式: fast-note-sync-[Vault]-file-hash-map
+        if (!data) {
+          const prevKey2 = `fast-note-sync-${vaultName}-file-hash-map`;
+          data = localStorage.getItem(prevKey2);
+        }
+
+        // 3. 尝试最原始格式: fast-note-sync-file-hash-map-[Vault]
+        if (!data) {
+          const oldKey = `fast-note-sync-file-hash-map-${vaultName}`;
+          data = localStorage.getItem(oldKey);
+        }
+
+        if (data) {
+          dump("FileHashManager: 发现旧版哈希表数据，执行迁移");
+          localStorage.setItem(this.storageKey, data);
+        } else {
+          return false;
+        }
       }
 
       const parsed = JSON.parse(data);

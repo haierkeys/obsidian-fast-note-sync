@@ -31,19 +31,35 @@ export class LocalStorageManager {
         localStorage.setItem(key, value);
     }
 
-    /**
-     * 获取内部私有数据的完整键名（带插件和笔记库前缀）
-     */
     private getInternalKey(field: string): string {
-        const vaultName = this.plugin.settings.vault || this.plugin.app.vault.getName();
-        return `fast-note-sync-${vaultName}-${field}`;
+        // 使用简短前缀 fns- 并绑定本地仓库名
+        const vaultName = this.plugin.app.vault.getName();
+        return `fns-${vaultName}-${field}`;
     }
 
-    /**
-     * 获取元数据项
-     */
-    getMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'lastFolderSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverChangelog' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'serverVersionNewChangelogContent' | 'serverVersionChangelogContent' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink' | 'pluginVersionNewChangelogContent' | 'pluginVersionChangelogContent' | 'internalExcludes'): any {
-        const value = this.read(this.getInternalKey(field));
+    getMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'lastFolderSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverChangelog' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'serverVersionNewChangelogContent' | 'serverVersionChangelogContent' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink' | 'pluginVersionNewChangelogContent' | 'pluginVersionChangelogContent' | 'internalExcludes' | 'apiToken'): any {
+        const newKey = this.getInternalKey(field);
+        let value = this.read(newKey);
+
+        // 迁移逻辑
+        if (value === null) {
+            const vaultName = this.plugin.app.vault.getName();
+            // 尝试读取上一个格式: fast-note-sync-[本地库名]-[field]
+            const prevKey = `fast-note-sync-${vaultName}-${field}`;
+            let oldValue = this.read(prevKey);
+
+            // 尝试读取最初格式（如果存在远端库名）: fast-note-sync-[远端库名]-[field]
+            if (oldValue === null && this.plugin.settings.vault && this.plugin.settings.vault !== vaultName) {
+                const oldRemoteKey = `fast-note-sync-${this.plugin.settings.vault}-${field}`;
+                oldValue = this.read(oldRemoteKey);
+            }
+
+            if (oldValue !== null) {
+                value = oldValue;
+                // 自动同步到新键
+                this.write(newKey, value);
+            }
+        }
         if (field.endsWith('Time')) {
             return value ? Number(value) : 0;
         }
@@ -56,7 +72,7 @@ export class LocalStorageManager {
     /**
      * 设置元数据项
      */
-    setMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'lastFolderSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverChangelog' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'serverVersionNewChangelogContent' | 'serverVersionChangelogContent' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink' | 'pluginVersionNewChangelogContent' | 'pluginVersionChangelogContent' | 'internalExcludes', value: any): void {
+    setMetadata(field: 'lastNoteSyncTime' | 'lastFileSyncTime' | 'lastConfigSyncTime' | 'lastFolderSyncTime' | 'clientName' | 'isInitSync' | 'serverVersion' | 'serverChangelog' | 'serverVersionIsNew' | 'serverVersionNewName' | 'serverVersionNewLink' | 'serverVersionNewChangelogContent' | 'serverVersionChangelogContent' | 'pluginVersionIsNew' | 'pluginVersionNewName' | 'pluginVersionNewLink' | 'pluginVersionNewChangelogContent' | 'pluginVersionChangelogContent' | 'internalExcludes' | 'apiToken', value: any): void {
         this.write(this.getInternalKey(field), String(value));
     }
 

@@ -18,7 +18,7 @@ export class FolderSnapshotManager {
     constructor(plugin: FastSync) {
         this.plugin = plugin;
         const vaultName = this.plugin.app.vault.getName();
-        this.storageKey = `fast-note-sync-folder-snapshot-${vaultName}`;
+        this.storageKey = `fns-${vaultName}-folderSnapshot`;
     }
 
     /**
@@ -95,8 +95,35 @@ export class FolderSnapshotManager {
      */
     private loadFromStorage(): boolean {
         try {
-            const data = localStorage.getItem(this.storageKey);
-            if (!data) return false;
+            let data = localStorage.getItem(this.storageKey);
+
+            // 迁移逻辑：如果新键无数据，尝试读取旧键
+            if (!data) {
+                const vaultName = this.plugin.app.vault.getName();
+
+                // 1. 尝试上一个格式: fast-note-sync-[Vault]-folderSnapshot
+                const prevKey1 = `fast-note-sync-${vaultName}-folderSnapshot`;
+                data = localStorage.getItem(prevKey1);
+
+                // 2. 尝试更早格式: fast-note-sync-[Vault]-folder-snapshot
+                if (!data) {
+                    const prevKey2 = `fast-note-sync-${vaultName}-folder-snapshot`;
+                    data = localStorage.getItem(prevKey2);
+                }
+
+                // 3. 尝试最原始格式: fast-note-sync-folder-snapshot-[Vault]
+                if (!data) {
+                    const oldKey = `fast-note-sync-folder-snapshot-${vaultName}`;
+                    data = localStorage.getItem(oldKey);
+                }
+
+                if (data) {
+                    dump("FolderSnapshotManager: 发现旧版快照数据，执行迁移");
+                    localStorage.setItem(this.storageKey, data);
+                } else {
+                    return false;
+                }
+            }
             const parsed = JSON.parse(data);
             this.snapshotMap = new Map(
                 Object.entries(parsed).map(([key, value]) => [key, Number(value)])

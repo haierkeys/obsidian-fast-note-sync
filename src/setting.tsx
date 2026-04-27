@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, Platform, SearchComponent, MarkdownRenderer, Component } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
-import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice } from "./lib/helps";
+import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice, encryptString, decryptString } from "./lib/helps";
 import { handleSync, resetSettingSyncTime, rebuildAllHashes, clearAllHashes } from "./lib/operator";
 import { SettingsView, SupportView } from "./views/settings-view";
 import { RuleEditorModal } from "./views/rule-editor-modal";
@@ -78,61 +78,7 @@ export interface PluginSettings {
   showUpgradeBadge: boolean
 }
 
-/**
- * SafeStorage 加密工具函数
- * 使用 Obsidian SafeStorage API 加密敏感信息
- */
 
-interface ISafeStorage {
-  isAvailable(): boolean;
-  encrypt(plaintext: string): Promise<string>;
-  decrypt(encrypted: string): Promise<string>;
-}
-
-const ENCRYPTED_PREFIX = "encrypted:";
-
-function getSafeStorage(app: App): ISafeStorage | undefined {
-  return (app as unknown as { safeStorage?: ISafeStorage }).safeStorage;
-}
-
-function isSafeStorageAvailable(app: App): boolean {
-  const safeStorage = getSafeStorage(app);
-  return safeStorage !== undefined && safeStorage.isAvailable();
-}
-
-export async function encryptString(app: App, plainText: string): Promise<string> {
-  const safeStorage = getSafeStorage(app);
-  if (!plainText) {
-    return "";
-  }
-  if (!isSafeStorageAvailable(app)) {
-    console.warn("[FastSync] SafeStorage is not available, storing token in plain text");
-    return plainText;
-  }
-  const encrypted = await safeStorage!.encrypt(plainText);
-  return ENCRYPTED_PREFIX + encrypted;
-}
-
-export async function decryptString(app: App, encryptedText: string): Promise<string> {
-  const safeStorage = getSafeStorage(app);
-  if (!encryptedText) {
-    return "";
-  }
-  if (!encryptedText.startsWith(ENCRYPTED_PREFIX)) {
-    return encryptedText;
-  }
-  if (!isSafeStorageAvailable(app)) {
-    console.warn("[FastSync] SafeStorage is not available, cannot decrypt token");
-    return "";
-  }
-  const encrypted = encryptedText.slice(ENCRYPTED_PREFIX.length);
-  try {
-    return await safeStorage!.decrypt(encrypted);
-  } catch (error) {
-    console.error("[FastSync] Failed to decrypt token:", error);
-    return "";
-  }
-}
 
 /**
  *

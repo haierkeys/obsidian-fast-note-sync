@@ -17,7 +17,11 @@ const ERROR_SYNC_CONFLICT = 530
 // WebSocket 连接常量
 const RECONNECT_BASE_DELAY = 3000 // 重连基础延迟 (毫秒)
 const CONNECTION_CHECK_INTERVAL = 3000 // 连接检查间隔 (毫秒)
-const WS_COUNT_STORAGE_KEY = "fast-note-sync-ws-count"
+
+function getWsCountStorageKey(plugin: FastSync): string {
+  const vaultName = plugin.app.vault.getName();
+  return `fns-${vaultName}-wsCount`;
+}
 
 export class WebSocketClient {
   public ws: WebSocket
@@ -42,7 +46,34 @@ export class WebSocketClient {
     this.plugin = plugin
 
     // Load count from local storage
-    const storedCount = localStorage.getItem(WS_COUNT_STORAGE_KEY)
+    const storageKey = getWsCountStorageKey(this.plugin);
+    let storedCount = localStorage.getItem(storageKey);
+
+    // 迁移逻辑：如果新键无值，尝试按顺序读取旧键
+    if (storedCount === null) {
+      const vaultName = this.plugin.app.vault.getName();
+      // 1. 尝试上一个格式: fast-note-sync-[Vault]-wsCount
+      const prevKey1 = `fast-note-sync-${vaultName}-wsCount`;
+      let oldValue = localStorage.getItem(prevKey1);
+
+      // 2. 尝试更早的格式: fast-note-sync-[Vault]-ws-count
+      if (oldValue === null) {
+        const prevKey2 = `fast-note-sync-${vaultName}-ws-count`;
+        oldValue = localStorage.getItem(prevKey2);
+      }
+
+      // 3. 尝试最初始格式: fast-note-sync-ws-count
+      if (oldValue === null) {
+        const oldKey = "fast-note-sync-ws-count";
+        oldValue = localStorage.getItem(oldKey);
+      }
+
+      if (oldValue !== null) {
+        storedCount = oldValue;
+        localStorage.setItem(storageKey, storedCount);
+      }
+    }
+
     this.count = storedCount ? parseInt(storedCount) : 0
 
     // Register default file sync handler
@@ -95,7 +126,7 @@ export class WebSocketClient {
       const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count);
       this.ws = new WebSocket(wsUrl)
       this.count++
-      localStorage.setItem(WS_COUNT_STORAGE_KEY, this.count.toString())
+      localStorage.setItem(getWsCountStorageKey(this.plugin), this.count.toString())
 
       this.ws.onerror = (error) => {
         dump("WebSocket error:", {

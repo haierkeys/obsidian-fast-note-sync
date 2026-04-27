@@ -1,7 +1,7 @@
 import { Plugin, WorkspaceLeaf, Platform, addIcon } from "obsidian";
 
-import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice } from "./lib/helps";
-import { SettingTab, PluginSettings, DEFAULT_SETTINGS, encryptString, decryptString } from "./setting";
+import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, encryptString, decryptString, loadApiToken, saveApiToken } from "./lib/helps";
+import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { ShareIndicatorManager } from "./lib/share_indicator_manager";
 import { FolderSnapshotManager } from "./lib/folder_snapshot_manager";
@@ -375,9 +375,15 @@ export default class FastSync extends Plugin {
     const data = await this.loadData()
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data)
 
-    // 解密存储的 apiToken
-    if (this.settings.apiToken) {
-      this.settings.apiToken = await decryptString(this.app, this.settings.apiToken);
+    let hasMigration = false
+
+    // 1. 处理 API Token (多级存储支持：SecretStorage > LocalStorage > data.json)
+    const apiToken = await loadApiToken(this.app, this, data?.apiToken);
+    this.settings.apiToken = apiToken;
+
+    // 如果原始 data.json 中存有 apiToken，标记迁移以触发后续的清理保存
+    if (data && data.apiToken) {
+      hasMigration = true;
     }
 
     if (!this.settings.vault) {
@@ -385,7 +391,7 @@ export default class FastSync extends Plugin {
     }
 
     // 数据迁移与清理：统一规则格式为 JSON
-    let hasMigration = false
+
     // 1. 处理同步排除文件夹 (syncExcludeFolders)
     const pluginSelfDir = getPluginDir(this);
     const internalExcludes = this.localStorageManager.getInternalExcludes();
@@ -509,15 +515,16 @@ export default class FastSync extends Plugin {
 
     this.localStorageManager.setInternalExcludes(internalRules);
 
+    // 从 settings 副本中移除 apiToken，确保其不被存入 data.json
+    const { apiToken, ...restSettings } = this.settings;
+
     const settingsToSave = {
-      ...this.settings,
+      ...restSettings,
       syncExcludeFolders: stringifyRules(externalRules)
     };
 
-    // 加密存储 apiToken
-    if (settingsToSave.apiToken) {
-      settingsToSave.apiToken = await encryptString(this.app, settingsToSave.apiToken);
-    }
+    // 将 apiToken 独立存入安全存储 (SecretStorage 或 LocalStorage)
+    await saveApiToken(this.app, this, apiToken || "");
 
     await this.saveData(settingsToSave)
   }

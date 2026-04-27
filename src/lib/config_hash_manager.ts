@@ -28,7 +28,7 @@ export class ConfigHashManager {
         this.plugin = plugin;
         // 根据仓库名生成唯一的存储键
         const vaultName = this.plugin.app.vault.getName();
-        this.storageKey = `fast-note-sync-config-hash-map-${vaultName}`;
+        this.storageKey = `fns-${vaultName}-configHashMap`;
     }
 
     /**
@@ -189,9 +189,34 @@ export class ConfigHashManager {
      */
     private loadFromStorage(): boolean {
         try {
-            const data = localStorage.getItem(this.storageKey);
+            let data = localStorage.getItem(this.storageKey);
+
+            // 迁移逻辑：如果新键无数据，尝试读取旧键
             if (!data) {
-                return false;
+                const vaultName = this.plugin.app.vault.getName();
+
+                // 1. 尝试上一个格式: fast-note-sync-[Vault]-configHashMap
+                const prevKey1 = `fast-note-sync-${vaultName}-configHashMap`;
+                data = localStorage.getItem(prevKey1);
+
+                // 2. 尝试更早格式: fast-note-sync-[Vault]-config-hash-map
+                if (!data) {
+                    const prevKey2 = `fast-note-sync-${vaultName}-config-hash-map`;
+                    data = localStorage.getItem(prevKey2);
+                }
+
+                // 3. 尝试最原始格式: fast-note-sync-config-hash-map-[Vault]
+                if (!data) {
+                    const oldKey = `fast-note-sync-config-hash-map-${vaultName}`;
+                    data = localStorage.getItem(oldKey);
+                }
+
+                if (data) {
+                    dump("ConfigHashManager: 发现旧版配置哈希数据，执行迁移");
+                    localStorage.setItem(this.storageKey, data);
+                } else {
+                    return false;
+                }
             }
 
             const parsed = JSON.parse(data);

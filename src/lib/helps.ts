@@ -1,4 +1,4 @@
-import { Notice, moment, normalizePath, TFolder, Platform } from "obsidian";
+import { Notice, moment, normalizePath, TFolder, Platform, App } from "obsidian";
 
 import FastSync from "../main";
 
@@ -612,4 +612,164 @@ export function showSyncNotice(message: string, duration: number = 2500): SyncNo
       startHide();
     }
   };
+}
+
+/**
+ * =============================================================================
+ * 加密相关 (Encryption)
+ * =============================================================================
+ */
+
+interface ISafeStorage {
+  isAvailable(): boolean;
+  encrypt(plaintext: string): Promise<string>;
+  decrypt(encrypted: string): Promise<string>;
+}
+
+const ENCRYPTED_PREFIX = "encrypted:";
+
+function getSafeStorage(app: App): ISafeStorage | undefined {
+  return (app as unknown as { safeStorage?: ISafeStorage }).safeStorage;
+}
+
+function isSafeStorageAvailable(app: App): boolean {
+  // Mobile platforms don't support safeStorage but might support secretStorage
+  if (Platform.isMobile) return false;
+  const safeStorage = getSafeStorage(app);
+  return safeStorage !== undefined && safeStorage.isAvailable();
+}
+
+/**
+ * 检查 Obsidian 原生 SecretStorage (Keychain) 是否可用
+ */
+export function isSecretStorageAvailable(app: App): boolean {
+  return (app as any).secretStorage !== undefined;
+}
+
+/**
+ * 保存 ApiToken：优先使用 SecretStorage (Keychain)，不支持则回退到 LocalStorage
+ */
+export async function saveApiToken(app: App, plugin: FastSync, token: string): Promise<void> {
+  const isAvailable = isSecretStorageAvailable(app);
+  dump(`[ApiToken] Saving token (length: ${token?.length}), SecretStorage available: ${isAvailable}`);
+
+  if (isAvailable) {
+    try {
+      const res = (app as any).secretStorage.setSecret("fns-api-token", token);
+      if (res instanceof Promise) await res;
+      dump("[ApiToken] Successfully saved to SecretStorage (fns-api-token)");
+      
+      // 成功存入 Keychain 后，清空 LocalStorage 中的备份
+      plugin.localStorageManager.setMetadata("apiToken", "");
+      return;
+    } catch (e) {
+      dump("[ApiToken] SecretStorage save failed, falling back to LocalStorage", e);
+    }
+  }
+
+  // 回退到 LocalStorage (加密存储)
+  const encrypted = await encryptString(app, token);
+  plugin.localStorageManager.setMetadata("apiToken", encrypted);
+  dump("[ApiToken] Saved to LocalStorage (encrypted)");
+}
+
+/**
+ * 获取 ApiToken：依次尝试 SecretStorage、LocalStorage 和 data.json (迁移)
+ */
+export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: string): Promise<string> {
+  // 1. 尝试从 SecretStorage (Keychain) 获取
+  if (isSecretStorageAvailable(app)) {
+    try {
+      // 优先尝试新格式 fns-api-token
+      let tokenPromise = (app as any).secretStorage.getSecret("fns-api-token");
+      let token = tokenPromise instanceof Promise ? await tokenPromise : tokenPromise;
+      
+      // 如果没有，尝试旧格式 fns-apiToken 并迁移
+      if (!token) {
+        let oldTokenPromise = (app as any).secretStorage.getSecret("fns-apiToken");
+        token = oldTokenPromise instanceof Promise ? await oldTokenPromise : oldTokenPromise;
+        
+        if (token) {
+          dump("[ApiToken] Found old SecretStorage ID (fns-apiToken), migrating...");
+          const res = (app as any).secretStorage.setSecret("fns-api-token", token);
+          if (res instanceof Promise) await res;
+          try { (app as any).secretStorage.setSecret("fns-apiToken", ""); } catch(e) {}
+        }
+      }
+      
+      if (token) {
+        dump(`[ApiToken] Loaded from SecretStorage (length: ${token.length})`);
+        return token;
+      }
+    } catch (e) {
+      dump("[ApiToken] SecretStorage load failed", e);
+    }
+  }
+
+  // 2. 尝试从 LocalStorage 获取
+  const storageToken = plugin.localStorageManager.getMetadata("apiToken");
+  if (storageToken) {
+    dump("[ApiToken] Found token in LocalStorage, decrypting...");
+    const plainToken = await decryptString(app, storageToken);
+    if (plainToken) {
+      // 自动迁移到 SecretStorage
+      if (isSecretStorageAvailable(app)) {
+        await saveApiToken(app, plugin, plainToken);
+      }
+      return plainToken;
+    }
+  }
+
+  // 3. 尝试从 data.json 获取
+  if (dataJsonToken) {
+    dump("[ApiToken] Found token in data.json (migration), decrypting...");
+    const plainToken = await decryptString(app, dataJsonToken);
+    if (plainToken) {
+      await saveApiToken(app, plugin, plainToken);
+      return plainToken;
+    }
+  }
+
+  dump("[ApiToken] No token found in any storage");
+  return "";
+}
+
+/**
+ * 使用 Obsidian SafeStorage API 加密字符串
+ */
+export async function encryptString(app: App, plainText: string): Promise<string> {
+  const safeStorage = getSafeStorage(app);
+  if (!plainText) {
+    return "";
+  }
+  if (!isSafeStorageAvailable(app)) {
+    console.warn("[FastSync] SafeStorage is not available, storing token in plain text");
+    return plainText;
+  }
+  const encrypted = await safeStorage!.encrypt(plainText);
+  return ENCRYPTED_PREFIX + encrypted;
+}
+
+/**
+ * 使用 Obsidian SafeStorage API 解密字符串
+ */
+export async function decryptString(app: App, encryptedText: string): Promise<string> {
+  const safeStorage = getSafeStorage(app);
+  if (!encryptedText) {
+    return "";
+  }
+  if (!encryptedText.startsWith(ENCRYPTED_PREFIX)) {
+    return encryptedText;
+  }
+  if (!isSafeStorageAvailable(app)) {
+    console.warn("[FastSync] SafeStorage is not available, cannot decrypt token");
+    return "";
+  }
+  const encrypted = encryptedText.slice(ENCRYPTED_PREFIX.length);
+  try {
+    return await safeStorage!.decrypt(encrypted);
+  } catch (error) {
+    console.error("[FastSync] Failed to decrypt token:", error);
+    return "";
+  }
 }
