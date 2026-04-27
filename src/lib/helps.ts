@@ -641,6 +641,15 @@ function isSafeStorageAvailable(app: App): boolean {
 }
 
 /**
+ * 获取基于库唯一标识的安全存储键名，避免移动端多库冲突
+ */
+function getSecretKey(app: App): string {
+  const appId = (app as any).appId;
+  const suffix = appId ? appId : app.vault.getName();
+  return `fns-api-token-${suffix}`;
+}
+
+/**
  * 检查 Obsidian 原生 SecretStorage (Keychain) 是否可用
  */
 export function isSecretStorageAvailable(app: App): boolean {
@@ -656,10 +665,10 @@ export async function saveApiToken(app: App, plugin: FastSync, token: string): P
 
   if (isAvailable) {
     try {
-      const res = (app as any).secretStorage.setSecret("fns-api-token", token);
-      if (res instanceof Promise) await res;
-      dump("[ApiToken] Successfully saved to SecretStorage (fns-api-token)");
-      
+      const secretKey = getSecretKey(app);
+      app.secretStorage.setSecret(secretKey, token);
+      dump(`[ApiToken] Successfully saved to SecretStorage (${secretKey})`);
+
       // 成功存入 Keychain 后，清空 LocalStorage 中的备份
       plugin.localStorageManager.setMetadata("apiToken", "");
       return;
@@ -681,23 +690,21 @@ export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: s
   // 1. 尝试从 SecretStorage (Keychain) 获取
   if (isSecretStorageAvailable(app)) {
     try {
-      // 优先尝试新格式 fns-api-token
-      let tokenPromise = (app as any).secretStorage.getSecret("fns-api-token");
-      let token = tokenPromise instanceof Promise ? await tokenPromise : tokenPromise;
-      
-      // 如果没有，尝试旧格式 fns-apiToken 并迁移
+      const secretKey = getSecretKey(app);
+
+      // 优先尝试基于当前库的独立键名
+      let token = app.secretStorage.getSecret(secretKey);
+
+      // 如果没有，尝试较新的全局格式 fns-api-token 并迁移
       if (!token) {
-        let oldTokenPromise = (app as any).secretStorage.getSecret("fns-apiToken");
-        token = oldTokenPromise instanceof Promise ? await oldTokenPromise : oldTokenPromise;
-        
+        token = app.secretStorage.getSecret("fns-api-token");
         if (token) {
-          dump("[ApiToken] Found old SecretStorage ID (fns-apiToken), migrating...");
-          const res = (app as any).secretStorage.setSecret("fns-api-token", token);
-          if (res instanceof Promise) await res;
-          try { (app as any).secretStorage.setSecret("fns-apiToken", ""); } catch(e) {}
+          dump(`[ApiToken] Found global SecretStorage ID (fns-api-token), migrating to ${secretKey}...`);
+          app.secretStorage.setSecret(secretKey, token);
+          try { app.secretStorage.setSecret("fns-api-token", ""); } catch (e) { }
         }
       }
-      
+
       if (token) {
         dump(`[ApiToken] Loaded from SecretStorage (length: ${token.length})`);
         return token;
