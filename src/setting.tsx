@@ -128,7 +128,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   mobileStatusDotPosition: "menu-bar",
   showUpgradeBadge: true,
   concurrencyControlEnabled: false,
-  maxConcurrentUploads: 5,
+  maxConcurrentUploads: 10,
 }
 
 
@@ -813,7 +813,7 @@ export class SettingTab extends PluginSettingTab {
     const root = createRoot(apiSet)
     this.roots.push(root)
     // 预设一个小文本，防止被搜索逻辑判定为“空元素”而隐藏
-    apiSet.setText(" ") 
+    apiSet.setText(" ")
     setTimeout(() => {
       root.render(<SettingsView plugin={this.plugin} />)
     }, 50)
@@ -1122,7 +1122,7 @@ export class SettingTab extends PluginSettingTab {
     if (this.plugin.settings.concurrencyControlEnabled) {
       new Setting(set).setName($("setting.sync.max_concurrency")).addSlider((slider) =>
         slider
-          .setLimits(1, 50, 1)
+          .setLimits(1, 200, 1)
           .setValue(this.plugin.settings.maxConcurrentUploads)
           .setDynamicTooltip()
           .onChange(async (value) => {
