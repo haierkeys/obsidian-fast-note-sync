@@ -1,7 +1,7 @@
 import { Plugin, setIcon } from "obsidian";
 
 import { NoteModify, NoteDelete, NoteRename, StartupFullNotesForceOverSync, StartupFullNotesSync } from "./lib/fs";
-import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
+import { SettingTab, PluginSettings, DEFAULT_SETTINGS, decryptString, encryptString } from "./setting";
 import { WebSocketClient } from "./lib/websocket";
 import { $ } from "./lang/lang";
 
@@ -109,7 +109,13 @@ export default class FastSync extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+    const savedSettings = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, savedSettings);
+
+    // 解密存储的 apiToken
+    if (this.settings.apiToken) {
+      this.settings.apiToken = await decryptString(this.app, this.settings.apiToken);
+    }
   }
 
   async saveSettings() {
@@ -130,6 +136,13 @@ export default class FastSync extends Plugin {
     } else {
       this.websocket.unRegister()
     }
-    await this.saveData(this.settings)
+
+    // 加密存储 apiToken
+    const settingsToSave = { ...this.settings };
+    if (settingsToSave.apiToken) {
+      settingsToSave.apiToken = await encryptString(this.app, settingsToSave.apiToken);
+    }
+
+    await this.saveData(settingsToSave)
   }
 }
