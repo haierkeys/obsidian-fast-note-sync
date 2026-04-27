@@ -205,9 +205,32 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
 
 /**
  * 获取用户自定义的配置同步目录列表（过滤 . 开头的目录）
+ * 兼容旧版换行格式和新版 JSON 格式（如 [{"pattern":".agents/"}]）
  */
 export const getConfigSyncCustomDirs = function (plugin: FastSync): string[] {
   const setting = plugin.settings.configSyncOtherDirs || ""
+
+  // 兼容 JSON 格式（如 [{"pattern":".agents/","caseSensitive":false}]）
+  const trimmed = setting.trim()
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item: any) => {
+            if (typeof item === "string") return item.trim()
+            if (item && typeof item === "object" && item.pattern) return item.pattern.trim()
+            return ""
+          })
+          .filter((p: string) => p !== "" && p.startsWith("."))
+          .map((p: string) => p.replace(/\/+$/, "")) // 去掉尾部斜杠
+      }
+    } catch {
+      // 解析失败，回退到换行符格式
+    }
+  }
+
+  // 旧版逻辑：换行分隔
   return setting
     .split(/\r?\n/)
     .map((p) => p.trim())
