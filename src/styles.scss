@@ -209,6 +209,33 @@
   touch-action: pan-y; /* 允许垂直滚动，由 JS 处理水平滑动 1*/
 }
 
+/* 手机端及平板端强制设置项垂直排列，但排除开关按钮（保持在右侧） */
+/* Force vertical layout on mobile/tablet, excluding toggles (keep them on the right) */
+.is-mobile .fns-setting-tab-content .setting-item:not(.setting-item-heading):not(:has(.checkbox-container)) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  .setting-item-info {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .setting-item-control {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 0;
+
+    button,
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+    }
+  }
+}
+
 .fast-note-sync-support-info {
   margin: 1em 0;
   ul {
@@ -494,6 +521,14 @@
     width: 100%;
     justify-content: flex-start;
     padding: 0;
+
+    button,
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+    }
   }
 }
 .note-history-modal {

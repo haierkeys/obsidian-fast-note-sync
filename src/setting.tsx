@@ -1072,7 +1072,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_config_desc"))
 
-    new Setting(set).setName($("setting.sync.clear_remote")).setDesc($("setting.sync.clear_remote_desc")).addButton((btn) => {
+    new Setting(set).setName($("setting.sync.clear_remote")).setDesc($("setting.sync.clear_remote_desc")).setClass("fns-setting-item-vertical").addButton((btn) => {
       btn.setWarning().setButtonText($("setting.sync.clear_remote")).onClick(async () => {
         new ConfirmModal(
           this.app,
