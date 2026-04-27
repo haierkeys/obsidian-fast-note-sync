@@ -76,6 +76,10 @@ export interface PluginSettings {
   mobileStatusDotPosition: 'hidden' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'menu-bar'
   /** 是否显示更新红点提示（侧边栏及图标） */
   showUpgradeBadge: boolean
+  /** 是否开启并发上传控制 (ACK 模式) */
+  concurrencyControlEnabled: boolean
+  /** 最大并发上传数量 */
+  maxConcurrentUploads: number
 }
 
 
@@ -123,6 +127,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   updateSource: "github",
   mobileStatusDotPosition: "menu-bar",
   showUpgradeBadge: true,
+  concurrencyControlEnabled: false,
+  maxConcurrentUploads: 5,
 }
 
 
@@ -1101,6 +1107,33 @@ export class SettingTab extends PluginSettingTab {
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.pdf_state_desc"))
+
+    new Setting(set).setName($("setting.sync.concurrency_control")).addToggle((toggle) =>
+      toggle.setValue(this.plugin.settings.concurrencyControlEnabled).onChange(async (value) => {
+        if (value != this.plugin.settings.concurrencyControlEnabled) {
+          this.plugin.settings.concurrencyControlEnabled = value
+          this.display()
+          await this.plugin.saveSettings("concurrencyControlEnabled")
+        }
+      }),
+    )
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.concurrency_control_desc"))
+
+    if (this.plugin.settings.concurrencyControlEnabled) {
+      new Setting(set).setName($("setting.sync.max_concurrency")).addSlider((slider) =>
+        slider
+          .setLimits(1, 50, 1)
+          .setValue(this.plugin.settings.maxConcurrentUploads)
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            if (value != this.plugin.settings.maxConcurrentUploads) {
+              this.plugin.settings.maxConcurrentUploads = value
+              await this.plugin.saveSettings("maxConcurrentUploads")
+            }
+          }),
+      )
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.max_concurrency_desc"))
+    }
 
     new Setting(set).setName($("setting.sync.offline_delete")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.offlineDeleteSyncEnabled).onChange(async (value) => {

@@ -16,6 +16,7 @@ import { EventManager } from "./lib/events_manager";
 import { WebSocketClient } from "./lib/websocket";
 import { MenuManager } from "./lib/menu_manager";
 import { LockManager } from "./lib/lock_manager";
+import { ConcurrencyManager } from "./lib/concurrency_manager";
 import { handleSync } from "./lib/operator";
 import { HttpApiService } from "./lib/api";
 import { $ } from "./i18n/lang";
@@ -31,6 +32,7 @@ export default class FastSync extends Plugin {
   websocket: WebSocketClient // WebSocket 客户端
   configManager: ConfigManager // 配置管理器
   lockManager: LockManager // 锁管理器
+  concurrencyManager: ConcurrencyManager // 并发管理器
   eventManager: EventManager // 事件管理器
   menuManager: MenuManager // 菜单管理器
   private menuManagerInitialized: boolean = false // 防止 onLayoutReady 重复初始化 / Guard against duplicate onLayoutReady init
@@ -267,6 +269,9 @@ export default class FastSync extends Plugin {
 
     // 初始化锁管理器 (必须在事件管理器和操作模块之前)
     this.lockManager = new LockManager()
+
+    // 初始化并发管理器
+    this.concurrencyManager = new ConcurrencyManager(this)
 
 
     // 注册协议处理器 (核心功能)

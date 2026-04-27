@@ -60,6 +60,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
         plugin.pendingNoteDeleteAcks.delete(file.path)
         plugin.pendingNoteModifies.set(file.path, contentHash)
       }
+      await plugin.concurrencyManager.waitForSlot(file.path)
       plugin.websocket.SendMessage("NoteModify", data)
       dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
     } finally {
@@ -101,6 +102,7 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
         // Add to pending set only after message is actually buffered; remove hash only on NoteDeleteAck
         plugin.pendingNoteDeleteAcks.add(file.path)
       })
+      await plugin.concurrencyManager.waitForSlot(file.path)
 
       dump(`Note delete send`, file.path)
     } finally {
@@ -134,6 +136,7 @@ export const noteDeleteByPath = async function (filePath: string, plugin: FastSy
         // Add to pending set only after message is actually buffered; remove hash only on NoteDeleteAck
         plugin.pendingNoteDeleteAcks.add(filePath)
       })
+      await plugin.concurrencyManager.waitForSlot(filePath)
       dump(`Note delete by path send`, filePath)
     } finally {
       plugin.removeIgnoredFile(filePath)
@@ -179,6 +182,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
       // 将重命名信息推入 FIFO 队列，等待服务端 NoteRenameAck 后再更新 hashManager
       // Push rename info to FIFO queue, update hashManager only after server NoteRenameAck
       plugin.pendingNoteRenames.push({ oldPath: oldfile, newPath: file.path, contentHash })
+      await plugin.concurrencyManager.waitForSlot(file.path, true)
       plugin.websocket.SendMessage("NoteRename", data)
       dump(`Note rename send`, data.path, data.pathHash)
     } finally {
@@ -301,6 +305,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   // Store hash in pending map; hashManager is written only after NoteModifyAck arrives.
   // Overwrites any stale pending entry left by a previously interrupted noteModify.
   plugin.pendingNoteModifies.set(file.path, contentHash)
+  await plugin.concurrencyManager.waitForSlot(file.path)
   plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
     plugin.removeIgnoredFile(file.path)
     plugin.noteSyncTasks.completed++
@@ -517,6 +522,9 @@ export const receiveNoteModifyAck = function (data: { lastTime?: number; path?: 
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
     plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
   }
+  if (data.path) {
+    plugin.concurrencyManager.releaseSlot(data.path)
+  }
 }
 
 // 收到 NoteRenameAck，从 FIFO 队列取出待确认条目并更新 hashManager
@@ -534,6 +542,7 @@ export const receiveNoteRenameAck = function (data: { lastTime?: number }, plugi
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
     plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
   }
+  plugin.concurrencyManager.releaseFifoSlot()
 }
 
 // 收到 NoteDeleteAck，仅当路径仍在 pending set 中时才从 hashManager 移除

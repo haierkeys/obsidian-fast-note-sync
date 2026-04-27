@@ -9,11 +9,6 @@ import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 
 
-// 上传并发控制 - 手机端严格限制，电脑端适度放开
-const MAX_CONCURRENT_UPLOADS = Platform.isMobile ? 2 : 20
-let activeUploads = 0
-const uploadQueue: (() => Promise<void>)[] = []
-
 // 下载内存缓冲控制 (20MB 阈值防止 OOM)
 let currentDownloadBufferBytes = 0
 const MAX_DOWNLOAD_BUFFER_BYTES = 20 * 1024 * 1024
@@ -25,8 +20,6 @@ const activeUploadsMap = new Map<string, { cancelled: boolean }>()
  * 清理上传队列
  */
 export const clearUploadQueue = () => {
-  uploadQueue.length = 0
-  activeUploads = 0
 }
 
 export const BINARY_PREFIX_FILE_SYNC = "00"
@@ -79,6 +72,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
       // New upload supersedes delete intent; clear pending to prevent stale Ack from removing new hash
       plugin.pendingFileDeleteAcks.delete(file.path)
       plugin.pendingUploadHashes.set(file.path, contentHash)
+      await plugin.concurrencyManager.waitForSlot(file.path)
       plugin.websocket.SendMessage("FileUploadCheck", data)
       dump(`File modify check sent`, data.path, data.contentHash)
     } finally {
@@ -131,6 +125,7 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
         // Add to pending set only after message is actually buffered; remove hash only on FileDeleteAck
         plugin.pendingFileDeleteAcks.add(file.path)
       })
+      await plugin.concurrencyManager.waitForSlot(file.path)
       dump(`File delete send`, file.path)
     } finally {
       plugin.removeIgnoredFile(file.path)
@@ -173,6 +168,7 @@ export const fileDeleteByPath = async function (filePath: string, plugin: FastSy
         // Add to pending set only after message is actually buffered; remove hash only on FileDeleteAck
         plugin.pendingFileDeleteAcks.add(filePath)
       })
+      await plugin.concurrencyManager.waitForSlot(filePath)
       dump(`File delete by path send`, filePath)
     } finally {
       plugin.removeIgnoredFile(filePath)
@@ -230,6 +226,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
         // 将重命名推入待确认队列，等待服务端 FileRenameAck 后再更新 hashManager
         // Push rename to pending queue; hashManager will be updated after server FileRenameAck
         plugin.pendingFileRenames.push({ oldPath: oldfile, newPath: file.path, contentHash })
+        await plugin.concurrencyManager.waitForSlot(file.path, true)
         plugin.websocket.SendMessage("FileRename", data)
       }
     } finally {
@@ -407,28 +404,8 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     }
   }
 
-  // 并发控制逻辑
-  const processQueue = async () => {
-    while (activeUploads < MAX_CONCURRENT_UPLOADS && uploadQueue.length > 0) {
-      activeUploads++
-      const task = uploadQueue.shift()
-      if (task) {
-        ; (async () => {
-          try {
-            await task()
-          } finally {
-            activeUploads--
-            processQueue()
-          }
-        })()
-      } else {
-        activeUploads--
-      }
-    }
-  }
-
-  uploadQueue.push(runUpload)
-  processQueue()
+  // 任务立即执行，受外部 ConcurrencyManager 控制
+  runUpload()
 }
 
 /**
@@ -962,6 +939,7 @@ export const receiveFileRenameAck = function (data: { lastTime?: number }, plugi
     plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
     dump(`FileRenameAck: lastFileSyncTime updated to`, data.lastTime)
   }
+  plugin.concurrencyManager.releaseFifoSlot()
 }
 
 // 收到 FileUploadAck，将 pending hash 转移到正式 hashManager 并更新 lastFileSyncTime
@@ -981,6 +959,9 @@ export const receiveFileUploadAck = function (data: { lastTime?: number; path?: 
     plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
     dump(`FileUploadAck: lastFileSyncTime updated to`, data.lastTime)
   }
+  if (data.path) {
+    plugin.concurrencyManager.releaseSlot(data.path)
+  }
 }
 
 // 收到 FileDeleteAck，仅当路径仍在 pending set 中时才从 hashManager 移除
@@ -992,6 +973,9 @@ export const receiveFileDeleteAck = function (data: { lastTime?: number; path?: 
   }
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
     plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+  }
+  if (data.path) {
+    plugin.concurrencyManager.releaseSlot(data.path)
   }
 }
 

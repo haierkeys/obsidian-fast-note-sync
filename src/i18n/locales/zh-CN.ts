@@ -99,6 +99,10 @@ export default {
   "setting.sync.clear_remote_desc": "从远端服务清理笔记库的配置。此操作不可逆。",
   "setting.sync.clear_remote_confirm": "确认从远端服务清理笔记库的配置吗？\n该操作将物理删除远端服务存储的本仓库所有配置，且不可恢复。",
   "ui.status.clear_success": "远端配置已清理",
+  "setting.sync.concurrency_control": "并发上传控制",
+  "setting.sync.concurrency_control_desc": "开启后，将通过服务端回复的 ACK 消息精确控制上行队列，防止瞬间大量请求堆积导致客户端卡顿。默认关闭。",
+  "setting.sync.max_concurrency": "最大并发上传数量",
+  "setting.sync.max_concurrency_desc": "设置同时进行的上传任务数量，推荐范围 3-10。仅在开启并发上传控制时生效。",
 
   // --- setting.cloud ---
   "setting.cloud.title": "附件云预览",

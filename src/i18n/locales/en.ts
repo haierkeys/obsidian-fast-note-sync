@@ -99,6 +99,10 @@ export default {
   "setting.sync.clear_remote_desc": "Clear the vault configuration from the remote service. This action is irreversible.",
   "setting.sync.clear_remote_confirm": "Confirm clearing the vault configuration from the remote service?\nThis operation will physically delete all configurations of this vault stored on the remote service and cannot be recovered.",
   "ui.status.clear_success": "Remote configuration cleared",
+  "setting.sync.concurrency_control": "Concurrency Upload Control",
+  "setting.sync.concurrency_control_desc": "When enabled, the uplink queue will be precisely controlled via ACK messages from the server, preventing sudden bursts of requests from congesting the network. Default is disabled.",
+  "setting.sync.max_concurrency": "Max Concurrent Uploads",
+  "setting.sync.max_concurrency_desc": "Set the number of simultaneous upload tasks, recommended range 3-10. Only takes effect when Concurrency Upload Control is enabled.",
 
   // --- setting.cloud ---
   "setting.cloud.title": "Attachment Cloud Preview",

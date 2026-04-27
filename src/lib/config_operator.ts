@@ -97,12 +97,13 @@ export const configModify = async function (path: string, plugin: FastSync, even
     // Temporarily store hash in pending map, update configHashManager only after server SettingModifyAck
     plugin.pendingConfigDeleteAcks.delete(path)
     plugin.pendingConfigModifies.set(path, contentHash)
+    await plugin.concurrencyManager.waitForSlot(path)
     plugin.websocket.SendMessage("SettingModify", data)
 
     plugin.removeIgnoredConfigFile(path)
 }
 
-export const configDelete = function (path: string, plugin: FastSync, eventEnter: boolean = false) {
+export const configDelete = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.configSyncEnabled == false || plugin.settings.readonlySyncEnabled) return
     if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && !plugin.getWatchEnabled()) return
@@ -126,6 +127,7 @@ export const configDelete = function (path: string, plugin: FastSync, eventEnter
         // Add to pending set only after message is actually buffered; remove hash only on SettingDeleteAck
         plugin.pendingConfigDeleteAcks.add(path)
     })
+    await plugin.concurrencyManager.waitForSlot(path)
     plugin.removeIgnoredConfigFile(path)
 }
 
@@ -260,6 +262,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     // 将 hash 暂存到 pending map，等待服务端 SettingModifyAck 后再写入 configHashManager
     // Temporarily store hash in pending map, update configHashManager only after server SettingModifyAck
     plugin.pendingConfigModifies.set(data.path, contentHash)
+    await plugin.concurrencyManager.waitForSlot(data.path)
     plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
         plugin.configSyncTasks.completed++;
@@ -382,6 +385,9 @@ export const receiveConfigModifyAck = function (data: { lastTime?: number; path?
     if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
         plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
     }
+    if (data.path) {
+        plugin.concurrencyManager.releaseSlot(data.path)
+    }
 }
 
 /**
@@ -397,6 +403,9 @@ export const receiveConfigDeleteAck = function (data: { lastTime?: number; path?
     }
     if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {
         plugin.localStorageManager.setMetadata("lastConfigSyncTime", data.lastTime)
+    }
+    if (data.path) {
+        plugin.concurrencyManager.releaseSlot(data.path)
     }
 }
 

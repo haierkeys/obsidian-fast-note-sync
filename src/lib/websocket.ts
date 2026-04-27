@@ -182,6 +182,7 @@ export class WebSocketClient {
           this.checkReConnect()
         }
         clearUploadQueue()
+        this.plugin.concurrencyManager.clear()
         dump("Service close")
       }
       this.ws.onmessage = (event) => {
