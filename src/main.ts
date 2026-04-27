@@ -402,6 +402,7 @@ export default class FastSync extends Plugin {
     const pluginSelfDir = getPluginDir(this);
     const internalExcludes = this.localStorageManager.getInternalExcludes();
     const folderRules = parseRules(this.settings.syncExcludeFolders)
+    const initialFolderRulesStr = this.settings.syncExcludeFolders;
 
     // 迁移：如果 data.json 中包含插件目录规则，则移动到 LocalStorage
     if (data && data.syncExcludeFolders) {
@@ -417,14 +418,6 @@ export default class FastSync extends Plugin {
         hasMigration = true;
       }
     }
-
-    // 确保运行时始终包含内部排除规则
-    const currentRules = parseRules(this.settings.syncExcludeFolders);
-    const externalRules = currentRules.filter(r => !isPathMatch(r.pattern, pluginSelfDir));
-    const mergedRules = [...externalRules, ...internalExcludes];
-    this.settings.syncExcludeFolders = stringifyRules(mergedRules);
-
-    const initialFolderRulesCount = mergedRules.length
 
     // 迁移旧版配置排除 (configExclude)
     if (data && data.configExclude) {
@@ -451,14 +444,21 @@ export default class FastSync extends Plugin {
       });
     }
 
-    if (mergedRules.length !== initialFolderRulesCount || !this.settings.syncExcludeFolders.startsWith("[")) {
-      this.settings.syncExcludeFolders = stringifyRules(mergedRules)
-      hasMigration = true
+    // 确保运行时始终包含内部排除规则，并计算最终规则字符串
+    const externalRules = folderRules.filter(r => !isPathMatch(r.pattern, pluginSelfDir));
+    const mergedRules = [...externalRules, ...internalExcludes];
+    const finalFolderRulesStr = stringifyRules(mergedRules);
+
+    // 变更检测：规则内容变化 或 需要格式迁移 (非空且不以 [ 开头)
+    const needsFolderFormatMigration = initialFolderRulesStr && !initialFolderRulesStr.startsWith("[");
+    if (finalFolderRulesStr !== initialFolderRulesStr || needsFolderFormatMigration) {
+      this.settings.syncExcludeFolders = finalFolderRulesStr;
+      hasMigration = true;
     }
 
     // 2. 处理同步白名单 (syncExcludeWhitelist)
     const whitelistRules = parseRules(this.settings.syncExcludeWhitelist)
-    const initialWhitelistCount = whitelistRules.length
+    const initialWhitelistStr = this.settings.syncExcludeWhitelist;
 
     // 迁移旧版白名单 (configExcludeWhitelist)
     if (data && data.configExcludeWhitelist) {
@@ -472,14 +472,17 @@ export default class FastSync extends Plugin {
       hasMigration = true
     }
 
-    if (whitelistRules.length !== initialWhitelistCount || (this.settings.syncExcludeWhitelist && !this.settings.syncExcludeWhitelist.startsWith("["))) {
-      this.settings.syncExcludeWhitelist = stringifyRules(whitelistRules)
-      hasMigration = true
+    const finalWhitelistStr = stringifyRules(whitelistRules);
+    const needsWhitelistFormatMigration = initialWhitelistStr && !initialWhitelistStr.startsWith("[");
+    if (finalWhitelistStr !== initialWhitelistStr || needsWhitelistFormatMigration) {
+      this.settings.syncExcludeWhitelist = finalWhitelistStr;
+      hasMigration = true;
     }
 
     // 3. 处理扩展名排除 (syncExcludeExtensions) - 确保格式统一
-    if (this.settings.syncExcludeExtensions && !this.settings.syncExcludeExtensions.startsWith("[")) {
-      const extRules = parseRules(this.settings.syncExcludeExtensions)
+    const initialExtStr = this.settings.syncExcludeExtensions;
+    if (initialExtStr && !initialExtStr.startsWith("[")) {
+      const extRules = parseRules(initialExtStr)
       this.settings.syncExcludeExtensions = stringifyRules(extRules)
       hasMigration = true
     }
