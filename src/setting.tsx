@@ -6,6 +6,61 @@ import { KofiImage } from "./lib/icons";
 import { $ } from "./lang/lang";
 import FastSync from "./main";
 
+/**
+ * 加密存储相关的工具函数
+ * 使用 Obsidian SafeStorage API 加密敏感信息
+ */
+
+// 定义 SafeStorage 接口（Obsidian API 中 app.safeStorage 的类型）
+interface ISafeStorage {
+  isAvailable(): boolean;
+  encrypt(plaintext: string): Promise<string>;
+  decrypt(encrypted: string): Promise<string>;
+}
+
+// 标记加密字段的前缀
+const ENCRYPTED_PREFIX = "encrypted:";
+
+// 检查 SafeStorage 是否可用
+function isSafeStorageAvailable(app: App): boolean {
+  const safeStorage = (app as unknown as { safeStorage?: ISafeStorage }).safeStorage;
+  return safeStorage !== undefined && safeStorage.isAvailable();
+}
+
+// 加密字符串
+export async function encryptString(app: App, plainText: string): Promise<string> {
+  const safeStorage = (app as unknown as { safeStorage?: ISafeStorage }).safeStorage;
+  if (!isSafeStorageAvailable(app)) {
+    console.warn("SafeStorage is not available, storing token in plain text");
+    return plainText;
+  }
+  const encrypted = await safeStorage!.encrypt(plainText);
+  return ENCRYPTED_PREFIX + encrypted;
+}
+
+// 解密字符串
+export async function decryptString(app: App, encryptedText: string): Promise<string> {
+  const safeStorage = (app as unknown as { safeStorage?: ISafeStorage }).safeStorage;
+  if (!encryptedText) {
+    return "";
+  }
+  if (!encryptedText.startsWith(ENCRYPTED_PREFIX)) {
+    // 如果不是加密格式，直接返回（兼容旧数据）
+    return encryptedText;
+  }
+  if (!isSafeStorageAvailable(app)) {
+    console.warn("SafeStorage is not available, cannot decrypt token");
+    return "";
+  }
+  const encrypted = encryptedText.slice(ENCRYPTED_PREFIX.length);
+  try {
+    return await safeStorage!.decrypt(encrypted);
+  } catch (error) {
+    console.error("Failed to decrypt token:", error);
+    return "";
+  }
+}
+
 
 export interface PluginSettings {
   //是否自动上传

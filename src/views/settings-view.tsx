@@ -26,7 +26,8 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
   const clipboardReadTipTipSave = async (tip: string) => {
     plugin.clipboardReadTip = tip
 
-    await plugin.saveData(plugin.settings)
+    // 调用 saveSettings 而不是 saveData，确保 apiToken 被加密
+    await plugin.saveSettings()
     plugin.settingTab.display()
 
     setTimeout(() => {
