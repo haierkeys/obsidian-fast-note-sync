@@ -7,7 +7,7 @@ import { dump } from "./helps";
  */
 export class ConcurrencyManager {
     private plugin: FastSync;
-    private queue: { key: string; resolve: () => void }[] = [];
+    private queue: { key: string; priority: number; resolve: () => void }[] = [];
     private activeKeys: Set<string> = new Set();
     
     // 针对 FIFO 类型的 ACK（如重命名消息），记录其对应的 Key 顺序
@@ -21,8 +21,9 @@ export class ConcurrencyManager {
      * 等待并获取一个并发槽位
      * @param key 任务标识（通常是文件路径，或者是生成的随机 ID）
      * @param isFifo 是否是 FIFO 类型的 ACK (ACK 中不带 path)
+     * @param priority 优先级（数字越大优先级越高，用于实现先上传后下载等逻辑）
      */
-    public async waitForSlot(key: string, isFifo: boolean = false): Promise<void> {
+    public async waitForSlot(key: string, isFifo: boolean = false, priority: number = 0): Promise<void> {
         if (!this.plugin.settings.concurrencyControlEnabled) {
             return;
         }
@@ -30,14 +31,15 @@ export class ConcurrencyManager {
         if (this.activeKeys.size < this.plugin.settings.maxConcurrentUploads) {
             this.activeKeys.add(key);
             if (isFifo) this.fifoKeys.push(key);
-            dump(`Concurrency: Slot acquired immediately for ${key}. Active: ${this.activeKeys.size}`);
+            dump(`Concurrency: Slot acquired immediately for ${key} (Priority: ${priority}). Active: ${this.activeKeys.size}`);
             return;
         }
 
         return new Promise((resolve) => {
-            dump(`Concurrency: Queueing task ${key}. Current active: ${this.activeKeys.size}`);
+            dump(`Concurrency: Queueing task ${key} (Priority: ${priority}). Current active: ${this.activeKeys.size}`);
             this.queue.push({
                 key,
+                priority,
                 resolve: () => {
                     this.activeKeys.add(key);
                     if (isFifo) this.fifoKeys.push(key);
@@ -45,6 +47,8 @@ export class ConcurrencyManager {
                     resolve();
                 }
             });
+            // 按照优先级倒序排序（优先级数值越大的越靠前）
+            this.queue.sort((a, b) => b.priority - a.priority);
         });
     }
 

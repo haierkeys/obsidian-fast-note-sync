@@ -349,11 +349,11 @@
   "ui.log.action.FolderModifyAck": "e40a967c402e097da15f284bb1354541",
   "ui.log.action.FolderRenameAck": "ebcf22ff751de890790619ec1c720964",
   "ui.log.action.FolderDeleteAck": "cfb0732a5ec727669cfe7a05f04d4550",
-  "setting.sync.concurrency_control": "d9306f0cd1e52c5218992802623586c5",
-  "setting.sync.concurrency_control_desc": "b9b52567d16d28a783edf9ce6d201e06",
-  "setting.sync.max_concurrency": "06e9260e7cc1a4aa4f8423413f438405",
-  "setting.sync.max_concurrency_desc": "75a0f27dba24b7a9567cb692046bfb19",
+  "setting.sync.concurrency_control": "5a9d75001db51c473bf9da22c23d8c10",
+  "setting.sync.concurrency_control_desc": "6aaa97062f5f936dc9ccb33cb2291bf5",
+  "setting.sync.max_concurrency": "97e0a49c0d4c66caeb39128685e2cafd",
+  "setting.sync.max_concurrency_desc": "3586578b567b1b99477643b1edc66a74",
   "setting.sync.show_concurrency_indicator": "90f457cc1fa563f716eae3d37a771fdd",
-  "setting.sync.show_concurrency_indicator_desc": "7b01e6fd449126dac17b65ee65211bef",
-  "setting.sync.concurrency_limit_tip": "1df6c8a79602fb5a74bef39a0906f423"
+  "setting.sync.show_concurrency_indicator_desc": "f2a873b2b9dd0c82d4b4b7153255a317",
+  "setting.sync.concurrency_limit_tip": "e5e91208a7c6793e567e74ed2e361551"
 }

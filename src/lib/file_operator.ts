@@ -264,12 +264,20 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   const runUpload = async () => {
     // 标记该路径进入活跃上传状态
     activeUploadsMap.set(data.path, { cancelled: false });
-    await plugin.concurrencyManager.waitForSlot(data.path)
+    await plugin.concurrencyManager.waitForSlot(data.path, false, 10) // 优先级设为 10，优先处理上传
 
     try {
       // 延迟到任务排到时才读取文件内容, 减少内存积压
-      let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file)
-      if (!content) return;
+      let content: ArrayBuffer | null = null;
+      try {
+        content = await plugin.app.vault.readBinary(file)
+      } catch (e) {
+        dump(`Failed to read file for upload: ${data.path}`, e)
+      }
+      if (!content) {
+        plugin.concurrencyManager.releaseSlot(data.path)
+        return;
+      }
 
       const contentHash = await hashArrayBuffer(content)
       // 将 hash 暂存到 pending map，等待服务端 FileUploadAck 后再写入 hashManager
@@ -348,8 +356,9 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
           }
         )
 
-        // 如果被取消,立即退出循环
+        // 如果被取消,立即退出循环并释放槽位
         if (cancelled) {
+          plugin.concurrencyManager.releaseSlot(data.path)
           return;
         }
 
@@ -399,6 +408,9 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
           }
         }, 2000);
       }
+    } catch (e) {
+      dump(`Upload process error for ${data.path}`, e);
+      plugin.concurrencyManager.releaseSlot(data.path);
     } finally {
       // 任务结束（完成或取消/失败），移除活跃标记
       activeUploadsMap.delete(data.path);
@@ -440,12 +452,17 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     }
   }
 
-  // 下载内存缓冲控制：如果当前内存中待写盘的分块过多，由于下载是异步触发的，此处等待
-  while (currentDownloadBufferBytes > MAX_DOWNLOAD_BUFFER_BYTES) {
-    await sleep(200);
-  }
+  // 等待并发槽位，防止大量并发下载导致内存耗尽
+  const slotKey = `download_${data.path}`
+  await plugin.concurrencyManager.waitForSlot(slotKey, false, -10) // 优先级设为 -10，延后处理下载
 
-  dump(`Receive file sync update(download): `, data.path)
+  try {
+    // 下载内存缓冲控制：如果当前内存中待写盘的分块过多，由于下载是异步触发的，此处等待
+    while (currentDownloadBufferBytes > MAX_DOWNLOAD_BUFFER_BYTES) {
+      await sleep(200);
+    }
+
+    dump(`Receive file sync update(download): `, data.path)
   const tempKey = `temp_${data.path}`
   const tempSession = {
     path: data.path,
@@ -467,13 +484,17 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   plugin.websocket.SendMessage("FileChunkDownload", requestData)
   plugin.totalFilesToDownload++
 
-  // 更新同步时间
-  // Update sync time
-  if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
-    plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
-  }
+    // 更新同步时间
+    // Update sync time
+    if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
+      plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)
+    }
 
-  plugin.fileSyncTasks.completed++
+    plugin.fileSyncTasks.completed++
+  } catch (e) {
+    plugin.concurrencyManager.releaseSlot(slotKey)
+    throw e;
+  }
 }
 
 /**
@@ -852,6 +873,7 @@ export const receiveFileSyncRename = async function (data: any, plugin: FastSync
  * 完成文件下载
  */
 const handleFileChunkDownloadComplete = async function (session: FileDownloadSession, plugin: FastSync) {
+  const slotKey = `download_${session.path}`;
   try {
     const chunks: ArrayBuffer[] = []
     for (let i = 0; i < session.totalChunks; i++) {
@@ -924,9 +946,12 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     plugin.fileDownloadSessions.delete(session.sessionId)
     plugin.downloadedFilesCount++
   } catch (e) {
+    dump(`Error completing file download for ${session.path}`, e)
     const sessionSize = Array.from(session.chunks.values()).reduce((sum, c) => sum + c.byteLength, 0)
     currentDownloadBufferBytes -= sessionSize
     plugin.fileDownloadSessions.delete(session.sessionId)
+  } finally {
+    plugin.concurrencyManager.releaseSlot(slotKey)
   }
 }
 
