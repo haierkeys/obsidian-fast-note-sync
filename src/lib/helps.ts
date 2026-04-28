@@ -644,9 +644,7 @@ function isSafeStorageAvailable(app: App): boolean {
  * 获取基于库唯一标识的安全存储键名，避免移动端多库冲突
  */
 function getSecretKey(app: App): string {
-  const appId = (app as any).appId;
-  const suffix = appId ? appId : app.vault.getName();
-  return `fns-api-token-${suffix}`;
+  return `fns-api-token`;
 }
 
 /**
@@ -657,74 +655,59 @@ export function isSecretStorageAvailable(app: App): boolean {
 }
 
 /**
- * 保存 ApiToken：优先使用 SecretStorage (Keychain)，不支持则回退到 LocalStorage
+ * 保存 ApiToken：直接使用 LocalStorage 加密存储，并清理 Keychain 残留数据
  */
 export async function saveApiToken(app: App, plugin: FastSync, token: string): Promise<void> {
-  const isAvailable = isSecretStorageAvailable(app);
-  dump(`[ApiToken] Saving token (length: ${token?.length}), SecretStorage available: ${isAvailable}`);
+  dump(`[ApiToken] Saving token (length: ${token?.length}) to LocalStorage...`);
 
-  if (isAvailable) {
-    try {
-      const secretKey = getSecretKey(app);
-      app.secretStorage.setSecret(secretKey, token);
-      dump(`[ApiToken] Successfully saved to SecretStorage (${secretKey})`);
-
-      // 成功存入 Keychain 后，清空 LocalStorage 中的备份
-      plugin.localStorageManager.setMetadata("apiToken", "");
-      return;
-    } catch (e) {
-      dump("[ApiToken] SecretStorage save failed, falling back to LocalStorage", e);
-    }
-  }
-
-  // 回退到 LocalStorage (加密存储)
+  // 直接保存到 LocalStorage (加密存储)
   const encrypted = await encryptString(app, token);
   plugin.localStorageManager.setMetadata("apiToken", encrypted);
   dump("[ApiToken] Saved to LocalStorage (encrypted)");
-}
 
-/**
- * 获取 ApiToken：依次尝试 SecretStorage、LocalStorage 和 data.json (迁移)
- */
-export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: string): Promise<string> {
-  // 1. 尝试从 SecretStorage (Keychain) 获取
+  // 清理可能存在的 Keychain 遗留数据
   if (isSecretStorageAvailable(app)) {
     try {
       const secretKey = getSecretKey(app);
-
-      // 优先尝试基于当前库的独立键名
-      let token = app.secretStorage.getSecret(secretKey);
-
-      // 如果没有，尝试较新的全局格式 fns-api-token 并迁移
-      if (!token) {
-        token = app.secretStorage.getSecret("fns-api-token");
-        if (token) {
-          dump(`[ApiToken] Found global SecretStorage ID (fns-api-token), migrating to ${secretKey}...`);
-          app.secretStorage.setSecret(secretKey, token);
-          try { app.secretStorage.setSecret("fns-api-token", ""); } catch (e) { }
-        }
-      }
-
-      if (token) {
-        dump(`[ApiToken] Loaded from SecretStorage (length: ${token.length})`);
-        return token;
-      }
+      app.secretStorage.setSecret(secretKey, "");
     } catch (e) {
-      dump("[ApiToken] SecretStorage load failed", e);
+      // 忽略清理失败的异常
     }
   }
+}
 
-  // 2. 尝试从 LocalStorage 获取
+/**
+ * 获取 ApiToken：优先尝试 LocalStorage，之后尝试从 SecretStorage 迁移
+ */
+export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: string): Promise<string> {
+  // 1. 优先尝试从 LocalStorage 获取 (新策略)
   const storageToken = plugin.localStorageManager.getMetadata("apiToken");
   if (storageToken) {
     dump("[ApiToken] Found token in LocalStorage, decrypting...");
     const plainToken = await decryptString(app, storageToken);
     if (plainToken) {
-      // 自动迁移到 SecretStorage
-      if (isSecretStorageAvailable(app)) {
-        await saveApiToken(app, plugin, plainToken);
-      }
       return plainToken;
+    }
+  }
+
+  // 2. 尝试从 SecretStorage (Keychain) 获取 (旧数据迁移)
+  if (isSecretStorageAvailable(app)) {
+    try {
+      const secretKey = getSecretKey(app);
+      let token = app.secretStorage.getSecret(secretKey);
+
+      if (!token) {
+        token = app.secretStorage.getSecret("fns-api-token");
+      }
+
+      if (token) {
+        dump(`[ApiToken] Loaded from SecretStorage (legacy), migrating to LocalStorage...`);
+        // 迁移到 LocalStorage
+        await saveApiToken(app, plugin, token);
+        return token;
+      }
+    } catch (e) {
+      dump("[ApiToken] SecretStorage load failed", e);
     }
   }
 

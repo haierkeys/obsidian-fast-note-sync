@@ -1,6 +1,6 @@
 {
   "name": "Fast Note Sync",
-  "version": "1.24.4",
+  "version": "1.24.5",
   "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
   "main": "main.js",
   "scripts": {
@@ -36,6 +36,7 @@
     "@codemirror/view": "6.38.6",
     "file-type": "^19.6.0",
     "jszip": "^3.10.1",
+    "pinyin-pro": "^3.28.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },
