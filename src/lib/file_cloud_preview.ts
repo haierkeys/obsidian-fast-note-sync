@@ -552,7 +552,19 @@ export class FileCloudPreview {
     const { api, vault, apiToken, cloudPreviewEnabled, cloudPreviewTypeRestricted, cloudPreviewRemoteUrl } = this.plugin.settings;
     if (!cloudPreviewEnabled || !api || !apiToken) return null;
 
-    const vaultPath = await this.plugin.app.fileManager.getAvailablePathForAttachment(filePath, sourcePath);
+    // Use the link path as written in the markdown. processEmbed() has already
+    // verified that getFirstLinkpathDest(filePath, sourcePath) returns null
+    // (i.e. the file is not present locally — typically because
+    // cloudPreviewAutoDeleteLocal removed it after upload), so the only
+    // authoritative location of the file is the path the user wrote in the
+    // link. getAvailablePathForAttachment() must NOT be used here: it returns
+    // the *destination path for a NEW attachment* based on the user's
+    // attachment-folder configuration, not the actual storage path of an
+    // existing file. For embeds like ![[attachment/yuque/X.mp3]] it would
+    // typically discard the directory and return just "X.mp3" (or worse,
+    // produce a path under the note's folder), causing the resulting cloud
+    // URL to 404 on the server.
+    const vaultPath = filePath;
     const ext = this.getFileExtension(vaultPath);
     if (!ext) return null;
 
