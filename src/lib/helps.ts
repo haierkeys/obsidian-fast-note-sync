@@ -8,16 +8,15 @@ import FastSync from "../main";
  * Get the real plugin directory (handles manually renamed folders)
  */
 export const getPluginDir = function (plugin: FastSync): string {
-  return (plugin.manifest as any).dir || `${plugin.app.vault.configDir}/plugins/${plugin.manifest.id}`;
+  return (plugin.manifest as any).dir || `${plugin.app.vault.configDir}/plugins/${plugin.manifest.id}`
 }
-
 
 /**
  * 同步规则结构
  */
 export interface SyncRule {
-  pattern: string;
-  caseSensitive: boolean;
+  pattern: string
+  caseSensitive: boolean
 }
 
 /**
@@ -46,27 +45,27 @@ export const getFileName = function (path: string, includeExt: boolean = true): 
 export const getDirName = function (path: string): string {
   // 1. 统一将 Windows 分隔符 \ 替换为 /，方便统一处理
   // 2. 找到最后一个斜杠的位置
-  const lastSlashIndex = path.replace(/\\/g, "/").lastIndexOf("/");
+  const lastSlashIndex = path.replace(/\\/g, "/").lastIndexOf("/")
 
   // 如果找不到斜杠，说明路径只包含文件名（在当前目录下），返回空字符串
-  if (lastSlashIndex === -1) return "";
+  if (lastSlashIndex === -1) return ""
 
-  const parts = path.split("/");
-  return parts[0] || "";
-};
+  const parts = path.split("/")
+  return parts[0] || ""
+}
 
 /**
  * 获取目录名或空
  */
 export const getDirNameOrEmpty = function (path: string): string {
-  return path != undefined && path.includes(".") ? "" : path;
-};
+  return path != undefined && path.includes(".") ? "" : path
+}
 
 /**
  * 正则表达式缓存，避免重复编译
  * Regex cache to avoid redundant compilation
  */
-const regexCache = new Map<string, RegExp>();
+const regexCache = new Map<string, RegExp>()
 
 /**
  * 检查路径是否命中模式
@@ -80,133 +79,141 @@ export const isPathMatch = function (path: string, pattern: string, caseSensitiv
   // 1. 尝试正则匹配
   try {
     // 根据规则决定是否忽略大小写
-    const flags = caseSensitive ? "" : "i";
-    const cacheKey = `${flags}:${pattern}`;
-    let regex = regexCache.get(cacheKey);
+    const flags = caseSensitive ? "" : "i"
+    const cacheKey = `${flags}:${pattern}`
+    let regex = regexCache.get(cacheKey)
 
     if (!regex) {
       // 检查 pattern 是否已经包含前后斜杠 (如果是纯正则模式)
       // 这里保持原逻辑：强制从头匹配 ^
-      regex = new RegExp("^" + pattern, flags);
-      regexCache.set(cacheKey, regex);
+      regex = new RegExp("^" + pattern, flags)
+      regexCache.set(cacheKey, regex)
     }
 
-    if (regex.test(path)) return true;
+    if (regex.test(path)) return true
   } catch (e) {
     // 如果正则非法，则忽略错误，继续后续的路径匹配逻辑
   }
 
   // 2. 传统路径前缀匹配 (支持 Windows 分隔符兼容)
-  const normalizedPath = path.replace(/\\/g, "/");
-  const normalizedPattern = pattern.replace(/\\/g, "/");
+  const normalizedPath = path.replace(/\\/g, "/")
+  const normalizedPattern = pattern.replace(/\\/g, "/")
 
   // 如果不区分大小写，统一转小写进行匹配
-  const p1 = caseSensitive ? normalizedPath : normalizedPath.toLowerCase();
-  const p2 = caseSensitive ? normalizedPattern : normalizedPattern.toLowerCase();
+  const p1 = caseSensitive ? normalizedPath : normalizedPath.toLowerCase()
+  const p2 = caseSensitive ? normalizedPattern : normalizedPattern.toLowerCase()
 
-  const p = p2.endsWith("/") ? p2.slice(0, -1) : p2;
+  const p = p2.endsWith("/") ? p2.slice(0, -1) : p2
 
-  if (p1 === p) return true;
-  if (p1.startsWith(p + "/")) return true;
+  if (p1 === p) return true
+  if (p1.startsWith(p + "/")) return true
 
-  return false;
+  return false
 }
 
 /**
  * 规则解析结果缓存
  * Rule parsing result cache
  */
-const parsedRulesCache = new Map<string, SyncRule[]>();
+const parsedRulesCache = new Map<string, SyncRule[]>()
 
 /**
  * 将设置中的字符串解析为规则数组
  * 支持旧版 (换行分隔) 和新版 (JSON)
  */
 export const parseRules = function (setting: string): SyncRule[] {
-  if (!setting || setting.trim() === "") return [];
+  if (!setting || setting.trim() === "") return []
 
   // 尝试从缓存获取
-  const cached = parsedRulesCache.get(setting);
-  if (cached) return cached;
+  const cached = parsedRulesCache.get(setting)
+  if (cached) return cached
 
-  const trimmed = setting.trim();
-  let rules: SyncRule[] = [];
+  const trimmed = setting.trim()
+  let rules: SyncRule[] = []
 
+  let isJsonParsed = false
   // 检查是否为 JSON 格式
   if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
     try {
-      const parsed = JSON.parse(trimmed);
+      const parsed = JSON.parse(trimmed)
       if (Array.isArray(parsed)) {
-        rules = parsed.map(item => ({
-          pattern: typeof item === 'string' ? item : (item.pattern || ""),
-          caseSensitive: !!item.caseSensitive
-        })).filter(item => item.pattern !== "");
+        isJsonParsed = true
+        rules = parsed
+          .map((item) => ({
+            pattern: typeof item === "string" ? item : item.pattern || "",
+            caseSensitive: !!item.caseSensitive,
+          }))
+          .filter((item) => item.pattern !== "")
       }
     } catch (e) {
       // 解析失败，视为普通文本
     }
   }
 
-  // 如果 JSON 解析未产生结果，则走旧版逻辑：换行分隔
-  if (rules.length === 0) {
-    rules = trimmed.split(/\r?\n/)
-      .map(line => line.trim())
-      .filter(line => line !== "")
-      .map(line => ({ pattern: line, caseSensitive: false }));
+  // 如果不是合法的 JSON 格式，则走旧版逻辑：换行分隔
+  if (!isJsonParsed && rules.length === 0) {
+    rules = trimmed
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line !== "")
+      .map((line) => ({ pattern: line, caseSensitive: false }))
   }
 
   // 存入缓存
-  parsedRulesCache.set(setting, rules);
-  return rules;
+  parsedRulesCache.set(setting, rules)
+  return rules
 }
 
 /**
  * 将规则数组序列化为 JSON 字符串
  */
 export const stringifyRules = function (rules: SyncRule[]): string {
-  if (!rules || rules.length === 0) return "";
-  return JSON.stringify(rules);
+  if (!rules || rules.length === 0) return ""
+  return JSON.stringify(rules)
 }
 
 /**
  * 检查路径是否被排除 (针对笔记和附件)
  */
 export const isPathExcluded = function (path: string, plugin: FastSync): boolean {
-  const { syncExcludeFolders, syncExcludeExtensions, syncExcludeWhitelist } = plugin.settings;
-  const normalizedPath = path.replace(/\\/g, "/");
+  const { syncExcludeFolders, syncExcludeExtensions, syncExcludeWhitelist } = plugin.settings
+  const normalizedPath = path.replace(/\\/g, "/")
 
   // 0. 检查白名单 (优先级最高)
   if (syncExcludeWhitelist) {
-    const whitelist = parseRules(syncExcludeWhitelist);
-    if (whitelist.some(rule => isPathMatch(normalizedPath, rule.pattern, rule.caseSensitive))) {
-      return false;
+    const whitelist = parseRules(syncExcludeWhitelist)
+    if (whitelist.some((rule) => isPathMatch(normalizedPath, rule.pattern, rule.caseSensitive))) {
+      return false
     }
   }
 
   // 1. 检查扩展名排除
   if (syncExcludeExtensions) {
-    const extList = parseRules(syncExcludeExtensions);
-    const dotIndex = normalizedPath.lastIndexOf(".");
-    const ext = dotIndex !== -1 ? normalizedPath.substring(dotIndex).toLowerCase() : "";
+    const extList = parseRules(syncExcludeExtensions)
+    const dotIndex = normalizedPath.lastIndexOf(".")
+    const ext = dotIndex !== -1 ? normalizedPath.substring(dotIndex).toLowerCase() : ""
 
-    if (ext && extList.some(rule => {
-      const e = rule.pattern.toLowerCase();
-      // 扩展名匹配目前强制不区分大小写，因为系统文件扩展名通常被视为同类
-      return ext === e || (e.startsWith(".") && ext === e) || (!e.startsWith(".") && ext === "." + e);
-    })) {
-      return true;
+    if (
+      ext &&
+      extList.some((rule) => {
+        const e = rule.pattern.toLowerCase()
+        // 扩展名匹配目前强制不区分大小写，因为系统文件扩展名通常被视为同类
+        return ext === e || (e.startsWith(".") && ext === e) || (!e.startsWith(".") && ext === "." + e)
+      })
+    ) {
+      return true
     }
   }
 
   // 2. 检查目录/路径排除 (共享设置)
   if (syncExcludeFolders) {
-    const folderList = parseRules(syncExcludeFolders);
-    if (folderList.some(rule => isPathMatch(normalizedPath, rule.pattern, rule.caseSensitive))) {
-      return true;
+    const folderList = parseRules(syncExcludeFolders)
+    if (folderList.some((rule) => isPathMatch(normalizedPath, rule.pattern, rule.caseSensitive))) {
+      return true
     }
   }
 
-  return false;
+  return false
 }
 
 /**
@@ -218,25 +225,25 @@ const CONFIG_EXCLUDE_SET = new Set<string>()
  * 检查配置文件路径是否被排除
  */
 export const configIsPathExcluded = function (relativePath: string, plugin: FastSync): boolean {
-  const normalizedPath = relativePath.replace(/\\/g, "/");
-  const { syncExcludeFolders, syncExcludeWhitelist } = plugin.settings;
+  const normalizedPath = relativePath.replace(/\\/g, "/")
+  const { syncExcludeFolders, syncExcludeWhitelist } = plugin.settings
 
   // 0. 检查白名单 (优先级最高 - 使用共享设置)
   if (syncExcludeWhitelist) {
-    const whitelist = parseRules(syncExcludeWhitelist);
+    const whitelist = parseRules(syncExcludeWhitelist)
     if (whitelist.some((rule) => isPathMatch(normalizedPath, rule.pattern, rule.caseSensitive))) {
       return false
     }
   }
 
   // 1. 检查内部排除集合 (支持左匹配) - 重要逻辑保留
-  if (Array.from(CONFIG_EXCLUDE_SET).some(p => isPathMatch(normalizedPath, p, false))) {
+  if (Array.from(CONFIG_EXCLUDE_SET).some((p) => isPathMatch(normalizedPath, p, false))) {
     return true
   }
 
   // 2. 检查用户设置的排除 (使用共享设置)
   if (syncExcludeFolders) {
-    const rules = parseRules(syncExcludeFolders);
+    const rules = parseRules(syncExcludeFolders)
     if (rules.some((rule) => isPathMatch(normalizedPath, rule.pattern, rule.caseSensitive))) {
       return true
     }
@@ -246,15 +253,15 @@ export const configIsPathExcluded = function (relativePath: string, plugin: Fast
 }
 
 /**
- * 获取用户自定义的配置同步目录列表（过滤 . 开头的目录）
+ * 获取用户自定义的配置同步目录列表
  */
 export const getConfigSyncCustomDirs = function (plugin: FastSync): string[] {
   const setting = plugin.settings.configSyncOtherDirs || ""
   // 支持 JSON 格式（UI 保存格式）和旧版换行分隔格式
   const rules = parseRules(setting)
   return rules
-    .map((r) => r.pattern.trim().replace(/\/+$/, ""))  // 提取 pattern 并移除尾部斜杠
-    .filter((p) => p !== "" && p.startsWith("."))
+    .map((r) => r.pattern.trim().replace(/\/+$/, "")) // 提取 pattern 并移除尾部斜杠
+    .filter((p) => p !== "")
 }
 
 /**
@@ -268,8 +275,6 @@ export const isPathInConfigSyncDirs = function (path: string, plugin: FastSync):
   // 1. 检查是否为标准配置目录
   if (normalizedPath.startsWith(configDir + "/")) return true
 
-
-
   // 2. 检查是否为 localStorage 虚拟目录
   const storagePrefix = plugin.localStorageManager.syncPathPrefix
 
@@ -277,7 +282,8 @@ export const isPathInConfigSyncDirs = function (path: string, plugin: FastSync):
 
   // 3. 检查是否为用户定义的自定义同步目录
   const customDirs = getConfigSyncCustomDirs(plugin)
-  if (customDirs.some(dir => normalizedPath === dir || normalizedPath.startsWith(dir + "/"))) return true
+  dump(customDirs)
+  if (customDirs.some((dir) => normalizedPath === dir || normalizedPath.startsWith(dir + "/"))) return true
 
   return false
 }
@@ -319,7 +325,7 @@ export const hashContentAsync = async function (content: string): Promise<string
   let hash = 0
   const len = content.length
   // 每 256K 字符让出一次主线程
-  const yieldSize = 256 * 1024;
+  const yieldSize = 256 * 1024
 
   for (let i = 0; i < len; i++) {
     const char = content.charCodeAt(i)
@@ -327,7 +333,7 @@ export const hashContentAsync = async function (content: string): Promise<string
     hash &= hash
 
     if (i > 0 && i % yieldSize === 0) {
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }
   return String(hash)
@@ -367,7 +373,7 @@ export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<str
     hash &= hash
 
     if (i > 0 && i % yieldSize === 0) {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }
   const result = String(hash)
@@ -379,7 +385,7 @@ export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<str
  * 获取安全的 ctime (如果不存在则回退到 mtime)
  */
 export const getSafeCtime = function (stat: { ctime?: number; mtime?: number }): number {
-  return (stat.ctime && stat.ctime > 0) ? stat.ctime : (stat.mtime || Date.now());
+  return stat.ctime && stat.ctime > 0 ? stat.ctime : stat.mtime || Date.now()
 }
 
 /**
@@ -408,44 +414,44 @@ export const stringToDate = function (date: string): string {
 /**
  * 延迟执行 (让出主线程)
  */
-export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * 防抖函数
  */
 export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null
   return function (this: any, ...args: Parameters<T>) {
-    if (timeout) clearTimeout(timeout);
+    if (timeout) clearTimeout(timeout)
     timeout = setTimeout(() => {
-      func.apply(this, args);
-    }, wait);
-  };
+      func.apply(this, args)
+    }, wait)
+  }
 }
 
 /**
  * 等待文件夹变为空
  */
 export const waitForFolderEmpty = async function (path: string, plugin: FastSync, timeoutMs: number = 10000): Promise<boolean> {
-  const startTime = Date.now();
-  const normalizedPath = normalizePath(path);
+  const startTime = Date.now()
+  const normalizedPath = normalizePath(path)
 
   while (Date.now() - startTime < timeoutMs) {
-    const folder = plugin.app.vault.getAbstractFileByPath(normalizedPath);
+    const folder = plugin.app.vault.getAbstractFileByPath(normalizedPath)
     if (!(folder instanceof TFolder)) {
-      return true; // 文件夹已经不存在了，也算成功
+      return true // 文件夹已经不存在了，也算成功
     }
 
     if (folder.children.length === 0) {
-      return true; // 文件夹已空
+      return true // 文件夹已空
     }
 
-    dump(`Waiting for folder to be empty: ${normalizedPath} (${folder.children.length} items remaining)`);
-    await sleep(100); // 等待 200ms 后重试
+    dump(`Waiting for folder to be empty: ${normalizedPath} (${folder.children.length} items remaining)`)
+    await sleep(100) // 等待 200ms 后重试
   }
 
-  dump(`Timeout waiting for folder to be empty: ${normalizedPath}`);
-  return false;
+  dump(`Timeout waiting for folder to be empty: ${normalizedPath}`)
+  return false
 }
 
 /**
@@ -477,21 +483,20 @@ export function addRandomParam(url: string): string {
 export function generateUUID(): string {
   // 优先使用标准 API
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
+    return crypto.randomUUID()
   }
 
   // 兼容性回退方案 (使用 getRandomValues)
   if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
-    return (([1e7] as any) + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: any) =>
-      (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
-    );
+    return (([1e7] as any) + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: any) => (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16))
   }
 
   // 最后的兜底方案 (Math.random)
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 /**
@@ -544,30 +549,30 @@ export const showErrorDialog = function (message: string): void {
  * 格式化文件大小
  */
 export const formatFileSize = function (bytes: number): string {
-  if (typeof bytes !== 'number' || isNaN(bytes)) return "0 B";
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
+  if (typeof bytes !== "number" || isNaN(bytes)) return "0 B"
+  if (bytes === 0) return "0 B"
+  const k = 1024
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+}
 /**
  * 检查版本是否有更新 (忽略后缀如 -alpha)
  * Check if version is new (ignore suffixes like -alpha)
  */
 export const isVersionNew = function (current: string, latest: string): boolean {
-  if (!current || !latest) return false;
-  const cleanCurrent = current.split('-')[0];
-  const cleanLatest = latest.split('-')[0];
-  return cleanCurrent !== cleanLatest;
+  if (!current || !latest) return false
+  const cleanCurrent = current.split("-")[0]
+  const cleanLatest = latest.split("-")[0]
+  return cleanCurrent !== cleanLatest
 }
 
 /**
  * 通知接口定义
  */
 export interface SyncNotice {
-  setMessage(message: string): void;
-  hide(): void;
+  setMessage(message: string): void
+  hide(): void
 }
 
 /**
@@ -576,43 +581,43 @@ export interface SyncNotice {
  */
 export function showSyncNotice(message: string, duration: number = 2500): SyncNotice {
   if (!Platform.isMobile) {
-    const notice = new Notice(message, duration);
+    const notice = new Notice(message, duration)
     return {
       setMessage: (msg: string) => notice.setMessage(msg),
-      hide: () => notice.hide()
-    };
+      hide: () => notice.hide(),
+    }
   }
   // 移除已有 toast 避免堆叠 / Remove existing toast to avoid stacking
-  const existing = document.querySelector('.fns-mobile-toast');
-  if (existing) existing.remove();
+  const existing = document.querySelector(".fns-mobile-toast")
+  if (existing) existing.remove()
 
-  const toast = document.createElement('div');
-  toast.className = 'fns-mobile-toast';
-  toast.textContent = message;
-  document.body.appendChild(toast);
+  const toast = document.createElement("div")
+  toast.className = "fns-mobile-toast"
+  toast.textContent = message
+  document.body.appendChild(toast)
 
-  let hideTimeout: any = null;
+  let hideTimeout: any = null
 
   const startHide = () => {
     if (toast.parentElement) {
-      toast.classList.add('fns-mobile-toast-hiding');
-      toast.addEventListener('animationend', () => toast.remove(), { once: true });
+      toast.classList.add("fns-mobile-toast-hiding")
+      toast.addEventListener("animationend", () => toast.remove(), { once: true })
     }
-  };
+  }
 
   if (duration > 0) {
-    hideTimeout = setTimeout(startHide, duration);
+    hideTimeout = setTimeout(startHide, duration)
   }
 
   return {
     setMessage: (msg: string) => {
-      toast.textContent = msg;
+      toast.textContent = msg
     },
     hide: () => {
-      if (hideTimeout) clearTimeout(hideTimeout);
-      startHide();
-    }
-  };
+      if (hideTimeout) clearTimeout(hideTimeout)
+      startHide()
+    },
+  }
 }
 
 /**
@@ -622,54 +627,54 @@ export function showSyncNotice(message: string, duration: number = 2500): SyncNo
  */
 
 interface ISafeStorage {
-  isAvailable(): boolean;
-  encrypt(plaintext: string): Promise<string>;
-  decrypt(encrypted: string): Promise<string>;
+  isAvailable(): boolean
+  encrypt(plaintext: string): Promise<string>
+  decrypt(encrypted: string): Promise<string>
 }
 
-const ENCRYPTED_PREFIX = "encrypted:";
+const ENCRYPTED_PREFIX = "encrypted:"
 
 function getSafeStorage(app: App): ISafeStorage | undefined {
-  return (app as unknown as { safeStorage?: ISafeStorage }).safeStorage;
+  return (app as unknown as { safeStorage?: ISafeStorage }).safeStorage
 }
 
 function isSafeStorageAvailable(app: App): boolean {
   // Mobile platforms don't support safeStorage but might support secretStorage
-  if (Platform.isMobile) return false;
-  const safeStorage = getSafeStorage(app);
-  return safeStorage !== undefined && safeStorage.isAvailable();
+  if (Platform.isMobile) return false
+  const safeStorage = getSafeStorage(app)
+  return safeStorage !== undefined && safeStorage.isAvailable()
 }
 
 /**
  * 获取基于库唯一标识的安全存储键名，避免移动端多库冲突
  */
 function getSecretKey(app: App): string {
-  return `fns-api-token`;
+  return `fns-api-token`
 }
 
 /**
  * 检查 Obsidian 原生 SecretStorage (Keychain) 是否可用
  */
 export function isSecretStorageAvailable(app: App): boolean {
-  return (app as any).secretStorage !== undefined;
+  return (app as any).secretStorage !== undefined
 }
 
 /**
  * 保存 ApiToken：直接使用 LocalStorage 加密存储，并清理 Keychain 残留数据
  */
 export async function saveApiToken(app: App, plugin: FastSync, token: string): Promise<void> {
-  dump(`[ApiToken] Saving token (length: ${token?.length}) to LocalStorage...`);
+  dump(`[ApiToken] Saving token (length: ${token?.length}) to LocalStorage...`)
 
   // 直接保存到 LocalStorage (加密存储)
-  const encrypted = await encryptString(app, token);
-  plugin.localStorageManager.setMetadata("apiToken", encrypted);
-  dump("[ApiToken] Saved to LocalStorage (encrypted)");
+  const encrypted = await encryptString(app, token)
+  plugin.localStorageManager.setMetadata("apiToken", encrypted)
+  dump("[ApiToken] Saved to LocalStorage (encrypted)")
 
   // 清理可能存在的 Keychain 遗留数据
   if (isSecretStorageAvailable(app)) {
     try {
-      const secretKey = getSecretKey(app);
-      app.secretStorage.setSecret(secretKey, "");
+      const secretKey = getSecretKey(app)
+      app.secretStorage.setSecret(secretKey, "")
     } catch (e) {
       // 忽略清理失败的异常
     }
@@ -681,86 +686,86 @@ export async function saveApiToken(app: App, plugin: FastSync, token: string): P
  */
 export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: string): Promise<string> {
   // 1. 优先尝试从 LocalStorage 获取 (新策略)
-  const storageToken = plugin.localStorageManager.getMetadata("apiToken");
+  const storageToken = plugin.localStorageManager.getMetadata("apiToken")
   if (storageToken) {
-    dump("[ApiToken] Found token in LocalStorage, decrypting...");
-    const plainToken = await decryptString(app, storageToken);
+    dump("[ApiToken] Found token in LocalStorage, decrypting...")
+    const plainToken = await decryptString(app, storageToken)
     if (plainToken) {
-      return plainToken;
+      return plainToken
     }
   }
 
   // 2. 尝试从 SecretStorage (Keychain) 获取 (旧数据迁移)
   if (isSecretStorageAvailable(app)) {
     try {
-      const secretKey = getSecretKey(app);
-      let token = app.secretStorage.getSecret(secretKey);
+      const secretKey = getSecretKey(app)
+      let token = app.secretStorage.getSecret(secretKey)
 
       if (!token) {
-        token = app.secretStorage.getSecret("fns-api-token");
+        token = app.secretStorage.getSecret("fns-api-token")
       }
 
       if (token) {
-        dump(`[ApiToken] Loaded from SecretStorage (legacy), migrating to LocalStorage...`);
+        dump(`[ApiToken] Loaded from SecretStorage (legacy), migrating to LocalStorage...`)
         // 迁移到 LocalStorage
-        await saveApiToken(app, plugin, token);
-        return token;
+        await saveApiToken(app, plugin, token)
+        return token
       }
     } catch (e) {
-      dump("[ApiToken] SecretStorage load failed", e);
+      dump("[ApiToken] SecretStorage load failed", e)
     }
   }
 
   // 3. 尝试从 data.json 获取
   if (dataJsonToken) {
-    dump("[ApiToken] Found token in data.json (migration), decrypting...");
-    const plainToken = await decryptString(app, dataJsonToken);
+    dump("[ApiToken] Found token in data.json (migration), decrypting...")
+    const plainToken = await decryptString(app, dataJsonToken)
     if (plainToken) {
-      await saveApiToken(app, plugin, plainToken);
-      return plainToken;
+      await saveApiToken(app, plugin, plainToken)
+      return plainToken
     }
   }
 
-  dump("[ApiToken] No token found in any storage");
-  return "";
+  dump("[ApiToken] No token found in any storage")
+  return ""
 }
 
 /**
  * 使用 Obsidian SafeStorage API 加密字符串
  */
 export async function encryptString(app: App, plainText: string): Promise<string> {
-  const safeStorage = getSafeStorage(app);
+  const safeStorage = getSafeStorage(app)
   if (!plainText) {
-    return "";
+    return ""
   }
   if (!isSafeStorageAvailable(app)) {
-    console.warn("[FastSync] SafeStorage is not available, storing token in plain text");
-    return plainText;
+    console.warn("[FastSync] SafeStorage is not available, storing token in plain text")
+    return plainText
   }
-  const encrypted = await safeStorage!.encrypt(plainText);
-  return ENCRYPTED_PREFIX + encrypted;
+  const encrypted = await safeStorage!.encrypt(plainText)
+  return ENCRYPTED_PREFIX + encrypted
 }
 
 /**
  * 使用 Obsidian SafeStorage API 解密字符串
  */
 export async function decryptString(app: App, encryptedText: string): Promise<string> {
-  const safeStorage = getSafeStorage(app);
+  const safeStorage = getSafeStorage(app)
   if (!encryptedText) {
-    return "";
+    return ""
   }
   if (!encryptedText.startsWith(ENCRYPTED_PREFIX)) {
-    return encryptedText;
+    return encryptedText
   }
   if (!isSafeStorageAvailable(app)) {
-    console.warn("[FastSync] SafeStorage is not available, cannot decrypt token");
-    return "";
+    console.warn("[FastSync] SafeStorage is not available, cannot decrypt token")
+    return ""
   }
-  const encrypted = encryptedText.slice(ENCRYPTED_PREFIX.length);
+  const encrypted = encryptedText.slice(ENCRYPTED_PREFIX.length)
   try {
-    return await safeStorage!.decrypt(encrypted);
+    return await safeStorage!.decrypt(encrypted)
   } catch (error) {
-    console.error("[FastSync] Failed to decrypt token:", error);
-    return "";
+    console.error("[FastSync] Failed to decrypt token:", error)
+    return ""
   }
 }

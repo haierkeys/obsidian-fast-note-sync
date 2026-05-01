@@ -61,7 +61,7 @@ export interface PluginSettings {
   /** 配置同步 - 增加目录同步（多行） */
   configSyncOtherDirs: string
   /** 网络请求库类型 */
-  networkLibrary: 'fetch' | 'requestUrl'
+  networkLibrary: "fetch" | "requestUrl"
   /** 最小化自动暂停同步 */
   autoPauseMinimized: boolean
   /** 分享中的笔记路径缓存（vault-relative 格式）
@@ -71,9 +71,9 @@ export interface PluginSettings {
    * Whether to show share icon (native file explorer & Notebook Navigator) */
   showShareIcon: boolean
   /** 插件更新源 */
-  updateSource: 'github' | 'cnb'
+  updateSource: "github" | "cnb"
   /** 手机端状态点位置 */
-  mobileStatusDotPosition: 'hidden' | 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'menu-bar'
+  mobileStatusDotPosition: "hidden" | "top-right" | "top-left" | "bottom-right" | "bottom-left" | "menu-bar"
   /** 是否显示更新红点提示（侧边栏及图标） */
   showUpgradeBadge: boolean
   /** 是否开启并发上传控制 (ACK 模式) */
@@ -83,8 +83,6 @@ export interface PluginSettings {
   /** 是否在状态栏显示并发控制图标 */
   showConcurrencyIndicator: boolean
 }
-
-
 
 /**
  *
@@ -134,9 +132,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   showConcurrencyIndicator: true,
 }
 
-
-
-export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG";
+export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG"
 
 export class SettingTab extends PluginSettingTab {
   plugin: FastSync
@@ -189,16 +185,24 @@ export class SettingTab extends PluginSettingTab {
       contentEl.setAttribute("data-swipe-init", "true")
       let touchStartX = 0
       let touchStartY = 0
-      contentEl.addEventListener("touchstart", (e) => {
-        touchStartX = e.changedTouches[0].screenX
-        touchStartY = e.changedTouches[0].screenY
-      }, { passive: true })
+      contentEl.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartX = e.changedTouches[0].screenX
+          touchStartY = e.changedTouches[0].screenY
+        },
+        { passive: true },
+      )
 
-      contentEl.addEventListener("touchend", (e) => {
-        const touchEndX = e.changedTouches[0].screenX
-        const touchEndY = e.changedTouches[0].screenY
-        this.handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY)
-      }, { passive: true })
+      contentEl.addEventListener(
+        "touchend",
+        (e) => {
+          const touchEndX = e.changedTouches[0].screenX
+          const touchEndY = e.changedTouches[0].screenY
+          this.handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY)
+        },
+        { passive: true },
+      )
     }
 
     // 3. 根据搜索状态或标签页渲染内容
@@ -213,13 +217,27 @@ export class SettingTab extends PluginSettingTab {
       this.renderAllSettings(contentEl)
     } else {
       switch (this.activeTab) {
-        case "GENERAL": this.renderGeneralSettings(contentEl); break
-        case "DEBUG": this.renderDebugSettings(contentEl); break
-        case "REMOTE": this.renderRemoteSettings(contentEl); break
-        case "SYNC": this.renderSyncSettings(contentEl); break
-        case "CLOUD": this.renderCloudSettings(contentEl); break
-        case "DISPLAY": this.renderDisplaySettings(contentEl); break
-        case "SHORTCUT": this.renderShortcutSettings(contentEl); break
+        case "GENERAL":
+          this.renderGeneralSettings(contentEl)
+          break
+        case "DEBUG":
+          this.renderDebugSettings(contentEl)
+          break
+        case "REMOTE":
+          this.renderRemoteSettings(contentEl)
+          break
+        case "SYNC":
+          this.renderSyncSettings(contentEl)
+          break
+        case "CLOUD":
+          this.renderCloudSettings(contentEl)
+          break
+        case "DISPLAY":
+          this.renderDisplaySettings(contentEl)
+          break
+        case "SHORTCUT":
+          this.renderShortcutSettings(contentEl)
+          break
       }
     }
     this.lastViewMode = currentMode
@@ -246,7 +264,11 @@ export class SettingTab extends PluginSettingTab {
 
   private unmountRoots() {
     this.roots.forEach((root) => {
-      try { root.unmount() } catch (e) { /* ignore */ }
+      try {
+        root.unmount()
+      } catch (e) {
+        /* ignore */
+      }
     })
     this.roots = []
   }
@@ -278,9 +300,7 @@ export class SettingTab extends PluginSettingTab {
 
   private renderSearch(containerEl: HTMLElement) {
     const searchContainer = containerEl.createDiv("fns-setting-search-container")
-    const search = new SearchComponent(searchContainer)
-      .setPlaceholder($("setting.search.placeholder"))
-      .setValue(this.searchQuery)
+    const search = new SearchComponent(searchContainer).setPlaceholder($("setting.search.placeholder")).setValue(this.searchQuery)
 
     this.searchComponent = search
 
@@ -319,7 +339,7 @@ export class SettingTab extends PluginSettingTab {
       const name = item.querySelector(".setting-item-name")?.textContent?.toLowerCase() || ""
       const desc = item.querySelector(".setting-item-description")?.textContent?.toLowerCase() || ""
       // 对于其他 div (如 React 渲染的容器)，检查其整体文本内容
-      const otherText = item.classList.contains("setting-item") ? "" : (item.textContent?.toLowerCase() || "")
+      const otherText = item.classList.contains("setting-item") ? "" : item.textContent?.toLowerCase() || ""
 
       if (name.includes(query) || desc.includes(query) || otherText.includes(query)) {
         item.style.display = ""
@@ -418,17 +438,14 @@ export class SettingTab extends PluginSettingTab {
         .addOption("github", "GitHub")
         .addOption("cnb", "腾讯 CNB")
         .setValue(this.plugin.settings.updateSource || "github")
-        .onChange(async (value: 'github' | 'cnb') => {
+        .onChange(async (value: "github" | "cnb") => {
           this.plugin.settings.updateSource = value
           await this.plugin.saveSettings()
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.debug.update_source_desc"))
 
-    new Setting(set)
-      .setName($("setting.support.title"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag")
+    new Setting(set).setName($("setting.support.title")).setHeading().setClass("fast-note-sync-settings-tag")
 
     const supportSet = set.createDiv()
     const root = createRoot(supportSet)
@@ -480,11 +497,13 @@ export class SettingTab extends PluginSettingTab {
           clientName: this.plugin.localStorageManager.getMetadata("clientName"),
 
           serverConnectionStatus: this.plugin.websocket.isConnected() ? "connected" : "disconnected",
-          ...(this.plugin.websocket.isConnected() ? {
-            serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
-          } : {
-            serverLastConnectVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
-          }),
+          ...(this.plugin.websocket.isConnected()
+            ? {
+                serverVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+              }
+            : {
+                serverLastConnectVersion: this.plugin.localStorageManager.getMetadata("serverVersion"),
+              }),
 
           serverVersionIsNew: this.plugin.localStorageManager.getMetadata("serverVersionIsNew"),
           pluginVersionIsNew: this.plugin.localStorageManager.getMetadata("pluginVersionIsNew"),
@@ -496,17 +515,22 @@ export class SettingTab extends PluginSettingTab {
           platform: typeof process !== "undefined" ? process.platform : "unknown",
           arch: typeof process !== "undefined" ? process.arch : "unknown",
           userAgent: navigator.userAgent,
-          versions: typeof process !== "undefined" ? {
-            node: process.versions.node,
-            electron: process.versions.electron,
-            chrome: process.versions.chrome,
-            v8: process.versions.v8,
-          } : {},
-          capacitor: (window as any).Capacitor ? {
-            platform: (window as any).Capacitor.getPlatform(),
-            isNative: (window as any).Capacitor.isNative,
-          } : "not found",
-          obsidianVersion: (this.app as any).version || (navigator.userAgent.match(/obsidian\/([\d.]+)/)?.[1]) || "unknown",
+          versions:
+            typeof process !== "undefined"
+              ? {
+                  node: process.versions.node,
+                  electron: process.versions.electron,
+                  chrome: process.versions.chrome,
+                  v8: process.versions.v8,
+                }
+              : {},
+          capacitor: (window as any).Capacitor
+            ? {
+                platform: (window as any).Capacitor.getPlatform(),
+                isNative: (window as any).Capacitor.isNative,
+              }
+            : "not found",
+          obsidianVersion: (this.app as any).version || navigator.userAgent.match(/obsidian\/([\d.]+)/)?.[1] || "unknown",
         },
         pluginVersion: this.plugin.manifest.version,
       },
@@ -543,7 +567,7 @@ export class SettingTab extends PluginSettingTab {
           },
           $("ui.button.goto_feedback"),
           $("ui.button.cancel"),
-          false
+          false,
         ).open()
       }
 
@@ -573,11 +597,11 @@ export class SettingTab extends PluginSettingTab {
           $("ui.title.notice"),
           $("setting.debug.clear_time_desc"),
           async () => {
-            await resetSettingSyncTime(this.plugin);
+            await resetSettingSyncTime(this.plugin)
           },
           $("ui.button.confirm"),
           $("ui.button.cancel"),
-          false
+          false,
         ).open()
       }
 
@@ -589,11 +613,11 @@ export class SettingTab extends PluginSettingTab {
           $("ui.title.notice"),
           $("setting.debug.clear_hash_only_desc"),
           async () => {
-            await clearAllHashes(this.plugin);
+            await clearAllHashes(this.plugin)
           },
           $("ui.button.confirm"),
           $("ui.button.cancel"),
-          false
+          false,
         ).open()
       }
 
@@ -605,11 +629,11 @@ export class SettingTab extends PluginSettingTab {
           $("ui.title.notice"),
           $("setting.debug.clear_hash_desc"),
           async () => {
-            await rebuildAllHashes(this.plugin);
+            await rebuildAllHashes(this.plugin)
           },
           $("ui.button.confirm"),
           $("ui.button.cancel"),
-          false
+          false,
         ).open()
       }
 
@@ -628,7 +652,7 @@ export class SettingTab extends PluginSettingTab {
               this.plugin.isWaitClearSync = true
             }
             this.plugin.websocket.SendMessage("SettingClear", {
-              vault: this.plugin.settings.vault
+              vault: this.plugin.settings.vault,
             })
 
             // 备份需要保留的远端核心配置
@@ -653,11 +677,8 @@ export class SettingTab extends PluginSettingTab {
             this.plugin.settings.networkLibrary = backup.networkLibrary
 
             // 重新初始化某些依赖库路径的动态默认值
-            const defaultExcludes = [
-              `${getPluginDir(this.plugin)}/data.json`,
-              `${this.app.vault.configDir}/community-plugins.json`,
-            ];
-            this.plugin.settings.syncExcludeFolders = JSON.stringify(defaultExcludes.map(pattern => ({ pattern, caseSensitive: false })));
+            const defaultExcludes = [`${getPluginDir(this.plugin)}/data.json`, `${this.app.vault.configDir}/community-plugins.json`]
+            this.plugin.settings.syncExcludeFolders = JSON.stringify(defaultExcludes.map((pattern) => ({ pattern, caseSensitive: false })))
 
             // 确保客户端名称不被重置
             if (clientNameBackup) {
@@ -678,7 +699,7 @@ export class SettingTab extends PluginSettingTab {
           },
           $("ui.button.confirm"),
           $("ui.button.cancel"),
-          false
+          false,
         ).open()
       }
     }
@@ -698,8 +719,6 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDebugSettings(set: HTMLElement) {
-
-
     new Setting(set).setName($("setting.support.log")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.logEnabled).onChange(async (value) => {
         this.plugin.settings.logEnabled = value
@@ -713,7 +732,7 @@ export class SettingTab extends PluginSettingTab {
         .addOption("fetch", "fetch")
         .addOption("requestUrl", "requestUrl")
         .setValue(this.plugin.settings.networkLibrary)
-        .onChange(async (value: 'fetch' | 'requestUrl') => {
+        .onChange(async (value: "fetch" | "requestUrl") => {
           this.plugin.settings.networkLibrary = value
           await this.plugin.saveSettings()
         }),
@@ -735,8 +754,6 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderDisplaySettings(set: HTMLElement) {
-
-
     new Setting(set).setName($("setting.general.show_notice")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.isShowNotice).onChange(async (value) => {
         if (value != this.plugin.settings.isShowNotice) {
@@ -761,11 +778,11 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set).setName($("setting.general.show_upgrade_badge")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showUpgradeBadge).onChange(async (value) => {
         if (value != this.plugin.settings.showUpgradeBadge) {
-          this.plugin.settings.showUpgradeBadge = value;
-          await this.plugin.saveSettings();
-          this.plugin.menuManager?.refreshUpgradeBadge();
+          this.plugin.settings.showUpgradeBadge = value
+          await this.plugin.saveSettings()
+          this.plugin.menuManager?.refreshUpgradeBadge()
           // 触发设置变更事件以通知 React 视图 / Trigger settings change event to notify React views
-          (this.app.workspace as any).trigger('fns:settings-change');
+          ;(this.app.workspace as any).trigger("fns:settings-change")
         }
       }),
     )
@@ -814,12 +831,7 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderRemoteSettings(set: HTMLElement) {
-
-
-    new Setting(set)
-      .setDesc($("setting.remote.setup_desc"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag-desc")
+    new Setting(set).setDesc($("setting.remote.setup_desc")).setHeading().setClass("fast-note-sync-settings-tag-desc")
 
     const apiSet = set.createDiv()
     apiSet.addClass("fast-note-sync-settings")
@@ -890,14 +902,9 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderShortcutSettings(set: HTMLElement) {
-    new Setting(set)
-      .setDesc($("setting.shortcut.title_desc"))
-      .setHeading()
-      .setClass("fast-note-sync-settings-tag-desc")
+    new Setting(set).setDesc($("setting.shortcut.title_desc")).setHeading().setClass("fast-note-sync-settings-tag-desc")
 
-    const shortcutSetting = new Setting(set)
-      .setName($("setting.shortcut.open_log"))
-      .setDesc($("setting.shortcut.open_log_desc"))
+    const shortcutSetting = new Setting(set).setName($("setting.shortcut.open_log")).setDesc($("setting.shortcut.open_log_desc"))
 
     const displayShortcut = (val: string) => {
       if (!val) return ""
@@ -911,9 +918,7 @@ export class SettingTab extends PluginSettingTab {
     }
 
     shortcutSetting.addText((text) => {
-      text
-        .setPlaceholder("Ctrl+Shift+Q")
-        .setValue(displayShortcut(this.plugin.getCommandHotkey("open-sync-log")))
+      text.setPlaceholder("Ctrl+Shift+Q").setValue(displayShortcut(this.plugin.getCommandHotkey("open-sync-log")))
 
       text.inputEl.addEventListener("keydown", async (e: KeyboardEvent) => {
         e.preventDefault()
@@ -958,14 +963,10 @@ export class SettingTab extends PluginSettingTab {
       })
     })
 
-    const menuShortcutSetting = new Setting(set)
-      .setName($("setting.shortcut.open_menu"))
-      .setDesc($("setting.shortcut.open_menu_desc"))
+    const menuShortcutSetting = new Setting(set).setName($("setting.shortcut.open_menu")).setDesc($("setting.shortcut.open_menu_desc"))
 
     menuShortcutSetting.addText((text) => {
-      text
-        .setPlaceholder("Ctrl+Shift+W")
-        .setValue(displayShortcut(this.plugin.getCommandHotkey("open-sync-menu")))
+      text.setPlaceholder("Ctrl+Shift+W").setValue(displayShortcut(this.plugin.getCommandHotkey("open-sync-menu")))
 
       text.inputEl.addEventListener("keydown", async (e: KeyboardEvent) => {
         e.preventDefault()
@@ -1010,14 +1011,10 @@ export class SettingTab extends PluginSettingTab {
       })
     })
 
-    const settingShortcutSetting = new Setting(set)
-      .setName($("setting.shortcut.open_settings"))
-      .setDesc($("setting.shortcut.open_settings_desc"))
+    const settingShortcutSetting = new Setting(set).setName($("setting.shortcut.open_settings")).setDesc($("setting.shortcut.open_settings_desc"))
 
     settingShortcutSetting.addText((text) => {
-      text
-        .setPlaceholder("Ctrl+Shift+S")
-        .setValue(displayShortcut(this.plugin.getCommandHotkey("open-settings")))
+      text.setPlaceholder("Ctrl+Shift+S").setValue(displayShortcut(this.plugin.getCommandHotkey("open-settings")))
 
       text.inputEl.addEventListener("keydown", async (e: KeyboardEvent) => {
         e.preventDefault()
@@ -1064,7 +1061,6 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderSyncSettings(set: HTMLElement) {
-
     new Setting(set).setName($("setting.sync.auto_note")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.syncEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.syncEnabled) {
@@ -1086,31 +1082,33 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_config_desc"))
 
-    new Setting(set).setName($("setting.sync.clear_remote")).setDesc($("setting.sync.clear_remote_desc")).setClass("fns-setting-item-vertical").addButton((btn) => {
-      btn.setWarning().setButtonText($("setting.sync.clear_remote")).onClick(async () => {
-        new ConfirmModal(
-          this.app,
-          $("setting.sync.clear_remote"),
-          $("setting.sync.clear_remote_confirm"),
-          () => {
-            if (this.plugin.settings.configSyncEnabled) {
-              this.plugin.isWaitClearSync = true
-            }
-            this.plugin.websocket.SendMessage("SettingClear", {
-              vault: this.plugin.settings.vault
-            })
+    new Setting(set)
+      .setName($("setting.sync.clear_remote"))
+      .setDesc($("setting.sync.clear_remote_desc"))
+      .setClass("fns-setting-item-vertical")
+      .addButton((btn) => {
+        btn
+          .setWarning()
+          .setButtonText($("setting.sync.clear_remote"))
+          .onClick(async () => {
+            new ConfirmModal(this.app, $("setting.sync.clear_remote"), $("setting.sync.clear_remote_confirm"), () => {
+              if (this.plugin.settings.configSyncEnabled) {
+                this.plugin.isWaitClearSync = true
+              }
+              this.plugin.websocket.SendMessage("SettingClear", {
+                vault: this.plugin.settings.vault,
+              })
 
-            btn.setDisabled(true)
-            btn.setIcon("check")
-            setTimeout(() => {
-              btn.setDisabled(false)
-              btn.setIcon("")
-              btn.setButtonText($("setting.sync.clear_remote"))
-            }, 5000)
-          }
-        ).open()
+              btn.setDisabled(true)
+              btn.setIcon("check")
+              setTimeout(() => {
+                btn.setDisabled(false)
+                btn.setIcon("")
+                btn.setButtonText($("setting.sync.clear_remote"))
+              }, 5000)
+            }).open()
+          })
       })
-    })
 
     new Setting(set).setName($("setting.sync.pdf_state")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.pdfSyncEnabled).onChange(async (value) => {
@@ -1191,23 +1189,21 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_pause_minimized_desc"))
 
-
-
     this.addRuleSetting(
       set,
       $("setting.sync.exclude"),
       $("setting.sync.exclude_desc"),
       () => parseRules(this.plugin.settings.syncExcludeFolders),
       async (rules) => {
-        this.plugin.settings.syncExcludeFolders = JSON.stringify(rules);
-        await this.plugin.saveSettings();
+        this.plugin.settings.syncExcludeFolders = JSON.stringify(rules)
+        await this.plugin.saveSettings()
       },
       true,
       $("ui.button.add_rule"),
       $("setting.sync.exclude_placeholder"),
       $("ui.button.edit_exclude"),
-      true
-    );
+      true,
+    )
 
     this.addRuleSetting(
       set,
@@ -1215,14 +1211,14 @@ export class SettingTab extends PluginSettingTab {
       $("setting.sync.exclude_extensions_desc"),
       () => parseRules(this.plugin.settings.syncExcludeExtensions),
       async (rules) => {
-        this.plugin.settings.syncExcludeExtensions = JSON.stringify(rules);
-        await this.plugin.saveSettings();
+        this.plugin.settings.syncExcludeExtensions = JSON.stringify(rules)
+        await this.plugin.saveSettings()
       },
       false,
       $("ui.button.add_rule"),
       $("setting.sync.exclude_extensions_placeholder"),
-      $("ui.button.edit_extension")
-    );
+      $("ui.button.edit_extension"),
+    )
 
     this.addRuleSetting(
       set,
@@ -1230,15 +1226,15 @@ export class SettingTab extends PluginSettingTab {
       $("setting.sync.exclude_whitelist_desc"),
       () => parseRules(this.plugin.settings.syncExcludeWhitelist),
       async (rules) => {
-        this.plugin.settings.syncExcludeWhitelist = JSON.stringify(rules);
-        await this.plugin.saveSettings();
+        this.plugin.settings.syncExcludeWhitelist = JSON.stringify(rules)
+        await this.plugin.saveSettings()
       },
       true,
       $("ui.button.add_rule"),
       $("setting.sync.exclude_placeholder"),
       $("ui.button.edit_whitelist"),
-      true
-    );
+      true,
+    )
 
     this.addRuleSetting(
       set,
@@ -1246,17 +1242,16 @@ export class SettingTab extends PluginSettingTab {
       $("setting.sync.config_dirs_desc"),
       () => parseRules(this.plugin.settings.configSyncOtherDirs),
       async (rules) => {
-        this.plugin.settings.configSyncOtherDirs = JSON.stringify(rules);
-        await this.plugin.saveSettings();
+        this.plugin.settings.configSyncOtherDirs = JSON.stringify(rules)
+        await this.plugin.saveSettings()
       },
       false,
       $("ui.button.add_dir"),
       $("setting.sync.config_dirs_placeholder"),
       $("ui.button.edit_dir"),
       true,
-      { onlyFolders: true, onlyHidden: true, excludeConfigDir: true }
-    );
-
+      { onlyFolders: true, onlyHidden: false, excludeConfigDir: true },
+    )
 
     new Setting(set).setName($("setting.sync.sync_delay")).addText((text) =>
       text
@@ -1271,7 +1266,6 @@ export class SettingTab extends PluginSettingTab {
         }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.sync_delay_desc"))
-
 
     new Setting(set)
       .setName($("setting.sync.merge_strategy"))
@@ -1292,8 +1286,6 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private renderCloudSettings(set: HTMLElement) {
-
-
     new Setting(set).setName($("setting.cloud.title")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.cloudPreviewEnabled).onChange(async (value) => {
         if (value != this.plugin.settings.cloudPreviewEnabled) {
@@ -1345,76 +1337,41 @@ export class SettingTab extends PluginSettingTab {
   }
 
   private setDescWithBreaks(el: HTMLElement, desc: string) {
-    const descEl = el.querySelector(".setting-item-description") as HTMLElement;
+    const descEl = el.querySelector(".setting-item-description") as HTMLElement
     if (descEl) {
-      descEl.empty();
-      descEl.addClass("fns-setting-desc-markdown");
-      MarkdownRenderer.render(this.app, desc, descEl, "", this.plugin);
+      descEl.empty()
+      descEl.addClass("fns-setting-desc-markdown")
+      MarkdownRenderer.render(this.app, desc, descEl, "", this.plugin)
     }
   }
 
-  private addRuleSetting(
-    set: HTMLElement,
-    name: string,
-    desc: string,
-    getRules: () => SyncRule[],
-    onSave: (rules: SyncRule[]) => Promise<void>,
-    showCaseSensitive: boolean = true,
-    addButtonText?: string,
-    inputPlaceholder?: string,
-    editButtonText?: string,
-    usePathSuggest: boolean = false,
-    pathSuggestOptions: any = {}
-  ) {
-    const setting = new Setting(set).setName(name).setClass("fns-setting-item-vertical");
-    this.setDescWithBreaks(set.lastElementChild as HTMLElement, desc);
+  private addRuleSetting(set: HTMLElement, name: string, desc: string, getRules: () => SyncRule[], onSave: (rules: SyncRule[]) => Promise<void>, showCaseSensitive: boolean = true, addButtonText?: string, inputPlaceholder?: string, editButtonText?: string, usePathSuggest: boolean = false, pathSuggestOptions: any = {}) {
+    const setting = new Setting(set).setName(name).setClass("fns-setting-item-vertical")
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, desc)
 
-    const inlineContainer = setting.settingEl.createDiv("fns-rule-editor-inline");
-    inlineContainer.hide();
+    const inlineContainer = setting.settingEl.createDiv("fns-rule-editor-inline")
+    inlineContainer.hide()
 
-    const defaultEditBtnText = editButtonText || $("ui.button.edit_rule");
+    const defaultEditBtnText = editButtonText || $("ui.button.edit_rule")
 
     setting.addButton((btn) => {
       btn.setButtonText(defaultEditBtnText).onClick(() => {
         if (Platform.isMobile) {
           if (inlineContainer.isShown()) {
-            inlineContainer.hide();
-            btn.setButtonText(defaultEditBtnText);
-            inlineContainer.empty();
+            inlineContainer.hide()
+            btn.setButtonText(defaultEditBtnText)
+            inlineContainer.empty()
           } else {
-            inlineContainer.show();
-            btn.setButtonText($("ui.button.collapse") || "收起");
-            const editor = new RuleEditor(
-              inlineContainer,
-              this.app,
-              name,
-              "",
-              getRules(),
-              onSave,
-              showCaseSensitive,
-              addButtonText,
-              inputPlaceholder,
-              usePathSuggest,
-              pathSuggestOptions
-            );
-            editor.load();
-            editor.render();
+            inlineContainer.show()
+            btn.setButtonText($("ui.button.collapse") || "收起")
+            const editor = new RuleEditor(inlineContainer, this.app, name, "", getRules(), onSave, showCaseSensitive, addButtonText, inputPlaceholder, usePathSuggest, pathSuggestOptions)
+            editor.load()
+            editor.render()
           }
         } else {
-          new RuleEditorModal(
-            this.app,
-            name,
-            desc,
-            getRules(),
-            onSave,
-            showCaseSensitive,
-            addButtonText,
-            inputPlaceholder,
-            usePathSuggest,
-            pathSuggestOptions
-          ).open();
+          new RuleEditorModal(this.app, name, desc, getRules(), onSave, showCaseSensitive, addButtonText, inputPlaceholder, usePathSuggest, pathSuggestOptions).open()
         }
-      });
-    });
+      })
+    })
   }
 }

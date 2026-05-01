@@ -1,13 +1,14 @@
 import { TAbstractFile, Platform, TFile, TFolder, Menu, MenuItem, normalizePath } from "obsidian";
 
-import { folderModify, folderDelete, folderRename } from "./folder_operator";
-import { NoteHistoryModal } from "../views/note-history/history-modal";
 import { noteModify, noteDelete, noteRename, noteDeleteByPath } from "./note_operator";
 import { fileModify, fileDelete, fileRename, fileDeleteByPath } from "./file_operator";
+import { folderModify, folderDelete, folderRename } from "./folder_operator";
+import { NoteHistoryModal } from "../views/note-history/history-modal";
 import { dump, isPathInConfigSyncDirs } from "./helps";
+import { ShareModal } from "../views/share-modal";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
-import { ShareModal } from "../views/share-modal"
+
 
 export class EventManager {
   private plugin: FastSync
@@ -63,7 +64,7 @@ export class EventManager {
    * Stop all timers and clear task status
    */
   public stop() {
-    this.rawEventTimers.forEach(timer => clearTimeout(timer))
+    this.rawEventTimers.forEach((timer) => clearTimeout(timer))
     this.rawEventTimers.clear()
     this.pendingRenamePaths.clear()
   }
@@ -184,35 +185,37 @@ export class EventManager {
       try {
         if (file instanceof TFile) {
           //对比新文件名和旧文件名后缀是否一致，如果不一致，则认为是文件类型变更，需要发送文件删除和文件创建消息
-          const oldExt = oldFile.match(/\.([^.]+)$/)?.[1] ?? ''
+          const oldExt = oldFile.match(/\.([^.]+)$/)?.[1] ?? ""
           let isDiffFileType = file.extension !== oldExt
           if (isDiffFileType) {
             // 修复：rename 完成后旧路径的 TFile 已不存在，直接使用路径字符串避免空指针崩溃
             // Fix: TFile of old path no longer exists after rename completes, use path string to avoid null pointer crash
-            this.runWithDelay(oldFile, () => {
-              if (oldFile.endsWith(".md"))
-                noteDeleteByPath(oldFile, this.plugin)
-              else
-                fileDeleteByPath(oldFile, this.plugin)
-            }, 0)
+            this.runWithDelay(
+              oldFile,
+              () => {
+                if (oldFile.endsWith(".md")) noteDeleteByPath(oldFile, this.plugin)
+                else fileDeleteByPath(oldFile, this.plugin)
+              },
+              0,
+            )
 
-            this.runWithDelay(file.path, () => {
-              //如果新文件是markdown文件，则发送笔记创建消息，否则发送文件创建消息
-              if (file.path.endsWith(".md"))
-                noteModify(file, this.plugin, true)
-              else
-                fileModify(file, this.plugin, true)
-            }, 0)
-          }
-          else{
+            this.runWithDelay(
+              file.path,
+              () => {
+                //如果新文件是markdown文件，则发送笔记创建消息，否则发送文件创建消息
+                if (file.path.endsWith(".md")) noteModify(file, this.plugin, true)
+                else fileModify(file, this.plugin, true)
+              },
+              0,
+            )
+          } else {
             if (file.path.endsWith(".md")) {
               await noteRename(file, oldFile, this.plugin, true)
             } else {
               await fileRename(file, oldFile, this.plugin, true)
-            }            
+            }
           }
-        }
-         else if (file instanceof TFolder) {
+        } else if (file instanceof TFolder) {
           await folderRename(file, oldFile, this.plugin, true)
         }
       } finally {
@@ -233,7 +236,6 @@ export class EventManager {
   }
 
   private watchRaw = (path: string, ctx?: any) => {
-
     if (!path) return
 
     // 检查 WebSocket 认证状态
@@ -241,15 +243,18 @@ export class EventManager {
       return
     }
     if (this.plugin.settings.manualSyncEnabled || this.plugin.settings.readonlySyncEnabled) return
-
     // 路径安全性校验
     if (!isPathInConfigSyncDirs(path, this.plugin)) return
 
-    this.runWithDelay(path, () => {
-      if (this.plugin.configManager) {
-        this.plugin.configManager.handleRawEvent(normalizePath(path), true)
-      }
-    }, 300)
+    this.runWithDelay(
+      path,
+      () => {
+        if (this.plugin.configManager) {
+          this.plugin.configManager.handleRawEvent(normalizePath(path), true)
+        }
+      },
+      300,
+    )
   }
 
   /**
@@ -282,9 +287,13 @@ export class EventManager {
     if (delay <= 0) {
       // 立即执行也需要加锁，以防与其他异步任务冲突
       // 如果获取锁失败，尝试重试 3 次，每次 50ms
-      this.plugin.lockManager.withLock(key, async () => {
-        await task()
-      }, { maxRetries: 3, retryInterval: 50 })
+      this.plugin.lockManager.withLock(
+        key,
+        async () => {
+          await task()
+        },
+        { maxRetries: 3, retryInterval: 50 },
+      )
       return
     }
 
@@ -293,9 +302,13 @@ export class EventManager {
 
       // 执行任务时加锁，并带重试逻辑
       // 这里的重试是为了应对可能正好有远程同步在写该文件的情况
-      await this.plugin.lockManager.withLock(key, async () => {
-        await task()
-      }, { maxRetries: 5, retryInterval: 100 })
+      await this.plugin.lockManager.withLock(
+        key,
+        async () => {
+          await task()
+        },
+        { maxRetries: 5, retryInterval: 100 },
+      )
     }, delay)
 
     this.rawEventTimers.set(key, timer)
