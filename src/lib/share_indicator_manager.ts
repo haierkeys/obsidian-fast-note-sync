@@ -97,6 +97,10 @@ export class ShareIndicatorManager {
         try {
             if (!this.plugin.settings.api || !this.plugin.settings.apiToken) return;
 
+            // 在拉取分享列表前，先执行健康检查
+            const isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
+            if (!isHealthy) return;
+
             const paths = await this.plugin.api.getSharePaths();
             if (paths === null) return; // 网络错误，静默失败 / Network error, fail silently
 

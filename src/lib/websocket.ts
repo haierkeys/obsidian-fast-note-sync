@@ -108,7 +108,7 @@ export class WebSocketClient {
     return this.isOpen
   }
 
-  public register() {
+  public async register() {
 
     // Prevent duplicate connection if already connecting or open
     if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
@@ -121,8 +121,19 @@ export class WebSocketClient {
       this.cleanupWebSocket(this.ws);
     }
 
+    this.isRegister = true
+
+    // 每次 ws 连接 / 重连 前 必须 先 /api/health 请求成功之后再请求ws
+    const isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
+    if (!isHealthy) {
+        dump("Health check failed before ws connect, scheduling reconnect...");
+        this.isOpen = false;
+        this.notifyStatusChange(false);
+        this.checkReConnect();
+        return;
+    }
+
     if (isWsUrl(this.plugin.runWsApi)) {
-      this.isRegister = true
       const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count);
       this.ws = new WebSocket(wsUrl)
       this.count++
@@ -338,6 +349,7 @@ export class WebSocketClient {
   public unRegister() {
     window.clearInterval(this.checkConnection)
     window.clearTimeout(this.checkReConnectTimeout)
+    this.timeConnect = 0
     this.isOpen = false
     this.isAuth = false
     this.isRegister = false
@@ -360,7 +372,7 @@ export class WebSocketClient {
       // Max attempts hardcoded or use constant
       return
     }
-    if (this.ws && this.ws.readyState === WebSocket.CLOSED) {
+    if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
       this.timeConnect++
       // Exponential backoff: 3s, 6s, 12s, 24s...
       let delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
@@ -382,6 +394,8 @@ export class WebSocketClient {
             delay = 1000
             showSyncNotice(`[FastSync] 尝试连接调试地址: ${url}`)
           }
+        } else if (this.timeConnect === 2 + debugUrls.length) {
+          // 调试地址全部失败后，恢复配置的原始地址
           this.plugin.updateRuntimeApi(this.plugin.settings.api);
           dump(`Debug URLs failed, reverting to settings API`)
         }

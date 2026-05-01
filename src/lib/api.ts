@@ -51,10 +51,11 @@ export class HttpApiService {
      * 该方法应在插件加载、配置保存后、WebSocket 启动前调用。
      * 它基于 settings.api 进行探测，并同步更新运行时的 runApi。
      */
-    async probeApiRedirect() {
-        if (!this.plugin.settings.api) return;
+    async probeApiRedirect(targetUrl?: string): Promise<boolean> {
+        const urlToProbe = targetUrl || this.plugin.settings.api;
+        if (!urlToProbe) return false;
 
-        const base = this.plugin.settings.api.replace(/\/+$/, "");
+        const base = urlToProbe.replace(/\/+$/, "");
         const probeUrl = addRandomParam(base + "/api/health");
 
         try {
@@ -73,11 +74,15 @@ export class HttpApiService {
                 if (healthIndex !== -1) {
                     const newBase = res.url.substring(0, healthIndex).replace(/\/+$/, "");
                     this.plugin.updateRuntimeApi(newBase);
+                } else {
+                    this.plugin.updateRuntimeApi(base);
                 }
             }
+            return res.ok;
         } catch (e) {
-            // 即使失败，也确保 runApi 有值（回退到配置值）
+            // 即使失败，也确保 runApi 有值（回退到探测的 base）
             this.plugin.updateRuntimeApi(base);
+            return false;
         }
     }
 
