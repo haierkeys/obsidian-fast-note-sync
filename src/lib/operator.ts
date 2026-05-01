@@ -5,7 +5,7 @@ import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, r
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
-import { hashContent, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice } from "./helps";
+import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
@@ -486,7 +486,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           // 尝试从缓存获取有效的哈希，避免重复计算 (Try to get valid hash from cache)
           let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
           if (contentHash === null) {
-            contentHash = hashContent(await plugin.app.vault.cachedRead(file));
+            contentHash = await hashContentAsync(await plugin.app.vault.read(file));
             // 只有在计算出新哈希后才更新缓存，但注意：正式写入 hashManager 建议在 Ack 之后
             // 这里我们先不更新 hashManager，保持现有的 Ack 后写入逻辑以确保一致性
             // 不过为了让 Full Sync 能利用缓存，我们需要在 initialize 时或者之前同步过

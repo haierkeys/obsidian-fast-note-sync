@@ -81,7 +81,7 @@ export class FileHashManager {
           // 根据文件类型选择不同的哈希计算方式
           if (file.extension === "md") {
             // md 文件使用文本内容计算哈希
-            let content: string | null = await this.plugin.app.vault.cachedRead(file);
+            let content: string | null = await this.plugin.app.vault.read(file);
             contentHash = await hashContentAsync(content);
             content = null; // 显式释放引用 (Explicitly release reference)
           } else {
