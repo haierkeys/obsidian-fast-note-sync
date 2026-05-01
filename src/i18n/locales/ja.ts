@@ -388,4 +388,7 @@ export default {
   "ui.common.name": "名前",
   "ui.common.na": "不明",
   "ui.system.wsClientName": "クライアント",
+  "ui.system.websocketClients": "オンラインクライアント",
+  "ui.system.wsNoClients": "オンラインクライアントはありません",
+  "ui.system.wsStartTime": "接続時刻",
 };

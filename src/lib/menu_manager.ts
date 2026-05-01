@@ -571,6 +571,26 @@ export class MenuManager {
     menu.addSeparator();
     menu.addItem((item: MenuItem) => {
       item
+        .setIcon("monitor")
+        .setTitle($("ui.system.websocketClients"))
+        .onClick(async () => {
+          const { WSClientsModal } = await import("../views/ws-clients-modal");
+          new WSClientsModal(this.plugin.app, this.plugin).open();
+        });
+      (item as any).dom.setAttribute("aria-label", $("ui.system.websocketClients"));
+      
+      // 异步获取在线客户端数量并更新菜单项
+      this.plugin.api.getWSClients().then(clients => {
+        const count = clients?.length || 0;
+        if (count > 0 && this.activeMenu === menu) {
+          item.setTitle($("ui.system.websocketClients") + ` (${count})`);
+        }
+      });
+    });
+
+    menu.addSeparator();
+    menu.addItem((item: MenuItem) => {
+      item
         .setIcon("settings")
         .setTitle($("ui.menu.settings"))
         .onClick(async () => {

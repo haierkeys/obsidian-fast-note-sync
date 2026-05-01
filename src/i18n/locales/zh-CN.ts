@@ -388,4 +388,7 @@ export default {
   "ui.common.name": "名称",
   "ui.common.na": "未知",
   "ui.system.wsClientName": "客户端",
+  "ui.system.websocketClients": "在线客户端",
+  "ui.system.wsNoClients": "暂无在线客户端",
+  "ui.system.wsStartTime": "连接时间",
 };

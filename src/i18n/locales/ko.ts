@@ -388,4 +388,7 @@ export default {
   "ui.common.name": "이름",
   "ui.common.na": "알 수 없음",
   "ui.system.wsClientName": "클라이언트",
+  "ui.system.websocketClients": "온라인 클라이언트",
+  "ui.system.wsNoClients": "현재 온라인 클라이언트가 없습니다",
+  "ui.system.wsStartTime": "연결 시간",
 };

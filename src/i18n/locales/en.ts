@@ -388,4 +388,7 @@ export default {
   "ui.common.name": "Name",
   "ui.common.na": "Unknown",
   "ui.system.wsClientName": "Client",
+  "ui.system.websocketClients": "Connected Clients",
+  "ui.system.wsNoClients": "No clients connected",
+  "ui.system.wsStartTime": "Connection Time",
 };

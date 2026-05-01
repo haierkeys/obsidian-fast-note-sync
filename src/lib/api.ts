@@ -728,6 +728,26 @@ export class HttpApiService {
             throw e;
         }
     }
+
+    /**
+     * 获取在线客户端列表
+     */
+    async getWSClients(): Promise<any[]> {
+        const endpoint = `/api/admin/ws_clients`;
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "GET"
+            });
+
+            if (status !== 200 || json.code <= 0) {
+                return [];
+            }
+            return json.data || [];
+        } catch (e) {
+            console.error("getWSClients error:", e);
+            return [];
+        }
+    }
 }
 
 /**

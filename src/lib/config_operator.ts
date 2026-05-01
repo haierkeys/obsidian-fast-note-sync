@@ -539,7 +539,18 @@ export const configReload = async function (path: string, plugin: FastSync, even
 
     // 设置新计时器，延迟 1 秒
 
-    reloadTimer = setTimeout(async () => {
+    const checkAndReload = async () => {
+        // 如果正在同步且配置同步尚未标记结束，或任务尚未全部完成，则继续等待
+        // If syncing and config sync not marked as end, or tasks not all completed, continue waiting
+        if (plugin.isSyncing) {
+            const tasks = plugin.configSyncTasks;
+            const totalTasks = tasks.needModify + tasks.needSyncMtime + tasks.needDelete;
+            if (!plugin.configSyncEnd || tasks.completed < totalTasks) {
+                reloadTimer = setTimeout(checkAndReload, 500);
+                return;
+            }
+        }
+
         const app = plugin.app as any
         const configDir = plugin.app.vault.configDir
 
@@ -614,7 +625,17 @@ export const configReload = async function (path: string, plugin: FastSync, even
         }
 
         // 统一处理插件重载
-        for (const id of pluginsToReload) {
+        // 将 fast-note-sync 移到最后处理，确保其他插件先重载
+        // Process fast-note-sync last to ensure other plugins reload first
+        const sortedPlugins = Array.from(pluginsToReload);
+        const selfId = "fast-note-sync";
+        if (sortedPlugins.includes(selfId)) {
+            const index = sortedPlugins.indexOf(selfId);
+            sortedPlugins.splice(index, 1);
+            sortedPlugins.push(selfId);
+        }
+
+        for (const id of sortedPlugins) {
             if (id === "hot-reload") continue
 
             const hasMainJsUpdate = updates.some(([p]) => p === `${configDir}/plugins/${id}/main.js`)
@@ -622,10 +643,11 @@ export const configReload = async function (path: string, plugin: FastSync, even
 
             // 特殊处理本插件的更新：
             // 如果 main.js 或 manifest.json 更新了，则进行正常的重载流程
-            // 否则（例如仅 data.json 更新），跳过重载以免影响插件运行1
-            if (id === "obsidian-fast-note-sync") {
+            // 否则（例如仅 data.json 更新），跳过重载以免影响插件运行
+            if (id === selfId) {
                 if (hasMainJsUpdate || hasManifestUpdate) {
                     dump(`[FastNoteSync] Detected critical update for self, triggering reload.`);
+                    plugin.websocket.unRegister();
                     // Fall through to reload logic
                 } else {
                     continue;
@@ -638,7 +660,9 @@ export const configReload = async function (path: string, plugin: FastSync, even
             }
         }
         if (app.setting?.activeTab) app.setting.activeTab.display()
-    }, 1000)
+    }
+
+    reloadTimer = setTimeout(checkAndReload, 1000)
 }
 
 

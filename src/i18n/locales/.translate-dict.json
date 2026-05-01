@@ -355,5 +355,8 @@
   "setting.sync.max_concurrency_desc": "3586578b567b1b99477643b1edc66a74",
   "setting.sync.show_concurrency_indicator": "90f457cc1fa563f716eae3d37a771fdd",
   "setting.sync.show_concurrency_indicator_desc": "f2a873b2b9dd0c82d4b4b7153255a317",
-  "setting.sync.concurrency_limit_tip": "e5e91208a7c6793e567e74ed2e361551"
+  "setting.sync.concurrency_limit_tip": "e5e91208a7c6793e567e74ed2e361551",
+  "ui.system.websocketClients": "9088f7e53824ee96968c1eb256bdd826",
+  "ui.system.wsNoClients": "e50d05f9ca53466c093daeb3607327e1",
+  "ui.system.wsStartTime": "6c1c22e1a553f6465dc9f9face914abc"
 }
