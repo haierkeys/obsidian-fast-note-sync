@@ -190,6 +190,12 @@ export class WebSocketClient {
 
         // Only reconnect if we differ intended to be registered
         if (this.isRegister && e.reason != "AuthorizationFaild" && e.reason != "ClientClose") {
+          // 断连时立即重置 isSyncing，避免重连后 handleSync 被守卫拦截
+          // Reset isSyncing on disconnect to unblock handleSync after reconnect
+          if (this.plugin.isSyncing) {
+            this.plugin.isSyncing = false
+            this.plugin.isSyncRequesting = false
+          }
           this.checkReConnect()
         }
         clearUploadQueue()

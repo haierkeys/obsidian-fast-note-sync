@@ -72,6 +72,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
       // New upload supersedes delete intent; clear pending to prevent stale Ack from removing new hash
       plugin.pendingFileDeleteAcks.delete(file.path)
       plugin.pendingUploadHashes.set(file.path, contentHash)
+      plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
       await plugin.concurrencyManager.waitForSlot(file.path)
       plugin.websocket.SendMessage("FileUploadCheck", data)
       dump(`File modify check sent`, data.path, data.contentHash)
@@ -106,12 +107,14 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
       // 仅清理本地状态
       plugin.fileHashManager.removeFileHash(file.path)
       plugin.pendingUploadHashes.delete(file.path)
+      plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
       return
     }
 
     // 清理可能存在的待确认上传记录，避免 pending map 内存泄漏
     // Clean up any pending upload record to avoid pending map memory leak
     plugin.pendingUploadHashes.delete(file.path)
+    plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
 
     plugin.addIgnoredFile(file.path)
     try {
@@ -150,12 +153,14 @@ export const fileDeleteByPath = async function (filePath: string, plugin: FastSy
       activeUploadsMap.get(filePath)!.cancelled = true;
       plugin.fileHashManager.removeFileHash(filePath)
       plugin.pendingUploadHashes.delete(filePath)
+      plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
       return
     }
 
     // 清理可能存在的待确认上传记录，避免 pending map 内存泄漏
     // Clean up any pending upload record to avoid pending map memory leak
     plugin.pendingUploadHashes.delete(filePath)
+    plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
 
     plugin.addIgnoredFile(filePath)
     try {
@@ -283,6 +288,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       // 将 hash 暂存到 pending map，等待服务端 FileUploadAck 后再写入 hashManager
       // Temporarily store hash in pending map, update hashManager only after server FileUploadAck
       plugin.pendingUploadHashes.set(data.path, contentHash)
+      plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
       // 记录当前文件的 mtime/size 到缓存，以便后续利用
       plugin.fileHashManager.setFileHash(data.path, contentHash, file.stat.mtime, file.stat.size)
 
@@ -984,6 +990,7 @@ export const receiveFileUploadAck = function (data: { lastTime?: number; path?: 
       const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
       plugin.fileHashManager.setFileHash(data.path, contentHash, file?.stat.mtime || 0, file?.stat.size || 0)
       plugin.pendingUploadHashes.delete(data.path)
+      plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
     }
   }
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {

@@ -349,6 +349,43 @@ export default class FastSync extends Plugin {
       }
       await Promise.all(initPromises)
 
+      // 崩溃恢复：从 localStorage 恢复持久化的 pending Map，过滤本地已不存在的路径
+      // Crash recovery: restore persisted pending Maps, filtering out paths that no longer exist locally
+      const allFiles = this.app.vault.getAllLoadedFiles()
+      const existingPaths = new Set(allFiles.map(f => f.path))
+
+      const restoredNoteModifies = this.localStorageManager.loadPending('pendingNoteModifies')
+      for (const [path] of restoredNoteModifies) {
+        if (!existingPaths.has(path)) restoredNoteModifies.delete(path)
+      }
+      if (restoredNoteModifies.size > 0) {
+        this.pendingNoteModifies = restoredNoteModifies
+        dump(`[Crash Recovery] Restored ${restoredNoteModifies.size} pendingNoteModifies`)
+      } else {
+        this.localStorageManager.clearPending('pendingNoteModifies')
+      }
+
+      const restoredUploadHashes = this.localStorageManager.loadPending('pendingUploadHashes')
+      for (const [path] of restoredUploadHashes) {
+        if (!existingPaths.has(path)) restoredUploadHashes.delete(path)
+      }
+      if (restoredUploadHashes.size > 0) {
+        this.pendingUploadHashes = restoredUploadHashes
+        dump(`[Crash Recovery] Restored ${restoredUploadHashes.size} pendingUploadHashes`)
+      } else {
+        this.localStorageManager.clearPending('pendingUploadHashes')
+      }
+
+      const restoredConfigModifies = this.localStorageManager.loadPending('pendingConfigModifies')
+      // 配置文件不过滤路径：getAllLoadedFiles 不含 .obsidian/ 路径，且 configModify 发送前会重新读文件，文件不存在时自动跳过
+      // Config paths not filtered: getAllLoadedFiles excludes .obsidian/ paths; configModify re-reads files before sending and skips missing ones
+      if (restoredConfigModifies.size > 0) {
+        this.pendingConfigModifies = restoredConfigModifies
+        dump(`[Crash Recovery] Restored ${restoredConfigModifies.size} pendingConfigModifies`)
+      } else {
+        this.localStorageManager.clearPending('pendingConfigModifies')
+      }
+
       // 6. 注册事件监听 (依赖哈希管理器)
       if (this.fileHashManager.isReady()) {
         this.eventManager = new EventManager(this)
