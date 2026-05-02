@@ -58,27 +58,44 @@ export class HttpApiService {
         const base = urlToProbe.replace(/\/+$/, "");
         const probeUrl = addRandomParam(base + "/api/health");
 
+        const networkLibrary = this.plugin.settings.networkLibrary;
+        const headers: Record<string, string> = {
+            "x-client": "ObsidianPlugin",
+            "x-client-name": encodeURIComponent(this.plugin.getClientName()),
+            "x-client-version": this.plugin.manifest.version || ""
+        };
+
         try {
-            // 默认优先用 fetch 探测以获取 301/302 后的最终路径
-            const res = await fetch(probeUrl, {
-                method: 'GET',
-                redirect: 'follow',
-                headers: {
-                    "x-client": "ObsidianPlugin",
-                    "x-client-name": encodeURIComponent(this.plugin.getClientName()),
-                    "x-client-version": this.plugin.manifest.version || ""
+            if (networkLibrary === 'requestUrl') {
+                // 使用 Obsidian requestUrl 探测（不受 iOS WKWebView CORS 限制）
+                const response = await requestUrl({
+                    url: probeUrl,
+                    method: 'GET',
+                    headers: headers,
+                    throw: false
+                });
+                // requestUrl 自动跟随重定向，response.headers 可能包含重定向信息
+                // 但最重要的是确认服务端可达且健康
+                this.plugin.updateRuntimeApi(base);
+                return response.status >= 200 && response.status < 400;
+            } else {
+                // 使用原生 fetch 探测以获取 301/302 后的最终路径
+                const res = await fetch(probeUrl, {
+                    method: 'GET',
+                    redirect: 'follow',
+                    headers: headers
+                });
+                if (res.url) {
+                    const healthIndex = res.url.indexOf("/api/health");
+                    if (healthIndex !== -1) {
+                        const newBase = res.url.substring(0, healthIndex).replace(/\/+$/, "");
+                        this.plugin.updateRuntimeApi(newBase);
+                    } else {
+                        this.plugin.updateRuntimeApi(base);
+                    }
                 }
-            });
-            if (res.url) {
-                const healthIndex = res.url.indexOf("/api/health");
-                if (healthIndex !== -1) {
-                    const newBase = res.url.substring(0, healthIndex).replace(/\/+$/, "");
-                    this.plugin.updateRuntimeApi(newBase);
-                } else {
-                    this.plugin.updateRuntimeApi(base);
-                }
+                return res.ok;
             }
-            return res.ok;
         } catch (e) {
             // 即使失败，也确保 runApi 有值（回退到探测的 base）
             this.plugin.updateRuntimeApi(base);
