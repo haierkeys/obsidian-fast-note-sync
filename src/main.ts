@@ -386,6 +386,25 @@ export default class FastSync extends Plugin {
         this.localStorageManager.clearPending('pendingConfigModifies')
       }
 
+      // 清理过期的断点续传 checkpoint（超过 20 分钟即视为过期，与服务端 session 超时一致）
+      // Clean up expired upload resume checkpoints (>20 min matches server session timeout)
+      const uploadCheckpointPrefix = `fns-${this.app.vault.getName()}-uploadSession-`
+      const expireMs = 20 * 60 * 1000
+      const now = Date.now()
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith(uploadCheckpointPrefix)) {
+          try {
+            const cp = JSON.parse(localStorage.getItem(key) || '{}')
+            if (!cp.timestamp || now - cp.timestamp > expireMs) {
+              localStorage.removeItem(key)
+            }
+          } catch (e) {
+            localStorage.removeItem(key)
+          }
+        }
+      }
+
       // 6. 注册事件监听 (依赖哈希管理器)
       if (this.fileHashManager.isReady()) {
         this.eventManager = new EventManager(this)

@@ -271,6 +271,11 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
     activeUploadsMap.set(data.path, { cancelled: false });
     await plugin.concurrencyManager.waitForSlot(data.path, false, 10) // 优先级设为 10，优先处理上传
 
+    // 断点续传 checkpoint key，提升到 try 外以便 catch 块中也能清除
+    // Resume checkpoint key hoisted outside try so the catch block can also remove it
+    const vaultName = plugin.app.vault.getName()
+    const checkpointKey = `fns-${vaultName}-uploadSession-${data.pathHash}`
+
     try {
       // 延迟到任务排到时才读取文件内容, 减少内存积压
       let content: ArrayBuffer | null = null;
@@ -295,6 +300,26 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       // 如果是空文件，强制设置分片数量为 1，发送一个空分片以通知服务端上传完成
       const actualTotalChunks = content.byteLength === 0 ? 1 : Math.ceil(content.byteLength / chunkSize)
 
+      // 断点续传：从 localStorage 读取上次中断的 checkpoint
+      // Resume upload: read checkpoint from localStorage for the last interrupted upload
+      let startChunkIndex = 0
+      try {
+        const cpRaw = localStorage.getItem(checkpointKey)
+        if (cpRaw) {
+          const cp = JSON.parse(cpRaw)
+          if (cp.sessionId === data.sessionId &&
+              cp.contentHash === contentHash &&
+              typeof cp.lastChunkIndex === 'number' &&
+              cp.lastChunkIndex >= 0 &&
+              cp.lastChunkIndex < actualTotalChunks - 1) {
+            startChunkIndex = cp.lastChunkIndex + 1
+            dump(`Resume upload from chunk ${startChunkIndex}/${actualTotalChunks}: ${data.path}`)
+          }
+        }
+      } catch (e) {
+        dump(`Failed to read upload checkpoint for ${data.path}`, e)
+      }
+
       // 仅在非同步期间(实时监听时)手动增加分片计数。同步期间由 SyncEnd 包装器统一预估
       if (plugin.getWatchEnabled()) {
         plugin.totalChunksToUpload += actualTotalChunks
@@ -314,7 +339,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
 
       const sleepTime = Platform.isMobile ? 10 : 2;
 
-      for (let i = 0; i < actualTotalChunks; i++) {
+      for (let i = startChunkIndex; i < actualTotalChunks; i++) {
         const start = i * chunkSize
         const end = Math.min(start + chunkSize, content.byteLength)
         const length = end - start;
@@ -350,6 +375,21 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
             const currentProgress = Math.floor(((i + 1) / actualTotalChunks) * 100);
             const isLastChunk = (i + 1) === actualTotalChunks;
 
+            // 更新断点续传 checkpoint（发送成功后，非最后一块）
+            // Update resume checkpoint after successful send (not the last chunk)
+            if (!isLastChunk) {
+              try {
+                localStorage.setItem(checkpointKey, JSON.stringify({
+                  sessionId: data.sessionId,
+                  lastChunkIndex: i,
+                  contentHash: contentHash,
+                  timestamp: Date.now(),
+                }))
+              } catch (e) {
+                dump(`Failed to save upload checkpoint for ${data.path}`, e)
+              }
+            }
+
             // 更新日志进度
             SyncLogManager.getInstance().addOrUpdateLog({
               id: data.sessionId,
@@ -364,6 +404,9 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
 
         // 如果被取消,立即退出循环并释放槽位
         if (cancelled) {
+          // 取消时清除 checkpoint，避免使用已失效的会话
+          // Clear checkpoint on cancel to avoid stale session reuse
+          try { localStorage.removeItem(checkpointKey) } catch (e) { /* ignore */ }
           plugin.concurrencyManager.releaseSlot(data.path)
           return;
         }
@@ -416,6 +459,9 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
       }
     } catch (e) {
       dump(`Upload process error for ${data.path}`, e);
+      // 异常退出时清除 checkpoint，避免下次用无效的 sessionId 继续
+      // Clear checkpoint on exception to avoid resuming with an invalid session
+      try { localStorage.removeItem(checkpointKey) } catch (e2) { /* ignore */ }
       plugin.concurrencyManager.releaseSlot(data.path);
     } finally {
       // 任务结束（完成或取消/失败），移除活跃标记
@@ -981,7 +1027,7 @@ export const receiveFileRenameAck = function (data: { lastTime?: number }, plugi
 
 // 收到 FileUploadAck，将 pending hash 转移到正式 hashManager 并更新 lastFileSyncTime
 // Receive FileUploadAck, move pending hash to formal hashManager and update lastFileSyncTime
-export const receiveFileUploadAck = function (data: { lastTime?: number; path?: string }, plugin: FastSync) {
+export const receiveFileUploadAck = function (data: { lastTime?: number; path?: string; pathHash?: string }, plugin: FastSync) {
   // 服务端确认上传成功，将 pending hash 转移到正式 hashManager
   // Server confirmed upload success, move pending hash to formal hashManager
   if (data.path) {
@@ -992,6 +1038,12 @@ export const receiveFileUploadAck = function (data: { lastTime?: number; path?: 
       plugin.pendingUploadHashes.delete(data.path)
       plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
     }
+  }
+  // 上传完成，清除断点续传 checkpoint
+  // Upload complete, clear resume checkpoint
+  if (data.pathHash) {
+    const vaultName = plugin.app.vault.getName()
+    try { localStorage.removeItem(`fns-${vaultName}-uploadSession-${data.pathHash}`) } catch (e) { /* ignore */ }
   }
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))) {
     plugin.localStorageManager.setMetadata("lastFileSyncTime", data.lastTime)

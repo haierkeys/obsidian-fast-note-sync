@@ -140,6 +140,11 @@ export const receiveFolderSyncModify = async function (data: any, plugin: FastSy
     } catch (e) {
         dump(`Error in receiveFolderSyncModify: ${normalizedPath}`, e)
     } finally {
+        // 实时更新同步时间戳，与 note 端保持一致
+        // Update sync timestamp in real time, consistent with note side
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"))) {
+            plugin.localStorageManager.setMetadata("lastFolderSyncTime", data.lastTime)
+        }
         plugin.folderSyncTasks.completed++
     }
 }
@@ -180,6 +185,11 @@ export const receiveFolderSyncDelete = async function (data: any, plugin: FastSy
     } catch (e) {
         dump(`Error in receiveFolderSyncDelete: ${normalizedPath}`, e)
     } finally {
+        // 实时更新同步时间戳，与 note 端保持一致
+        // Update sync timestamp in real time, consistent with note side
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"))) {
+            plugin.localStorageManager.setMetadata("lastFolderSyncTime", data.lastTime)
+        }
         plugin.folderSyncTasks.completed++
     }
 }
@@ -240,6 +250,11 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
     } catch (e) {
         dump(`Error in receiveFolderSyncRename: ${normalizedOldPath} -> ${normalizedNewPath}`, e)
     } finally {
+        // 实时更新同步时间戳，与 note 端保持一致
+        // Update sync timestamp in real time, consistent with note side
+        if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"))) {
+            plugin.localStorageManager.setMetadata("lastFolderSyncTime", data.lastTime)
+        }
         plugin.folderSyncTasks.completed++
     }
 }
