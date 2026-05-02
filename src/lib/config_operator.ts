@@ -555,6 +555,7 @@ export const configReload = async function (path: string, plugin: FastSync, even
         const configDir = plugin.app.vault.configDir
 
         const updates = Array.from(pendingConfigUpdates.entries())
+        const communityPluginsUpdated = updates.some(([p]) => p === `${configDir}/community-plugins.json`)
         pendingConfigUpdates.clear()
         reloadTimer = null
 
@@ -654,8 +655,15 @@ export const configReload = async function (path: string, plugin: FastSync, even
                 }
             }
 
-            if (plugin.configManager && plugin.configManager.enabledPlugins.has(id)) {
+            const isCurrentlyEnabled = app.plugins.enabledPlugins.has(id)
+            const shouldBeEnabled = plugin.configManager && plugin.configManager.enabledPlugins.has(id)
+
+            if (isCurrentlyEnabled) {
+                // 如果当前已启用，则执行重载逻辑（先停再开）
                 await app.plugins.disablePlugin(id)
+                await app.plugins.enablePlugin(id)
+            } else if (communityPluginsUpdated && shouldBeEnabled) {
+                // 如果当前未启用，仅当本次同步包含了最新的 community-plugins.json 且要求启用时才开启
                 await app.plugins.enablePlugin(id)
             }
         }

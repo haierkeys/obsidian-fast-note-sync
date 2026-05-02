@@ -96,7 +96,13 @@ export class ConfigManager {
     }
 
     if (shouldCheck) {
-      // 特殊处理本插件的 manifest.json 更新 (本地修改场景)
+      // 1. 特殊处理 community-plugins.json 更新 (本地修改场景)
+      // 确保 enabledPlugins 集合与磁盘文件同步，防止后续 reload 逻辑误判
+      if (fileName === "community-plugins.json" && path === normalizePath(`${configDir}/community-plugins.json`)) {
+        await this.loadEnabledPlugins()
+      }
+
+      // 2. 特殊处理本插件的 manifest.json 更新 (本地修改场景)
       if (fileName === "manifest.json" && relativePath === `${this.pluginDir}/manifest.json`) {
         setTimeout(async () => {
           try {
