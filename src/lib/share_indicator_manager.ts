@@ -97,9 +97,11 @@ export class ShareIndicatorManager {
         try {
             if (!this.plugin.settings.api || !this.plugin.settings.apiToken) return;
 
-            // 在拉取分享列表前，先执行健康检查
-            const isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
-            if (!isHealthy) return;
+            // 在拉取分享列表前，先执行探测以确保 runApi 是最新的
+            // Execute probe before fetching share list to ensure runApi is up-to-date
+            await this.plugin.api.probeApiRedirect(this.plugin.runApi);
+            // 不再因为探测失败而中断，让下方的业务请求自行处理连接问题
+            // No longer interrupt due to probe failure; let the business request below handle connection issues
 
             const paths = await this.plugin.api.getSharePaths();
             if (paths === null) return; // 网络错误，静默失败 / Network error, fail silently

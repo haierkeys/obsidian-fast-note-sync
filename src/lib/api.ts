@@ -47,6 +47,13 @@ export class HttpApiService {
     constructor(private plugin: FastSync) { }
 
     /**
+     * 判断响应是否成功 (code > 0 && code < 300)
+     */
+    private isSuccess(json: any): boolean {
+        return json && json.code > 0 && json.code < 300;
+    }
+
+    /**
      * 探测 API 跳转情况。
      * 该方法应在插件加载、配置保存后、WebSocket 启动前调用。
      * 它基于 settings.api 进行探测，并同步更新运行时的 runApi。
@@ -78,7 +85,15 @@ export class HttpApiService {
                     this.plugin.updateRuntimeApi(base);
                 }
             }
-            return res.ok;
+            
+            // 进一步校验业务状态码 (若返回的是 JSON)
+            try {
+                const json = await res.clone().json();
+                return res.ok && this.isSuccess(json);
+            } catch (e) {
+                // 如果不是 JSON，回退到 HTTP 状态码判断
+                return res.ok;
+            }
         } catch (e) {
             // 即使失败，也确保 runApi 有值（回退到探测的 base）
             this.plugin.updateRuntimeApi(base);
@@ -96,7 +111,7 @@ export class HttpApiService {
             const { status, json } = await this.request(endpoint, {
                 method: "GET"
             });
-            return status === 200 && json.code > 0;
+            return status === 200 && this.isSuccess(json);
         } catch (e) {
             console.error("adminUpgrade error:", e);
             return false;
@@ -265,7 +280,7 @@ export class HttpApiService {
                 throw new Error(`HTTP ${status}: Failed to fetch history list`);
             }
 
-            if (json.code <= 0) {
+            if (!this.isSuccess(json)) {
                 throw new Error(json?.message || "Failed to fetch history list");
             }
 
@@ -292,7 +307,7 @@ export class HttpApiService {
                 method: "GET"
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to fetch history detail";
                 showSyncNotice(msg);
                 throw new Error(msg);
@@ -319,7 +334,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to restore note version";
                 showSyncNotice(msg);
                 return false;
@@ -352,7 +367,7 @@ export class HttpApiService {
                 method: "GET"
             });
 
-            if (status !== 200 || (json && json.code <= 0)) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 throw new Error(json?.message || `HTTP ${status}: Failed to fetch file info`);
             }
 
@@ -388,7 +403,7 @@ export class HttpApiService {
                 throw new Error(`HTTP ${status}: Failed to fetch note list`);
             }
 
-            if (json.code <= 0) {
+            if (!this.isSuccess(json)) {
                 throw new Error(json?.message || "Failed to fetch note list");
             }
 
@@ -424,7 +439,7 @@ export class HttpApiService {
                 throw new Error(`HTTP ${status}: Failed to fetch file list`);
             }
 
-            if (json.code <= 0) {
+            if (!this.isSuccess(json)) {
                 throw new Error(json?.message || "Failed to fetch file list");
             }
 
@@ -449,7 +464,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to restore note";
                 showSyncNotice(msg);
                 return false;
@@ -477,7 +492,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to restore file";
                 showSyncNotice(msg);
                 return false;
@@ -505,7 +520,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to delete file";
                 showSyncNotice(msg);
                 return false;
@@ -534,7 +549,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || (path ? "永久删除失败" : "清空回收站失败");
                 showSyncNotice(msg);
                 return false;
@@ -562,7 +577,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to create share";
                 showSyncNotice(msg);
                 return null;
@@ -590,7 +605,7 @@ export class HttpApiService {
                 method: "GET"
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 return null;
             }
             return json.data;
@@ -616,7 +631,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to update password";
                 showSyncNotice(msg);
                 return false;
@@ -647,7 +662,7 @@ export class HttpApiService {
                 body: JSON.stringify(body)
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to create short link";
                 showSyncNotice(msg);
                 return null;
@@ -676,7 +691,7 @@ export class HttpApiService {
                 })
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 const msg = json?.message || "Failed to cancel share";
                 showSyncNotice(msg);
                 return false;
@@ -700,7 +715,7 @@ export class HttpApiService {
         const endpoint = `/api/notes/share-paths?${params.toString()}`;
         try {
             const { status, json } = await this.request(endpoint, { method: "GET" });
-            if (status !== 200 || json.code <= 0) return null;
+            if (status !== 200 || !this.isSuccess(json)) return null;
             return json.data || [];
         } catch (e) {
             console.error("getSharePaths error:", e);
@@ -719,7 +734,7 @@ export class HttpApiService {
                 method: "GET"
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 throw new Error(json?.message || "Failed to fetch user info");
             }
 
@@ -739,7 +754,7 @@ export class HttpApiService {
                 method: "GET"
             });
 
-            if (status !== 200 || json.code <= 0) {
+            if (status !== 200 || !this.isSuccess(json)) {
                 return [];
             }
             return json.data || [];

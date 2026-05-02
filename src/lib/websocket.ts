@@ -253,7 +253,7 @@ export class WebSocketClient {
 
 
         if (msgAction == "Authorization") {
-          if (data.code == 0 || data.code > 200) {
+          if (data.code <= 0 || data.code >= 300) {
             showSyncNotice("Service Authorization Error: Code=" + data.code + " Msg=" + data.msg + data.details)
             return
           } else {
@@ -271,8 +271,7 @@ export class WebSocketClient {
         }
 
         if (msgAction == "ClientInfo") {
-          if (data.code == 0 || data.code > 200) {
-
+          if (data.code <= 0 || data.code >= 300) {
             return
           } else {
             if (data.data) {
@@ -303,7 +302,7 @@ export class WebSocketClient {
           return
         }
 
-        if (data.code == 0 || data.code > 200) {
+        if (data.code <= 0 || data.code >= 300) {
           // 处理冲突相关错误码
           if (data.code === ERROR_SYNC_CONFLICT) {
             this.handleConflictError(data)

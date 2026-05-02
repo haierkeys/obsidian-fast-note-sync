@@ -544,10 +544,10 @@ export class MenuManager {
       (item as any).dom.setAttribute("aria-label", $("ui.recycle_bin.title"));
     });
 
-    // 分享中（X）菜单项，仅在有分享笔记时显示
-    // Sharing (X) menu item, only shown when there are shared notes
+    // 分享中（X）菜单项，仅在有分享笔记或已连接时显示
+    // Sharing (X) menu item, shown when there are shared notes or connected
     const sharedCount = this.plugin.shareIndicatorManager?.getSharedCount() ?? 0;
-    if (sharedCount > 0) {
+    if (sharedCount > 0 || this.plugin.websocket.isAuth) {
       menu.addSeparator();
       menu.addItem((item: MenuItem) => {
         const isActive = this.plugin.shareIndicatorManager?.isFilterActive ?? false;
@@ -565,6 +565,16 @@ export class MenuManager {
             }
           });
         (item as any).dom.setAttribute("aria-label", $("ui.menu.sharing_desc"));
+
+        // 异步获取分享列表并更新标题 / Async fetch share list and update title
+        if (this.plugin.websocket.isAuth) {
+          this.plugin.shareIndicatorManager?.syncWithServer().then(() => {
+            const newCount = this.plugin.shareIndicatorManager?.getSharedCount() ?? 0;
+            if (this.activeMenu === menu) {
+              item.setTitle($("ui.menu.sharing", { count: newCount }));
+            }
+          });
+        }
       });
     }
 
