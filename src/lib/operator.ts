@@ -167,7 +167,6 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: ReturnType<ty
     // Refresh share indicator state after sync completion
     plugin.shareIndicatorManager?.syncWithServer();
 
-    plugin.isSyncing = false;
     setTimeout(() => plugin.updateStatusBar(""), 3000);
   } else {
     // --- 强制完成逻辑与 90% 补偿 ---
@@ -274,6 +273,7 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
       plugin.fileHashManager.setFileHash(path, hash)
     }
     plugin.pendingNoteModifies.clear()
+    plugin.localStorageManager.clearPending('pendingNoteModifies')
   } else if (type === "file") {
     for (const path of plugin.pendingDeleteFilePaths) plugin.fileHashManager.removeFileHash(path)
     plugin.pendingDeleteFilePaths.clear()
@@ -282,6 +282,7 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
       plugin.fileHashManager.setFileHash(path, hash)
     }
     plugin.pendingUploadHashes.clear()
+    plugin.localStorageManager.clearPending('pendingUploadHashes')
   } else if (type === "folder") {
     for (const path of plugin.pendingDeleteFolderPaths) plugin.folderSnapshotManager.removeFolder(path)
     plugin.pendingDeleteFolderPaths.clear()
@@ -295,6 +296,7 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
     }
     plugin.pendingDeleteConfigPaths.clear()
     plugin.pendingConfigModifies.clear()
+    plugin.localStorageManager.clearPending('pendingConfigModifies')
   }
 
   // 3. 调用原始 End 处理函数 (更新时间戳等)
@@ -337,6 +339,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     return;
   }
   plugin.isSyncing = true;
+  try {
   const context = generateUUID();
   dump(`Sync context generated: ${context}`);
   if (!plugin.menuManager.ribbonIconStatus) {
@@ -379,6 +382,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.pendingFileDeleteAcks.clear()
   plugin.pendingConfigDeleteAcks.clear()
   plugin.pendingConfigModifies.clear()
+  plugin.localStorageManager.clearPending('pendingConfigModifies')
   plugin.disableWatch();
 
   if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
@@ -736,6 +740,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   const progressCheckInterval = setInterval(() => {
     checkSyncCompletion(plugin, progressCheckInterval, syncStartTime);
   }, 100);
+  } finally {
+    // 确保 isSyncing 在所有退出路径（正常完成、early return、异常）下都被重置
+    // Ensure isSyncing is reset on all exit paths: normal completion, early return, or exception
+    plugin.isSyncing = false;
+  }
 };
 
 
@@ -813,12 +822,9 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
     // Step 3: Folder structure is ready, now send NoteSync and FileSync
     plugin.websocket.SendMessage("NoteSync", noteSyncData, undefined, () => {
       for (const note of noteSyncData.notes) {
-        // 将同步发送的 hash 加入 pending，等待服务端可能发送的消息后再确定
-        // 在 batch 同步中，如果没有收到对应 Ack 而是收到了 End，则 End 包装器会处理
-        // 不过由于 NoteSync 通常不触发 NoteModifyAck，这里可能需要保持原样
-        // 但为了符合 "ACK 之后才保存" 的原则，我们还是加入 pending
         plugin.pendingNoteModifies.set(note.path, note.contentHash);
       }
+      plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
     });
 
     // 如果启用了云预览且未开启类型限制，则不发送 FileSync 请求，从而关闭启动时的 file 同步
@@ -850,6 +856,7 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
       for (const config of configSyncData.settings) {
         plugin.pendingConfigModifies.set(config.path, config.contentHash);
       }
+      plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies)
     });
 
     // 将已删除配置路径加入 pending set，等待 SettingSyncEnd 确认服务端已处理后再移除

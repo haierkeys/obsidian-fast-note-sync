@@ -59,6 +59,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
         // New create supersedes delete intent; clear pending to prevent stale Ack from removing new hash
         plugin.pendingNoteDeleteAcks.delete(file.path)
         plugin.pendingNoteModifies.set(file.path, contentHash)
+        plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
       }
       await plugin.concurrencyManager.waitForSlot(file.path)
       plugin.websocket.SendMessage("NoteModify", data)
@@ -90,6 +91,7 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
     // 清理可能存在的待确认上传记录，避免 pending map 内存泄漏
     // Clean up any pending note modify record to avoid memory leak
     plugin.pendingNoteModifies.delete(file.path)
+    plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
     plugin.addIgnoredFile(file.path)
     try {
       const data = {
@@ -125,6 +127,7 @@ export const noteDeleteByPath = async function (filePath: string, plugin: FastSy
     // 清理可能存在的待确认上传记录，避免 pending map 内存泄漏
     // Clean up any pending note modify record to avoid memory leak
     plugin.pendingNoteModifies.delete(filePath)
+    plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
     plugin.addIgnoredFile(filePath)
     try {
       await plugin.concurrencyManager.waitForSlot(filePath)
@@ -239,6 +242,7 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
       // 服务端版本已覆盖本地，清理 pending 避免增量过滤器旁路导致该笔记无限重传
       // Server version overrides local; clear pending to avoid incremental filter bypass loop
       plugin.pendingNoteModifies.delete(data.path)
+      plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
       // 服务端推送新内容说明该路径已被创建/更新，清理可能残留的 deleteAck pending
       // Server push means path was created/updated; clear any stale deleteAck pending
       plugin.pendingNoteDeleteAcks.delete(data.path)
@@ -305,6 +309,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   // Store hash in pending map; hashManager is written only after NoteModifyAck arrives.
   // Overwrites any stale pending entry left by a previously interrupted noteModify.
   plugin.pendingNoteModifies.set(file.path, contentHash)
+  plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
   await plugin.concurrencyManager.waitForSlot(file.path)
   plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
     plugin.removeIgnoredFile(file.path)
@@ -341,6 +346,7 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
         if (pendingHash !== undefined) {
           plugin.fileHashManager.setFileHash(data.path, pendingHash, data.mtime, file.stat.size)
           plugin.pendingNoteModifies.delete(data.path)
+          plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
         }
         // 更新同步时间
         if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
@@ -381,6 +387,7 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
         // 清理 pending，避免已删除路径的 pending 条目泄漏
         // Clean up pending to prevent memory leak for deleted path
         plugin.pendingNoteModifies.delete(normalizedPath)
+        plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
         // 更新同步时间
         if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {
           plugin.localStorageManager.setMetadata("lastNoteSyncTime", data.lastTime)
@@ -520,6 +527,7 @@ export const receiveNoteModifyAck = function (data: { lastTime?: number; path?: 
       const file = plugin.app.vault.getFileByPath(normalizePath(data.path))
       plugin.fileHashManager.setFileHash(data.path, contentHash, file?.stat.mtime || 0, file?.stat.size || 0)
       plugin.pendingNoteModifies.delete(data.path)
+      plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
     } else {
       dump(`NoteModifyAck received for non-pending path: ${data.path}`)
     }

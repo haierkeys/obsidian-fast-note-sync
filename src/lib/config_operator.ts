@@ -97,6 +97,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
     // Temporarily store hash in pending map, update configHashManager only after server SettingModifyAck
     plugin.pendingConfigDeleteAcks.delete(path)
     plugin.pendingConfigModifies.set(path, contentHash)
+    plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies)
     await plugin.concurrencyManager.waitForSlot(path)
     plugin.websocket.SendMessage("SettingModify", data)
 
@@ -262,6 +263,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     // 将 hash 暂存到 pending map，等待服务端 SettingModifyAck 后再写入 configHashManager
     // Temporarily store hash in pending map, update configHashManager only after server SettingModifyAck
     plugin.pendingConfigModifies.set(data.path, contentHash)
+    plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies)
     await plugin.concurrencyManager.waitForSlot(data.path)
     plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
@@ -386,6 +388,7 @@ export const receiveConfigModifyAck = function (data: { lastTime?: number; path?
                 plugin.configHashManager.setFileHash(data.path, contentHash)
             }
             plugin.pendingConfigModifies.delete(data.path)
+            plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies)
         }
     }
     if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) {

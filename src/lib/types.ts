@@ -51,6 +51,7 @@ export interface ReceiveFileSyncUpdateMessage {
 
 export interface FileUploadMessage {
     path: string;
+    pathHash: string;
     ctime: number;
     mtime: number;
     sessionId: string;
@@ -141,6 +142,7 @@ export interface FolderSyncRenameMessage {
     mtime: number;
     oldPath: string;
     oldPathHash: string;
+    lastTime?: number;
 }
 
 export interface FolderSyncData {

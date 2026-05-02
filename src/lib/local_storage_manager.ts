@@ -97,6 +97,45 @@ export class LocalStorageManager {
         this.setMetadata('internalExcludes', JSON.stringify(rules));
     }
 
+    // --- pending 持久化方法 ---
+    // Pending persistence methods: protect against data loss on crash
+
+    /**
+     * 将内存中的 pending Map 序列化写入 localStorage
+     * Serialize in-memory pending Map to localStorage
+     */
+    savePending(field: 'pendingNoteModifies' | 'pendingUploadHashes' | 'pendingConfigModifies', map: Map<string, string>): void {
+        try {
+            this.write(this.getInternalKey(field), JSON.stringify(Object.fromEntries(map)));
+        } catch (e) {
+            dump(`[LocalStorageManager] Failed to persist ${field}:`, e);
+        }
+    }
+
+    /**
+     * 从 localStorage 加载 pending Map，并过滤本地已不存在的路径
+     * Load pending Map from localStorage, filtering out paths that no longer exist locally
+     */
+    loadPending(field: 'pendingNoteModifies' | 'pendingUploadHashes' | 'pendingConfigModifies'): Map<string, string> {
+        try {
+            const raw = this.read(this.getInternalKey(field));
+            if (!raw) return new Map();
+            const obj = JSON.parse(raw);
+            return new Map(Object.entries(obj));
+        } catch (e) {
+            dump(`[LocalStorageManager] Failed to load pending ${field}:`, e);
+            return new Map();
+        }
+    }
+
+    /**
+     * 清除 localStorage 中的 pending 持久化数据
+     * Clear persisted pending data from localStorage
+     */
+    clearPending(field: 'pendingNoteModifies' | 'pendingUploadHashes' | 'pendingConfigModifies'): void {
+        localStorage.removeItem(this.getInternalKey(field));
+    }
+
     /**
      * 清理所有同步记录时间戳
      */
