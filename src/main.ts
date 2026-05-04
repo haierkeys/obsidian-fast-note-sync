@@ -238,6 +238,15 @@ export default class FastSync extends Plugin {
     this.menuManager?.updateStatusBar(text, current, total)
   }
 
+  /**
+   * 将 mobileToastTop 设置注入为 CSS 变量，覆盖 .fns-mobile-toast 的 top 值。
+   * Inject mobileToastTop as CSS variable to override .fns-mobile-toast top.
+   */
+  applyMobileToastTop() {
+    if (!Platform.isMobile) return
+    document.body.style.setProperty("--fns-toast-top", `${this.settings.mobileToastTop}px`)
+  }
+
   async onload() {
     // 注册自定义颜色图标 / Register custom colored icons
     const colors = {
@@ -421,6 +430,9 @@ export default class FastSync extends Plugin {
           this.shareIndicatorManager?.regenerateCss()
         })
       )
+
+      // 应用移动端 toast 高度 CSS 变量 / Apply mobile toast top CSS variable on startup
+      this.applyMobileToastTop()
     })
   }
 

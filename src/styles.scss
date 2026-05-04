@@ -1340,7 +1340,7 @@
 /* ===== 移动端同步 Toast / Mobile Sync Toast ===== */
 .fns-mobile-toast {
   position: fixed;
-  top: 110px;
+  top: var(--fns-toast-top, 110px); /* 由插件设置动态注入 / Dynamically set by plugin settings */
   right: 12px;
   z-index: 9999;
   min-width: 90px;
@@ -1371,7 +1371,7 @@
   }
 
   .is-tablet & {
-    top: 126px;
+    top: var(--fns-toast-top, 126px); /* 平板默认回退 / Tablet default fallback */
   }
 }
 
