@@ -82,6 +82,8 @@ export interface PluginSettings {
   maxConcurrentUploads: number
   /** 是否在状态栏显示并发控制图标 */
   showConcurrencyIndicator: boolean
+  /** 移动端消息通知距顶距离（px）/ Mobile toast top offset (px) */
+  mobileToastTop: number
 }
 
 /**
@@ -130,9 +132,29 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   concurrencyControlEnabled: false,
   maxConcurrentUploads: 20,
   showConcurrencyIndicator: true,
+  // 手机 110，平板 126，与 CSS 硬编码值一致 / Phone 110, tablet 126, matches CSS defaults
+  mobileToastTop: Platform.isTablet ? 126 : 110,
 }
 
 export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG"
+
+// 预览 toast 位置，文案固定为 "Toast" / Preview toast position with fixed text "Toast"
+function showTestToast(top: number) {
+  const existing = document.querySelector(".fns-preview-toast")
+  if (existing) existing.remove()
+  const toast = document.createElement("div")
+  // 复用 .fns-mobile-toast 的样式，仅覆盖 top / Reuse .fns-mobile-toast styles, override top only
+  toast.className = "fns-mobile-toast fns-preview-toast"
+  toast.style.top = `${top}px`
+  toast.textContent = "Toast"
+  document.body.appendChild(toast)
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add("fns-mobile-toast-hiding")
+      toast.addEventListener("animationend", () => toast.remove(), { once: true })
+    }
+  }, 2500)
+}
 
 export class SettingTab extends PluginSettingTab {
   plugin: FastSync
@@ -759,10 +781,41 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.isShowNotice) {
           this.plugin.settings.isShowNotice = value
           await this.plugin.saveSettings()
+          this.display()
         }
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.show_notice_desc"))
+
+    // 仅移动端且通知开启时显示子选项 / Show sub-option only on mobile with notifications enabled
+    if (Platform.isMobile && this.plugin.settings.isShowNotice) {
+      // 用闭包保存 TextComponent，供测试按钮读取当前输入值 / Capture TextComponent for test button to read current value
+      let toastTopText: import("obsidian").TextComponent
+      new Setting(set)
+        .setName($("setting.general.mobile_toast_top"))
+        .addText((text) => {
+          text
+            .setPlaceholder(Platform.isTablet ? "126" : "110")
+            .setValue(this.plugin.settings.mobileToastTop.toString())
+            .onChange(async (value) => {
+              const numValue = parseInt(value)
+              if (!isNaN(numValue) && numValue >= 0) {
+                this.plugin.settings.mobileToastTop = numValue
+                this.plugin.applyMobileToastTop()
+                await this.plugin.saveSettings()
+              }
+            })
+          toastTopText = text
+        })
+        .addButton((btn) =>
+          btn.setButtonText($("setting.general.mobile_toast_top_test")).onClick(() => {
+            const current = parseInt(toastTopText.getValue())
+            const top = isNaN(current) ? this.plugin.settings.mobileToastTop : current
+            showTestToast(top)
+          }),
+        )
+      this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.general.mobile_toast_top_desc"))
+    }
 
     new Setting(set).setName($("setting.general.show_share_icon")).addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.showShareIcon).onChange(async (value) => {
