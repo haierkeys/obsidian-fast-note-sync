@@ -7,7 +7,7 @@ export class ShareModal extends Modal {
     private plugin: FastSync;
     private path: string;
     private loading: boolean = false;
-    private shareData: { id: number, token: string, isPassword?: boolean, shortLink?: string } | null = null;
+    private shareData: { id: number, token: string, isPassword?: boolean, shortLink?: string, baseUrl?: string } | null = null;
     
     // 密码状态相关
     private isPasswordVisible: boolean = false;
@@ -122,7 +122,7 @@ export class ShareModal extends Modal {
         setIcon(linkLabelIcon, "globe");
         labelEl.createSpan({ text: $("ui.share.link") });
 
-        const apiBase = (this.plugin.runApi || this.plugin.settings.api).replace(/\/+$/, "");
+        const apiBase = this.shareData?.baseUrl || (this.plugin.runApi || this.plugin.settings.api).replace(/\/+$/, "");
         const shareUrl = `${apiBase}/share/${this.shareData?.id}/${this.shareData?.token}`;
 
         const linkContainer = resultContainer.createDiv("fns-share-link-container");

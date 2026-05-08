@@ -569,7 +569,7 @@ export class HttpApiService {
     /**
      * 创建分享链接
      */
-    async createShare(path: string): Promise<{ id: number, token: string, isPassword?: boolean, shortLink?: string } | null> {
+    async createShare(path: string): Promise<{ id: number, token: string, isPassword?: boolean, shortLink?: string, baseUrl?: string } | null> {
         const endpoint = `/api/share`;
         try {
             const { status, json } = await this.request(endpoint, {
@@ -597,7 +597,7 @@ export class HttpApiService {
     /**
      * 查询分享状态
      */
-    async getShare(path: string): Promise<{ id: number, token: string, isPassword?: boolean, shortLink?: string } | null> {
+    async getShare(path: string): Promise<{ id: number, token: string, isPassword?: boolean, shortLink?: string, baseUrl?: string } | null> {
         const params = new URLSearchParams({
             vault: this.plugin.settings.vault,
             path: path,
