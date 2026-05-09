@@ -911,7 +911,7 @@ export class SettingTab extends PluginSettingTab {
           if (value != this.plugin.settings.api) {
             this.plugin.wsSettingChange = true
             this.plugin.settings.api = value
-            this.plugin.localStorageManager.setMetadata("isInitSync", false)
+            this.plugin.localStorageManager.clearSyncTime()
             await this.plugin.saveSettings()
           }
         }),
@@ -926,7 +926,7 @@ export class SettingTab extends PluginSettingTab {
           if (value != this.plugin.settings.apiToken) {
             this.plugin.wsSettingChange = true
             this.plugin.settings.apiToken = value
-            this.plugin.localStorageManager.setMetadata("isInitSync", false)
+            this.plugin.localStorageManager.clearSyncTime()
             await this.plugin.saveSettings()
           }
         }),
@@ -940,7 +940,7 @@ export class SettingTab extends PluginSettingTab {
         .onChange(async (value) => {
           this.plugin.wsSettingChange = true
           this.plugin.settings.vault = value
-          this.plugin.localStorageManager.setMetadata("isInitSync", false)
+          this.plugin.localStorageManager.clearSyncTime()
           await this.plugin.saveSettings()
         }),
     )

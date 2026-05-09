@@ -18,6 +18,7 @@ async function getClipboardContent(plugin: FastSync): Promise<void> {
     plugin.settings.vault = Vault
     plugin.clipboardReadTip = tip
 
+    plugin.localStorageManager.clearSyncTime()
     await plugin.saveSettings()
     plugin.settingTab.display()
 

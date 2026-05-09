@@ -1,8 +1,8 @@
 import { moment, Platform } from "obsidian";
 
+import { dump, isWsUrl, addRandomParam, isPathExcluded, isVersionNew, showSyncNotice } from "./helps";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync, startupFullSync, checkSyncCompletion } from "./operator";
-import { dump, isWsUrl, addRandomParam, isPathExcluded, isVersionNew, showSyncNotice } from "./helps";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
@@ -263,7 +263,9 @@ export class WebSocketClient {
 
         if (msgAction == "Authorization") {
           if (data.code <= 0 || data.code >= 300) {
-            showSyncNotice("Service Authorization Error: Code=" + data.code + " Msg=" + data.msg + data.details)
+            const errorMsg = data.message || "";
+            const errorDetails = data.details ? " Details=" + data.details : "";
+            showSyncNotice("Service Authorization Error: Code=" + data.code + " Msg=" + errorMsg + errorDetails)
             return
           } else {
             this.isAuth = true
@@ -316,7 +318,9 @@ export class WebSocketClient {
           if (data.code === ERROR_SYNC_CONFLICT) {
             this.handleConflictError(data)
           } else {
-            showSyncNotice("Service Error: Code=" + data.code + " Message=" + data.message + " Details=" + data.details)
+            const errorMsg = data.message || "";
+            const errorDetails = data.details ? " Details=" + data.details : "";
+            showSyncNotice("Service Error: Code=" + data.code + " Message=" + errorMsg + errorDetails)
           }
         } else {
 
