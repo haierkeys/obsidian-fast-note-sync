@@ -174,6 +174,16 @@ export class ConfigHashManager {
         this.saveToStorage();
     }
 
+    setFileHashes(entries: Iterable<[string, string]>, getStat?: (path: string) => { mtime?: number; size?: number } | null | undefined): void {
+        let changed = false;
+        for (const [path, hash] of entries) {
+            const stat = getStat?.(path);
+            this.hashMap.set(path, { hash, mtime: stat?.mtime || 0, size: stat?.size || 0 });
+            changed = true;
+        }
+        if (changed) this.saveToStorage();
+    }
+
     /**
      * 删除指定路径的哈希
      */
@@ -182,6 +192,14 @@ export class ConfigHashManager {
         if (deleted) {
             this.saveToStorage();
         }
+    }
+
+    removeFileHashes(paths: Iterable<string>): void {
+        let changed = false;
+        for (const path of paths) {
+            changed = this.hashMap.delete(path) || changed;
+        }
+        if (changed) this.saveToStorage();
     }
 
     /**
@@ -303,4 +321,3 @@ export class ConfigHashManager {
         };
     }
 }
-

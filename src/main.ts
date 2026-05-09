@@ -401,11 +401,12 @@ export default class FastSync extends Plugin {
       // 清理过期的断点续传 checkpoint（超过 20 分钟即视为过期，与服务端 session 超时一致）
       // Clean up expired upload resume checkpoints (>20 min matches server session timeout)
       const uploadCheckpointPrefix = `fns-${this.app.vault.getName()}-uploadSession-`
+      const anyUploadCheckpointPattern = /^fns-.+-uploadSession-/
       const expireMs = 20 * 60 * 1000
       const now = Date.now()
       for (let i = localStorage.length - 1; i >= 0; i--) {
         const key = localStorage.key(i)
-        if (key && key.startsWith(uploadCheckpointPrefix)) {
+        if (key && (key.startsWith(uploadCheckpointPrefix) || anyUploadCheckpointPattern.test(key))) {
           try {
             const cp = JSON.parse(localStorage.getItem(key) || '{}')
             if (!cp.timestamp || now - cp.timestamp > expireMs) {
@@ -611,6 +612,13 @@ export default class FastSync extends Plugin {
 
   async refreshRuntime(forceRegister: boolean = true, setItem: string = "") {
     if (forceRegister && this.settings.api && this.settings.apiToken) {
+      if (this.settings.manualSyncEnabled) {
+        dump("Manual sync mode enabled, skipping automatic WebSocket registration")
+        this.websocket?.unRegister()
+        this.isWatchEnabled = false
+        this.updateStatusBar("")
+        return
+      }
       // 1. 前置探测跳转，更新 runApi
       await this.api?.probeApiRedirect()
 

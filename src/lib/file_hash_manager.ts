@@ -1,6 +1,6 @@
 import { TFile } from "obsidian";
 
-import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, showSyncNotice } from "./helps";
+import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, logMemorySnapshot, isBinaryFileSyncDisabled } from "./helps";
 import type FastSync from "../main";
 
 
@@ -85,10 +85,20 @@ export class FileHashManager {
             contentHash = await hashContentAsync(content);
             content = null; // 显式释放引用 (Explicitly release reference)
           } else {
+            if (isBinaryFileSyncDisabled()) {
+              dump(`FileHashManager: skip binary hash while binary sync is disabled: ${file.path}`);
+              continue;
+            }
+            if (isLargeBinarySyncRisk(file.stat.size)) {
+              dump(`FileHashManager: skip large binary hash (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
+              continue;
+            }
             // 非 md 文件使用二进制内容计算哈希
+            logMemorySnapshot(`before hash ${file.path}`);
             let buffer: ArrayBuffer | null = await this.plugin.app.vault.readBinary(file);
             contentHash = await hashArrayBuffer(buffer);
             buffer = null; // 显式释放引用 (Explicitly release reference)
+            logMemorySnapshot(`after hash ${file.path}`);
           }
 
           this.hashMap.set(file.path, {
@@ -161,6 +171,16 @@ export class FileHashManager {
     this.saveToStorage();
   }
 
+  setFileHashes(entries: Iterable<[string, string]>, getStat?: (path: string) => { mtime?: number; size?: number } | null | undefined): void {
+    let changed = false;
+    for (const [path, hash] of entries) {
+      const stat = getStat?.(path);
+      this.hashMap.set(path, { hash, mtime: stat?.mtime || 0, size: stat?.size || 0 });
+      changed = true;
+    }
+    if (changed) this.saveToStorage();
+  }
+
   /**
    * 删除指定路径的哈希
    */
@@ -169,6 +189,14 @@ export class FileHashManager {
     if (deleted) {
       this.saveToStorage();
     }
+  }
+
+  removeFileHashes(paths: Iterable<string>): void {
+    let changed = false;
+    for (const path of paths) {
+      changed = this.hashMap.delete(path) || changed;
+    }
+    if (changed) this.saveToStorage();
   }
 
   /**
@@ -295,4 +323,3 @@ export class FileHashManager {
     };
   }
 }
-

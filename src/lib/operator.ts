@@ -5,7 +5,7 @@ import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, r
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
-import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice } from "./helps";
+import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, logMemorySnapshot, isBinaryFileSyncDisabled } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
@@ -266,21 +266,17 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
   // 2. SyncEnd 到达说明服务端已处理本轮同步（含删除），将 pending 删除路径从 hashManager 移除
   // SyncEnd means server processed this sync round (including deletes); remove pending delete paths from hashManager
   if (type === "note") {
-    for (const path of plugin.pendingDeleteNotePaths) plugin.fileHashManager.removeFileHash(path)
+    plugin.fileHashManager.removeFileHashes(plugin.pendingDeleteNotePaths)
     plugin.pendingDeleteNotePaths.clear()
     // 同步结束，提交本轮同步中可能产生的待确认上传 hash
-    for (const [path, hash] of plugin.pendingNoteModifies) {
-      plugin.fileHashManager.setFileHash(path, hash)
-    }
+    plugin.fileHashManager.setFileHashes(plugin.pendingNoteModifies, (path) => plugin.app.vault.getFileByPath(path)?.stat)
     plugin.pendingNoteModifies.clear()
     plugin.localStorageManager.clearPending('pendingNoteModifies')
   } else if (type === "file") {
-    for (const path of plugin.pendingDeleteFilePaths) plugin.fileHashManager.removeFileHash(path)
+    plugin.fileHashManager.removeFileHashes(plugin.pendingDeleteFilePaths)
     plugin.pendingDeleteFilePaths.clear()
     // 同步结束，提交本轮同步中可能产生的待确认上传 hash
-    for (const [path, hash] of plugin.pendingUploadHashes) {
-      plugin.fileHashManager.setFileHash(path, hash)
-    }
+    plugin.fileHashManager.setFileHashes(plugin.pendingUploadHashes, (path) => plugin.app.vault.getFileByPath(path)?.stat)
     plugin.pendingUploadHashes.clear()
     plugin.localStorageManager.clearPending('pendingUploadHashes')
   } else if (type === "folder") {
@@ -288,11 +284,9 @@ async function receiveSyncEndWrapper(data: any, plugin: FastSync, type: "note" |
     plugin.pendingDeleteFolderPaths.clear()
   } else if (type === "config") {
     if (plugin.configHashManager && plugin.configHashManager.isReady()) {
-      for (const path of plugin.pendingDeleteConfigPaths) plugin.configHashManager.removeFileHash(path)
+      plugin.configHashManager.removeFileHashes(plugin.pendingDeleteConfigPaths)
       // 同步结束，提交本轮同步中可能产生的待确认上传 hash
-      for (const [path, hash] of plugin.pendingConfigModifies) {
-        plugin.configHashManager.setFileHash(path, hash)
-      }
+      plugin.configHashManager.setFileHashes(plugin.pendingConfigModifies)
     }
     plugin.pendingDeleteConfigPaths.clear()
     plugin.pendingConfigModifies.clear()
@@ -509,6 +503,14 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
           notes.push(item);
         } else {
+          if (isBinaryFileSyncDisabled()) {
+            dump(`Skip scanning attachment while binary sync is disabled: ${file.path}`);
+            continue;
+          }
+          if (isLargeBinarySyncRisk(file.stat.size)) {
+            dump(`Skip scanning large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
+            continue;
+          }
           const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
           if (skipSync) continue;
 
@@ -522,7 +524,11 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
           // 尝试从缓存获取有效的哈希，避免重复计算 (Try to get valid hash from cache)
           let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
           if (contentHash === null) {
-            contentHash = await hashArrayBuffer(await plugin.app.vault.readBinary(file));
+            logMemorySnapshot(`before scan hash ${file.path}`);
+            let content: ArrayBuffer | null = await plugin.app.vault.readBinary(file);
+            contentHash = await hashArrayBuffer(content);
+            content = null;
+            logMemorySnapshot(`after scan hash ${file.path}`);
           }
 
           let item = {
@@ -630,11 +636,17 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     const fullPath = normalizePath(path);
     const stat = await plugin.app.vault.adapter.stat(fullPath);
     if (!stat) continue;
+    if (isLargeBinarySyncRisk(stat.size)) {
+      dump(`Skip scanning large config file (${describeBinarySyncLimit()} limit): ${path}`, stat.size);
+      continue;
+    }
     if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
     // 尝试从缓存获取有效的哈希 (Try to get valid hash from cache)
     let contentHash = plugin.configHashManager.getValidHash(path, stat.mtime, stat.size);
     if (contentHash === null) {
-      contentHash = await hashArrayBuffer(await plugin.app.vault.adapter.readBinary(fullPath));
+      let content: ArrayBuffer | null = await plugin.app.vault.adapter.readBinary(fullPath);
+      contentHash = await hashArrayBuffer(content);
+      content = null;
     }
 
     configs.push({
@@ -829,7 +841,7 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
 
     // 如果启用了云预览且未开启类型限制，则不发送 FileSync 请求，从而关闭启动时的 file 同步
     // 若开启了类型限制，则需要发送以同步不受限类型的附件1
-    if (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted) {
+    if (!isBinaryFileSyncDisabled() && (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted)) {
       plugin.websocket.SendMessage("FileSync", fileSyncData);
     }
 

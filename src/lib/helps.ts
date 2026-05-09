@@ -395,6 +395,35 @@ export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<str
   return result
 }
 
+export const MAX_IN_MEMORY_FILE_SYNC_BYTES = 128 * 1024 * 1024
+export const BINARY_FILE_SYNC_ENABLED = true
+
+export const isBinaryFileSyncDisabled = function (): boolean {
+  return !BINARY_FILE_SYNC_ENABLED
+}
+
+export const isLargeBinarySyncRisk = function (size: number): boolean {
+  return typeof size === "number" && size > MAX_IN_MEMORY_FILE_SYNC_BYTES
+}
+
+export const describeBinarySyncLimit = function (): string {
+  return formatFileSize(MAX_IN_MEMORY_FILE_SYNC_BYTES)
+}
+
+export const logMemorySnapshot = function (label: string): void {
+  if (!isLogEnabled) return
+  const memory = (performance as any)?.memory
+  if (memory) {
+    console.log("[FastNoteSync][Memory]", label, {
+      used: formatFileSize(memory.usedJSHeapSize),
+      total: formatFileSize(memory.totalJSHeapSize),
+      limit: formatFileSize(memory.jsHeapSizeLimit),
+    })
+  } else {
+    console.log("[FastNoteSync][Memory]", label)
+  }
+}
+
 /**
  * 获取安全的 ctime (如果不存在则回退到 mtime)
  */
