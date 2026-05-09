@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "./types";
-import { hashContent, dump, isPathExcluded, getSafeCtime } from "./helps";
+import { hashContent, hashContentAsync, dump, isPathExcluded, getSafeCtime } from "./helps";
 import type FastSync from "../main";
 
 
@@ -36,7 +36,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
       } else {
         // 缓存失效或不存在，计算新哈希
         content = await plugin.app.vault.read(file)
-        contentHash = hashContent(content)
+        contentHash = await hashContentAsync(content)
       }
 
       if (content === null) content = await plugin.app.vault.read(file)
@@ -171,7 +171,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
       let contentHash = plugin.fileHashManager.getPathHash(oldfile)
       if (contentHash == null) {
         const content: string = await plugin.app.vault.read(file)
-        contentHash = hashContent(content)
+        contentHash = await hashContentAsync(content)
       }
 
       const data = {
@@ -287,7 +287,7 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   // 尝试从缓存获取 (Try to get from cache)
   let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
   const content = await plugin.app.vault.read(file);
-  if (contentHash === null) contentHash = hashContent(content);
+  if (contentHash === null) contentHash = await hashContentAsync(content);
 
   if (content.length === 0) {
     dump(`Empty note upload: ${data.path}`);
@@ -489,7 +489,7 @@ export const receiveNoteSyncRename = async function (data: any, plugin: FastSync
       const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
       if (targetFile instanceof TFile) {
         const content = await plugin.app.vault.read(targetFile)
-        const localContentHash = hashContent(content)
+        const localContentHash = await hashContentAsync(content)
         if (localContentHash === data.contentHash) {
           dump(`Target file already exists and matches hash, skipping rename: ${data.path}`)
           plugin.fileHashManager.setFileHash(data.path, data.contentHash)
