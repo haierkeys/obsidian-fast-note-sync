@@ -137,7 +137,10 @@ export class WebSocketClient {
     }
 
     if (isWsUrl(this.plugin.runWsApi)) {
-      const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count);
+      const client = "ObsidianPlugin";
+      const clientName = encodeURIComponent(this.plugin.getClientName());
+      const clientVersion = this.plugin.manifest.version || "";
+      const wsUrl = addRandomParam(this.plugin.runWsApi + "/api/user/sync?lang=" + moment.locale() + "&count=" + this.count + "&client=" + client + "&clientName=" + clientName + "&clientVersion=" + clientVersion);
       this.ws = new WebSocket(wsUrl)
       this.count++
       localStorage.setItem(getWsCountStorageKey(this.plugin), this.count.toString())
