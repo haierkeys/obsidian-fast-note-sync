@@ -431,7 +431,8 @@ export const hashFileAsync = async function (app: App, path: string): Promise<st
 /**
  * 内部统一哈希计算逻辑 (Internal unified hashing logic)
  */
-async function computeRollingHash(view: Uint8Array): Promise<string> {
+async function computeRollingHash(view: Uint8Array | null): Promise<string> {
+  if (!view) return "0"
   let hash = 0
   const len = view.length
   const yieldSize = 512 * 1024 // 每 512KB 让出一次主线程 (Yield every 512KB)
