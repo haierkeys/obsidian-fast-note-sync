@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting, Platform, SearchComponent, MarkdownRenderer, Component } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 
-import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice, encryptString, decryptString } from "./lib/helps";
+import { parseRules, SyncRule, getPluginDir, debounce, showSyncNotice } from "./lib/helps";
 import { handleSync, resetSettingSyncTime, rebuildAllHashes, clearAllHashes } from "./lib/operator";
 import { SettingsView, SupportView } from "./views/settings-view";
 import { RuleEditorModal } from "./views/rule-editor-modal";

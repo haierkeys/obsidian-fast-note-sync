@@ -1,6 +1,6 @@
 import { Plugin, WorkspaceLeaf, Platform, addIcon } from "obsidian";
 
-import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, encryptString, decryptString, loadApiToken, saveApiToken } from "./lib/helps";
+import { dump, setLogEnabled, isPathMatch, parseRules, stringifyRules, getPluginDir, showSyncNotice, loadApiToken, saveApiToken } from "./lib/helps";
 import { SettingTab, PluginSettings, DEFAULT_SETTINGS } from "./setting";
 import { SyncLogView, SYNC_LOG_VIEW_TYPE } from "./views/sync-log-view";
 import { ShareIndicatorManager } from "./lib/share_indicator_manager";
@@ -267,15 +267,17 @@ export default class FastSync extends Plugin {
     });
 
     this.localStorageManager = new LocalStorageManager(this)
-    this.localStorageManager.startWatch()
+    this.api = new HttpApiService(this)
+    this.websocket = new WebSocketClient(this)
 
     await this.loadSettings()
 
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
     this.addSettingTab(this.settingTab)
-    this.api = new HttpApiService(this)
-    this.websocket = new WebSocketClient(this)
+
+    // 启动监听 (必须在依赖组件实例化后)
+    this.localStorageManager.startWatch()
 
     // 初始化锁管理器 (必须在事件管理器和操作模块之前)
     this.lockManager = new LockManager()

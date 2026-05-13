@@ -196,8 +196,8 @@ export class LocalStorageManager {
      */
     private async checkChanges() {
         // 如果未连接或未初始化，跳过检查
-        if (!this.plugin.websocket.isConnected()) {
-            // dump("[LocalStorageManager] Skip check: WebSocket not connected.");
+        if (!this.plugin.websocket || !this.plugin.websocket.isConnected()) {
+            // dump("[LocalStorageManager] Skip check: WebSocket not ready or not connected.");
             return;
         }
         if (!this.plugin.getWatchEnabled()) {

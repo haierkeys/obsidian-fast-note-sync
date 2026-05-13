@@ -709,151 +709,42 @@ export function showSyncNotice(message: string, duration: number = 2500): SyncNo
 }
 
 /**
+/**
  * =============================================================================
- * 加密相关 (Encryption)
+ * Token 管理 (Token Management) - 移除加密以增强兼容性
  * =============================================================================
  */
 
-interface ISafeStorage {
-  isAvailable(): boolean
-  encrypt(plaintext: string): Promise<string>
-  decrypt(encrypted: string): Promise<string>
-}
-
-const ENCRYPTED_PREFIX = "encrypted:"
-
-function getSafeStorage(app: App): ISafeStorage | undefined {
-  return (app as unknown as { safeStorage?: ISafeStorage }).safeStorage
-}
-
-function isSafeStorageAvailable(app: App): boolean {
-  // Mobile platforms don't support safeStorage but might support secretStorage
-  if (Platform.isMobile) return false
-  const safeStorage = getSafeStorage(app)
-  return safeStorage !== undefined && safeStorage.isAvailable()
-}
-
 /**
- * 获取基于库唯一标识的安全存储键名，避免移动端多库冲突
- */
-function getSecretKey(app: App): string {
-  return `fns-api-token`
-}
-
-/**
- * 检查 Obsidian 原生 SecretStorage (Keychain) 是否可用
- */
-export function isSecretStorageAvailable(app: App): boolean {
-  return (app as any).secretStorage !== undefined
-}
-
-/**
- * 保存 ApiToken：直接使用 LocalStorage 加密存储，并清理 Keychain 残留数据
+ * 保存 ApiToken：直接使用 LocalStorage 明文存储
  */
 export async function saveApiToken(app: App, plugin: FastSync, token: string): Promise<void> {
   dump(`[ApiToken] Saving token (length: ${token?.length}) to LocalStorage...`)
-
-  // 直接保存到 LocalStorage (加密存储)
-  const encrypted = await encryptString(app, token)
-  plugin.localStorageManager.setMetadata("apiToken", encrypted)
-  dump("[ApiToken] Saved to LocalStorage (encrypted)")
-
-  // 清理可能存在的 Keychain 遗留数据
-  if (isSecretStorageAvailable(app)) {
-    try {
-      const secretKey = getSecretKey(app)
-      app.secretStorage.setSecret(secretKey, "")
-    } catch (e) {
-      // 忽略清理失败的异常
-    }
-  }
+  plugin.localStorageManager.setMetadata("apiToken", token)
+  dump("[ApiToken] Saved to LocalStorage (plain text)")
 }
 
 /**
- * 获取 ApiToken：优先尝试 LocalStorage，之后尝试从 SecretStorage 迁移
+ * 获取 ApiToken：从 LocalStorage 获取，支持从旧的加密格式平滑回退
  */
 export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: string): Promise<string> {
-  // 1. 优先尝试从 LocalStorage 获取 (新策略)
-  const storageToken = plugin.localStorageManager.getMetadata("apiToken")
-  if (storageToken) {
-    dump("[ApiToken] Found token in LocalStorage, decrypting...")
-    const plainToken = await decryptString(app, storageToken)
-    if (plainToken) {
-      return plainToken
-    }
+  // 1. 优先尝试从 LocalStorage 获取
+  let token = plugin.localStorageManager.getMetadata("apiToken")
+  
+  if (!token && dataJsonToken) {
+    token = dataJsonToken;
   }
 
-  // 2. 尝试从 SecretStorage (Keychain) 获取 (旧数据迁移)
-  if (isSecretStorageAvailable(app)) {
-    try {
-      const secretKey = getSecretKey(app)
-      let token = app.secretStorage.getSecret(secretKey)
-
-      if (!token) {
-        token = app.secretStorage.getSecret("fns-api-token")
-      }
-
-      if (token) {
-        dump(`[ApiToken] Loaded from SecretStorage (legacy), migrating to LocalStorage...`)
-        // 迁移到 LocalStorage
-        await saveApiToken(app, plugin, token)
-        return token
-      }
-    } catch (e) {
-      dump("[ApiToken] SecretStorage load failed", e)
+  if (token) {
+    // 如果是旧的加密格式，由于已移除 SafeStorage 特性，将无法解密。
+    // 返回空字符串引导用户重新输入，或直接返回（如果已经是明文）。
+    if (token.startsWith("encrypted:")) {
+      dump("[ApiToken] Found legacy encrypted token, but SafeStorage is removed. Please re-input token.");
+      return "";
     }
-  }
-
-  // 3. 尝试从 data.json 获取
-  if (dataJsonToken) {
-    dump("[ApiToken] Found token in data.json (migration), decrypting...")
-    const plainToken = await decryptString(app, dataJsonToken)
-    if (plainToken) {
-      await saveApiToken(app, plugin, plainToken)
-      return plainToken
-    }
+    return token;
   }
 
   dump("[ApiToken] No token found in any storage")
   return ""
-}
-
-/**
- * 使用 Obsidian SafeStorage API 加密字符串
- */
-export async function encryptString(app: App, plainText: string): Promise<string> {
-  const safeStorage = getSafeStorage(app)
-  if (!plainText) {
-    return ""
-  }
-  if (!isSafeStorageAvailable(app)) {
-    console.warn("[FastSync] SafeStorage is not available, storing token in plain text")
-    return plainText
-  }
-  const encrypted = await safeStorage!.encrypt(plainText)
-  return ENCRYPTED_PREFIX + encrypted
-}
-
-/**
- * 使用 Obsidian SafeStorage API 解密字符串
- */
-export async function decryptString(app: App, encryptedText: string): Promise<string> {
-  const safeStorage = getSafeStorage(app)
-  if (!encryptedText) {
-    return ""
-  }
-  if (!encryptedText.startsWith(ENCRYPTED_PREFIX)) {
-    return encryptedText
-  }
-  if (!isSafeStorageAvailable(app)) {
-    console.warn("[FastSync] SafeStorage is not available, cannot decrypt token")
-    return ""
-  }
-  const encrypted = encryptedText.slice(ENCRYPTED_PREFIX.length)
-  try {
-    return await safeStorage!.decrypt(encrypted)
-  } catch (error) {
-    console.error("[FastSync] Failed to decrypt token:", error)
-    return ""
-  }
 }
