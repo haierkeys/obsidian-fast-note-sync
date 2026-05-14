@@ -1,11 +1,11 @@
 import { TFolder, TFile, normalizePath } from "obsidian";
 
 import { receiveFileUpload, receiveFileSyncUpdate, receiveFileSyncDelete, receiveFileSyncMtime, receiveFileSyncChunkDownload, receiveFileSyncEnd, checkAndUploadAttachments, receiveFileSyncRename, receiveFileRenameAck, receiveFileUploadAck, receiveFileDeleteAck } from "./file_operator";
+import { hashContent, hashContentAsync, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, logMemorySnapshot, hashFileAsync, formatFileSize } from "./helps";
 import { receiveConfigSyncModify, receiveConfigUpload, receiveConfigSyncMtime, receiveConfigSyncDelete, receiveConfigSyncEnd, configAllPaths, receiveConfigSyncClear, receiveConfigModifyAck, receiveConfigDeleteAck } from "./config_operator";
 import { receiveNoteSyncModify, receiveNoteUpload, receiveNoteSyncMtime, receiveNoteSyncDelete, receiveNoteSyncEnd, receiveNoteSyncRename, receiveNoteModifyAck, receiveNoteRenameAck, receiveNoteDeleteAck } from "./note_operator";
 import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData, FileSyncData, ConfigSyncData, FolderSyncData } from "./types";
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./folder_operator";
-import { hashContent, hashContentAsync, hashArrayBuffer, dump, isPathExcluded, configIsPathExcluded, getConfigSyncCustomDirs, generateUUID, showSyncNotice, isLargeBinarySyncRisk, describeBinarySyncLimit, logMemorySnapshot, hashFileAsync, formatFileSize } from "./helps";
 import { FileCloudPreview } from "./file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../main";
@@ -334,449 +334,449 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   }
   plugin.isSyncing = true;
   try {
-  const context = generateUUID();
-  dump(`Sync context generated: ${context}`);
-  if (!plugin.menuManager.ribbonIconStatus) {
-    showSyncNotice($("setting.remote.disconnected"));
-    return;
-  }
-  if (!plugin.getWatchEnabled()) {
-    showSyncNotice($("ui.status.last_sync_not_completed"), 4000);
-    return;
-  }
-
-  if (plugin.settings.readonlySyncEnabled) {
-    dump("Read-only mode: Proceeding with state gathering for remote-to-local sync.");
-  }
-
-  plugin.currentSyncType = isLoadLastTime ? 'incremental' : 'full';
-  plugin.syncTypeCompleteCount = 0;
-  plugin.resetSyncTasks();
-  plugin.totalFilesToDownload = 0;
-  plugin.downloadedFilesCount = 0;
-  plugin.totalChunksToDownload = 0;
-  plugin.downloadedChunksCount = 0;
-  plugin.totalChunksToUpload = 0;
-  plugin.uploadedChunksCount = 0;
-  // 清空上一次连接的未完成 rename 队列，由 hashManager 旧路径进 delFiles 自然处理
-  // Clear pending renames from previous connection; old paths in hashManager will naturally go into delFiles
-  plugin.pendingFileRenames = []
-  // 清空上一次连接的未完成笔记 rename 队列，由 hashManager 旧路径进 delNotes 自然处理
-  // Clear pending note renames from previous connection; old paths in hashManager will naturally go into delNotes
-  plugin.pendingNoteRenames = []
-  // 清空 pending 删除路径集合，避免旧的 pending 条目干扰本次同步
-  // Clear pending delete path sets to avoid stale entries interfering with this sync
-  plugin.pendingDeleteNotePaths.clear()
-  plugin.pendingDeleteFilePaths.clear()
-  plugin.pendingDeleteFolderPaths.clear()
-  plugin.pendingDeleteConfigPaths.clear()
-  // 重连时清空 pending Ack 集合；路径保留在 hashManager，将自然进入 delNotes
-  // On reconnect clear pending Ack sets; paths remain in hashManager and flow into delNotes naturally
-  plugin.pendingNoteDeleteAcks.clear()
-  plugin.pendingFileDeleteAcks.clear()
-  plugin.pendingConfigDeleteAcks.clear()
-  plugin.pendingConfigModifies.clear()
-  plugin.localStorageManager.clearPending('pendingConfigModifies')
-  plugin.disableWatch();
-
-  if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
-    showSyncNotice($("ui.status.starting"));
-  }
-  plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
-
-  // --- 新增：初始化哈希扫描日志 ---
-  const hashingLogId = `hashing-${context}`;
-  if (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled) {
-    SyncLogManager.getInstance().addOrUpdateLog({
-      id: hashingLogId,
-      type: 'info',
-      action: `VaultScanning_${plugin.currentSyncType}`,
-      status: 'pending',
-      progress: 0,
-      message: plugin.currentSyncType === 'full' ? '正在进行全量哈希计算...' : '正在进行增量哈希计算...'
-    });
-  }
-
-  const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], folders: SnapFolder[] = [];
-  const delNotes: PathHashFile[] = [], delFiles: PathHashFile[] = [], delConfigs: PathHashFile[] = [], delFolders: PathHashFile[] = [];
-  const missingNotes: PathHashFile[] = [], missingFiles: PathHashFile[] = [], missingConfigs: PathHashFile[] = [], missingFolders: PathHashFile[] = [];
-  const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
-  const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
-
-  // 预先标记未参与本次同步的模块为已结束，避免 checkSyncCompletion 永远等待它们
-  // Pre-mark modules not participating in this sync as ended to prevent checkSyncCompletion from waiting forever
-  if (!(plugin.settings.syncEnabled && shouldSyncNotes)) {
-    plugin.noteSyncEnd = true;
-    plugin.fileSyncEnd = true;
-    plugin.folderSyncEnd = true;
-  } else if (plugin.settings.cloudPreviewEnabled && !plugin.settings.cloudPreviewTypeRestricted) {
-    plugin.fileSyncEnd = true;
-  }
-  if (!(plugin.settings.configSyncEnabled && shouldSyncConfigs)) {
-    plugin.configSyncEnd = true;
-  }
-
-  let expectedCount = 0;
-  if (plugin.settings.syncEnabled && shouldSyncNotes) {
-    expectedCount += 1; // NoteSync
-    expectedCount += 1; // FolderSync
-    if (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted) {
-      expectedCount += 1; // FileSync
+    const context = generateUUID();
+    dump(`Sync context generated: ${context}`);
+    if (!plugin.menuManager.ribbonIconStatus) {
+      showSyncNotice($("setting.remote.disconnected"));
+      return;
     }
-  }
-  if (plugin.settings.configSyncEnabled && shouldSyncConfigs) expectedCount += 1;
-  plugin.expectedSyncCount = expectedCount;
-  if (expectedCount === 0) {
-    plugin.enableWatch();
-    plugin.updateStatusBar("");
-    return;
-  }
-
-  if (plugin.settings.syncEnabled && shouldSyncNotes) {
-    const list = plugin.app.vault.getAllLoadedFiles();
-    let processedCount = 0;
-    const totalFiles = list.length;
-    // 简单预估配置数量，用于合并进度条
-    const estimatedConfigCount = plugin.settings.configSyncEnabled ? 100 : 0;
-    const totalToProcess = totalFiles + estimatedConfigCount;
-
-    for (const file of list) {
-      // 每处理 20 个文件让出一次主线程，防止 UI 卡死 (已将 100 优化为 20)
-      if (++processedCount % 20 === 0) {
-        await sleep(0);
-        // 更新扫描进度
-        SyncLogManager.getInstance().addOrUpdateLog({
-          id: hashingLogId,
-          type: 'info',
-          action: `VaultScanning_${plugin.currentSyncType}`,
-          status: 'pending',
-          progress: Math.floor((processedCount / totalToProcess) * 100),
-          message: `${plugin.currentSyncType === 'full' ? '🔍 正在全量扫描' : '🔍 正在增量扫描'}... (${processedCount}/${totalFiles})`
-        });
-      }
-
-      try {
-        if (isPathExcluded(file.path, plugin)) continue;
-        if (file instanceof TFolder) {
-          if (file.path === "/") continue;
-
-          // 使用虚拟化 mtime：优先从快照读取，若是新路径则用当前时间
-          let mtime = plugin.folderSnapshotManager.getMtime(file.path) || Date.now();
-
-          // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
-          if (isLoadLastTime && mtime < Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime")) && plugin.folderSnapshotManager.getMtime(file.path) !== undefined) continue;
-
-          folders.push({
-            path: file.path,
-            pathHash: hashContent(file.path),
-          });
-          continue;
-        }
-
-        if (file instanceof TFile) {
-          if (file.extension === "md") {
-            // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间，且无待确认上传时跳过
-            if (isLoadLastTime
-              && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))
-              && plugin.fileHashManager.getPathHash(file.path) !== null
-              && !plugin.pendingNoteModifies.has(file.path)) continue;
-            
-            // 如果文件较大，更新日志消息让用户感知进度 (Update log for large files)
-            if (file.stat.size > 2 * 1024 * 1024) {
-               SyncLogManager.getInstance().addOrUpdateLog({
-                 id: hashingLogId,
-                 type: 'info',
-                 action: `VaultScanning_${plugin.currentSyncType}`,
-                 message: `🔍 正在哈希笔记: ${file.name} (${formatFileSize(file.stat.size)})`
-               });
-            }
-
-            const baseHash = plugin.fileHashManager.getPathHash(file.path);
-            let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
-            if (contentHash === null) {
-              contentHash = await hashContentAsync(await plugin.app.vault.read(file));
-            }
-
-            let item = {
-              path: file.path,
-              pathHash: hashContent(file.path),
-              contentHash: contentHash,
-              mtime: file.stat.mtime,
-              ctime: file.stat.ctime,
-              size: file.stat.size,
-              ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
-            }
-            notes.push(item);
-          } else {
-            if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
-              dump(`Skip scanning large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
-              continue;
-            }
-            const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
-            if (skipSync) continue;
-
-            if (isLoadLastTime
-              && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))
-              && plugin.fileHashManager.getPathHash(file.path) !== null
-              && !plugin.pendingUploadHashes.has(file.path)) continue;
-            
-            // 处理大附件时实时显示文件名，避免假死感 (Update message for large attachments)
-            if (file.stat.size > 5 * 1024 * 1024) {
-              SyncLogManager.getInstance().addOrUpdateLog({
-                id: hashingLogId,
-                type: 'info',
-                action: `VaultScanning_${plugin.currentSyncType}`,
-                message: `🔍 正在哈希附件: ${file.name} (${formatFileSize(file.stat.size)})`
-              });
-            }
-
-            const baseHash = plugin.fileHashManager.getPathHash(file.path);
-            let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
-            if (contentHash === null) {
-              contentHash = await hashFileAsync(plugin.app, file.path);
-              logMemorySnapshot(`after scan hash ${file.path}`);
-            }
-
-            let item = {
-              path: file.path,
-              pathHash: hashContent(file.path),
-              contentHash: contentHash,
-              mtime: file.stat.mtime,
-              ctime: file.stat.ctime,
-              size: file.stat.size,
-              ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
-            }
-            files.push(item);
-          }
-        }
-      } catch (e) {
-        // 单个文件处理失败不应中断整个同步流程
-        console.warn(`[FastNoteSync] 跳过异常文件 ${file.path}: ${e.message}`);
-        dump(`Error processing file ${file.path}:`, e);
-      }
+    if (!plugin.getWatchEnabled()) {
+      showSyncNotice($("ui.status.last_sync_not_completed"), 4000);
+      return;
     }
 
-    // 检测被删除的文件 (对比哈希表和本地 Vault)
-    if (plugin.settings.offlineDeleteSyncEnabled) {
-      const trackedPaths = plugin.fileHashManager.getAllPaths();
-      const localPathsSet = new Set(list.map(f => f.path)); // 优化：使用 Set 提高查找效率
-      let delCount = 0;
-      for (const path of trackedPaths) {
-        if (++delCount % 100 === 0) await sleep(0);
-        if (isPathExcluded(path, plugin)) continue;
-        if (!localPathsSet.has(path)) {
-          const item = { path: path, pathHash: hashContent(path) };
-          if (path.endsWith(".md")) {
-            delNotes.push(item);
-          } else {
-            delFiles.push(item);
-          }
-        }
-      }
-
-      // 检测被删除的文件夹
-      if (plugin.folderSnapshotManager && plugin.folderSnapshotManager.isReady()) {
-        const trackedFolderPaths = plugin.folderSnapshotManager.getAllPaths();
-        const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
-        let folderCount = 0;
-        for (const path of trackedFolderPaths) {
-          if (++folderCount % 100 === 0) await sleep(0);
-          if (isPathExcluded(path, plugin)) continue;
-          if (!localFolderPathsSet.has(path)) {
-            delFolders.push({ path: path, pathHash: hashContent(path) });
-          }
-        }
-      }
-    } else if (isLoadLastTime) {
-      // 增量同步且未开启离线删除同步：检测缺失的文件（哈希表中有但本地不存在）
-      const trackedPaths = plugin.fileHashManager.getAllPaths();
-      const localPathsSet = new Set(list.map(f => f.path));
-      let missingCount = 0;
-      for (const path of trackedPaths) {
-        if (++missingCount % 100 === 0) await sleep(0);
-        if (isPathExcluded(path, plugin)) continue;
-        if (!localPathsSet.has(path)) {
-          const item = { path: path, pathHash: hashContent(path) };
-          if (path.endsWith(".md")) {
-            missingNotes.push(item);
-          } else {
-            missingFiles.push(item);
-          }
-        }
-      }
-
-      // 检测缺失的文件夹
-      if (plugin.folderSnapshotManager && plugin.folderSnapshotManager.isReady()) {
-        const trackedFolderPaths = plugin.folderSnapshotManager.getAllPaths();
-        const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
-        let folderCount = 0;
-        for (const path of trackedFolderPaths) {
-          if (++folderCount % 100 === 0) await sleep(0);
-          if (isPathExcluded(path, plugin)) continue;
-          if (!localFolderPathsSet.has(path)) {
-            missingFolders.push({ path: path, pathHash: hashContent(path) });
-          }
-        }
-      }
+    if (plugin.settings.readonlySyncEnabled) {
+      dump("Read-only mode: Proceeding with state gathering for remote-to-local sync.");
     }
-  }
 
-  const configDirs = [plugin.app.vault.configDir, ...getConfigSyncCustomDirs(plugin)]
-  const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths(configDirs, plugin) : [];
+    plugin.currentSyncType = isLoadLastTime ? 'incremental' : 'full';
+    plugin.syncTypeCompleteCount = 0;
+    plugin.resetSyncTasks();
+    plugin.totalFilesToDownload = 0;
+    plugin.downloadedFilesCount = 0;
+    plugin.totalChunksToDownload = 0;
+    plugin.downloadedChunksCount = 0;
+    plugin.totalChunksToUpload = 0;
+    plugin.uploadedChunksCount = 0;
+    // 清空上一次连接的未完成 rename 队列，由 hashManager 旧路径进 delFiles 自然处理
+    // Clear pending renames from previous connection; old paths in hashManager will naturally go into delFiles
+    plugin.pendingFileRenames = []
+    // 清空上一次连接的未完成笔记 rename 队列，由 hashManager 旧路径进 delNotes 自然处理
+    // Clear pending note renames from previous connection; old paths in hashManager will naturally go into delNotes
+    plugin.pendingNoteRenames = []
+    // 清空 pending 删除路径集合，避免旧的 pending 条目干扰本次同步
+    // Clear pending delete path sets to avoid stale entries interfering with this sync
+    plugin.pendingDeleteNotePaths.clear()
+    plugin.pendingDeleteFilePaths.clear()
+    plugin.pendingDeleteFolderPaths.clear()
+    plugin.pendingDeleteConfigPaths.clear()
+    // 重连时清空 pending Ack 集合；路径保留在 hashManager，将自然进入 delNotes
+    // On reconnect clear pending Ack sets; paths remain in hashManager and flow into delNotes naturally
+    plugin.pendingNoteDeleteAcks.clear()
+    plugin.pendingFileDeleteAcks.clear()
+    plugin.pendingConfigDeleteAcks.clear()
+    plugin.pendingConfigModifies.clear()
+    plugin.localStorageManager.clearPending('pendingConfigModifies')
+    plugin.disableWatch();
 
-  let configCount = 0;
-  const totalConfigs = configPaths.length;
-  // 获取已处理的基础文件数，用于连续进度条
-  const baseProcessedCount = plugin.settings.syncEnabled ? plugin.app.vault.getAllLoadedFiles().length : 0;
-  const overallTotal = baseProcessedCount + totalConfigs;
+    if (plugin.settings.isShowNotice && (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled)) {
+      showSyncNotice($("ui.status.starting"));
+    }
+    plugin.updateStatusBar($("ui.status.syncing"), 0, 1);
 
-  for (const path of configPaths) {
-    if (++configCount % 20 === 0) { // 已将 50 优化为 20
-      await sleep(0);
+    // --- 新增：初始化哈希扫描日志 ---
+    const hashingLogId = `hashing-${context}`;
+    if (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled) {
       SyncLogManager.getInstance().addOrUpdateLog({
         id: hashingLogId,
         type: 'info',
         action: `VaultScanning_${plugin.currentSyncType}`,
         status: 'pending',
-        progress: overallTotal > 0 ? Math.floor(((baseProcessedCount + configCount) / overallTotal) * 100) : 100,
-        message: `${plugin.currentSyncType === 'full' ? '⚙️ 正在全量扫描配置' : '⚙️ 正在增量扫描配置'}... (${configCount}/${totalConfigs})`
+        progress: 0,
+        message: plugin.currentSyncType === 'full' ? '正在进行全量哈希计算...' : '正在进行增量哈希计算...'
       });
     }
-    
-    try {
-      if (configIsPathExcluded(path, plugin)) continue;
-      const fullPath = normalizePath(path);
-      const stat = await plugin.app.vault.adapter.stat(fullPath);
-      if (!stat) continue;
-      if (isLargeBinarySyncRisk(stat.size, plugin)) {
-        dump(`Skip scanning large config file (${describeBinarySyncLimit()} limit): ${path}`, stat.size);
-        continue;
+
+    const notes: SnapFile[] = [], files: SnapFile[] = [], configs: SnapFile[] = [], folders: SnapFolder[] = [];
+    const delNotes: PathHashFile[] = [], delFiles: PathHashFile[] = [], delConfigs: PathHashFile[] = [], delFolders: PathHashFile[] = [];
+    const missingNotes: PathHashFile[] = [], missingFiles: PathHashFile[] = [], missingConfigs: PathHashFile[] = [], missingFolders: PathHashFile[] = [];
+    const shouldSyncNotes = syncMode === "auto" || syncMode === "note";
+    const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
+
+    // 预先标记未参与本次同步的模块为已结束，避免 checkSyncCompletion 永远等待它们
+    // Pre-mark modules not participating in this sync as ended to prevent checkSyncCompletion from waiting forever
+    if (!(plugin.settings.syncEnabled && shouldSyncNotes)) {
+      plugin.noteSyncEnd = true;
+      plugin.fileSyncEnd = true;
+      plugin.folderSyncEnd = true;
+    } else if (plugin.settings.cloudPreviewEnabled && !plugin.settings.cloudPreviewTypeRestricted) {
+      plugin.fileSyncEnd = true;
+    }
+    if (!(plugin.settings.configSyncEnabled && shouldSyncConfigs)) {
+      plugin.configSyncEnd = true;
+    }
+
+    let expectedCount = 0;
+    if (plugin.settings.syncEnabled && shouldSyncNotes) {
+      expectedCount += 1; // NoteSync
+      expectedCount += 1; // FolderSync
+      if (!plugin.settings.cloudPreviewEnabled || plugin.settings.cloudPreviewTypeRestricted) {
+        expectedCount += 1; // FileSync
       }
-      if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
-      
-      // 处理大配置文件时更新消息
-      if (stat.size > 2 * 1024 * 1024) {
+    }
+    if (plugin.settings.configSyncEnabled && shouldSyncConfigs) expectedCount += 1;
+    plugin.expectedSyncCount = expectedCount;
+    if (expectedCount === 0) {
+      plugin.enableWatch();
+      plugin.updateStatusBar("");
+      return;
+    }
+
+    if (plugin.settings.syncEnabled && shouldSyncNotes) {
+      const list = plugin.app.vault.getAllLoadedFiles();
+      let processedCount = 0;
+      const totalFiles = list.length;
+      // 简单预估配置数量，用于合并进度条
+      const estimatedConfigCount = plugin.settings.configSyncEnabled ? 100 : 0;
+      const totalToProcess = totalFiles + estimatedConfigCount;
+
+      for (const file of list) {
+        // 每处理 20 个文件让出一次主线程，防止 UI 卡死 (已将 100 优化为 20)
+        if (++processedCount % 20 === 0) {
+          await sleep(0);
+          // 更新扫描进度
+          SyncLogManager.getInstance().addOrUpdateLog({
+            id: hashingLogId,
+            type: 'info',
+            action: `VaultScanning_${plugin.currentSyncType}`,
+            status: 'pending',
+            progress: Math.floor((processedCount / totalToProcess) * 100),
+            message: `${plugin.currentSyncType === 'full' ? '🔍 正在全量扫描' : '🔍 正在增量扫描'}... (${processedCount}/${totalFiles})`
+          });
+        }
+
+        try {
+          if (isPathExcluded(file.path, plugin)) continue;
+          if (file instanceof TFolder) {
+            if (file.path === "/") continue;
+
+            // 使用虚拟化 mtime：优先从快照读取，若是新路径则用当前时间
+            let mtime = plugin.folderSnapshotManager.getMtime(file.path) || Date.now();
+
+            // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间时跳过
+            if (isLoadLastTime && mtime < Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime")) && plugin.folderSnapshotManager.getMtime(file.path) !== undefined) continue;
+
+            folders.push({
+              path: file.path,
+              pathHash: hashContent(file.path),
+            });
+            continue;
+          }
+
+          if (file instanceof TFile) {
+            if (file.extension === "md") {
+              // 优化增量同步过滤：仅在文件已追踪且 mtime 未超过上次同步时间，且无待确认上传时跳过
+              if (isLoadLastTime
+                && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))
+                && plugin.fileHashManager.getPathHash(file.path) !== null
+                && !plugin.pendingNoteModifies.has(file.path)) continue;
+
+              // 如果文件较大，更新日志消息让用户感知进度 (Update log for large files)
+              if (file.stat.size > 2 * 1024 * 1024) {
+                SyncLogManager.getInstance().addOrUpdateLog({
+                  id: hashingLogId,
+                  type: 'info',
+                  action: `VaultScanning_${plugin.currentSyncType}`,
+                  message: `🔍 正在哈希笔记: ${file.name} (${formatFileSize(file.stat.size)})`
+                });
+              }
+
+              const baseHash = plugin.fileHashManager.getPathHash(file.path);
+              let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
+              if (contentHash === null) {
+                contentHash = await hashContentAsync(await plugin.app.vault.read(file));
+              }
+
+              let item = {
+                path: file.path,
+                pathHash: hashContent(file.path),
+                contentHash: contentHash,
+                mtime: file.stat.mtime,
+                ctime: file.stat.ctime,
+                size: file.stat.size,
+                ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+              }
+              notes.push(item);
+            } else {
+              if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
+                dump(`Skip scanning large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size);
+                continue;
+              }
+              const skipSync = plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted || FileCloudPreview.isRestrictedType("." + file.extension));
+              if (skipSync) continue;
+
+              if (isLoadLastTime
+                && file.stat.mtime < Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"))
+                && plugin.fileHashManager.getPathHash(file.path) !== null
+                && !plugin.pendingUploadHashes.has(file.path)) continue;
+
+              // 处理大附件时实时显示文件名，避免假死感 (Update message for large attachments)
+              if (file.stat.size > 5 * 1024 * 1024) {
+                SyncLogManager.getInstance().addOrUpdateLog({
+                  id: hashingLogId,
+                  type: 'info',
+                  action: `VaultScanning_${plugin.currentSyncType}`,
+                  message: `🔍 正在哈希附件: ${file.name} (${formatFileSize(file.stat.size)})`
+                });
+              }
+
+              const baseHash = plugin.fileHashManager.getPathHash(file.path);
+              let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
+              if (contentHash === null) {
+                contentHash = await hashFileAsync(plugin.app, file.path);
+                logMemorySnapshot(`after scan hash ${file.path}`);
+              }
+
+              let item = {
+                path: file.path,
+                pathHash: hashContent(file.path),
+                contentHash: contentHash,
+                mtime: file.stat.mtime,
+                ctime: file.stat.ctime,
+                size: file.stat.size,
+                ...(baseHash !== null ? { baseHash } : { baseHashMissing: true }),
+              }
+              files.push(item);
+            }
+          }
+        } catch (e) {
+          // 单个文件处理失败不应中断整个同步流程
+          console.warn(`[FastNoteSync] 跳过异常文件 ${file.path}: ${e.message}`);
+          dump(`Error processing file ${file.path}:`, e);
+        }
+      }
+
+      // 检测被删除的文件 (对比哈希表和本地 Vault)
+      if (plugin.settings.offlineDeleteSyncEnabled) {
+        const trackedPaths = plugin.fileHashManager.getAllPaths();
+        const localPathsSet = new Set(list.map(f => f.path)); // 优化：使用 Set 提高查找效率
+        let delCount = 0;
+        for (const path of trackedPaths) {
+          if (++delCount % 100 === 0) await sleep(0);
+          if (isPathExcluded(path, plugin)) continue;
+          if (!localPathsSet.has(path)) {
+            const item = { path: path, pathHash: hashContent(path) };
+            if (path.endsWith(".md")) {
+              delNotes.push(item);
+            } else {
+              delFiles.push(item);
+            }
+          }
+        }
+
+        // 检测被删除的文件夹
+        if (plugin.folderSnapshotManager && plugin.folderSnapshotManager.isReady()) {
+          const trackedFolderPaths = plugin.folderSnapshotManager.getAllPaths();
+          const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
+          let folderCount = 0;
+          for (const path of trackedFolderPaths) {
+            if (++folderCount % 100 === 0) await sleep(0);
+            if (isPathExcluded(path, plugin)) continue;
+            if (!localFolderPathsSet.has(path)) {
+              delFolders.push({ path: path, pathHash: hashContent(path) });
+            }
+          }
+        }
+      } else if (isLoadLastTime) {
+        // 增量同步且未开启离线删除同步：检测缺失的文件（哈希表中有但本地不存在）
+        const trackedPaths = plugin.fileHashManager.getAllPaths();
+        const localPathsSet = new Set(list.map(f => f.path));
+        let missingCount = 0;
+        for (const path of trackedPaths) {
+          if (++missingCount % 100 === 0) await sleep(0);
+          if (isPathExcluded(path, plugin)) continue;
+          if (!localPathsSet.has(path)) {
+            const item = { path: path, pathHash: hashContent(path) };
+            if (path.endsWith(".md")) {
+              missingNotes.push(item);
+            } else {
+              missingFiles.push(item);
+            }
+          }
+        }
+
+        // 检测缺失的文件夹
+        if (plugin.folderSnapshotManager && plugin.folderSnapshotManager.isReady()) {
+          const trackedFolderPaths = plugin.folderSnapshotManager.getAllPaths();
+          const localFolderPathsSet = new Set(list.filter(f => f instanceof TFolder).map(f => f.path));
+          let folderCount = 0;
+          for (const path of trackedFolderPaths) {
+            if (++folderCount % 100 === 0) await sleep(0);
+            if (isPathExcluded(path, plugin)) continue;
+            if (!localFolderPathsSet.has(path)) {
+              missingFolders.push({ path: path, pathHash: hashContent(path) });
+            }
+          }
+        }
+      }
+    }
+
+    const configDirs = [plugin.app.vault.configDir, ...getConfigSyncCustomDirs(plugin)]
+    const configPaths = plugin.settings.configSyncEnabled && shouldSyncConfigs ? await configAllPaths(configDirs, plugin) : [];
+
+    let configCount = 0;
+    const totalConfigs = configPaths.length;
+    // 获取已处理的基础文件数，用于连续进度条
+    const baseProcessedCount = plugin.settings.syncEnabled ? plugin.app.vault.getAllLoadedFiles().length : 0;
+    const overallTotal = baseProcessedCount + totalConfigs;
+
+    for (const path of configPaths) {
+      if (++configCount % 20 === 0) { // 已将 50 优化为 20
+        await sleep(0);
         SyncLogManager.getInstance().addOrUpdateLog({
           id: hashingLogId,
           type: 'info',
           action: `VaultScanning_${plugin.currentSyncType}`,
-          message: `⚙️ 正在哈希配置: ${path.split('/').pop()} (${formatFileSize(stat.size)})`
+          status: 'pending',
+          progress: overallTotal > 0 ? Math.floor(((baseProcessedCount + configCount) / overallTotal) * 100) : 100,
+          message: `${plugin.currentSyncType === 'full' ? '⚙️ 正在全量扫描配置' : '⚙️ 正在增量扫描配置'}... (${configCount}/${totalConfigs})`
         });
       }
 
-      // 尝试从缓存获取有效的哈希 (Try to get valid hash from cache)
-      let contentHash = plugin.configHashManager.getValidHash(path, stat.mtime, stat.size);
-      if (contentHash === null) {
-        contentHash = await hashFileAsync(plugin.app, path);
-      }
+      try {
+        if (configIsPathExcluded(path, plugin)) continue;
+        const fullPath = normalizePath(path);
+        const stat = await plugin.app.vault.adapter.stat(fullPath);
+        if (!stat) continue;
+        if (isLargeBinarySyncRisk(stat.size, plugin)) {
+          dump(`Skip scanning large config file (${describeBinarySyncLimit()} limit): ${path}`, stat.size);
+          continue;
+        }
+        if (isLoadLastTime && stat.mtime < Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"))) continue;
 
-      configs.push({
-        path: path,
-        pathHash: hashContent(path),
-        contentHash: contentHash,
-        mtime: stat.mtime,
-        ctime: stat.ctime,
-        size: stat.size
+        // 处理大配置文件时更新消息
+        if (stat.size > 2 * 1024 * 1024) {
+          SyncLogManager.getInstance().addOrUpdateLog({
+            id: hashingLogId,
+            type: 'info',
+            action: `VaultScanning_${plugin.currentSyncType}`,
+            message: `⚙️ 正在哈希配置: ${path.split('/').pop()} (${formatFileSize(stat.size)})`
+          });
+        }
+
+        // 尝试从缓存获取有效的哈希 (Try to get valid hash from cache)
+        let contentHash = plugin.configHashManager.getValidHash(path, stat.mtime, stat.size);
+        if (contentHash === null) {
+          contentHash = await hashFileAsync(plugin.app, path);
+        }
+
+        configs.push({
+          path: path,
+          pathHash: hashContent(path),
+          contentHash: contentHash,
+          mtime: stat.mtime,
+          ctime: stat.ctime,
+          size: stat.size
+        });
+      } catch (e) {
+        console.warn(`[FastNoteSync] 跳过异常配置文件 ${path}: ${e.message}`);
+        dump(`Error processing config file ${path}:`, e);
+      }
+    }
+
+    // 加入 LocalStorage 同步项
+    if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
+      const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
+      for (const sc of storageConfigs) {
+        configs.push(sc);
+      }
+    }
+
+    // 检测被删除的配置文件 (对比哈希表和本地配置)
+    if (plugin.settings.configSyncEnabled && shouldSyncConfigs && plugin.settings.offlineDeleteSyncEnabled) {
+      if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+        const trackedConfigPaths = plugin.configHashManager.getAllPaths();
+        const localConfigPathsSet = new Set(configPaths);
+
+        // 添加 LocalStorage 虚拟路径
+        const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
+        for (const sc of storageConfigs) {
+          localConfigPathsSet.add(sc.path);
+        }
+
+        for (const path of trackedConfigPaths) {
+          if (configIsPathExcluded(path, plugin)) continue;
+          if (!localConfigPathsSet.has(path)) {
+            delConfigs.push({ path: path, pathHash: hashContent(path) });
+          }
+        }
+      }
+    } else if (plugin.settings.configSyncEnabled && shouldSyncConfigs && isLoadLastTime) {
+      // 增量同步且未开启离线删除同步：检测缺失的配置文件
+      if (plugin.configHashManager && plugin.configHashManager.isReady()) {
+        const trackedConfigPaths = plugin.configHashManager.getAllPaths();
+        const localConfigPathsSet = new Set(configPaths);
+
+        // 添加 LocalStorage 虚拟路径
+        const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
+        for (const sc of storageConfigs) {
+          localConfigPathsSet.add(sc.path);
+        }
+
+        for (const path of trackedConfigPaths) {
+          if (configIsPathExcluded(path, plugin)) continue;
+          if (!localConfigPathsSet.has(path)) {
+            missingConfigs.push({ path: path, pathHash: hashContent(path) });
+          }
+        }
+      }
+    }
+
+    let fileTime = 0, noteTime = 0, configTime = 0, folderTime = 0;
+    if (isLoadLastTime) {
+      fileTime = Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"));
+      noteTime = Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"));
+      configTime = Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"));
+      folderTime = Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"));
+    }
+
+    const noteData: NoteSyncData = { lastTime: noteTime, notes, delNotes, missingNotes };
+    const fileData: FileSyncData = { lastTime: fileTime, files, delFiles, missingFiles };
+    const configData: ConfigSyncData = { lastTime: configTime, configs, delConfigs, missingConfigs };
+    const folderData: FolderSyncData = { lastTime: folderTime, folders, delFolders, missingFolders };
+
+    noteData.context = context;
+    fileData.context = context;
+    configData.context = context;
+    folderData.context = context;
+
+    // --- 结束哈希扫描日志 ---
+    if (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled) {
+      SyncLogManager.getInstance().addOrUpdateLog({
+        id: hashingLogId,
+        type: 'info',
+        action: `VaultScanning_${plugin.currentSyncType}`,
+        status: 'success',
+        progress: 100,
+        message: `✅ ${plugin.currentSyncType === 'full' ? '全量' : '增量'}扫描完成 | 笔记: ${notes.length} | 附件: ${files.length} | 配置: ${configs.length}`
       });
-    } catch (e) {
-      console.warn(`[FastNoteSync] 跳过异常配置文件 ${path}: ${e.message}`);
-      dump(`Error processing config file ${path}:`, e);
     }
-  }
 
-  // 加入 LocalStorage 同步项
-  if (plugin.settings.configSyncEnabled && shouldSyncConfigs) {
-    const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
-    for (const sc of storageConfigs) {
-      configs.push(sc);
+    // 设置发起请求状态位，防止 checkSyncCompletion 过早判定结束 (Set requesting flag to prevent premature completion detection)
+    plugin.isSyncRequesting = true;
+
+    try {
+      await handleRequestSend(plugin, syncMode, noteData, fileData, configData, folderData);
+    } finally {
+      plugin.isSyncRequesting = false;
     }
-  }
 
-  // 检测被删除的配置文件 (对比哈希表和本地配置)
-  if (plugin.settings.configSyncEnabled && shouldSyncConfigs && plugin.settings.offlineDeleteSyncEnabled) {
-    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
-      const trackedConfigPaths = plugin.configHashManager.getAllPaths();
-      const localConfigPathsSet = new Set(configPaths);
-
-      // 添加 LocalStorage 虚拟路径
-      const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
-      for (const sc of storageConfigs) {
-        localConfigPathsSet.add(sc.path);
-      }
-
-      for (const path of trackedConfigPaths) {
-        if (configIsPathExcluded(path, plugin)) continue;
-        if (!localConfigPathsSet.has(path)) {
-          delConfigs.push({ path: path, pathHash: hashContent(path) });
-        }
-      }
-    }
-  } else if (plugin.settings.configSyncEnabled && shouldSyncConfigs && isLoadLastTime) {
-    // 增量同步且未开启离线删除同步：检测缺失的配置文件
-    if (plugin.configHashManager && plugin.configHashManager.isReady()) {
-      const trackedConfigPaths = plugin.configHashManager.getAllPaths();
-      const localConfigPathsSet = new Set(configPaths);
-
-      // 添加 LocalStorage 虚拟路径
-      const storageConfigs = await plugin.localStorageManager.getStorageConfigs();
-      for (const sc of storageConfigs) {
-        localConfigPathsSet.add(sc.path);
-      }
-
-      for (const path of trackedConfigPaths) {
-        if (configIsPathExcluded(path, plugin)) continue;
-        if (!localConfigPathsSet.has(path)) {
-          missingConfigs.push({ path: path, pathHash: hashContent(path) });
-        }
-      }
-    }
-  }
-
-  let fileTime = 0, noteTime = 0, configTime = 0, folderTime = 0;
-  if (isLoadLastTime) {
-    fileTime = Number(plugin.localStorageManager.getMetadata("lastFileSyncTime"));
-    noteTime = Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"));
-    configTime = Number(plugin.localStorageManager.getMetadata("lastConfigSyncTime"));
-    folderTime = Number(plugin.localStorageManager.getMetadata("lastFolderSyncTime"));
-  }
-
-  const noteData: NoteSyncData = { lastTime: noteTime, notes, delNotes, missingNotes };
-  const fileData: FileSyncData = { lastTime: fileTime, files, delFiles, missingFiles };
-  const configData: ConfigSyncData = { lastTime: configTime, configs, delConfigs, missingConfigs };
-  const folderData: FolderSyncData = { lastTime: folderTime, folders, delFolders, missingFolders };
-
-  noteData.context = context;
-  fileData.context = context;
-  configData.context = context;
-  folderData.context = context;
-
-  // --- 结束哈希扫描日志 ---
-  if (plugin.settings.syncEnabled || plugin.settings.configSyncEnabled) {
-    SyncLogManager.getInstance().addOrUpdateLog({
-      id: hashingLogId,
-      type: 'info',
-      action: `VaultScanning_${plugin.currentSyncType}`,
-      status: 'success',
-      progress: 100,
-      message: `✅ ${plugin.currentSyncType === 'full' ? '全量' : '增量'}扫描完成 | 笔记: ${notes.length} | 附件: ${files.length} | 配置: ${configs.length}`
-    });
-  }
-
-  // 设置发起请求状态位，防止 checkSyncCompletion 过早判定结束 (Set requesting flag to prevent premature completion detection)
-  plugin.isSyncRequesting = true;
-
-  try {
-    await handleRequestSend(plugin, syncMode, noteData, fileData, configData, folderData);
-  } finally {
-    plugin.isSyncRequesting = false;
-  }
-
-  // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
-  // 同时记录开始时间，用于超时保底
-  const syncStartTime = Date.now();
-  const progressCheckInterval = window.setInterval(() => {
-    checkSyncCompletion(plugin, progressCheckInterval as any, syncStartTime);
-  }, 100);
+    // 启动进度检测循环,每 100ms 检测一次(更频繁以获得更平滑的进度更新)
+    // 同时记录开始时间，用于超时保底
+    const syncStartTime = Date.now();
+    const progressCheckInterval = window.setInterval(() => {
+      checkSyncCompletion(plugin, progressCheckInterval as any, syncStartTime);
+    }, 100);
   } finally {
     // 确保 isSyncing 在所有退出路径（正常完成、early return、异常）下都被重置
     // Ensure isSyncing is reset on all exit paths: normal completion, early return, or exception

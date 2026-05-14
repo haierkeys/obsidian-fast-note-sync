@@ -383,7 +383,7 @@ export const hashArrayBuffer = async function (buffer: ArrayBuffer): Promise<str
  */
 async function readRange(app: App, path: string, offset: number, length: number): Promise<ArrayBuffer> {
   const url = app.vault.adapter.getResourcePath(path)
-  
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 秒超时
 
@@ -593,8 +593,8 @@ export function generateUUID(): string {
   // 兼容性回退方案 (使用 getRandomValues)
   if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
     return (([1e7] as unknown as string) + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: string) => {
-        const cNum = parseInt(c);
-        return (cNum ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (cNum / 4)))).toString(16);
+      const cNum = parseInt(c);
+      return (cNum ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (cNum / 4)))).toString(16);
     })
   }
 
@@ -756,7 +756,7 @@ export async function saveApiToken(app: App, plugin: FastSync, token: string): P
 export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: string): Promise<string> {
   // 1. 优先尝试从 LocalStorage 获取
   let token = plugin.localStorageManager.getMetadata("apiToken")
-  
+
   if (!token && dataJsonToken) {
     token = dataJsonToken;
   }
