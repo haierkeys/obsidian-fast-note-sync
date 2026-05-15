@@ -1,6 +1,6 @@
 {
   "name": "fast-note-sync",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "type": "module",
   "description": "Fast and efficient file synchronization plugin for Obsidian",
   "main": "main.js",
