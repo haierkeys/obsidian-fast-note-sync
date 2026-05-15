@@ -1,6 +1,7 @@
 import { requestUrl } from "obsidian";
 
 import { hashContent, addRandomParam, showSyncNotice, dump, nativeFetch } from "./helps";
+import { getLocale } from "../i18n/lang";
 import type FastSync from "../main";
 
 
@@ -45,6 +46,21 @@ export interface Pager {
     pageSize: number;
     totalRows: number;
     totalPages: number;
+}
+
+export interface SupportRecord {
+    amount: string;
+    item: string;
+    message: string;
+    name: string;
+    time: string;
+    unit: string;
+}
+
+export interface SupportPager {
+    page: number;
+    pageSize: number;
+    totalRows: number;
 }
 
 export interface NoteListResponse {
@@ -847,6 +863,44 @@ export class HttpApiService {
         } catch (e) {
             console.error("getWSClients error:", e);
             return [];
+        }
+    }
+
+    /**
+     * 获取支持记录列表
+     */
+    async getSupportRecordsPage(page: number = 1, pageSize: number = 15, sortBy: string = "amount", sortOrder: string = "desc"): Promise<{ list: SupportRecord[], pager: SupportPager }> {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            pageSize: pageSize.toString(),
+            sortBy: sortBy,
+            sortOrder: sortOrder,
+            lang: getLocale()
+        });
+
+        const endpoint = `/api/support?${params.toString()}`;
+
+        try {
+            const { status, json } = await this.request(endpoint, {
+                method: "GET"
+            });
+
+            if (status !== 200) {
+                throw new Error(`HTTP ${status}: Failed to fetch support records`);
+            }
+
+            const res = json as ApiResponse<{ list: SupportRecord[], pager: SupportPager }>;
+            if (!this.isSuccess(res)) {
+                throw new Error(res?.message || "Failed to fetch support records");
+            }
+
+            return {
+                list: res.data?.list || [],
+                pager: res.data?.pager || { page, pageSize, totalRows: 0 }
+            };
+        } catch (e) {
+            console.error("getSupportRecordsPage error:", e);
+            throw e;
         }
     }
 }

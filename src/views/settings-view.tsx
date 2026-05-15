@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { KofiImage, WXImage } from "src/lib/icons";
 import { dump } from "src/lib/helps";
 import { setIcon } from "obsidian";
 import FastSync from "src/main";
 
-import { UserDTO } from "../lib/api";
-import { $ } from "../i18n/lang";
+import { UserDTO, SupportRecord, SupportPager } from "../lib/api";
+import { $, getLocale } from "../i18n/lang";
+import { LucideIcon } from "./note-history/lucide-icon";
 
 
 async function getClipboardContent(plugin: FastSync): Promise<void> {
@@ -191,10 +192,151 @@ export const SettingsView = ({ plugin }: { plugin: FastSync }) => {
 }
 
 
+const SupportList = ({ plugin }: { plugin: FastSync }) => {
+  const [records, setRecords] = useState<SupportRecord[]>([]);
+  const [pager, setPager] = useState<SupportPager>({ page: 1, pageSize: 10, totalRows: 0 });
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("amount_3m");
+
+  const fetchRecords = useCallback(async (page = 1, sort = sortBy) => {
+    setLoading(true);
+    try {
+      const data = await plugin.api.getSupportRecordsPage(page, 10, sort, "desc");
+      setRecords(data.list);
+      setPager(data.pager);
+    } catch (err) {
+      dump("Failed to fetch support records:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [plugin, sortBy]);
+
+  useEffect(() => {
+    fetchRecords(1, sortBy);
+  }, [fetchRecords, sortBy, getLocale()]);
+
+  const getInitials = (name: string) => {
+    if (!name) return "?";
+    return name.charAt(0).toUpperCase();
+  };
+
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+      '#F06292', '#AED581', '#FFD54F', '#4DB6AC', '#7986CB'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  if (loading && records.length === 0) {
+    return <div className="fns-support-loading">{$("setting.support.loading")}</div>;
+  }
+
+  return (
+    <>
+      <div className="fns-supporters-list-header">
+        <div className="fns-supporters-title-group">
+          <LucideIcon icon="trophy" size={16} />
+          <span className="fns-supporters-title">
+            {$("setting.support.list")}
+            <span className="fns-supporters-range">
+              ({sortBy === 'amount_3m' ? $("setting.support.range_3m") : $("setting.support.range_all")})
+            </span>
+          </span>
+        </div>
+        <div className="fns-support-controls">
+          <div className="fns-support-sort-group">
+            <button 
+              className={sortBy === 'amount_3m' ? 'is-active' : ''} 
+              onClick={() => setSortBy('amount_3m')}
+            >
+              {$("setting.support.sort_3m")}
+            </button>
+            <button 
+              className={sortBy === 'amount' ? 'is-active' : ''} 
+              onClick={() => setSortBy('amount')}
+            >
+              {$("setting.support.sort_amount")}
+            </button>
+            <button 
+              className={sortBy === 'time' ? 'is-active' : ''} 
+              onClick={() => setSortBy('time')}
+            >
+              {$("setting.support.sort_time")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {records.length === 0 ? (
+        <div className="fns-support-empty">{$("setting.support.empty")}</div>
+      ) : (
+        <>
+          <div className="fns-supporters-container">
+            {records.map((record, idx) => (
+              <div key={idx} className="fns-support-row">
+                {/* Date */}
+                <div className="fns-support-date">
+                  {(record.time || "").split(' ')[0].substring(2) || "N/A"}
+                </div>
+
+                {/* Avatar */}
+                <div 
+                  className="fns-support-avatar" 
+                  style={{ backgroundColor: getAvatarColor(record.name) }}
+                >
+                  {getInitials(record.name)}
+                </div>
+
+                {/* Name and Message */}
+                <div className="fns-support-info">
+                  <span className="fns-support-name">{record.name || "Anonymous"}</span>
+                  {record.message && (
+                    <>
+                      <span className="fns-support-sep">|</span>
+                      <span className="fns-support-msg">{record.message}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Amount */}
+                <div className="fns-support-amount-pill">
+                  {record.amount} <span className="fns-support-unit">{record.unit}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="fns-support-pager">
+            <button 
+              disabled={pager.page <= 1 || loading} 
+              onClick={() => fetchRecords(pager.page - 1)}
+            >
+              <LucideIcon icon="chevron-left" size={14} />
+            </button>
+            <span>{pager.page}</span>
+            <button 
+              disabled={pager.page * pager.pageSize >= pager.totalRows || loading} 
+              onClick={() => fetchRecords(pager.page + 1)}
+            >
+              <LucideIcon icon="chevron-right" size={14} />
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
+
+
 
 export const SupportView = ({ plugin }: { plugin: FastSync }) => {
   return (
-    <div className="fns-support-view-wrapper">
+    <div className="fns-support-view-wrapper fns-supporters-list-card">
       <div className="fns-support-header-desc">
         {$("setting.support.desc")}
       </div>
@@ -228,19 +370,17 @@ export const SupportView = ({ plugin }: { plugin: FastSync }) => {
       </div>
 
       {/* Supporters List Section */}
-      <div className="fns-supporters-list-card">
-        <div className="fns-supporters-list-header">
-          <span className="fns-supporters-icon">🏆</span>
-          <span className="fns-supporters-title">{$("setting.support.list")}</span>
-        </div>
-        <div className="fns-supporters-content">
+      <div className="fns-supporters-list-content">
+        {plugin.settings.api ? (
+          <SupportList plugin={plugin} />
+        ) : (
           <a href="https://github.com/haierkeys/fast-note-sync-service/blob/master/docs/Support.zh-CN.md" target="_blank" rel="noreferrer" className="fns-supporters-github-link">
             <span className="fns-github-icon">
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
             </span>
             <span>{$("setting.support.list_link")}</span>
           </a>
-        </div>
+        )}
       </div>
     </div>
   )

@@ -220,186 +220,78 @@
   padding-left: 1.5em;
 }
 
-/* --- Sponsorship & Support Redesign --- */
-.fns-support-view-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 10px 0;
-}
-
-.fns-support-header-desc {
-  font-size: var(--font-ui-small);
+.fast-note-sync-support-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  border: 1px solid var(--background-modifier-border);
   color: var(--text-muted);
-  line-height: 1.6;
-  padding: 0 4px;
+  font-size: var(--font-ui-smaller);
 }
-
-.fns-support-cards-container {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-}
-
-.is-mobile .fns-support-cards-container {
-  flex-direction: column;
-}
-
-.fns-support-card {
-  flex: 1;
-  background-color: var(--background-secondary);
+.fast-note-sync-support-table th,
+.fast-note-sync-support-table td {
   border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: visible;
-}
-
-.fns-support-card:hover {
-  border-color: var(--interactive-accent);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-  background-color: var(--background-secondary-alt);
-}
-
-.fns-support-card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 0px;
-}
-
-.fns-support-card-icon {
-  font-size: 16px;
-}
-
-.fns-support-card-title {
-  font-weight: 600;
-  font-size: var(--font-ui-small);
-  color: var(--text-normal);
-}
-
-.fns-support-card-body {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 80px;
-  padding: 8px 0;
-}
-
-.fns-support-link {
-  display: block;
-  width: 100%;
+  padding: 10px;
   text-align: center;
-  text-decoration: none !important;
+  vertical-align: middle;
+  font-size: var(--font-ui-smaller);
 }
-
-.fns-support-img-kofi {
-  width: 100%;
-  max-width: 120px;
+.fast-note-sync-support-table .support-separator {
+  width: 40px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+.fast-note-sync-support-table .ko-fi-logo-large {
+  width: 200px;
   height: auto;
-  border-radius: 8px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  display: block;
   margin: 0 auto;
-  display: block;
 }
-
-.fns-wechat-qr-wrapper {
-  background-color: white;
-  padding: 8px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: zoom-in;
-  position: relative;
-  z-index: 1;
-  transform-origin: top;
-}
-
-.fns-wechat-qr-wrapper:hover {
-  transform: scale(1.5);
-  z-index: 100;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-}
-
-.fns-support-img-wechat {
+.fast-note-sync-support-table .wx-pay-logo-large {
   width: 80px;
-  height: 80px;
+  height: auto;
+  border-radius: 4px;
   display: block;
+  margin: 0 auto;
 }
 
-/* Supporters List Card */
-.fns-supporters-list-card {
-  background-color: var(--background-secondary-alt);
-  border: 1px dashed var(--background-modifier-border);
-  border-radius: 12px;
-  padding: 16px;
+.supporters-list-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--background-modifier-border);
+}
+.supporters-list-section .supporters-list-title {
+  font-weight: bold;
+  font-size: var(--font-ui-medium);
+  margin-bottom: 4px;
+}
+.supporters-list-section .supporters-list-title a {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+.supporters-list-section .supporters-list-title a:hover {
+  text-decoration: underline;
+}
+.supporters-list-section .supporters-list-subtitle {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  margin-bottom: 10px;
+}
+.supporters-list-section .supporters-list-content {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  word-break: break-all;
 }
-
-.fns-supporters-list-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.supporters-list-section .supporters-list-content a {
+  color: var(--text-accent);
+  text-decoration: underline;
 }
-
-.fns-supporters-icon {
-  font-size: 18px;
-}
-
-.fns-supporters-title {
-  font-weight: 600;
-  font-size: var(--font-ui-small);
-  color: var(--text-normal);
-}
-
-.fns-supporters-content {
-  display: flex;
-  align-items: center;
-}
-
-.fns-supporters-github-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background-color: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  color: var(--text-normal);
-  text-decoration: none !important;
-  font-size: var(--font-ui-small);
-  transition: all 0.2s ease;
-  width: 100%;
-  justify-content: center;
-}
-
-.fns-supporters-github-link:hover {
-  background-color: var(--interactive-accent);
-  color: white;
-  border-color: var(--interactive-accent);
-}
-
-.fns-github-icon {
-  display: flex;
-  align-items: center;
+.supporters-list-section .supporters-list-content a:hover {
   opacity: 0.8;
 }
-
-.fns-supporters-github-link:hover .fns-github-icon {
-  opacity: 1;
-}
-
 
 .fast-note-sync-settings-debug {
   margin-top: var(--size-4-2);
@@ -3221,6 +3113,346 @@ body .suggestion-container {
 }
 .fns-debug-log-item:last-child {
   border-bottom: none;
+}
+
+/* ===== 赞助与支持 / Sponsorship & Support ===== */
+.fns-support-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fns-support-header-desc {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.fns-support-cards-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .fns-support-cards-container {
+    grid-template-columns: 1fr;
+  }
+}
+.fns-support-card {
+  flex: 1;
+  background-color: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+}
+.fns-support-card:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  background-color: var(--background-secondary);
+}
+
+.fns-support-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fns-support-card-icon {
+  font-size: 18px;
+}
+
+.fns-support-card-title {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: var(--text-normal);
+}
+
+.fns-support-card-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
+  padding: 10px 0;
+}
+
+.fns-support-link {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.fns-support-img-kofi {
+  width: 100%;
+  max-width: 130px;
+  height: auto;
+  border-radius: 8px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  margin: 0 auto;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.fns-support-card:hover .fns-support-img-kofi {
+  transform: scale(1.05);
+}
+
+.fns-wechat-qr-wrapper {
+  background-color: white; /* QR codes need white background for scanning */
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: zoom-in;
+  position: relative;
+  z-index: 1;
+  transform-origin: center;
+}
+
+.fns-wechat-qr-wrapper:hover {
+  transform: scale(1.8);
+  z-index: 100;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fns-support-img-wechat {
+  width: 80px;
+  height: 80px;
+  display: block;
+  object-fit: contain;
+}
+
+/* ===== 已支持名单 / Support List ===== */
+.fns-supporters-list-card {
+  background-color: var(--background-primary-alt);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.fns-supporters-list-card .fns-supporters-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.fns-supporters-list-card .fns-supporters-list-header .fns-supporters-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1.1em;
+  color: var(--text-normal);
+}
+.fns-supporters-list-card .fns-supporters-list-header .fns-supporters-title-group .fns-supporters-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fns-supporters-list-card .fns-supporters-list-header .fns-supporters-title-group .fns-supporters-range {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-faint);
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.fns-supporters-list-card .fns-support-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.fns-supporters-list-card .fns-support-sort-group {
+  display: inline-flex;
+  background-color: var(--background-secondary);
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid var(--background-modifier-border-faint);
+}
+.fns-supporters-list-card .fns-support-sort-group button {
+  padding: 4px 10px;
+  height: 24px;
+  min-height: 24px;
+  font-size: 11px;
+  border-radius: 4px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--text-muted) !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 !important;
+}
+.fns-supporters-list-card .fns-support-sort-group button.is-active {
+  background-color: var(--background-primary) !important;
+  color: var(--interactive-accent) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  font-weight: 600 !important;
+}
+.fns-supporters-list-card .fns-support-sort-group button:hover:not(.is-active) {
+  background-color: var(--background-modifier-hover) !important;
+}
+.fns-supporters-list-card .fns-supporters-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background-color: var(--background-modifier-border-faint);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--background-modifier-border-faint);
+}
+.fns-supporters-list-card .fns-support-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--background-primary);
+  transition: background-color 0.2s;
+  gap: 12px;
+}
+.fns-supporters-list-card .fns-support-row:hover {
+  background-color: var(--background-secondary-alt);
+}
+.fns-supporters-list-card .fns-support-row .fns-support-date {
+  width: 60px;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--font-monospace);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+.fns-supporters-list-card .fns-support-row .fns-support-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.fns-supporters-list-card .fns-support-row .fns-support-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.fns-supporters-list-card .fns-support-row .fns-support-info .fns-support-name {
+  font-weight: 600;
+  color: var(--text-normal);
+  white-space: nowrap;
+  opacity: 0.9;
+}
+.fns-supporters-list-card .fns-support-row .fns-support-info .fns-support-sep {
+  color: var(--background-modifier-border);
+  font-size: 10px;
+  opacity: 0.5;
+}
+.fns-supporters-list-card .fns-support-row .fns-support-info .fns-support-msg {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  opacity: 0.8;
+}
+.fns-supporters-list-card .fns-support-row .fns-support-amount-pill {
+  margin-left: auto;
+  padding: 2px 10px;
+  background-color: var(--background-secondary);
+  color: var(--text-normal);
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: var(--font-monospace);
+  border: 1px solid var(--background-modifier-border-faint);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.fns-supporters-list-card .fns-support-row .fns-support-amount-pill .fns-support-unit {
+  font-size: 0.9em;
+  opacity: 0.5;
+  font-weight: normal;
+  margin-left: 2px;
+}
+.fns-supporters-list-card .fns-support-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.fns-supporters-list-card .fns-support-pager button {
+  padding: 4px 8px;
+  height: 24px;
+  min-height: 24px;
+  background: transparent !important;
+  border: 1px solid var(--background-modifier-border-faint) !important;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: none !important;
+  font-size: 11px;
+  margin: 0 !important;
+}
+.fns-supporters-list-card .fns-support-pager button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.fns-supporters-list-card .fns-support-pager button:hover:not(:disabled) {
+  background-color: var(--background-modifier-hover) !important;
+  border-color: var(--background-modifier-border) !important;
+}
+.fns-supporters-list-card .fns-support-loading, .fns-supporters-list-card .fns-support-empty {
+  padding: 30px;
+  text-align: center;
+  color: var(--text-faint);
+  font-style: italic;
+  font-size: 12px;
+  background-color: var(--background-primary);
+}
+.fns-supporters-list-card .fns-supporters-github-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--background-secondary);
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.fns-supporters-list-card .fns-supporters-github-link:hover {
+  background-color: var(--background-secondary-alt);
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+}
+.fns-supporters-list-card .fns-supporters-github-link .fns-github-icon {
+  display: flex;
+  align-items: center;
 }
 
 /*# sourceMappingURL=styles.css.map */
