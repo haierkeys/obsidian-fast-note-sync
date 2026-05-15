@@ -1,6 +1,6 @@
 import { moment, Platform } from "obsidian";
 
-import { dump, isWsUrl, addRandomParam, isVersionNew, showSyncNotice } from "./helps";
+import { dump, isWsUrl, addRandomParam, isVersionNew, showSyncNotice, safeStringify } from "./helps";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue } from "./file_operator";
 import { receiveOperators, startupSync } from "./operator";
 import { SyncLogManager } from "./sync_log_manager";
@@ -33,7 +33,7 @@ function normalizeNoticeValue(value: unknown): string {
       .join(", ")
   }
 
-  const text = String(value).trim()
+  const text = safeStringify(value).trim()
   return text === "undefined" ? "" : text
 }
 

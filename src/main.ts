@@ -22,6 +22,7 @@ import { HttpApiService } from "./lib/api";
 import { clearAllTempChunks, abortAllFileOperations, resetFileOperations } from "./lib/file_operator";
 import { $ } from "./i18n/lang";
 import { FileDownloadSession, AppWithInternal } from "./lib/types";
+import { DebugLogModal } from "./views/debug-log-modal";
 
 
 interface LegacySettings extends Partial<PluginSettings> {
@@ -364,7 +365,6 @@ export default class FastSync extends Plugin {
         id: "open-debug-log",
         name: $("ui.log.debug_title"),
         callback: () => {
-          const { DebugLogModal } = require("./views/debug-log-modal");
           new DebugLogModal(this.app).open();
         },
       });

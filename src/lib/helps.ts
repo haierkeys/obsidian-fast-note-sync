@@ -903,3 +903,21 @@ export async function loadApiToken(app: App, plugin: FastSync, dataJsonToken?: s
   dump("[ApiToken] No token found in any storage")
   return ""
 }
+
+/**
+ * 安全地将未知类型转换为字符串，避免 [object Object]
+ * Safely convert unknown to string, avoiding [object Object]
+ */
+export function safeStringify(value: unknown): string {
+  if (value === null) return "null"
+  if (value === undefined) return "undefined"
+  if (typeof value === 'object' || typeof value === 'function') {
+    try {
+      return JSON.stringify(value)
+    } catch {
+      return "[Unserializable]"
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  return String(value)
+}

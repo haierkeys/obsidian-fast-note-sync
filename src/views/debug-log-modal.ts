@@ -12,16 +12,6 @@ export class DebugLogModal extends Modal {
         titleEl.setText($("ui.log.debug_title"));
 
         const container = contentEl.createDiv({ cls: "fns-debug-log-container" });
-        container.style.fontFamily = "var(--font-monospace)";
-        container.style.fontSize = "12px";
-        container.style.backgroundColor = "var(--background-secondary-alt)";
-        container.style.border = "1px solid var(--background-modifier-border)";
-        container.style.borderRadius = "4px";
-        container.style.padding = "10px";
-        container.style.height = "400px";
-        container.style.overflowY = "auto";
-        container.style.whiteSpace = "pre-wrap";
-        container.style.wordBreak = "break-all";
 
         const refreshLogs = () => {
             container.empty();
@@ -32,8 +22,6 @@ export class DebugLogModal extends Modal {
             }
             logs.forEach(log => {
                 const item = container.createDiv({ cls: "fns-debug-log-item" });
-                item.style.borderBottom = "1px solid var(--background-modifier-border-faint)";
-                item.style.padding = "4px 0";
                 item.setText(log);
             });
             // Scroll to bottom

@@ -1,3 +1,4 @@
+import { safeStringify } from "./helps";
 
 export class DebugLogManager {
     private static instance: DebugLogManager;
@@ -16,16 +17,7 @@ export class DebugLogManager {
 
     public addLog(...message: unknown[]) {
         const timestamp = new Date().toLocaleTimeString();
-        const msg = message.map(m => {
-            if (typeof m === 'object') {
-                try {
-                    return JSON.stringify(m);
-                } catch {
-                    return String(m);
-                }
-            }
-            return String(m);
-        }).join(' ');
+        const msg = message.map(m => safeStringify(m)).join(' ');
         
         this.logs.push(`[${timestamp}] ${msg}`);
         if (this.logs.length > this.MAX_LOGS) {
