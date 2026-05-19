@@ -62,7 +62,7 @@ export default class FastSync extends Plugin {
   clipboardReadTip: string = "" // 剪贴板读取提示信息
 
   isFirstSync: boolean = false // 是否为首次同步
-  isWatchEnabled: boolean = false // 是否启用文件监听
+  isWatchEnabled: boolean = true // 是否启用文件监听
   ignoredFiles: Set<string> = new Set() // 忽略的文件集合
   ignoredConfigFiles: Set<string> = new Set() // 忽略的配置文件集合
   lastSyncMtime: Map<string, number> = new Map() // 最后同步的修改时间

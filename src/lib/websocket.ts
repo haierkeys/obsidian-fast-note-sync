@@ -188,12 +188,7 @@ export class WebSocketClient {
     this.isRegister = true
 
     // 每次 ws 连接 / 重连 前 必须 先 /api/health 请求成功之后再请求ws
-    let isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
-    if (!isHealthy) {
-        // Capacitor 原生 HTTP 从后台恢复时可能未就绪，立即重试一次
-        // Capacitor native HTTP may not be ready after background; retry once immediately
-        isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
-    }
+    const isHealthy = await this.plugin.api.probeApiRedirect(this.plugin.runApi);
     if (!isHealthy) {
         dump("Health check failed before ws connect, scheduling reconnect...");
         if (this.plugin.settings.autoRedirectEnabled) {
@@ -464,8 +459,11 @@ export class WebSocketClient {
     }
     if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
       this.timeConnect++
-      // Exponential backoff: 3s, 6s, 12s, 24s...
-      let delay = RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 1)
+      // 前 3 次固定 1s，之后指数增长: 1s, 1s, 1s, 2s, 4s, 8s...
+      // First 3 attempts fixed 1s to handle Capacitor HTTP warm-up, then exponential
+      let delay = this.timeConnect <= 3
+        ? RECONNECT_BASE_DELAY
+        : RECONNECT_BASE_DELAY * Math.pow(2, this.timeConnect - 3)
 
       // 调试地址回退逻辑
       const debugUrls = this.plugin.settings.debugRemoteUrls ? this.plugin.settings.debugRemoteUrls.split("\n").filter(u => u.trim() !== "") : []
