@@ -281,7 +281,9 @@ const VersionItem = ({
                 <div className="fns-changelog-scroll-area">
                     {(() => {
                         const latestChangelog = (history && history.length > 0) ? history[0].changelogContent : changelog;
-                        const intermediateVersions = (history && history.length > 1) ? history.slice(1) : [];
+                        // 只有当有新版本要升级时（isNew === true）才提取显示中间历史版本
+                        // Only extract and show intermediate versions when there is a new version to upgrade (isNew === true)
+                        const intermediateVersions = (isNew && history && history.length > 1) ? history.slice(1) : [];
 
                         return (
                             <>
