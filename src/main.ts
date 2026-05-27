@@ -310,10 +310,13 @@ export default class FastSync extends Plugin {
 
     this.localStorageManager = new LocalStorageManager(this)
     this.api = new HttpApiService(this)
-    this.versionManager = new VersionManager(this)
     this.websocket = new WebSocketClient(this)
 
     await this.loadSettings()
+
+    // Initialize VersionManager after settings are loaded to avoid reading undefined 'settings.vault'
+    // 在加载设置后初始化 VersionManager，避免在 settings 未加载时访问 settings.vault
+    this.versionManager = new VersionManager(this)
 
     this.settingTab = new SettingTab(this.app, this)
     // 注册设置选项
