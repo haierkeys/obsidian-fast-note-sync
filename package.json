@@ -1,6 +1,6 @@
 {
   "name": "fast-note-sync",
-  "version": "2.0.19",
+  "version": "2.0.20",
   "type": "module",
   "description": "Real-time sync of your vaults across server, mobile, and web; shareable with anyone; supports REST and MCP integrations to build your personal AI knowledge base.",
   "main": "main.js",

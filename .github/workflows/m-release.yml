@@ -86,7 +86,7 @@ jobs:
           mkdir -p ${PKG_NAME}
           cp main.js manifest.json styles.css ${PKG_NAME}
           zip -r ${PKG_NAME}-v${{ steps.version.outputs.tag }}.zip ${PKG_NAME}
-          echo "${{ steps.version.outputs.note }}" > changelog.txt
+          # echo "${{ steps.version.outputs.note }}" > changelog.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -103,7 +103,7 @@ jobs:
             main.js
             manifest.json
             styles.css
-            changelog.txt
+            # changelog.txt
             fast-note-sync-v${{ steps.version.outputs.tag }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -156,7 +156,7 @@ jobs:
           echo "::endgroup::"
 
           # 3. Upload Assets (Serial for debugging)
-          FILES=("$ZIP_FILE" "main.js" "manifest.json" "styles.css" "changelog.txt")
+          FILES=("$ZIP_FILE" "main.js" "manifest.json" "styles.css") # "changelog.txt"
           for FILE_NAME in "${FILES[@]}"; do
             echo "----------------------------------------"
             echo "Processing file: $FILE_NAME"

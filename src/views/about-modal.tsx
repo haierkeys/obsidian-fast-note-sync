@@ -280,10 +280,28 @@ const VersionItem = ({
             {((history && history.length > 0) || changelog) && (
                 <div className="fns-changelog-scroll-area">
                     {(() => {
-                        const latestChangelog = (history && history.length > 0) ? history[0].changelogContent : changelog;
-                        // 只有当有新版本要升级时（isNew === true）才提取显示中间历史版本
-                        // Only extract and show intermediate versions when there is a new version to upgrade (isNew === true)
-                        const intermediateVersions = (isNew && history && history.length > 1) ? history.slice(1) : [];
+                        const cleanVer = (v: string) => v ? v.replace(/^v/i, '').trim() : '';
+                        const latestClean = cleanVer(latest);
+                        const latestHistoryItem = history?.find(h => cleanVer(h.version) === latestClean);
+                        const latestChangelog = latestHistoryItem ? latestHistoryItem.changelogContent : changelog;
+                        
+                        // 版本对比降序排序函数 (Version comparison descending sort function)
+                        const compareVersions = (v1: string, v2: string) => {
+                            const parts1 = cleanVer(v1).split('.').map(Number);
+                            const parts2 = cleanVer(v2).split('.').map(Number);
+                            for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+                                const p1 = parts1[i] || 0;
+                                const p2 = parts2[i] || 0;
+                                if (p1 !== p2) return p2 - p1;
+                            }
+                            return 0;
+                        };
+
+                        // 只有当有新版本要升级时（isNew === true）才提取显示中间历史版本并降序排序
+                        // Only extract, show and sort intermediate versions when there is a new version to upgrade (isNew === true)
+                        const intermediateVersions = (isNew && history)
+                            ? history.filter(h => cleanVer(h.version) !== latestClean).sort((a, b) => compareVersions(a.version, b.version))
+                            : [];
 
                         return (
                             <>

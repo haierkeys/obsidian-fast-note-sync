@@ -110,7 +110,7 @@ jobs:
           zip -r ${PKG_NAME}-v${{ steps.check_version.outputs.release_tag }}.zip ${PKG_NAME}
 
           # 生成 changelog.txt
-          echo "${{ steps.prepare.outputs.commit_msg }}" > changelog.txt
+          # echo "${{ steps.prepare.outputs.commit_msg }}" > changelog.txt
 
           ls
           # 设置输出变量 tag_name
@@ -133,7 +133,7 @@ jobs:
             main.js
             manifest.json
             styles.css
-            changelog.txt
+            # changelog.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -192,7 +192,7 @@ jobs:
           echo "::endgroup::"
 
           # 准备上传列表
-          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css" "changelog.txt")
+          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css") # "changelog.txt"
 
           for FILE_NAME in "${FILES[@]}"; do
             (
