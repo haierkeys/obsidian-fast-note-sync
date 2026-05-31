@@ -1,4 +1,4 @@
-﻿name: Build plugin
+name: Build plugin
 
 # 触发条件配置
 on:
@@ -8,12 +8,15 @@ on:
       - "master"
     paths:
       - "manifest.json"
-# 权限配置：允许脚本写入仓库内容（用于发布 Release）
+# 权限配置：允许脚本写入仓库内容并生成构建证明
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 env:
   NAME: ${{ github.event.repository.name }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -27,7 +30,7 @@ jobs:
           # 获取所有历史记录，为了确保能获取到 git tags
           fetch-depth: 0 # Required to fetch tags
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -108,6 +111,8 @@ jobs:
         id: build
         # 只有在 check_version 步骤输出 should_release 为 true 时才执行
         if: steps.check_version.outputs.should_release == 'true'
+        env:
+          COMMIT_MSG: ${{ steps.prepare.outputs.commit_msg }}
         run: |
           pnpm install
           pnpm run build
@@ -118,7 +123,7 @@ jobs:
           zip -r ${PKG_NAME}-v${{ steps.check_version.outputs.release_tag }}.zip ${PKG_NAME}
 
           # 生成 changelog.txt
-          echo "${{ steps.prepare.outputs.commit_msg }}" > changelog.txt
+          # echo "$COMMIT_MSG" > changelog.txt
 
           ls
           # 设置输出变量 tag_name
@@ -126,13 +131,13 @@ jobs:
 
       - name: Create Release
         if: steps.check_version.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.check_version.outputs.release_tag }}
           name: ${{ steps.check_version.outputs.release_tag }}
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
           body: ${{ steps.prepare.outputs.commit_msg }}
           target_commitish: ${{ github.sha }} # 明确指定在当前分支的 commit 上创建 tag
           overwrite_files: true
@@ -141,9 +146,18 @@ jobs:
             main.js
             manifest.json
             styles.css
-            changelog.txt
+            # changelog.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Artifact Attestation
+        if: steps.check_version.outputs.should_release == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Push Tag to CNB
         if: steps.check_version.outputs.should_release == 'true'
@@ -200,7 +214,7 @@ jobs:
           echo "::endgroup::"
 
           # 准备上传列表
-          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css" "changelog.txt")
+          FILES=("${ZIP_FILE}" "main.js" "manifest.json" "styles.css") # "changelog.txt"
 
           for FILE_NAME in "${FILES[@]}"; do
             (
@@ -266,5 +280,4 @@ jobs:
           done
           wait
           echo "🎉 All assets uploaded to CNB Release!"
-
 

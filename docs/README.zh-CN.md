@@ -18,9 +18,9 @@
 
 
 <p align="center">
-  <strong>快速、稳定、高效、任意部署的 Obsidian 笔记 同步&备份 插件</strong>
+  <strong>快速多端同步、自动备份、版本可追溯，可分享协作的 Obsidian 笔记同步插件</strong>
   <br>
-  <em>可私有化部署，专注为 Obsidian 用户提供无打扰、丝般顺滑、多端实时同步的笔记同步&备份插件， 支持 Mac、Windows、Android、iOS 等平台，并提供多语言支持。</em>
+  <em>随时随地，多端实时同步你的笔记（电脑、手机、网页）。一键生成分享链接与好友共用，轻松回溯修改历史或恢复回收站内容；还支持备份、镜像与 Git 同步。借助 Fast Note Sync Service 的 REST/MCP 服务，你可以快速搭建属于自己的个人知识库。</em>
 </p>
 
 <p align="center">
@@ -63,14 +63,12 @@
     > 配合插件的排除设置，可对某类附件直接使用第三方资源库(例如 WebDav)而不通过服务端上传。
 - 🗒️ **同步日志**：
     - 提供同步日志功能，便于查看每次同步的详细信息。
+- **云存储备份**：提供云存储备份功能，保护您的笔记数据不丢失。
 
 ## 🗺️ 路线图 (Roadmap)
 
 我们正在持续改进，以下是未来的开发计划：
-- [ ] **笔记分享功能**：为您的云端笔记生成分享链接，方便您将自己成果分享给他人。
 - [ ] **端到端加密**：提供端到端加密功能，保证您的笔记数据在任何地方保存都是安全的。
-- [ ] **云存储备份**：提供云存储备份功能，保护您的笔记数据不丢失。
-
 - [ ] **AI笔记**：探索 AI+ 笔记相关的创新玩法， 等待您提供宝贵的建议。
 
 > **如果您有改进建议或新想法，欢迎通过提交 issue 与我们分享——我们会认真评估并采纳合适的建议。**
@@ -90,13 +88,16 @@
 
 ## 🚀 快速开始
 
-1. 安装插件 (三选一)
-   - **推荐** 使用 **BRAT** 安装 ( 支持手机安装 ): 在 Obsidian 插件社区市场, 搜索并安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat) 插件, 进入插件设置界面, 点击 **Add plugin** 并粘贴 https://github.com/haierkeys/obsidian-fast-note-sync
-   - **官方商店**: <s>打开 Obsidian 社区插件市场, 搜索 **Fast Note Sync** 安装</s>
-        > ⚠️ 插件尚未上架官方商店,无法搜索, 请手动安装
-   - **手动安装**: 访问 https://github.com/haierkeys/obsidian-fast-note-sync/releases 下载安装包, 解压到 Obsidian 插件目录下 **.obsidian/plugin**
-2. 打开插件配置项，点击 **粘贴远端配置** 按钮，将远端服务配置粘贴到输入框中。
+**第一步：获取插件**
 
+* **商店搜索：** 打开 Obsidian **设置** > **社区插件** > **浏览**，搜索 `Fast Note Sync` 进行安装。 *(注：若商店未上架，请选择手动安装)*
+* **手动下载：** 从 [GitHub 发布页](https://github.com/haierkeys/obsidian-fast-note-sync/releases) 获取 `main.js`, `styles.css`, `manifest.json` 等文件，放入 `.obsidian/plugins/fast-note-sync` 文件夹中。
+
+**第二步：授权同步**
+
+1. 访问您搭建的 **[Fast Note Sync Service](https://github.com/haierkeys/fast-note-sync-service)** Web 界面。
+2. 在左侧导航栏中选择 **「笔记库」**。
+3. 点击 **「一键授权 Obsidian」**，系统会自动唤起 Obsidian 并自动完成传递授权信息，当然你也可以手动复制授权到插件内。
 
 ## 📦 服务端部署
 

@@ -1,0 +1,71 @@
+name: Feature Request / 功能请求
+description: Suggest an idea for this project / 为该项目提出一个新想法
+title: "[Feature Request]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your idea! Please use a clear and descriptive title that summarizes the feature, so developers can understand your request.
+        感谢您贡献您的想法。请起一个能够清晰概括此功能的标题，便于开发者了解您的想法。
+
+        ### Checklist / 检查清单
+
+        Before submitting a request, please confirm the following:
+        在提出建议之前，请先确认以下所有事项：
+
+        1. I have updated to the [latest version]https://github.com/haierkeys/obsidian-fast-note-sync/releases/latest) and checked the [latest commits](https://github.com/haierkeys/obsidian-fast-note-sync/commits/master/) to confirm that my desired feature has not been implemented.
+           我已更新到[最新版](https://github.com/haierkeys/obsidian-fast-note-sync/releases/latest)，并看过[最新提交](https://github.com/haierkeys/obsidian-fast-note-sync/commits/master/)，确认我想要的功能还没有实现。
+
+        2. I have searched [Issues](https://github.com/haierkeys/obsidian-fast-note-sync/issues) and confirmed that a similar request has **not been submitted**.
+           我已在 [Issues](https://github.com/haierkeys/obsidian-fast-note-sync/issues) 中检索，确认这一类似的建议 **未被提交过**。
+
+        3. I understand that due to the developer's limited time and energy, my feature request may take a long time to be implemented.
+           我已知晓由于插件开发者时间精力有限，我提交的功能请求可能需要比较久的时间才能实现。
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Confirmation Checklist / 确认检查清单"
+      description: "Please confirm before creating this issue / 在创建此 Issue 之前，请先确认"
+      options:
+        - label: |
+            I have read and confirmed the checklist above. / 我已阅读以上清单并确认。
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Feature Request / 功能请求
+
+        Describe the feature you want. You can attach screenshots, screen recordings, stack traces, logs, etc., to help the developer understand.
+        描述您想要的功能。您可以附上截图、录屏、堆栈跟踪、日志等材料，便于插件开发者进行开发。
+
+  - type: textarea
+    id: back
+    attributes:
+      label: "Background & Motivation / 背景与动机"
+      description: "Why should this feature be added? (Optional) / 添加此功能的理由。（可选）"
+    validations:
+      required: false
+
+  - type: textarea
+    id: req
+    attributes:
+      label: "Desired Feature / 想要实现或优化的功能"
+      description: |
+        Describe in detail the feature you want. The more specific, the higher the likelihood it will be implemented. You can also attach images or other attachments to help the developer better understand your intent.
+        详细地描述一下你想要的功能，描述的越具体，有人制作的可能性越高；也可以提供图片等附件，以使开发者更好理解您的意图。
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: revision
+    attributes:
+      label: "Final Step / 最后一步"
+      description: "Review your answer / 回顾您的回答"
+      options:
+        - label: |
+            I believe the above description is detailed enough for the developer to understand the feature I want. If my issue is not filled out as requested, it may be **closed without explanation**.
+            我认为上述的描述已经足以详细，以便插件开发人员理解您想要的功能。如果我的 Issue 没有按照上述的要求填写，可能会被 **无条件关闭**。
+          required: true

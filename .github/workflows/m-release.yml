@@ -1,0 +1,214 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. 1.25.0). If empty, uses version from manifest.json'
+        required: false
+        default: ''
+      release_note:
+        description: 'Release notes / Changelog (If empty, uses latest commit message)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+env:
+  NAME: ${{ github.event.repository.name }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.actor == 'haierkeys'
+    env:
+      CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".node-version"
+
+      - name: Resolve Version and Note
+        id: version
+        run: |
+          # 1. Resolve Version
+          INPUT_TAG="${{ github.event.inputs.tag_name }}"
+          if [ -z "$INPUT_TAG" ]; then
+            CURRENT_VERSION=$(jq -r .version manifest.json)
+            echo "Using version from manifest.json: $CURRENT_VERSION"
+            TARGET_TAG="$CURRENT_VERSION"
+          else
+            echo "Using manual tag: $INPUT_TAG"
+            TARGET_TAG="$INPUT_TAG"
+          fi
+          
+          # 2. Force Check Git Tag
+          echo "Checking if tag '$TARGET_TAG' exists..."
+          if ! git rev-parse "$TARGET_TAG" >/dev/null 2>&1; then
+            echo "::error::Tag '$TARGET_TAG' does not exist in the repository. Please create the tag first."
+            exit 1
+          fi
+          echo "tag=$TARGET_TAG" >> $GITHUB_OUTPUT
+
+          # 3. Resolve Release Note
+          INPUT_NOTE="${{ github.event.inputs.release_note }}"
+          if [ -z "$INPUT_NOTE" ]; then
+            echo "Release note is empty, fetching commit message for $TARGET_TAG..."
+            COMMIT_MSG=$(git log -1 --pretty=%B "$TARGET_TAG")
+            echo "note<<EOF" >> $GITHUB_OUTPUT
+            echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "Using manual release note."
+            echo "note<<EOF" >> $GITHUB_OUTPUT
+            echo "$INPUT_NOTE" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build
+        env:
+          RELEASE_NOTE: ${{ steps.version.outputs.note }}
+        run: |
+          pnpm install
+          pnpm run build
+          # Prepare assets
+          PKG_NAME="fast-note-sync"
+          mkdir -p ${PKG_NAME}
+          cp main.js manifest.json styles.css ${PKG_NAME}
+          zip -r ${PKG_NAME}-v${{ steps.version.outputs.tag }}.zip ${PKG_NAME}
+          # echo "$RELEASE_NOTE" > changelog.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: ${{ steps.version.outputs.note }}
+          target_commitish: ${{ github.sha }}
+          overwrite_files: true
+          files: |
+            main.js
+            manifest.json
+            styles.css
+            # changelog.txt
+            fast-note-sync-v${{ steps.version.outputs.tag }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Artifact Attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+
+      - name: Sync to CNB (Optional)
+        if: env.CNB_TOKEN != ''
+        env:
+          CNB_REPO: haierkeys/obsidian-fast-note-sync
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_BODY: ${{ steps.version.outputs.note }}
+          ZIP_FILE: fast-note-sync-v${{ steps.version.outputs.tag }}.zip
+        run: |
+          set -e
+          echo "Starting CNB Sync for tag: $RELEASE_TAG"
+          
+          # 1. Push Tag
+          git tag "$RELEASE_TAG" || true
+          git remote add cnb "https://cnb:${CNB_TOKEN}@cnb.cool/${CNB_REPO}.git" || true
+          git push cnb "$RELEASE_TAG" --force
+          echo "✅ Tag pushed to CNB"
+
+          # 2. Create/Fetch Release ID
+          echo "::group::Managing CNB Release"
+          RELEASE_RESPONSE=$(curl -s -X POST \
+            -H "Accept: application/vnd.cnb.api+json" \
+            -H "Authorization: Bearer ${CNB_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg tag "$RELEASE_TAG" --arg name "$RELEASE_TAG" --arg body "$RELEASE_BODY" '{tag_name: $tag, name: $name, body: $body, prerelease: false, draft: false}')" \
+            "https://api.cnb.cool/${CNB_REPO}/-/releases")
+
+          RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id')
+          if [ "$RELEASE_ID" = "null" ] || [ -z "$RELEASE_ID" ]; then
+             echo "Release creation returned no ID, searching for existing release..."
+             RELEASE_ID=$(curl -s -H "Authorization: Bearer ${CNB_TOKEN}" "https://api.cnb.cool/${CNB_REPO}/-/releases" | jq -r ".[] | select(.tag_name==\"$RELEASE_TAG\") | .id")
+          fi
+          
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "::error::Could not obtain CNB Release ID"
+            exit 1
+          fi
+          echo "Using CNB Release ID: $RELEASE_ID"
+          echo "::endgroup::"
+
+          # 3. Upload Assets (Serial for debugging)
+          FILES=("$ZIP_FILE" "main.js" "manifest.json" "styles.css") # "changelog.txt"
+          for FILE_NAME in "${FILES[@]}"; do
+            echo "----------------------------------------"
+            echo "Processing file: $FILE_NAME"
+            if [ ! -f "$FILE_NAME" ]; then
+              echo "::warning::File $FILE_NAME not found, skipping."
+              continue
+            fi
+
+            FILE_SIZE=$(stat -c%s "$FILE_NAME")
+            echo "File size: $FILE_SIZE bytes"
+
+            # Get Upload URL
+            UPLOAD_INFO=$(curl -s -X POST \
+              -H "Accept: application/vnd.cnb.api+json" \
+              -H "Authorization: Bearer ${CNB_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n --arg name "$FILE_NAME" --argjson size $FILE_SIZE '{asset_name: $name, size: $size, overwrite: true}')" \
+              "https://api.cnb.cool/${CNB_REPO}/-/releases/${RELEASE_ID}/asset-upload-url")
+            
+            UPLOAD_URL=$(echo "$UPLOAD_INFO" | jq -r '.upload_url')
+            VERIFY_URL=$(echo "$UPLOAD_INFO" | jq -r '.verify_url')
+            
+            if [ -z "$UPLOAD_URL" ] || [ "$UPLOAD_URL" = "null" ]; then
+              echo "::error::Failed to get upload URL for $FILE_NAME. Response: $UPLOAD_INFO"
+              continue
+            fi
+
+            echo "Uploading binary data..."
+            UPLOAD_RESULT=$(curl -s -w "\n%{http_code}" -X PUT \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$FILE_NAME" \
+              "$UPLOAD_URL")
+            
+            HTTP_CODE=$(echo "$UPLOAD_RESULT" | tail -1)
+            if [ "$HTTP_CODE" -ne 200 ] && [ "$HTTP_CODE" -ne 201 ]; then
+              echo "::error::Upload failed with HTTP $HTTP_CODE"
+              continue
+            fi
+
+            echo "Confirming upload..."
+            CONFIRM_STATUS=$(curl -s -w "%{http_code}" -o /dev/null -X POST \
+              -H "Accept: application/vnd.cnb.api+json" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${CNB_TOKEN}" \
+              "$VERIFY_URL")
+            
+            if [ "$CONFIRM_STATUS" -eq 200 ] || [ "$CONFIRM_STATUS" -eq 201 ]; then
+              echo "✅ $FILE_NAME uploaded and confirmed successfully."
+            else
+              echo "::error::Upload confirmation failed with HTTP $CONFIRM_STATUS"
+            fi
+          done
+          echo "🎉 CNB Sync complete!"

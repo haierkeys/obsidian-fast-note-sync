@@ -10,6 +10,9 @@ on:
       - '**'       # 所有标签的推送都会触发
   delete:           # 分支或标签删除时也同步
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   mirror:
     name: Mirror to CNB.cool

@@ -1,36 +1,57 @@
 {
-  "name": "Fast Note Sync",
-  "version": "0.6.26",
-  "description": "Privately deployable real-time multi-device note synchronization, supporting desktop and mobile devices.",
+  "name": "fast-note-sync",
+  "version": "2.0.21",
+  "type": "module",
+  "description": "Real-time sync of your vaults across server, mobile, and web; shareable with anyone; supports REST and MCP integrations to build your personal AI knowledge base.",
   "main": "main.js",
   "scripts": {
-    "dev": "node esbuild.config.mjs",
+    "dev": "npm-run-all2 --parallel devts devcss",
+    "devts": "node esbuild.config.mjs",
     "devcss": "sass --watch src/styles.scss styles.css && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "lint": "eslint src",
+    "lint:css": "stylelint \"src/**/*.scss\"",
+    "fix": "eslint --fix src",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "ver": "node ./scripts/update-version.js"
+    "test:auth": "node tests/websocket-auth-error.test.mjs",
+    "ver": "node ./scripts/update-version.js",
+    "dist": "npx tsx scripts/copy-dist.ts",
+    "translate": "node scripts/translate-i18n.mjs --model Qwen/Qwen3.6-35B-A3B",
+    "tl": "node scripts/translate-i18n.mjs --model Qwen/Qwen3.6-35B-A3B",
+    "icons": "node scripts/obfuscate_icons.js --compress --width 300"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^22.19.12",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
-    "builtin-modules": "^4.0.0",
+    "@types/node": "^25.6.2",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
     "esbuild": "^0.24.2",
-    "eslint": "^9.39.3",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.3.0",
+    "npm-run-all2": "^8.0.4",
     "obsidian": "^1.12.3",
+    "sass": "^1.99.0",
+    "sharp": "^0.34.5",
+    "stylelint": "^17.11.1",
+    "stylelint-config-standard-scss": "^17.0.0",
+    "stylelint-scss": "^7.1.1",
     "tslib": "^2.8.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@codemirror/state": "6.5.0",
     "@codemirror/view": "6.38.6",
-    "file-type": "^19.6.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "fflate": "^0.8.2",
+    "file-type": "^21.3.1",
+    "pinyin-pro": "^3.28.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
-  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "packageManager": "pnpm@11.1.2+sha512.415a1cc25974731e75455c1468371be74c5aa5fb7621b50d4056d222451609f11412f23fd602e6169f1e060466641f798597e1be961a10688836a67b16569499"
 }

@@ -1,0 +1,157 @@
+name: Bug Report / 问题报告
+description: File a bug report / 提交问题反馈
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report / 问题报告
+        Thanks for taking the time to fill out this bug report!
+        Please use a clear and descriptive title that summarizes your issue, so developers can address it effectively.
+        感谢你花时间填写这个问题报告！请起一个能够清晰描述您的问题的标题，便于开发者解决您的问题。
+        > [!important]
+        > Please search existing [Issues](https://github.com/haierkeys/obsidian-fast-note-sync/issues) to see if an issue already exists for the bug you encountered.
+        > 请搜索现有 [Issue](https://github.com/haierkeys/obsidian-fast-note-sync/issues)，以确认您遇到的 Bug 是否已有对应的 Issue。
+        >
+        > If you are unsure how to describe your problem clearly and effectively, we recommend reading [_How to Ask Questions the Smart Way_](http://www.catb.org/~esr/faqs/smart-questions.html).
+        > 如果您不知道如何有效、精准地表述，我们建议您先阅读[《提问的智慧》](https://github.com/ryanhanwu/How-To-Ask-Questions-The-Smart-Way/blob/main/README-zh_CN.md)。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened? / 发生了什么？
+      description:
+      placeholder: |
+        Describe the bug here / 在此描述问题...
+        You can drag and drop files, such as images and videos, here. / 你可以拖拽图片、视频等文件到此处
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior / 预期行为
+      description:
+      placeholder: What should have happened? / 本应该发生什么？
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce / 复现步骤
+      description:
+      placeholder: |
+        1. Open Obsidian, go to '...' / 1. 打开 Obsidian，进入“...”
+        2. Click on '....' / 2. 点击“....”
+        3. Scroll to '....' / 3. 滚动到“....”
+        4. See error / 4. 看到错误
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## Environment / 环境信息
+
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian Version / Obsidian 版本
+      description: You can find this in Settings → About / 在 设置 → 关于 中可以找到
+      placeholder: e.g. 1.12.7 / 例如 1.12.7
+    validations:
+      required: false
+
+  - type: dropdown
+    id: client-os
+    attributes:
+      label: Client Operating System (where Obsidian runs) / 插件端操作系统（Obsidian 运行环境）
+      description: Select all that apply / 可多选
+      multiple: true
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - iOS
+        - Android
+        - Other / 其他 (Please specify in "Additional Context" below / 请在下方“补充说明”中填写)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: server-os
+    attributes:
+      label: Server Operating System / 服务端操作系统
+      description: Select all that apply / 可多选
+      multiple: true
+      options:
+        - Linux (Ubuntu/Debian/CentOS/...)
+        - Windows
+        - macOS
+        - Other / 其他 (Please specify in "Additional Context" below / 请在下方“补充说明”中填写)
+    validations:
+      required: false
+
+
+  - type: textarea
+    id: other-plugins
+    attributes:
+      label: Other Active Plugins / 其他启用的插件
+      description: |
+        List any other active plugins that might be relevant. This helps identify conflicts.
+        / 列出其他可能相关的启用插件，这有助于排查插件冲突。
+      placeholder:
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## Debug Information / 调试信息
+
+  - type: textarea
+    id: debug-info
+    attributes:
+      label: Plugin Debug Info / 插件 Debug 信息
+      description: |
+        In Plugin Settings → General, click the "Copy Debug Info" button at the bottom, and paste it here.
+        / 在 插件设置 → 通用，点击底部“复制 Debug 信息”，粘贴在这里。
+      render: json
+      placeholder:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / 日志
+      description:
+      render: shell
+      placeholder:
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context / 补充说明
+      description:
+      placeholder:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: revision
+    attributes:
+      label: "Final Step / 最后一步"
+      description: "Review your answer / 回顾您的回答"
+      options:
+        - label: |
+            I believe the above description is detailed enough for the developer to reproduce the issue. If my issue is not filled out as requested, it may be **closed without explanation**.
+            我认为上述的描述已经足以详细，以允许开发人员能复现该问题。如果我的 Issue 没有按照上述的要求填写，可能会被 **无条件关闭**。
+          required: true

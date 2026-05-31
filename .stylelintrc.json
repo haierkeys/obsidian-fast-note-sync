@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "stylelint-config-standard-scss"
+  ],
+  "rules": {
+    "selector-class-pattern": null,
+    "no-descending-specificity": null,
+    "scss/at-mixin-pattern": null,
+    "scss/dollar-variable-pattern": null,
+    "font-family-no-missing-generic-family-keyword": null,
+    "color-hex-length": "long",
+    "declaration-no-important": true,
+    "declaration-block-single-line-max-declarations": null
+  }
+}
