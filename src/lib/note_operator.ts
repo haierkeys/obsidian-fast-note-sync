@@ -13,7 +13,6 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
   if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
-  if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
@@ -78,7 +77,6 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
   if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
-  if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
@@ -155,7 +153,6 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
   if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
-  if (eventEnter && !plugin.getWatchEnabled()) return
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
   if (isPathExcluded(file.path, plugin)) return
 
