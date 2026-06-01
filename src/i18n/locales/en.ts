@@ -223,6 +223,8 @@ export default {
   "ui.status.api_connected": "Connected to identified service address: ${url}",
   "ui.status.api_redirected": "Remote service address redirection detected, automatically updated to: ${url}",
   "ui.status.last_sync_not_completed": "The previous full sync has not yet completed. Please wait patiently or check the server status.",
+  "ui.status.auth_error": "Service Authorization Error: Code=${code} Message=${message}",
+  "ui.status.auth_error_scope": "Authorization failed (Code=315): Token scope insufficient. Please verify: 1) the token scope includes 'ws' protocol permission, 2) the token scope matches the client type (ObsidianPlugin), 3) the token was created with the appropriate permissions.",
 
   // --- ui.version ---
   "ui.version.title": "Version Information",
