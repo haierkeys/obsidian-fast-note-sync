@@ -223,6 +223,8 @@ export default {
   "ui.status.api_connected": "已连接到识别后的服务地址: ${url}",
   "ui.status.api_redirected": "检测到远端服务地址重定向，已自动更新为: ${url}",
   "ui.status.last_sync_not_completed": "上一次的全部同步尚未完成，请耐心等待或检查服务端状态",
+  "ui.status.auth_error": "服务授权错误: Code=${code} Message=${message}",
+  "ui.status.auth_error_scope": "授权失败 (Code=315)：Token scope 权限不足。请检查：1) Token scope 是否包含 'ws' 协议权限；2) Token scope 是否与客户端类型 (ObsidianPlugin) 匹配；3) Token 创建时是否授予了合适的权限。",
 
   // --- ui.version ---
   "ui.version.title": "版本信息",

@@ -266,9 +266,14 @@ export class WebSocketClient {
 
         if (msgAction == "Authorization") {
           if (data.code <= 0 || data.code >= 300) {
-            const errorMsg = data.message || "";
-            const errorDetails = data.details ? " Details=" + data.details : "";
-            showSyncNotice("Service Authorization Error: Code=" + data.code + " Msg=" + errorMsg + errorDetails)
+            const rawMsg = data.message
+            const errorMsg = (!rawMsg || rawMsg === "undefined") ? "" : String(rawMsg)
+            const errorDetails = data.details ? " Details=" + data.details : ""
+            if (data.code === 315) {
+              showSyncNotice($("ui.status.auth_error_scope") + errorDetails)
+            } else {
+              showSyncNotice($("ui.status.auth_error", { code: data.code, message: errorMsg + errorDetails }))
+            }
             return
           } else {
             this.isAuth = true
