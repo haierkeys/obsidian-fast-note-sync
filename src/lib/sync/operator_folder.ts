@@ -66,12 +66,60 @@ export const folderDelete = async function (folder: TFolder, plugin: FastSync, e
 }
 
 /**
+ * 按路径字符串发送文件夹删除消息（用于无法获取 TFolder 对象的场景，如 rename 后旧路径已不存在）
+ * Send folder delete message by path string (for scenarios where TFolder object is unavailable, e.g., old path after rename)
+ */
+export const folderDeleteByPath = async function (folderPath: string, plugin: FastSync) {
+    if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
+    if (isPathExcluded(folderPath, plugin)) return
+    if (plugin.lastSyncPathDeleted.has(folderPath)) return
+
+    await plugin.lockManager.withLock(folderPath, async () => {
+        plugin.addIgnoredFile(folderPath)
+        try {
+            const data = {
+                vault: plugin.settings.vault,
+                path: folderPath,
+                pathHash: hashContent(folderPath),
+            }
+            void plugin.websocket.SendMessage("FolderDelete", data, undefined, () => {
+                plugin.folderSnapshotManager.removeFolder(folderPath)
+            })
+            dump('Folder delete by path send', folderPath)
+        } finally {
+            plugin.removeIgnoredFile(folderPath)
+        }
+    }, { maxRetries: 3, retryInterval: 50 });
+}
+
+/**
  * 文件夹重命名事件处理
  */
 export const folderRename = async function (folder: TFolder, oldPath: string, plugin: FastSync, eventEnter: boolean = false) {
     if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
     if (eventEnter && plugin.isIgnoredFile(folder.path)) return
-    if (isPathExcluded(folder.path, plugin)) return
+    const newExcluded = isPathExcluded(folder.path, plugin)
+    const oldExcluded = isPathExcluded(oldPath, plugin)
+
+    // Cross-exclusion-boundary rename handling
+    // 跨排除边界重命名处理
+    if (newExcluded && !oldExcluded) {
+        // Moving from normal folder to excluded folder: delete old path on server
+        // 从正常文件夹移至排除文件夹：删除服务端旧路径
+        void folderDeleteByPath(oldPath, plugin)
+        return
+    }
+    if (!newExcluded && oldExcluded) {
+        // Moving from excluded folder to normal folder: create new folder on server
+        // 从排除文件夹移至正常文件夹：在服务端创建新文件夹
+        void folderModify(folder, plugin, true)
+        return
+    }
+    if (newExcluded && oldExcluded) {
+        // Both paths excluded: do nothing
+        // 两个路径均被排除：不处理
+        return
+    }
 
     // --- 新增：重命名拦截 ---
     if (plugin.lastSyncPathRenamed.has(folder.path)) {

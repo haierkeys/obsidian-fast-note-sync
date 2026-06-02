@@ -154,7 +154,28 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
   if (!(file instanceof TFile)) return
   if (!file.path.endsWith(".md")) return
   if (eventEnter && plugin.isIgnoredFile(file.path)) return
-  if (isPathExcluded(file.path, plugin)) return
+  const newExcluded = isPathExcluded(file.path, plugin)
+  const oldExcluded = isPathExcluded(oldfile, plugin)
+
+  // Cross-exclusion-boundary rename handling
+  // 跨排除边界重命名处理
+  if (newExcluded && !oldExcluded) {
+    // Moving from normal folder to excluded folder: delete old path on server
+    // 从正常文件夹移至排除文件夹：删除服务端旧路径
+    void noteDeleteByPath(oldfile, plugin)
+    return
+  }
+  if (!newExcluded && oldExcluded) {
+    // Moving from excluded folder to normal folder: create new note on server
+    // 从排除文件夹移至正常文件夹：在服务端创建新笔记
+    void noteModify(file, plugin, true)
+    return
+  }
+  if (newExcluded && oldExcluded) {
+    // Both paths excluded: do nothing
+    // 两个路径均被排除：不处理
+    return
+  }
 
   // --- 新增：重命名拦截 ---
   if (plugin.lastSyncPathRenamed.has(file.path)) {
