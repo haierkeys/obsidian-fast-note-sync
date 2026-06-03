@@ -56,15 +56,31 @@ const ObsidianIcon = ({ icon, className, style }: { icon: string, className?: st
     return <span ref={ref} className={className} style={{ display: 'flex', alignItems: 'center', ...style }} />;
 };
 
+interface SyncSummaryStats {
+    syncType?: string;
+    hasChanges?: boolean;
+    note?: { upload: number; modify: number; delete: number };
+    file?: { upload: number; modify: number; delete: number };
+    config?: { upload: number; modify: number; delete: number };
+}
+
 const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
-    let stats;
+    let stats: SyncSummaryStats | null = null;
     try {
-        stats = JSON.parse(log.message || '{}');
-    } catch (e) {
+        stats = JSON.parse(log.message || '{}') as SyncSummaryStats;
+    } catch {
         return null;
     }
 
-    const { syncType, note, file, config, hasChanges } = stats;
+    if (!stats) return null;
+
+    const {
+        syncType,
+        note = { upload: 0, modify: 0, delete: 0 },
+        file = { upload: 0, modify: 0, delete: 0 },
+        config = { upload: 0, modify: 0, delete: 0 },
+        hasChanges
+    } = stats;
 
     // 辅助渲染每一行，如果该类别没有任何变更，则不显示它（符合“只展示有变化的行”）
     // Helper to render each row. If there are no changes in the category, do not display it (matching "only show changed rows")
@@ -82,7 +98,7 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
                     {counts.upload > 0 && (
                         <span 
                             className="fns-summary-badge badge-upload"
-                            title={`${$("ui.log.type_send" as Parameters<typeof $>[0])}: ${counts.upload}`}
+                            title={`${$("ui.log.type_send")}: ${counts.upload}`}
                         >
                             ↑{counts.upload}
                         </span>
@@ -90,7 +106,7 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
                     {counts.modify > 0 && (
                         <span 
                             className="fns-summary-badge badge-modify"
-                            title={`${$("ui.log.type_receive" as Parameters<typeof $>[0])}: ${counts.modify}`}
+                            title={`${$("ui.log.type_receive")}: ${counts.modify}`}
                         >
                             ↓{counts.modify}
                         </span>
@@ -98,7 +114,7 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
                     {counts.delete > 0 && (
                         <span 
                             className="fns-summary-badge badge-delete"
-                            title={`${($("ui.history.deleted" as Parameters<typeof $>[0]) || $("ui.button.delete" as Parameters<typeof $>[0]))}: ${counts.delete}`}
+                            title={`${($("ui.history.deleted") || $("ui.button.delete"))}: ${counts.delete}`}
                         >
                             ✗{counts.delete}
                         </span>
@@ -110,8 +126,8 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
 
     const timeStr = moment(log.timestamp).format("HH:mm:ss");
     const titleText = syncType === 'full' 
-        ? ($("ui.log.summary.title_full" as Parameters<typeof $>[0]) || "同步完成 (全量)") 
-        : ($("ui.log.summary.title_inc" as Parameters<typeof $>[0]) || "同步完成 (增量)");
+        ? ($("ui.log.summary.title_full") || "同步完成 (全量)") 
+        : ($("ui.log.summary.title_inc") || "同步完成 (增量)");
 
     return (
         <div className={`fns-sync-summary-card ${!hasChanges ? 'no-changes-card' : ''}`}>
@@ -121,7 +137,7 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
                     <span>{titleText}</span>
                     {!hasChanges && (
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: '6px' }}>
-                            ({$("ui.log.summary.no_changes" as Parameters<typeof $>[0]) || "无内容变更"})
+                            ({$("ui.log.summary.no_changes") || "无内容变更"})
                         </span>
                     )}
                 </div>
@@ -132,9 +148,9 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
             </div>
             {hasChanges && (
                 <div className="fns-summary-rows">
-                    {renderRow("dot-note", $("ui.log.category_note" as Parameters<typeof $>[0]) || "笔记", note)}
-                    {renderRow("dot-attachment", $("ui.log.category_attachment" as Parameters<typeof $>[0]) || "附件", file)}
-                    {renderRow("dot-config", $("ui.log.category_config" as Parameters<typeof $>[0]) || "配置", config)}
+                    {renderRow("dot-note", $("ui.log.category_note") || "笔记", note)}
+                    {renderRow("dot-attachment", $("ui.log.category_attachment") || "附件", file)}
+                    {renderRow("dot-config", $("ui.log.category_config") || "配置", config)}
                 </div>
             )}
         </div>
@@ -157,7 +173,7 @@ const VaultScanningSummaryCard = ({ log }: { log: SyncLog }) => {
     const actionKey = log.action === "VaultScanning_full"
         ? "ui.log.action.VaultScanningSummary_full"
         : "ui.log.action.VaultScanningSummary_incremental";
-    const titleText = $(actionKey as Parameters<typeof $>[0]) || log.action;
+    const titleText = $(actionKey) || log.action;
 
     return (
         <div className="fns-sync-summary-card">
@@ -175,21 +191,21 @@ const VaultScanningSummaryCard = ({ log }: { log: SyncLog }) => {
                 <div className="fns-summary-row">
                     <div className="fns-summary-label">
                         <span className="fns-summary-dot dot-note" />
-                        <span>{$("ui.log.category_note" as Parameters<typeof $>[0]) || "笔记"}</span>
+                        <span>{$("ui.log.category_note") || "笔记"}</span>
                     </div>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '4px' }}>{noteCount}</span>
                 </div>
                 <div className="fns-summary-row">
                     <div className="fns-summary-label">
                         <span className="fns-summary-dot dot-attachment" />
-                        <span>{$("ui.log.category_attachment" as Parameters<typeof $>[0]) || "附件"}</span>
+                        <span>{$("ui.log.category_attachment") || "附件"}</span>
                     </div>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '4px' }}>{fileCount}</span>
                 </div>
                 <div className="fns-summary-row">
                     <div className="fns-summary-label">
                         <span className="fns-summary-dot dot-config" />
-                        <span>{$("ui.log.category_config" as Parameters<typeof $>[0]) || "配置"}</span>
+                        <span>{$("ui.log.category_config") || "配置"}</span>
                     </div>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '4px' }}>{configCount}</span>
                 </div>
@@ -220,11 +236,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
         }
     };
 
-    // 获取最新的同步小结日志
-    // Get the latest sync summary log
-    const latestSummary = React.useMemo(() => {
-        return logs.find(log => log.category === 'summary');
-    }, [logs]);
+
 
     const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
     const [hasUpgrade, setHasUpgrade] = React.useState<boolean>(
@@ -566,7 +578,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                                 {log.path && (
                                     <div 
                                         className={`fns-sync-log-path ${['note', 'attachment'].includes(log.category) ? 'is-clickable' : ''}`}
-                                        onClick={() => handlePathClick(log.path, log.category)}
+                                        onClick={() => { if (log.path) void handlePathClick(log.path, log.category); }}
                                     >
                                         {log.path}
                                     </div>

@@ -22,6 +22,13 @@ export interface SyncLog {
     vault?: string;
 }
 
+interface SyncSummaryStats {
+    syncType?: string;
+    note?: { upload: number; modify: number; delete: number };
+    file?: { upload: number; modify: number; delete: number };
+    config?: { upload: number; modify: number; delete: number };
+}
+
 export class SyncLogManager {
     private static instance: SyncLogManager;
     private logs: SyncLog[] = [];
@@ -293,13 +300,13 @@ export class SyncLogManager {
             // If it is a sync summary, format the JSON into an easy-to-read text string for the log file
             if (log.category === 'summary' && log.message) {
                 try {
-                    const stats = JSON.parse(log.message);
+                    const stats = JSON.parse(log.message) as SyncSummaryStats;
                     const parts: string[] = [];
                     if (stats.note) parts.push(`Note(up:${stats.note.upload},recv:${stats.note.modify},del:${stats.note.delete})`);
                     if (stats.file) parts.push(`Attachment(up:${stats.file.upload},recv:${stats.file.modify},del:${stats.file.delete})`);
                     if (stats.config) parts.push(`Config(up:${stats.config.upload},recv:${stats.config.modify},del:${stats.config.delete})`);
                     msgStr = ` [Msg: Sync completed (${stats.syncType === 'full' ? 'Full' : 'Incremental'}): ${parts.join(', ')}]`;
-                } catch (e) {
+                } catch {
                     // 解析失败时使用默认逻辑
                     // Fall back to default logic if parsing fails
                 }

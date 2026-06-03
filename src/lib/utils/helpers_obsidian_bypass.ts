@@ -1,4 +1,4 @@
-import { App, Vault, TAbstractFile } from "obsidian";
+import { Vault, TAbstractFile } from "obsidian";
 import { DebugLogManager } from "./debug_log_manager";
 
 /**

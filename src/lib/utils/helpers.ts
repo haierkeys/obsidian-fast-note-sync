@@ -10,10 +10,33 @@ export { nativeFetch, vaultDelete, dump, dumpError, setLogEnabled, logLevel };
 
 /**
  * 获取插件真实目录 (处理手动重命名文件夹的情况)
+ * 总是返回相对 Vault 根目录的路径，以确保过滤和文件 API 的兼容性
  * Get the real plugin directory (handles manually renamed folders)
+ * Always returns a path relative to the vault root to ensure compatibility with filters and file APIs
  */
 export const getPluginDir = function (plugin: FastSync): string {
-  return (plugin.manifest as PluginManifest & { dir?: string }).dir || `${plugin.app.vault.configDir}/plugins/${plugin.manifest.id}`
+  const dir = (plugin.manifest as PluginManifest & { dir?: string }).dir
+  const configDir = plugin.app.vault.configDir.replace(/\\/g, "/")
+  const defaultDir = `${configDir}/plugins/${plugin.manifest.id}`
+  if (!dir) return defaultDir
+
+  const normalizedDir = dir.replace(/\\/g, "/")
+
+  // 如果已经是相对路径且以 configDir 开头，直接返回
+  // If it is already a relative path starting with configDir, return directly
+  if (normalizedDir.startsWith(configDir + "/")) {
+    return normalizedDir
+  }
+
+  // 否则，从绝对路径中截取相对路径
+  // Otherwise, extract the relative path from the absolute path
+  const searchStr = `/${configDir}/plugins/`
+  const idx = normalizedDir.lastIndexOf(searchStr)
+  if (idx !== -1) {
+    return normalizedDir.substring(idx + 1)
+  }
+
+  return defaultDir
 }
 
 /**
