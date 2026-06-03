@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, moment, setIcon, Platform, MenuItem, Menu } from "obsidian";
+import { ItemView, WorkspaceLeaf, moment, setIcon, Platform, MenuItem, Menu, TFile, Notice } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import * as React from "react";
 
@@ -200,6 +200,25 @@ const VaultScanningSummaryCard = ({ log }: { log: SyncLog }) => {
 
 const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
+
+    const handlePathClick = async (path: string, category: string) => {
+        if (category !== 'note' && category !== 'attachment') {
+            return;
+        }
+        const file = plugin.app.vault.getAbstractFileByPath(path);
+        if (file instanceof TFile) {
+            try {
+                const leaf = plugin.app.workspace.getLeaf(Platform.isMobile ? false : 'tab');
+                await leaf.openFile(file);
+            } catch (e) {
+                console.error("Failed to open file in preferred leaf, fallback to active leaf:", e);
+                const leaf = plugin.app.workspace.getLeaf(false);
+                await leaf.openFile(file);
+            }
+        } else {
+            new Notice($("ui.log.file_not_found"));
+        }
+    };
 
     // 获取最新的同步小结日志
     // Get the latest sync summary log
@@ -529,7 +548,14 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                                         </span>
                                     </div>
                                 </div>
-                                {log.path && <div className="fns-sync-log-path">{log.path}</div>}
+                                {log.path && (
+                                    <div 
+                                        className={`fns-sync-log-path ${['note', 'attachment'].includes(log.category) ? 'is-clickable' : ''}`}
+                                        onClick={() => handlePathClick(log.path, log.category)}
+                                    >
+                                        {log.path}
+                                    </div>
+                                )}
                                 {log.message && !['成功', 'success'].includes(log.message.toLowerCase()) && <div className="fns-sync-log-message">{log.message}</div>}
                             </div>
                         );

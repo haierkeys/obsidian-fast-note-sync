@@ -278,6 +278,7 @@ export default {
   "ui.log.clear": "로그 지우기",
   "ui.log.copy_all": "모두 복사",
   "ui.log.empty": "로그 없음",
+  "ui.log.file_not_found": "파일이 존재하지 않거나 삭제되었습니다",
   "ui.log.type_send": "전송",
   "ui.log.type_receive": "수신",
   "ui.log.type_info": "정보",

@@ -278,6 +278,7 @@ export default {
   "ui.log.clear": "清空日誌",
   "ui.log.copy_all": "複製全部",
   "ui.log.empty": "暫無日誌",
+  "ui.log.file_not_found": "檔案不存在或已被刪除",
   "ui.log.type_send": "發送",
   "ui.log.type_receive": "接收",
   "ui.log.type_info": "信息",

@@ -415,5 +415,6 @@
   "ui.log.summary.title_inc": "3f0e0c6762f074514b035e6bfc44c7a0",
   "ui.log.summary.no_changes": "dcd054253336f125b6a103aa0b51075c",
   "ui.log.action.VaultScanningSummary_full": "43990c6ccc703e892b4e5518f4c69238",
-  "ui.log.action.VaultScanningSummary_incremental": "a16e6a5710d00ddd039d57f8c2f8bfd4"
+  "ui.log.action.VaultScanningSummary_incremental": "a16e6a5710d00ddd039d57f8c2f8bfd4",
+  "ui.log.file_not_found": "e4c872d45a99a50fa3d84bc53b51f4a8"
 }

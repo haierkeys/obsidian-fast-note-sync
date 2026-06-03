@@ -278,6 +278,7 @@ export default {
   "ui.log.clear": "Clear Log",
   "ui.log.copy_all": "Copy All",
   "ui.log.empty": "No logs yet",
+  "ui.log.file_not_found": "File does not exist or has been deleted",
   "ui.log.type_send": "Send",
   "ui.log.type_receive": "Receive",
   "ui.log.type_info": "Info",

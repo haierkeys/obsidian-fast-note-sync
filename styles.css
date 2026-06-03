@@ -4006,4 +4006,17 @@ body .suggestion-container {
   border-bottom: 1px dashed var(--background-modifier-border-faint);
 }
 
+.fns-sync-log-path {
+  word-break: break-all;
+}
+.fns-sync-log-path.is-clickable {
+  cursor: pointer;
+  color: var(--text-accent);
+  transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+.fns-sync-log-path.is-clickable:hover {
+  color: var(--text-accent-hover);
+  text-decoration: underline;
+}
+
 /*# sourceMappingURL=styles.css.map */

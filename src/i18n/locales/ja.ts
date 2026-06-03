@@ -278,6 +278,7 @@ export default {
   "ui.log.clear": "ログをクリア",
   "ui.log.copy_all": "すべてコピー",
   "ui.log.empty": "ログはありません",
+  "ui.log.file_not_found": "ファイルが存在しないか、削除されました",
   "ui.log.type_send": "送信",
   "ui.log.type_receive": "受信",
   "ui.log.type_info": "情報",

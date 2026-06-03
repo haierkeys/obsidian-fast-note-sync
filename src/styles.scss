@@ -4192,3 +4192,18 @@ body .suggestion-container {
   padding-bottom: 8px;
   border-bottom: 1px dashed var(--background-modifier-border-faint);
 }
+
+.fns-sync-log-path {
+  word-break: break-all;
+
+  &.is-clickable {
+    cursor: pointer;
+    color: var(--text-accent);
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+
+    &:hover {
+      color: var(--text-accent-hover);
+      text-decoration: underline;
+    }
+  }
+}
