@@ -410,5 +410,10 @@
   "ui.version.click_to_expand": "dec2532ca519e81606ce50d7f2441222",
   "ui.version.has_intermediate_versions_below": "b1c05427d802cca25d9c271f4d8cb36f",
   "setting.debug.protobuf": "254dd1fe1c19211983274bdde15a4343",
-  "setting.debug.protobuf_desc": "6a5e04ec66a86bc09363ff4053417018"
+  "setting.debug.protobuf_desc": "6a5e04ec66a86bc09363ff4053417018",
+  "ui.log.summary.title_full": "c321da6292ed585369eb316fea914014",
+  "ui.log.summary.title_inc": "3f0e0c6762f074514b035e6bfc44c7a0",
+  "ui.log.summary.no_changes": "dcd054253336f125b6a103aa0b51075c",
+  "ui.log.action.VaultScanningSummary_full": "43990c6ccc703e892b4e5518f4c69238",
+  "ui.log.action.VaultScanningSummary_incremental": "a16e6a5710d00ddd039d57f8c2f8bfd4"
 }

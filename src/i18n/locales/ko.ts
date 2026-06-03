@@ -292,10 +292,15 @@ export default {
   "ui.log.category_folder": "폴더",
   "ui.log.category_config": "설정",
   "ui.log.category_other": "기타",
+  "ui.log.summary.title_full": "동기화 완료 (전체)",
+  "ui.log.summary.title_inc": "동기화 완료 (증분)",
+  "ui.log.summary.no_changes": "이번 동기화에서 변경된 내용을 감지하지 못했습니다",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "노트 보관소 해시 계산 진행률(전체)",
   "ui.log.action.VaultScanning_incremental": "노트 보관소 해시 계산 진행률(증분)",
+  "ui.log.action.VaultScanningSummary_full": "동기화 시작(전체) - 해시 계산",
+  "ui.log.action.VaultScanningSummary_incremental": "동기화 시작(증분) - 해시 계산",
   "ui.log.action.FolderSync_full": "폴더 동기화(전체)",
   "ui.log.action.FolderSync_incremental": "폴더 동기화(증분)",
   "ui.log.action.FolderSyncEnd_full": "폴더 동기화 종료(전체)",

@@ -148,6 +148,48 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
   if (((allSyncDone && allChunksCompleted && allDownloadsComplete && bufferCleared) || isProgressComplete) && !plugin.isSyncRequesting) {
     if (intervalId) window.clearInterval(intervalId);
 
+    // 收集本轮同步的统计数据并生成小结日志
+    // Collect stats of the current sync round and generate summary log
+    const syncType = plugin.syncState.currentSyncType;
+    const noteStats = {
+      upload: plugin.noteSyncTasks.needUpload,
+      modify: plugin.noteSyncTasks.needModify + plugin.noteSyncTasks.needSyncMtime,
+      delete: plugin.noteSyncTasks.needDelete
+    };
+    const fileStats = {
+      upload: plugin.fileSyncTasks.needUpload,
+      modify: plugin.fileSyncTasks.needModify + plugin.fileSyncTasks.needSyncMtime,
+      delete: plugin.fileSyncTasks.needDelete
+    };
+    const configStats = {
+      upload: plugin.configSyncTasks.needUpload,
+      modify: plugin.configSyncTasks.needModify + plugin.configSyncTasks.needSyncMtime,
+      delete: plugin.configSyncTasks.needDelete
+    };
+
+    const hasChanges = (
+      Object.values(noteStats).some(v => v > 0) ||
+      Object.values(fileStats).some(v => v > 0) ||
+      Object.values(configStats).some(v => v > 0)
+    );
+
+    const summaryMessage = JSON.stringify({
+      syncType,
+      hasChanges,
+      note: noteStats,
+      file: fileStats,
+      config: configStats
+    });
+
+    SyncLogManager.getInstance().addOrUpdateLog({
+      id: `summary-${Date.now()}`,
+      type: 'info',
+      action: 'SyncSummary',
+      status: 'success',
+      message: summaryMessage,
+      timestamp: Date.now()
+    });
+
     plugin.syncState.activeSyncContext = null; // 同步完成，清空活跃的上下文 / Sync completed, reset the active context
     plugin.enableWatch();
     plugin.syncTypeCompleteCount = 0;

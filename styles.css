@@ -985,7 +985,7 @@
   background-color: #FF8A33;
 }
 .fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-other {
-  background-color: #999999;
+  background-color: #6367FF;
 }
 .fns-sync-log-container .fns-sync-log-filter-panel .filter-group .filter-chips .filter-chip span[class^=fns-dot-].fns-dot-send {
   background-color: #FF8C00;
@@ -1130,7 +1130,7 @@
   border-left-color: #FF8A33;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-other {
-  border-left-color: var(--text-faint);
+  border-left-color: #6367FF;
 }
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-category-folder {
   border-left-color: #1E88E5;
@@ -1151,6 +1151,122 @@
 .fns-sync-log-container .fns-sync-log-item.fns-sync-log-type-receive .fns-sync-log-type-tag {
   background-color: rgba(0, 123, 255, 0.1);
   color: #007BFF;
+}
+.fns-sync-log-container {
+  /* 同步日志小结卡片 / Sync Log Summary Card */
+}
+.fns-sync-log-container .fns-sync-summary-card {
+  padding: 5px 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  background-color: var(--background-secondary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-left: 4px solid #6367FF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.fns-sync-log-container .fns-sync-summary-card.no-changes-card {
+  /* 无变更时进一步压扁 / Flatten further when there are no changes */
+  padding: 4px 8px;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-header.has-border {
+  margin-bottom: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--background-modifier-border-faint);
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-header .fns-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+  font-size: 12px;
+  color: #6367FF;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-header .fns-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-header .fns-summary-meta .fns-summary-type-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-rows {
+  display: flex;
+  flex-direction: row; /* 横向并排 / Align horizontally */
+  flex-wrap: wrap; /* 窄屏自动折行 / Auto-wrap on narrow screens */
+  gap: 12px; /* 项目间距 / Item gap */
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-rows .fns-summary-empty-text {
+  color: var(--text-muted);
+  font-size: 11px;
+  width: 100%;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 0;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-label .fns-summary-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-label .fns-summary-dot.dot-note {
+  background-color: #08b94e;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-label .fns-summary-dot.dot-attachment {
+  background-color: #7C4DFF;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-label .fns-summary-dot.dot-config {
+  background-color: #FF8A33;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-badges {
+  display: flex;
+  gap: 4px;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-badges .fns-summary-badge {
+  font-size: 9px;
+  padding: 0px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-badges .fns-summary-badge.badge-upload {
+  background-color: rgba(255, 140, 0, 0.1);
+  color: #FF8C00;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-badges .fns-summary-badge.badge-modify {
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007BFF;
+}
+.fns-sync-log-container .fns-sync-summary-card .fns-summary-row .fns-summary-badges .fns-summary-badge.badge-delete {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #f44336;
 }
 .fns-sync-log-container .fns-sync-log-pagination {
   display: flex;

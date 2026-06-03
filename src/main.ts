@@ -302,7 +302,7 @@ export default class FastSync extends Plugin {
       'attachment': '#7C4DFF',
       'folder': '#1E88E5',
       'config': '#FF8A33',
-      'other': '#999999',
+      'other': '#6367FF',
       'send': '#FF8C00',
       'receive': '#007BFF'
     };

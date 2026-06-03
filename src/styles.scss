@@ -1132,7 +1132,7 @@
             &.fns-dot-attachment { background-color: #7C4DFF; }
             &.fns-dot-folder { background-color: #1E88E5; }
             &.fns-dot-config { background-color: #FF8A33; }
-            &.fns-dot-other { background-color: #999999; }
+            &.fns-dot-other { background-color: #6367FF; }
             &.fns-dot-send { background-color: #FF8C00; }
             &.fns-dot-receive { background-color: #007BFF; }
           }
@@ -1295,7 +1295,7 @@
     }
 
     &.fns-sync-log-category-other {
-      border-left-color: var(--text-faint);
+      border-left-color: #6367FF;
     }
 
     &.fns-sync-log-category-folder {
@@ -1326,6 +1326,131 @@
     }
   }
 
+  /* 同步日志小结卡片 / Sync Log Summary Card */
+  .fns-sync-summary-card {
+    padding: 5px 8px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background-color: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-left: 4px solid #6367FF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    &.no-changes-card {
+      /* 无变更时进一步压扁 / Flatten further when there are no changes */
+      padding: 4px 8px;
+    }
+
+    .fns-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      &.has-border {
+        margin-bottom: 4px;
+        padding-bottom: 2px;
+        border-bottom: 1px solid var(--background-modifier-border-faint);
+      }
+
+      .fns-summary-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: bold;
+        font-size: 12px;
+        color: #6367FF;
+      }
+
+      .fns-summary-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--text-faint);
+
+        .fns-summary-type-tag {
+          font-size: 10px;
+          padding: 1px 6px;
+          border-radius: 10px;
+          background-color: var(--background-modifier-border);
+          color: var(--text-muted);
+          font-weight: 500;
+        }
+      }
+    }
+
+    .fns-summary-rows {
+      display: flex;
+      flex-direction: row; /* 横向并排 / Align horizontally */
+      flex-wrap: wrap;     /* 窄屏自动折行 / Auto-wrap on narrow screens */
+      gap: 12px;           /* 项目间距 / Item gap */
+
+      .fns-summary-empty-text {
+        color: var(--text-muted);
+        font-size: 11px;
+        width: 100%;
+      }
+    }
+
+    .fns-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 0;
+
+      .fns-summary-label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+        color: var(--text-normal);
+
+        .fns-summary-dot {
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          border: 1px solid var(--background-modifier-border);
+          flex-shrink: 0;
+
+          &.dot-note { background-color: #08b94e; }
+          &.dot-attachment { background-color: #7C4DFF; }
+          &.dot-config { background-color: #FF8A33; }
+        }
+      }
+
+      .fns-summary-badges {
+        display: flex;
+        gap: 4px;
+
+        .fns-summary-badge {
+          font-size: 9px;
+          padding: 0px 4px;
+          border-radius: 3px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 1px;
+
+          &.badge-upload {
+            background-color: rgb(255 140 0 / 10%);
+            color: #FF8C00;
+          }
+
+          &.badge-modify {
+            background-color: rgb(0 123 255 / 10%);
+            color: #007BFF;
+          }
+
+          &.badge-delete {
+            background-color: rgb(244 67 54 / 10%);
+            color: #f44336;
+          }
+        }
+      }
+    }
+  }
 
   .fns-sync-log-pagination {
     display: flex;

@@ -56,8 +56,157 @@ const ObsidianIcon = ({ icon, className, style }: { icon: string, className?: st
     return <span ref={ref} className={className} style={{ display: 'flex', alignItems: 'center', ...style }} />;
 };
 
+const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
+    let stats;
+    try {
+        stats = JSON.parse(log.message || '{}');
+    } catch (e) {
+        return null;
+    }
+
+    const { syncType, note, file, config, hasChanges } = stats;
+
+    // 辅助渲染每一行，如果该类别没有任何变更，则不显示它（符合“只展示有变化的行”）
+    // Helper to render each row. If there are no changes in the category, do not display it (matching "only show changed rows")
+    const renderRow = (iconClass: string, title: string, counts: { upload: number; modify: number; delete: number }) => {
+        const total = counts.upload + counts.modify + counts.delete;
+        if (total === 0) return null;
+
+        return (
+            <div className="fns-summary-row">
+                <div className="fns-summary-label">
+                    <span className={`fns-summary-dot ${iconClass}`} />
+                    <span>{title}</span>
+                </div>
+                <div className="fns-summary-badges">
+                    {counts.upload > 0 && (
+                        <span 
+                            className="fns-summary-badge badge-upload"
+                            title={`${$("ui.log.type_send" as Parameters<typeof $>[0])}: ${counts.upload}`}
+                        >
+                            ↑{counts.upload}
+                        </span>
+                    )}
+                    {counts.modify > 0 && (
+                        <span 
+                            className="fns-summary-badge badge-modify"
+                            title={`${$("ui.log.type_receive" as Parameters<typeof $>[0])}: ${counts.modify}`}
+                        >
+                            ↓{counts.modify}
+                        </span>
+                    )}
+                    {counts.delete > 0 && (
+                        <span 
+                            className="fns-summary-badge badge-delete"
+                            title={`${($("ui.history.deleted" as Parameters<typeof $>[0]) || $("ui.button.delete" as Parameters<typeof $>[0]))}: ${counts.delete}`}
+                        >
+                            ✗{counts.delete}
+                        </span>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const timeStr = moment(log.timestamp).format("HH:mm:ss");
+    const titleText = syncType === 'full' 
+        ? ($("ui.log.summary.title_full" as Parameters<typeof $>[0]) || "同步完成 (全量)") 
+        : ($("ui.log.summary.title_inc" as Parameters<typeof $>[0]) || "同步完成 (增量)");
+
+    return (
+        <div className={`fns-sync-summary-card ${!hasChanges ? 'no-changes-card' : ''}`}>
+            <div className={`fns-summary-header ${hasChanges ? 'has-border' : ''}`}>
+                <div className="fns-summary-title">
+                    <ObsidianIcon icon="check-circle-2" />
+                    <span>{titleText}</span>
+                    {!hasChanges && (
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: '6px' }}>
+                            ({$("ui.log.summary.no_changes" as Parameters<typeof $>[0]) || "无内容变更"})
+                        </span>
+                    )}
+                </div>
+                <div className="fns-summary-meta">
+                    <span className="fns-summary-type-tag">{$(`ui.log.type_${log.type}`)}</span>
+                    <span>{timeStr}</span>
+                </div>
+            </div>
+            {hasChanges && (
+                <div className="fns-summary-rows">
+                    {renderRow("dot-note", $("ui.log.category_note" as Parameters<typeof $>[0]) || "笔记", note)}
+                    {renderRow("dot-attachment", $("ui.log.category_attachment" as Parameters<typeof $>[0]) || "附件", file)}
+                    {renderRow("dot-config", $("ui.log.category_config" as Parameters<typeof $>[0]) || "配置", config)}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const VaultScanningSummaryCard = ({ log }: { log: SyncLog }) => {
+    const noteMatch = log.message?.match(/笔记:\s*(\d+)/);
+    const fileMatch = log.message?.match(/附件:\s*(\d+)/);
+    const configMatch = log.message?.match(/配置:\s*(\d+)/);
+
+    const noteCount = noteMatch ? parseInt(noteMatch[1]) : 0;
+    const fileCount = fileMatch ? parseInt(fileMatch[1]) : 0;
+    const configCount = configMatch ? parseInt(configMatch[1]) : 0;
+
+    const timeStr = moment(log.timestamp).format("HH:mm:ss");
+    
+    // 根据 action 区分全量和增量并调用新增的翻译键
+    // Distinguish between full and incremental action and load new translation keys
+    const actionKey = log.action === "VaultScanning_full"
+        ? "ui.log.action.VaultScanningSummary_full"
+        : "ui.log.action.VaultScanningSummary_incremental";
+    const titleText = $(actionKey as Parameters<typeof $>[0]) || log.action;
+
+    return (
+        <div className="fns-sync-summary-card">
+            <div className="fns-summary-header has-border">
+                <div className="fns-summary-title">
+                    <ObsidianIcon icon="circle-chevron-right" />
+                    <span>{titleText}</span>
+                </div>
+                <div className="fns-summary-meta">
+                    <span className="fns-summary-type-tag">{$(`ui.log.type_${log.type}`)}</span>
+                    <span>{timeStr}</span>
+                </div>
+            </div>
+            <div className="fns-summary-rows">
+                <div className="fns-summary-row">
+                    <div className="fns-summary-label">
+                        <span className="fns-summary-dot dot-note" />
+                        <span>{$("ui.log.category_note" as Parameters<typeof $>[0]) || "笔记"}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '4px' }}>{noteCount}</span>
+                </div>
+                <div className="fns-summary-row">
+                    <div className="fns-summary-label">
+                        <span className="fns-summary-dot dot-attachment" />
+                        <span>{$("ui.log.category_attachment" as Parameters<typeof $>[0]) || "附件"}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '4px' }}>{fileCount}</span>
+                </div>
+                <div className="fns-summary-row">
+                    <div className="fns-summary-label">
+                        <span className="fns-summary-dot dot-config" />
+                        <span>{$("ui.log.category_config" as Parameters<typeof $>[0]) || "配置"}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold', marginLeft: '4px' }}>{configCount}</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
+
+    // 获取最新的同步小结日志
+    // Get the latest sync summary log
+    const latestSummary = React.useMemo(() => {
+        return logs.find(log => log.category === 'summary');
+    }, [logs]);
+
     const [isConnected, setIsConnected] = React.useState<boolean>(plugin.websocket.isConnected());
     const [hasUpgrade, setHasUpgrade] = React.useState<boolean>(
         plugin.versionManager.hasNewVersion()
@@ -140,6 +289,7 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     // 筛选逻辑
     const filteredLogs = React.useMemo(() => {
         return logs.filter(log => {
+            if (log.category === 'summary') return false; // 排除小结卡片 / Exclude summary card
             const matchCategory = categoryFilter === 'all' || log.category === categoryFilter;
             const matchType = typeFilter === 'all' || log.type === typeFilter;
             const matchVault = !log.vault || log.vault === plugin.settings.vault;
@@ -343,35 +493,47 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
             )}
 
             <div className="fns-sync-log-list" ref={scrollRef}>
+                {currentPage === 1 && (categoryFilter === 'all' || categoryFilter === 'other') && typeFilter === 'all' && latestSummary && (
+                    <SyncSummaryCard log={latestSummary} />
+                )}
                 {paginatedLogs.length === 0 ? (
-                    <div className="fns-sync-log-empty">{$("ui.log.empty")}</div>
+                    (!latestSummary || currentPage !== 1 || !['all', 'other'].includes(categoryFilter) || typeFilter !== 'all') && (
+                        <div className="fns-sync-log-empty">{$("ui.log.empty")}</div>
+                    )
                 ) : (
-                    paginatedLogs.map((log) => (
-                        <div key={log.id} className={`fns-sync-log-item fns-sync-log-category-${log.category} fns-sync-log-status-${log.status} fns-sync-log-type-${log.type}`}>
-                            <div className="fns-sync-log-item-header">
-                                <span className="fns-sync-log-time">{moment(log.timestamp).format("HH:mm:ss")}</span>
-                                <span className="fns-sync-log-action">{$(`ui.log.action.${log.action}` as Parameters<typeof $>[0])}</span>
-                                <span className="fns-sync-log-type-tag">
-                                    {log.type === 'send' ? (
-                                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
-                                    ) : log.type === 'receive' ? (
-                                        <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
-                                    ) : null}
-                                    {$(`ui.log.type_${log.type}`)}
-                                </span>
-                                <div className="fns-sync-log-header-right">
-                                    {log.progress !== undefined && (log.status === 'pending' || (log.status === 'success' && log.progress === 100)) && (
-                                        <span className="fns-sync-log-progress-percentage">{log.progress}%</span>
-                                    )}
-                                    <span className={`fns-sync-log-status-tag status-${log.status}`}>
-                                        {log.status === 'success' ? '✓' : log.status === 'error' ? '✗' : '...'}
+                    paginatedLogs.map((log) => {
+                        // 如果是成功完成的哈希扫描，以卡片形式渲染
+                        // If it is a successfully completed hash scan, render it as a card
+                        if (log.action.startsWith('VaultScanning') && log.status === 'success') {
+                            return <VaultScanningSummaryCard key={log.id} log={log} />;
+                        }
+                        return (
+                            <div key={log.id} className={`fns-sync-log-item fns-sync-log-category-${log.category} fns-sync-log-status-${log.status} fns-sync-log-type-${log.type}`}>
+                                <div className="fns-sync-log-item-header">
+                                    <span className="fns-sync-log-time">{moment(log.timestamp).format("HH:mm:ss")}</span>
+                                    <span className="fns-sync-log-action">{$(`ui.log.action.${log.action}` as Parameters<typeof $>[0])}</span>
+                                    <span className="fns-sync-log-type-tag">
+                                        {log.type === 'send' ? (
+                                            <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                                        ) : log.type === 'receive' ? (
+                                            <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                                        ) : null}
+                                        {$(`ui.log.type_${log.type}`)}
                                     </span>
+                                    <div className="fns-sync-log-header-right">
+                                        {log.progress !== undefined && (log.status === 'pending' || (log.status === 'success' && log.progress === 100)) && (
+                                            <span className="fns-sync-log-progress-percentage">{log.progress}%</span>
+                                        )}
+                                        <span className={`fns-sync-log-status-tag status-${log.status}`}>
+                                            {log.status === 'success' ? '✓' : log.status === 'error' ? '✗' : '...'}
+                                        </span>
+                                    </div>
                                 </div>
+                                {log.path && <div className="fns-sync-log-path">{log.path}</div>}
+                                {log.message && !['成功', 'success'].includes(log.message.toLowerCase()) && <div className="fns-sync-log-message">{log.message}</div>}
                             </div>
-                            {log.path && <div className="fns-sync-log-path">{log.path}</div>}
-                            {log.message && !['成功', 'success'].includes(log.message.toLowerCase()) && <div className="fns-sync-log-message">{log.message}</div>}
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 

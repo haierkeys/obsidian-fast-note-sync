@@ -292,10 +292,15 @@ export default {
   "ui.log.category_folder": "目錄",
   "ui.log.category_config": "設定",
   "ui.log.category_other": "其他",
+  "ui.log.summary.title_full": "同步完成（全量）",
+  "ui.log.summary.title_inc": "同步完成（增量）",
+  "ui.log.summary.no_changes": "本次同步未偵測到任何內容變更",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "筆記庫雜湊計算進度(全量)",
   "ui.log.action.VaultScanning_incremental": "筆記庫雜湊計算進度(增量)",
+  "ui.log.action.VaultScanningSummary_full": "同步開始（全量）- 雜湊計算",
+  "ui.log.action.VaultScanningSummary_incremental": "同步開始（增量）- 雜湊計算",
   "ui.log.action.FolderSync_full": "文件夾同步(全量)",
   "ui.log.action.FolderSync_incremental": "文件夾同步(增量)",
   "ui.log.action.FolderSyncEnd_full": "文件夾同步結束(全量)",

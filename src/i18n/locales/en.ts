@@ -292,10 +292,15 @@ export default {
   "ui.log.category_folder": "Folder",
   "ui.log.category_config": "Config",
   "ui.log.category_other": "Other",
+  "ui.log.summary.title_full": "Sync Complete (Full)",
+  "ui.log.summary.title_inc": "Sync Complete (Incremental)",
+  "ui.log.summary.no_changes": "No content changes detected in this sync",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "Vault Hash Calculation Progress (Full)",
   "ui.log.action.VaultScanning_incremental": "Vault Hash Calculation Progress (Incremental)",
+  "ui.log.action.VaultScanningSummary_full": "Sync Started (Full) - Hash Calculation",
+  "ui.log.action.VaultScanningSummary_incremental": "Sync Started (Incremental) - Hash Calculation",
   "ui.log.action.FolderSync_full": "Folder Sync (Full)",
   "ui.log.action.FolderSync_incremental": "Folder Sync (Incremental)",
   "ui.log.action.FolderSyncEnd_full": "Folder Sync Ended (Full)",

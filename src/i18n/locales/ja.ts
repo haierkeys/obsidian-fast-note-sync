@@ -292,10 +292,15 @@ export default {
   "ui.log.category_folder": "フォルダ",
   "ui.log.category_config": "設定",
   "ui.log.category_other": "その他",
+  "ui.log.summary.title_full": "同期完了（フル）",
+  "ui.log.summary.title_inc": "同期完了（増分）",
+  "ui.log.summary.no_changes": "今回の同期では変更が検出されませんでした",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "Vaultハッシュ計算進捗(全量)",
   "ui.log.action.VaultScanning_incremental": "Vaultハッシュ計算進捗(増分)",
+  "ui.log.action.VaultScanningSummary_full": "同期開始（フル）- ハッシュ計算",
+  "ui.log.action.VaultScanningSummary_incremental": "同期開始（増分）- ハッシュ計算",
   "ui.log.action.FolderSync_full": "フォルダ同期（完全）",
   "ui.log.action.FolderSync_incremental": "フォルダ同期（増分）",
   "ui.log.action.FolderSyncEnd_full": "フォルダ同期終了（完全）",

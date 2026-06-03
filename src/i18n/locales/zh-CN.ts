@@ -292,10 +292,15 @@ export default {
   "ui.log.category_folder": "目录",
   "ui.log.category_config": "配置",
   "ui.log.category_other": "其他",
+  "ui.log.summary.title_full": "同步完成 (全量)",
+  "ui.log.summary.title_inc": "同步完成 (增量)",
+  "ui.log.summary.no_changes": "本次同步没有检测到任何内容变更",
 
   // --- ui.log.action ---
   "ui.log.action.VaultScanning_full": "笔记库哈希计算进度(全量)",
   "ui.log.action.VaultScanning_incremental": "笔记库哈希计算进度(增量)",
+  "ui.log.action.VaultScanningSummary_full": "同步开始(全量) - 哈希计算",
+  "ui.log.action.VaultScanningSummary_incremental": "同步开始(增量) - 哈希计算",
   "ui.log.action.FolderSync_full": "文件夹同步(全量)",
   "ui.log.action.FolderSync_incremental": "文件夹同步(增量)",
   "ui.log.action.FolderSyncEnd_full": "文件夹同步结束(全量)",
