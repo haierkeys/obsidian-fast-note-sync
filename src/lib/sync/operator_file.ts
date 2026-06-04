@@ -333,7 +333,28 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
   if (plugin.settings.syncEnabled == false || plugin.settings.readonlySyncEnabled) return
   if (file.path.endsWith(".md")) return
   if (plugin.isIgnoredFile(file.path) && eventEnter) return
-  if (isPathExcluded(file.path, plugin)) return
+  const newExcluded = isPathExcluded(file.path, plugin)
+  const oldExcluded = isPathExcluded(oldfile, plugin)
+
+  // Cross-exclusion-boundary rename handling
+  // 跨排除边界重命名处理
+  if (newExcluded && !oldExcluded) {
+    // Moving from normal folder to excluded folder: delete old path on server
+    // 从正常文件夹移至排除文件夹：删除服务端旧路径
+    void fileDeleteByPath(oldfile, plugin)
+    return
+  }
+  if (!newExcluded && oldExcluded) {
+    // Moving from excluded folder to normal folder: create new file on server
+    // 从排除文件夹移至正常文件夹：在服务端创建新文件
+    void fileModify(file, plugin, true)
+    return
+  }
+  if (newExcluded && oldExcluded) {
+    // Both paths excluded: do nothing
+    // 两个路径均被排除：不处理
+    return
+  }
 
   if (!(file instanceof TFile)) return
 
