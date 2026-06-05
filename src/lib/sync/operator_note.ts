@@ -612,6 +612,10 @@ export const receiveNoteDeleteAck = function (data: { lastTime?: number; path?: 
   if (data.path && plugin.pendingNoteDeleteAcks.has(data.path)) {
     plugin.fileHashManager.removeFileHash(data.path)
     plugin.pendingNoteDeleteAcks.delete(data.path)
+  }
+  // 释放并发槽位：与 FileDeleteAck/ConfigDeleteAck 保持一致，仅检查 data.path 是否存在
+  // Release concurrency slot: consistent with FileDeleteAck/ConfigDeleteAck, only check data.path
+  if (data.path) {
     plugin.concurrencyLimiter.releaseSlot(data.path)
   }
   if (data.lastTime && data.lastTime > Number(plugin.localStorageManager.getMetadata("lastNoteSyncTime"))) {

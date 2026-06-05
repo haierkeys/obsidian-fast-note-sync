@@ -121,8 +121,4 @@ export class ConcurrencyLimiter {
         this.queue = [];
     }
 
-    /** 是否有待确认的操作（等待服务端 ACK）/ Whether there are pending operations awaiting ACK */
-    public hasPending(): boolean {
-        return this.activeKeys.size > 0 || this.queue.length > 0;
-    }
 }
