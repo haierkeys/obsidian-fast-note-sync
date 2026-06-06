@@ -406,19 +406,12 @@ export default class FastSync extends Plugin {
 
       // 注册 WebSocket 数据传输活动监听 — 任何数据收发时显示同步指示器 / Register data transfer activity listener
       let activityTimer: number | null = null;
-      const scheduleTurnOff = () => {
-        if (activityTimer) window.clearTimeout(activityTimer);
-        activityTimer = window.setTimeout(() => {
-          if (this.concurrencyLimiter.hasPending()) {
-            scheduleTurnOff(); // 还有未确认操作，200ms 后再检查 / Still pending ACKs, recheck
-          } else {
-            this.menuManager.setSyncStatus(false);
-          }
-        }, 600);
-      };
       this.websocket.addActivityListener(() => {
         this.menuManager.setSyncStatus(true);
-        scheduleTurnOff();
+        if (activityTimer) window.clearTimeout(activityTimer);
+        activityTimer = window.setTimeout(() => {
+          this.menuManager.setSyncStatus(false);
+        }, 1000);
       });
 
       // 初始化分享指示器管理器 / Initialize share indicator manager

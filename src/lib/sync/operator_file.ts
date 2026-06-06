@@ -859,6 +859,9 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
     }
   });
 
+  // FileSyncMtime 表示文件已在服务端存在（无需上传），释放 fileModify 中获取的并发槽位
+  // FileSyncMtime indicates file already exists on server (no upload needed), release slot acquired by fileModify
+  if (data.path) plugin.concurrencyLimiter.releaseSlot(data.path)
   plugin.fileSyncTasks.completed++
 }
 

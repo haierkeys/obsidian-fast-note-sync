@@ -48,7 +48,7 @@
     transform: rotate(0deg);
   }
   to {
-    transform: rotate(-360deg);
+    transform: rotate(360deg);
   }
 }
 /* 同步中：wifi 图标上叠加旋转 refresh-cw 图标 / Syncing: spinning refresh-cw icon overlay */
