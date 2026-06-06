@@ -1,5 +1,5 @@
 import { Vault, TAbstractFile } from "obsidian";
-import { DebugLogManager } from "./debug_log_manager";
+import { DebugLogManager } from "./utils/debug_log_manager";
 
 /**
  * =============================================================================

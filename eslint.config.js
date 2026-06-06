@@ -6,7 +6,7 @@ import { defineConfig } from "eslint/config";
 export default defineConfig([
   {
     ignores: [
-      "src/lib/utils/helpers_obsidian_bypass.ts",
+      "src/lib/helpers_obsidian_bypass.ts",
       "src/pb/**",
       "main.js",
       "styles.css",

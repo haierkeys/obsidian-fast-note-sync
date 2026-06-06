@@ -3,7 +3,7 @@ import { $ } from "../../i18n/lang";
 
 import FastSync from "../../main";
 import { SyncLogManager } from "../sync/sync_log_manager";
-import { nativeFetch, vaultDelete, dump, dumpError, setLogEnabled, logLevel } from "./helpers_obsidian_bypass";
+import { nativeFetch, vaultDelete, dump, dumpError, setLogEnabled, logLevel } from "../helpers_obsidian_bypass";
 
 export { nativeFetch, vaultDelete, dump, dumpError, setLogEnabled, logLevel };
 
