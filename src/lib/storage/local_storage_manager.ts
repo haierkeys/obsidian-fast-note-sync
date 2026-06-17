@@ -16,6 +16,7 @@ export class LocalStorageManager {
     private lastHashes: Map<string, string> = new Map();
     private lastMtimes: Map<string, number> = new Map();
     private watchTimer: number | null = null;
+    private storageHandler: ((event: StorageEvent) => void) | null = null;
 
     /**
      * 底层读原子操作
@@ -173,11 +174,15 @@ export class LocalStorageManager {
         );
 
         // 3. 监听跨窗口/标签页的 localStorage 变更 (Listen for cross-tab changes)
-        window.addEventListener("storage", (e) => {
+        if (this.storageHandler) {
+            window.removeEventListener("storage", this.storageHandler);
+        }
+        this.storageHandler = (e) => {
             if (e.key && this.getKeys().includes(e.key)) {
                 void this.checkChanges();
             }
-        });
+        };
+        window.addEventListener("storage", this.storageHandler);
 
         // 标记为已启动 (Reuse watchTimer as a boolean flag)
         this.watchTimer = 1;
@@ -187,6 +192,10 @@ export class LocalStorageManager {
      * 停止定时检查 (Cleanup handled by plugin.registerEvent)
      */
     stopWatch() {
+        if (this.storageHandler) {
+            window.removeEventListener("storage", this.storageHandler);
+            this.storageHandler = null;
+        }
         this.watchTimer = null;
     }
 
