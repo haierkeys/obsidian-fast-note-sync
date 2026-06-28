@@ -10,6 +10,8 @@ export interface SyncTaskStats {
   needSyncMtime: number; // 需要同步时间戳 / Need to sync mtime
   needDelete: number;   // 需要删除 / Need to delete
   completed: number;    // 已完成数量 / Completed count
+  chunksReceived?: number; // 已接收的块数量 / Received chunks count
+  totalChunks?: number;    // 总块数量 / Total chunks count
 }
 
 /**
@@ -136,10 +138,10 @@ export class SyncState {
    * Reset all per-session task statistics and sync-end flags
    */
   resetSession() {
-    this.noteSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };
-    this.fileSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };
-    this.configSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };
-    this.folderSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };
+    this.noteSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0, chunksReceived: 0, totalChunks: 0 };
+    this.fileSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0, chunksReceived: 0, totalChunks: 0 };
+    this.configSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0, chunksReceived: 0, totalChunks: 0 };
+    this.folderSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0, chunksReceived: 0, totalChunks: 0 };
     this.lastStatusBarPercentage = 0;
     this.noteSyncEnd = false;
     this.fileSyncEnd = false;

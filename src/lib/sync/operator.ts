@@ -531,7 +531,8 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
       // --- PERF: Limit hash computations per sync cycle ---
       // Prevents V8 heap exhaustion on first full scan of large vaults.
-      const MAX_HASH_PER_CYCLE = 5000;
+      const MAX_HASH_PER_CYCLE = 20000;
+      let hitHashLimit = false;
       let hashComputeCount = 0;
 
       for (const file of list) {
@@ -579,7 +580,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
               let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
               if (contentHash === null) {
-                if (hashComputeCount >= MAX_HASH_PER_CYCLE) continue;
+                if (hashComputeCount >= MAX_HASH_PER_CYCLE) { hitHashLimit = true; continue; }
                 hashComputeCount++;
                 try {
                   contentHash = await Promise.race([
@@ -616,7 +617,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
 
               let contentHash = plugin.fileHashManager.getValidHash(file.path, file.stat.mtime, file.stat.size);
               if (contentHash === null) {
-                if (hashComputeCount >= MAX_HASH_PER_CYCLE) continue;
+                if (hashComputeCount >= MAX_HASH_PER_CYCLE) { hitHashLimit = true; continue; }
                 hashComputeCount++;
                 try {
                   contentHash = await Promise.race([
@@ -861,14 +862,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     // 50000 entries × 200 bytes = 10MB+ JSON payload which silently fails on WebSocket send.
     // Cap to 2000 items. Remaining items are already hash-cached and will sync on
     // subsequent incremental syncs when modified.
-    const MAX_SYNC_ITEMS = 2000;
-    const MAX_SYNC_FOLDERS = 2000;
-    if (notes.length > MAX_SYNC_ITEMS || files.length > MAX_SYNC_ITEMS || folders.length > MAX_SYNC_FOLDERS) {
-      dump(`[Sync] Capping sync arrays: notes ${notes.length}→${Math.min(notes.length, MAX_SYNC_ITEMS)}, files ${files.length}→${Math.min(files.length, MAX_SYNC_ITEMS)}, folders ${folders.length}→${Math.min(folders.length, MAX_SYNC_FOLDERS)}`);
-    }
-    if (notes.length > MAX_SYNC_ITEMS) notes.length = MAX_SYNC_ITEMS;
-    if (files.length > MAX_SYNC_ITEMS) files.length = MAX_SYNC_ITEMS;
-    if (folders.length > MAX_SYNC_FOLDERS) folders.length = MAX_SYNC_FOLDERS;
+    // Array capping removed to allow full sync via chunking.
 
     const noteData: NoteSyncData = { lastTime: noteTime, notes, delNotes, missingNotes };
     const fileData: FileSyncData = { lastTime: fileTime, files, delFiles, missingFiles };

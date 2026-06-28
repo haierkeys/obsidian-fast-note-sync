@@ -964,11 +964,7 @@ export const receiveFileSyncEnd = async function (data: unknown, plugin: FastSyn
   dump(`Receive file sync end:`, data)
 
   const syncData = data as SyncEndData
-  // 更新任务统计信息，用于进度条计算 (Update task stats for progress bar)
-  plugin.fileSyncTasks.needUpload = syncData.needUploadCount || 0
-  plugin.fileSyncTasks.needModify = syncData.needModifyCount || 0
-  plugin.fileSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0
-  plugin.fileSyncTasks.needDelete = syncData.needDeleteCount || 0
+  // Task stats are now accumulated in receiveSyncEndWrapper
 
   // 无条件更新 lastFileSyncTime，确保包含服务端本轮同步后的所有异步操作（如 SyncResourceFID）
   // Unconditionally update lastFileSyncTime to cover all async server-side ops after this sync round (e.g., SyncResourceFID)

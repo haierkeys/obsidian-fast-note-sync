@@ -369,11 +369,7 @@ export const receiveConfigSyncEnd = async function (data: unknown, plugin: FastS
     dump(`Receive config sync end:`, data)
 
     const syncData = data as SyncEndData
-    // 更新任务统计信息，用于进度条计算 (Update task stats for progress bar)
-    plugin.configSyncTasks.needUpload = syncData.needUploadCount || 0
-    plugin.configSyncTasks.needModify = syncData.needModifyCount || 0
-    plugin.configSyncTasks.needSyncMtime = syncData.needSyncMtimeCount || 0
-    plugin.configSyncTasks.needDelete = syncData.needDeleteCount || 0
+    // Task stats are now accumulated in receiveSyncEndWrapper
 
     const hasUpdates = (syncData.needUploadCount || 0) + (syncData.needModifyCount || 0) + (syncData.needSyncMtimeCount || 0) + (syncData.needDeleteCount || 0) > 0;
     if (hasUpdates) {
