@@ -187,8 +187,8 @@ export class SyncProgressTracker {
     // Accumulate precisely received total task count from server / 累加绝对精准的已收到任务总数
     prog.receivedTaskTotal += totalCount;
     
-    // 如果收到最后一页标志，或者当前页码达到数学计算的预期尾页，则标记所有页均已收到
-    prog.allPagesReceived = isLast || (prog.expectedPages > 0 && pageIndex >= prog.expectedPages - 1);
+    // 如果收到最后一页标志，则标记所有页均已收到
+    prog.allPagesReceived = isLast;
 
     // Correct UI total if received count exceeds it / 如果实际收到的数量超过了估算值，调大估算分母
     if (prog.pageTaskTotal < prog.receivedTaskTotal) {

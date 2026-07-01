@@ -282,7 +282,6 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     await plugin.concurrencyLimiter.waitForSlot(data.path)
     void plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
-        plugin.configSyncTasks.completed++;
     }, (data as any).context);
 };
 
@@ -442,6 +441,7 @@ export const receiveConfigModifyAck = async function (data: { lastTime?: number;
     if (data.path) {
         plugin.concurrencyLimiter.releaseSlot(data.path)
     }
+    plugin.configSyncTasks.completed++
 }
 
 /**

@@ -339,7 +339,6 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   await plugin.concurrencyLimiter.waitForSlot(file.path)
   void plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
     plugin.removeIgnoredFile(file.path)
-    plugin.noteSyncTasks.completed++
   }, (data as any).context)
   dump(`Note modify send`, sendData.path, sendData.contentHash, sendData.mtime, sendData.pathHash)
 }
@@ -586,6 +585,7 @@ export const receiveNoteModifyAck = function (data: { lastTime?: number; path?: 
   if (data.path) {
     plugin.concurrencyLimiter.releaseSlot(data.path)
   }
+  plugin.noteSyncTasks.completed++
 }
 
 // 收到 NoteRenameAck，从 FIFO 队列取出待确认条目并更新 hashManager
