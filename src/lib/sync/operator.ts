@@ -48,7 +48,12 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
   // Safety timeout: increased to 300s to support large vaults with many batches, preventing false timeout termination
   const SYNC_TIMEOUT_MS = 300000;
   if (syncStartTime && Date.now() - syncStartTime > SYNC_TIMEOUT_MS) {
-    if (intervalId) window.clearInterval(intervalId);
+    if (intervalId) {
+      window.clearInterval(intervalId);
+      if (plugin.syncState.progressCheckIntervalId === intervalId) {
+        plugin.syncState.progressCheckIntervalId = null;
+      }
+    }
     dump(`Sync completion timeout after ${SYNC_TIMEOUT_MS}ms. Tasks: note=${JSON.stringify(plugin.noteSyncTasks)}, file=${JSON.stringify(plugin.fileSyncTasks)}, folder=${JSON.stringify(plugin.folderSyncTasks)}, config=${JSON.stringify(plugin.configSyncTasks)}`)
     plugin.syncState.activeSyncContext = null; // 同步超时，清空活跃的上下文 / Sync timeout, reset the active context
     plugin.syncTypeCompleteCount = 0;
@@ -85,7 +90,12 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
   const overallPercentage = plugin.progressTracker.getOverallPct();
 
   if (allSyncDone && allDownloadsComplete && bufferCleared && !plugin.isSyncRequesting) {
-    if (intervalId) window.clearInterval(intervalId);
+    if (intervalId) {
+      window.clearInterval(intervalId);
+      if (plugin.syncState.progressCheckIntervalId === intervalId) {
+        plugin.syncState.progressCheckIntervalId = null;
+      }
+    }
 
     // 收集本轮同步的统计数据并生成小结日志
     // Collect stats of the current sync round and generate summary log
@@ -893,6 +903,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     const progressCheckInterval = window.setInterval(() => {
       checkSyncCompletion(plugin, progressCheckInterval, syncStartTime);
     }, 100);
+    plugin.syncState.progressCheckIntervalId = progressCheckInterval;
   } catch (error) {
     dump("Sync failed with error: " + error);
     plugin.syncState.activeSyncContext = null; // 同步失败，清空上下文 / Sync failed, reset the context
@@ -904,6 +915,70 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     plugin.isSyncing = false;
   }
 };
+
+/**
+ * 取消当前正在进行的同步，并重置所有运行时状态。
+ * Cancel the current sync and reset all runtime states.
+ */
+export function cancelSync(plugin: FastSync): void {
+  if (plugin.syncState.progressCheckIntervalId !== null) {
+    window.clearInterval(plugin.syncState.progressCheckIntervalId);
+    plugin.syncState.progressCheckIntervalId = null;
+  }
+
+  plugin.syncState.activeSyncContext = null;
+  plugin.syncTypeCompleteCount = 0;
+  plugin.resetSyncTasks();
+  plugin.syncPageStateMap.clear();
+  plugin.totalFilesToDownload = 0;
+  plugin.downloadedFilesCount = 0;
+  plugin.totalChunksToDownload = 0;
+  plugin.downloadedChunksCount = 0;
+  plugin.totalChunksToUpload = 0;
+  plugin.uploadedChunksCount = 0;
+
+  // 清理待确认与重命名队列 / Clear pending queues and renames
+  plugin.pendingFileRenames = [];
+  plugin.pendingNoteRenames = [];
+  plugin.pendingDeleteNotePaths.clear();
+  plugin.pendingDeleteFilePaths.clear();
+  plugin.pendingDeleteFolderPaths.clear();
+  plugin.pendingDeleteConfigPaths.clear();
+  plugin.pendingNoteDeleteAcks.clear();
+  plugin.pendingFileDeleteAcks.clear();
+  plugin.pendingConfigDeleteAcks.clear();
+  plugin.pendingConfigModifies.clear();
+  plugin.localStorageManager.clearPending('pendingConfigModifies');
+  plugin.pendingNoteModifies.clear();
+  plugin.localStorageManager.clearPending('pendingNoteModifies');
+  plugin.pendingUploadHashes.clear();
+  plugin.localStorageManager.clearPending('pendingUploadHashes');
+
+  plugin.progressTracker.forceComplete();
+  plugin.updateStatusBar($("ui.status.cancelled") || "Sync Cancelled");
+  window.setTimeout(() => plugin.updateStatusBar(""), 3000);
+
+  // 记录一条“同步取消”的小结日志，供同步日志视图渲染卡片 / Record a "Sync Cancelled" summary log for rendering in the Sync Log View
+  const syncType = plugin.syncState.currentSyncType;
+  const summaryMessage = JSON.stringify({
+    syncType,
+    hasChanges: false
+  });
+
+  SyncLogManager.getInstance().addOrUpdateLog({
+    id: `summary-${Date.now()}`,
+    type: 'info',
+    action: 'SyncSummary',
+    status: 'cancelled',
+    message: summaryMessage,
+    timestamp: Date.now()
+  });
+
+  // 确保重置同步状态标志 / Ensure sync state flag is reset
+  plugin.isSyncing = false;
+
+  dump("Sync cancelled by user");
+}
 
 
 /**

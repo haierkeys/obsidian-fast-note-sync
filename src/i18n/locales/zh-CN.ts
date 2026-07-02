@@ -227,6 +227,8 @@ export default {
   "ui.menu.full_sync": "完整同步",
   "ui.menu.full_sync_desc": "会和服务端进行完整比对，同步所有文件，同时清理本地所有空文件夹",
   "ui.menu.reconnecting": "正在重新连接，连接成功后将自动同步...",
+  "ui.menu.cancel_full_first": "请先取消完整同步，再执行默认同步",
+  "ui.menu.cancel_default_first": "请先取消默认同步，再执行完整同步",
   "ui.menu.enable_sync": "开启同步",
   "ui.menu.enable_sync_desc": "已经开启设置的所有同步",
   "ui.menu.disable_sync": "临时关闭同步",
@@ -257,6 +259,7 @@ export default {
   "ui.status.new_version": "发现新版本: ${version}, 点击后跳转更新页面",
   "ui.status.completed": "同步完成",
   "ui.status.failed": "同步失败",
+  "ui.status.cancelled": "同步已取消",
   "ui.status.conflict": "检测到同步冲突，已强制合并，需要手动处理 ${path}。",
   "ui.status.no_connection": "无法连接到服务器，请检查网络连接",
   "ui.status.config_imported": "已导入授权配置",
@@ -311,6 +314,8 @@ export default {
   "ui.log.category_other": "其他",
   "ui.log.summary.title_full": "同步完成 (全量)",
   "ui.log.summary.title_inc": "同步完成 (增量)",
+  "ui.log.summary.title_cancelled_full": "同步已取消 (全量)",
+  "ui.log.summary.title_cancelled_inc": "同步已取消 (增量)",
   "ui.log.summary.no_changes": "无变更",
 
   // --- ui.log.action ---

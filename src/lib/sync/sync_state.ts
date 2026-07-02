@@ -158,6 +158,8 @@ export class SyncState {
   lastSyncPathRenamed = new Set<string>();
   /** 自动同步定时器 / Auto-sync timer */
   syncTimer: number | null = null;
+  /** 进度检测定时器 ID，供取消同步时使用 / Progress check interval ID for sync cancellation */
+  progressCheckIntervalId: number | null = null;
   /** 文件下载会话管理 / File download session map */
   fileDownloadSessions = new Map<string, FileDownloadSession>();
 
@@ -168,6 +170,10 @@ export class SyncState {
    * Reset all per-session task statistics and sync-end flags
    */
   resetSession() {
+    if (this.progressCheckIntervalId !== null) {
+      window.clearInterval(this.progressCheckIntervalId);
+      this.progressCheckIntervalId = null;
+    }
     this.noteSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };
     this.fileSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };
     this.configSyncTasks = { needUpload: 0, needModify: 0, needSyncMtime: 0, needDelete: 0, completed: 0 };

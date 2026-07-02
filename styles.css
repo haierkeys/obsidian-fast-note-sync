@@ -69,6 +69,28 @@
   color: inherit;
 }
 
+/* 菜单项内的执行指示旋转图标 / Spinning indicator inside menu items */
+.fns-menu-sync-spinner {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.fns-menu-sync-spinner svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.5;
+  animation: rotate 1.2s linear infinite;
+  color: var(--interactive-accent);
+}
+
+/* 同步互斥时的禁用菜单项 / Disabled menu item during mutually exclusive sync */
+.fns-menu-item-disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+  pointer-events: auto !important; /* 保留点击事件以便进行 Notice 提示 / Keep click events for Notice prompt */
+}
+
 /* 设置页同步指示器预览 / Settings page sync indicator preview */
 .fns-sync-indicator-preview {
   display: inline-flex;
@@ -1171,6 +1193,12 @@
 .fns-sync-log-container .fns-sync-summary-card.no-changes-card {
   /* 无变更时进一步压扁 / Flatten further when there are no changes */
   padding: 4px 8px;
+}
+.fns-sync-log-container .fns-sync-summary-card.is-cancelled-card {
+  border-left-color: var(--text-error);
+}
+.fns-sync-log-container .fns-sync-summary-card.is-cancelled-card .fns-summary-header .fns-summary-title {
+  color: var(--text-error);
 }
 .fns-sync-log-container .fns-sync-summary-card .fns-summary-header {
   display: flex;

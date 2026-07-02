@@ -5,7 +5,7 @@ import { dumpError } from "../utils/helpers";
 
 
 export type LogType = 'send' | 'receive' | 'info' | 'error';
-export type LogStatus = 'success' | 'error' | 'pending';
+export type LogStatus = 'success' | 'error' | 'pending' | 'cancelled';
 
 export type LogCategory = 'note' | 'attachment' | 'config' | 'folder' | 'summary' | 'other';
 

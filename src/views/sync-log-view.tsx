@@ -125,17 +125,22 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
     };
 
     const timeStr = moment(log.timestamp).format("HH:mm:ss");
-    const titleText = syncType === 'full' 
-        ? ($("ui.log.summary.title_full") || "同步完成 (全量)") 
-        : ($("ui.log.summary.title_inc") || "同步完成 (增量)");
+    const isCancelled = log.status === 'cancelled';
+    const titleText = isCancelled
+        ? (syncType === 'full' 
+            ? ($("ui.log.summary.title_cancelled_full") || "同步已取消 (全量)") 
+            : ($("ui.log.summary.title_cancelled_inc") || "同步已取消 (增量)"))
+        : (syncType === 'full' 
+            ? ($("ui.log.summary.title_full") || "同步完成 (全量)") 
+            : ($("ui.log.summary.title_inc") || "同步完成 (增量)"));
 
     return (
-        <div className={`fns-sync-summary-card ${!hasChanges ? 'no-changes-card' : ''}`}>
-            <div className={`fns-summary-header ${hasChanges ? 'has-border' : ''}`}>
+        <div className={`fns-sync-summary-card ${isCancelled ? 'is-cancelled-card' : ''} ${(!hasChanges || isCancelled) ? 'no-changes-card' : ''}`}>
+            <div className={`fns-summary-header ${(hasChanges && !isCancelled) ? 'has-border' : ''}`}>
                 <div className="fns-summary-title">
-                    <ObsidianIcon icon="check-circle-2" />
+                    <ObsidianIcon icon={isCancelled ? "x-circle" : "check-circle-2"} />
                     <span>{titleText}</span>
-                    {!hasChanges && (
+                    {!hasChanges && !isCancelled && (
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', marginLeft: '6px' }}>
                             ({$("ui.log.summary.no_changes") || "无内容变更"})
                         </span>
@@ -146,7 +151,7 @@ const SyncSummaryCard = ({ log }: { log: SyncLog }) => {
                     <span>{timeStr}</span>
                 </div>
             </div>
-            {hasChanges && (
+            {hasChanges && !isCancelled && (
                 <div className="fns-summary-rows">
                     {renderRow("dot-note", $("ui.log.category_note") || "笔记", note)}
                     {renderRow("dot-attachment", $("ui.log.category_attachment") || "附件", file)}
