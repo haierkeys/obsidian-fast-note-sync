@@ -110,6 +110,8 @@ export interface PluginSettings {
   hashSyncLimitEnabled: boolean
   /** 哈希计算数量限制 */
   hashSyncLimit: number
+  /** 已提示过大文件跳过同步的 "path|size" 记录，避免同一文件每轮同步重复弹通知 */
+  largeFileNoticeShown: string[]
 }
 
 /**
@@ -171,6 +173,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   attachmentSyncLimit: 50,
   hashSyncLimitEnabled: false,
   hashSyncLimit: 50000,
+  largeFileNoticeShown: [],
 }
 
 export type TabId = "GENERAL" | "DISPLAY" | "SHORTCUT" | "REMOTE" | "SYNC" | "CLOUD" | "DEBUG"

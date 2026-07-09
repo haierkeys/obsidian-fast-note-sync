@@ -13,6 +13,7 @@
     "fix": "eslint --fix src",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "test:auth": "node tests/websocket-auth-error.test.mjs",
+    "test:mirror": "node tests/file-mirror-restore.test.mjs",
     "ver": "node ./scripts/update-version.js",
     "dist": "npx tsx scripts/copy-dist.ts",
     "translate": "node scripts/translate-i18n.mjs --model Qwen/Qwen3.6-35B-A3B",

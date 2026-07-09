@@ -628,6 +628,108 @@ export function debounce<T extends (...args: unknown[]) => unknown>(func: T, wai
 }
 
 /**
+ * =============================================================================
+ * 本地状态文件镜像 (Local State File Mirror)
+ * =============================================================================
+ */
+
+/**
+ * 本地状态文件镜像器：把某个纯 localStorage 状态额外镜像一份到 vault 内的文件，
+ * 用于移动端 WebView localStorage 被系统清除后的兜底恢复（文件哈希表/配置哈希表/目录快照等）。
+ * 镜像文件路径挂在插件目录下，构造时即通过 configAddPathExcluded 挡在配置同步之外
+ * (内存级排除，不依赖 localStorage，因此不会被同样的清除问题连带影响)。
+ * Local state file mirror: mirrors a piece of localStorage-only state into a file inside the vault,
+ * so it can be recovered after mobile WebView localStorage gets cleared by the system (file hash map /
+ * config hash map / folder snapshot, etc). The mirror path lives under the plugin dir and is excluded
+ * from config sync via configAddPathExcluded at construction time (in-memory exclusion, unaffected by
+ * the same localStorage-clearing issue).
+ */
+export class LocalStateFileMirror {
+  private plugin: FastSync;
+  private mirrorPath: string;
+  private latestData: string | null = null;
+  // 是否存在尚未落盘的最新数据 (Whether latestData hasn't been persisted yet)
+  private pendingWrite: boolean = false;
+  // 写入串行化：写入在途时不并发发起新写入，仅记下需要在写完后重跑一次
+  // Write serialization: don't start a concurrent write while one is in-flight; just remember to rerun once it finishes
+  private isWriting: boolean = false;
+  private rerunAfterWrite: boolean = false;
+  private writeTimer: number | null = null;
+
+  constructor(plugin: FastSync, fileName: string) {
+    this.plugin = plugin;
+    this.mirrorPath = `${getPluginDir(plugin)}/${fileName}`;
+    // 挡在配置同步之外，防止镜像文件本身被当作配置项同步
+    configAddPathExcluded(this.mirrorPath, plugin);
+  }
+
+  /**
+   * 读取镜像文件内容；不存在或异常均返回 null，绝不弹 toast
+   */
+  async read(): Promise<string | null> {
+    try {
+      const exists = await this.plugin.app.vault.adapter.exists(this.mirrorPath);
+      if (!exists) return null;
+      return await this.plugin.app.vault.adapter.read(this.mirrorPath);
+    } catch (error) {
+      dump(`LocalStateFileMirror: 读取镜像文件失败: ${this.mirrorPath}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 安排一次防抖写入 (2000ms)，latest-wins：期间多次调用只保留最新一份数据
+   */
+  scheduleWrite(data: string): void {
+    this.latestData = data;
+    this.pendingWrite = true;
+    if (this.writeTimer) window.clearTimeout(this.writeTimer);
+    this.writeTimer = window.setTimeout(() => {
+      this.writeTimer = null;
+      this.doWrite();
+    }, 2000);
+  }
+
+  /**
+   * 串行化落盘：写入在途时只标记需要重跑，绝不并发 adapter.write；写失败只 dump，不弹 toast
+   */
+  private doWrite(): void {
+    if (!this.pendingWrite || this.latestData === null) return;
+    if (this.isWriting) {
+      this.rerunAfterWrite = true;
+      return;
+    }
+    this.isWriting = true;
+    this.pendingWrite = false;
+    const data = this.latestData;
+    void this.plugin.app.vault.adapter.write(this.mirrorPath, data)
+      .catch((error) => {
+        dump(`LocalStateFileMirror: 写入镜像文件失败: ${this.mirrorPath}`, error);
+      })
+      .finally(() => {
+        this.isWriting = false;
+        if (this.rerunAfterWrite) {
+          this.rerunAfterWrite = false;
+          this.pendingWrite = true;
+          this.doWrite();
+        }
+      });
+  }
+
+  /**
+   * 若有未落盘的数据，取消防抖计时器并立即触发一次写入 (同步上下文调用，void 掉 promise)
+   */
+  flush(): void {
+    if (this.writeTimer) {
+      window.clearTimeout(this.writeTimer);
+      this.writeTimer = null;
+    }
+    if (!this.pendingWrite) return;
+    this.doWrite();
+  }
+}
+
+/**
  * 等待文件夹变为空
  */
 export const waitForFolderEmpty = async function (path: string, plugin: FastSync, timeoutMs: number = 10000): Promise<boolean> {

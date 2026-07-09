@@ -21,6 +21,30 @@ export let isPluginUnloading = false;
 // 会话 ID 到文件路径的映射，用于处理 463 会话不存在错误
 const sessionIdToPathMap = new Map<string, string>()
 
+// 大文件跳过同步通知去重：本会话内已提示过的 "path|size"，避免同一文件每轮同步重复弹 toast
+const sessionLargeFileNotified = new Set<string>()
+
+/**
+ * 大文件跳过同步的通知去重：同一 (path, size) 组合本会话或历史设置中已提示过则只 dump，不再弹 toast
+ * Dedup notice for large-file-skip: only dump (no toast) if this (path, size) pair was already notified
+ * either in this session or recorded in settings history
+ */
+function notifyLargeFileSkipped(plugin: FastSync, path: string, size: number, message: string): void {
+  const key = `${path}|${size}`
+  const shown = plugin.settings.largeFileNoticeShown ?? []
+  if (sessionLargeFileNotified.has(key) || shown.includes(key)) {
+    dump(`Large file skip notice suppressed (already shown): ${key}`)
+    return
+  }
+  showSyncNotice(message, 5000)
+  sessionLargeFileNotified.add(key)
+  // 重新赋值而非 push：settings 可能与 DEFAULT_SETTINGS 浅拷贝共享同一数组引用，原地 push 会污染默认值
+  const next = [...shown, key]
+  if (next.length > 200) next.shift()
+  plugin.settings.largeFileNoticeShown = next
+  void plugin.saveSettings()
+}
+
 /**
  * 获取临时分片目录路径
  */
@@ -186,7 +210,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
 
   if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
     dump(`Skip file modify for large attachment (${describeBinarySyncLimit()} limit): ${file.path}`, file.stat.size)
-    showSyncNotice(`Fast Note Sync skipped large file: ${file.path}`, 5000)
+    notifyLargeFileSkipped(plugin, file.path, file.stat.size, `Fast Note Sync skipped large file: ${file.path}`)
     return
   }
 
@@ -446,7 +470,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
   }
   if (isLargeBinarySyncRisk(file.stat.size, plugin)) {
     dump(`Skip file upload for large attachment (${describeBinarySyncLimit()} limit): ${data.path}`, file.stat.size)
-    showSyncNotice(`Fast Note Sync skipped large file upload: ${data.path}`, 5000)
+    notifyLargeFileSkipped(plugin, data.path, file.stat.size, `Fast Note Sync skipped large file upload: ${data.path}`)
     plugin.recordSyncCompleted('file', data.pageIndex)
     return
   }
@@ -713,7 +737,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   }
   if (isLargeBinarySyncRisk(data.size, plugin)) {
     dump(`Skip file download for large attachment (${describeBinarySyncLimit()} limit): ${data.path}`, data.size)
-    showSyncNotice(`Fast Note Sync skipped large file download: ${data.path}`, 5000)
+    notifyLargeFileSkipped(plugin, data.path, data.size, `Fast Note Sync skipped large file download: ${data.path}`)
     plugin.recordSyncCompleted('file', data.pageIndex);
     return
   }
