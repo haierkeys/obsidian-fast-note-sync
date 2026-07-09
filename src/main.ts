@@ -620,6 +620,10 @@ export default class FastSync extends Plugin {
     // 取消注册文件事件
     void this.reloadServices(false)
     this.updateStatusBar("")
+    // 落盘防抖中的状态文件镜像写入 (Flush pending debounced state mirror writes)
+    this.fileHashManager?.flush()
+    this.configHashManager?.flush()
+    this.folderSnapshotManager?.flush()
   }
 
   async loadSettings() {
