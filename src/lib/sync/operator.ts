@@ -320,6 +320,8 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
       plugin.fileHashManager.bulkSetFromScanned(plugin.scannedNoteHashes);
       plugin.scannedNoteHashes.clear();
     }
+    // 同步结束，强制落盘本轮防抖累积的哈希写入
+    plugin.fileHashManager.flush();
   } else if (type === "file") {
     plugin.fileHashManager.removeFileHashes(plugin.pendingDeleteFilePaths)
     plugin.pendingDeleteFilePaths.clear()
@@ -332,9 +334,13 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
       plugin.fileHashManager.bulkSetFromScanned(plugin.scannedFileHashes);
       plugin.scannedFileHashes.clear();
     }
+    // 同步结束，强制落盘本轮防抖累积的哈希写入
+    plugin.fileHashManager.flush();
   } else if (type === "folder") {
     plugin.folderSnapshotManager.removeFolders(plugin.pendingDeleteFolderPaths);
     plugin.pendingDeleteFolderPaths.clear()
+    // 同步结束，强制落盘本轮防抖累积的快照写入
+    plugin.folderSnapshotManager.flush();
   } else if (type === "config") {
     if (plugin.configHashManager && plugin.configHashManager.isReady()) {
       plugin.configHashManager.removeFileHashes(plugin.pendingDeleteConfigPaths)
@@ -357,6 +363,8 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
       plugin.configHashManager.bulkSetFromScanned(plugin.scannedConfigHashes);
       plugin.scannedConfigHashes.clear();
     }
+    // 同步结束，强制落盘本轮防抖累积的哈希写入
+    plugin.configHashManager.flush();
   }
 
   //dddd

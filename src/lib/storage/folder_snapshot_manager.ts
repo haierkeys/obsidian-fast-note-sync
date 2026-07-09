@@ -1,6 +1,6 @@
 import { TFolder } from "obsidian";
 
-import { dump, isFolderSyncPathExcluded } from "../utils/helpers";
+import { dump, isFolderSyncPathExcluded, debounce } from "../utils/helpers";
 import type FastSync from "../../main";
 
 
@@ -14,11 +14,33 @@ export class FolderSnapshotManager {
     private snapshotMap: Map<string, number> = new Map();
     private storageKey: string;
     private isInitialized: boolean = false;
+    // 脏标记 + 防抖落盘：高频单条写入（下载/Ack 路径）不再逐条同步整表 JSON.stringify，
+    // 避免高频写 localStorage 阻塞主线程导致界面白屏
+    private isDirty: boolean = false;
+    private debouncedFlush: () => void;
 
     constructor(plugin: FastSync) {
         this.plugin = plugin;
         const vaultName = this.plugin.app.vault.getName();
         this.storageKey = `fns-${vaultName}-folderSnapshot`;
+        this.debouncedFlush = debounce(() => this.flush(), 500);
+    }
+
+    /**
+     * 标记为脏并安排一次防抖落盘（用于高频单条写入路径）
+     */
+    private scheduleSave(): void {
+        this.isDirty = true;
+        this.debouncedFlush();
+    }
+
+    /**
+     * 立即将脏数据落盘（用于同步结束、插件卸载等需要保证持久化的时机）
+     */
+    flush(): void {
+        if (!this.isDirty) return;
+        this.isDirty = false;
+        this.saveToStorage();
     }
 
     /**
@@ -78,7 +100,7 @@ export class FolderSnapshotManager {
      */
     setFolderMtime(path: string, mtime: number): void {
         this.snapshotMap.set(path, mtime);
-        this.saveToStorage();
+        this.scheduleSave();
     }
 
     /**

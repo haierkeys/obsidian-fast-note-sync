@@ -617,6 +617,10 @@ export default class FastSync extends Plugin {
     this.localStorageManager?.stopWatch()
     this.shareIndicatorManager?.unload()
     this.menuManager?.unload()
+    // 卸载前强制落盘防抖累积的哈希/快照写入，避免丢失
+    this.fileHashManager?.flush()
+    this.configHashManager?.flush()
+    this.folderSnapshotManager?.flush()
     // 取消注册文件事件
     void this.reloadServices(false)
     this.updateStatusBar("")

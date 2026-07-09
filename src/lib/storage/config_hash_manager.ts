@@ -1,6 +1,6 @@
 import { normalizePath } from "obsidian";
 
-import { hashContentAsync, dump, dumpError, configIsPathExcluded, getConfigSyncCustomDirs, showSyncNotice, hashFileAsync } from "../utils/helpers";
+import { hashContentAsync, dump, dumpError, configIsPathExcluded, getConfigSyncCustomDirs, showSyncNotice, hashFileAsync, debounce } from "../utils/helpers";
 import { configAllPaths } from "../sync/operator_config";
 import type FastSync from "../../main";
 
@@ -23,12 +23,34 @@ export class ConfigHashManager {
     private hashMap: Map<string, HashCache> = new Map();
     private storageKey: string;
     private isInitialized: boolean = false;
+    // 脏标记 + 防抖落盘：高频单条写入（下载/Ack 路径）不再逐条同步整表 JSON.stringify，
+    // 避免高频写 localStorage 阻塞主线程导致界面白屏
+    private isDirty: boolean = false;
+    private debouncedFlush: () => void;
 
     constructor(plugin: FastSync) {
         this.plugin = plugin;
         // 根据仓库名生成唯一的存储键
         const vaultName = this.plugin.app.vault.getName();
         this.storageKey = `fns-${vaultName}-configHashMap`;
+        this.debouncedFlush = debounce(() => this.flush(), 500);
+    }
+
+    /**
+     * 标记为脏并安排一次防抖落盘（用于高频单条写入路径）
+     */
+    private scheduleSave(): void {
+        this.isDirty = true;
+        this.debouncedFlush();
+    }
+
+    /**
+     * 立即将脏数据落盘（用于同步结束、插件卸载等需要保证持久化的时机）
+     */
+    flush(): void {
+        if (!this.isDirty) return;
+        this.isDirty = false;
+        this.saveToStorage();
     }
 
     /**
@@ -168,7 +190,7 @@ export class ConfigHashManager {
      */
     setFileHash(path: string, hash: string, mtime: number = 0, size: number = 0): void {
         this.hashMap.set(path, { hash, mtime, size });
-        this.saveToStorage();
+        this.scheduleSave();
     }
 
     async setFileHashes(entries: Iterable<[string, string]>, getStat?: (path: string) => Promise<{ mtime?: number; size?: number } | null | undefined> | { mtime?: number; size?: number } | null | undefined): Promise<void> {
