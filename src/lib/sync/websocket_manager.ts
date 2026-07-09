@@ -3,7 +3,7 @@ import { moment, Platform } from "obsidian";
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue, receiveFileUploadSessionNotFound } from "./operator_file";
 import { dump, addRandomParam, showSyncNotice, safeStringify } from "../utils/helpers";
 import { enSendDTOToProtobuf, deReceivePacket } from "../../pb/protobuf_mapper";
-import { receiveOperators, startupSync, startupFullSync } from "./operator";
+import { receiveOperators, startupSync, startupFullSync, settleAllBatchSendSessionsOnClose } from "./operator";
 import { SyncLogManager } from "./sync_log_manager";
 import * as WSAction from "./websocket_action";
 import { WebSocketClient } from "./websocket_client";
@@ -161,6 +161,9 @@ export class WebSocketManager {
         }
         clearUploadQueue();
         this.plugin.concurrencyLimiter.clear();
+        // 断线：清空所有在途上行批发送窗口会话的重传 timer（设计稿 §3.2 异常路径表）；
+        // W==0/旧路径下没有会话注册，no-op
+        settleAllBatchSendSessionsOnClose();
       },
       onMessage: (client, action, data) => {
         this.handleStructuredMessage(action, data);
