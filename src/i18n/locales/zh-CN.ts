@@ -504,4 +504,7 @@ export default {
   "ui.sso.no_token": "（未提供）",
   "ui.sso.risk_title": "安全提示：",
   "ui.sso.risk_desc": " 导入非信任服务器将导致您的所有笔记在自动同步时发送至该服务器。请仅在您完全信任来源时确认。",
+  "ui.offline_guard.title": "设备离线时间较长",
+  "ui.offline_guard.message": "本设备已离线较长时间，本次同步检测到约 ${count} 项“本地有、服务端无”的文件即将上传，可能是在其他设备已删除、但服务端删除记录已过期的文件（存在被误判复活的风险）。是否继续上传？",
+  "ui.offline_guard.confirm": "继续上传",
 };

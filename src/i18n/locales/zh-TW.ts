@@ -503,4 +503,7 @@ export default {
   "ui.sso.no_token": "（未提供）",
   "ui.sso.risk_title": "安全提示：",
   "ui.sso.risk_desc": " 匯入非信任伺服器將導致您的所有筆記在自動同步時發送至此伺服器。請僅在您完全信任來源時確認。",
+  "ui.offline_guard.title": "裝置離線時間較長",
+  "ui.offline_guard.message": "本裝置已離線較長時間，本次同步偵測到約 ${count} 項「本機有、伺服端無」的檔案即將上傳，可能是在其他裝置已刪除、但伺服端刪除記錄已過期的檔案（存在被誤判復活的風險）。是否繼續上傳？",
+  "ui.offline_guard.confirm": "繼續上傳",
 };

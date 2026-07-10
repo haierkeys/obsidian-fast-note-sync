@@ -504,4 +504,7 @@ export default {
   "ui.sso.no_token": "(Not Provided)",
   "ui.sso.risk_title": "Security Notice:",
   "ui.sso.risk_desc": " Importing a non-trusted server will cause all your notes to be sent to that server during automatic synchronization. Please confirm only if you fully trust the source.",
+  "ui.offline_guard.title": "Device offline for a long time",
+  "ui.offline_guard.message": "This device has been offline for a long time. About ${count} item(s) marked as \"local only, missing on server\" are about to be uploaded — this may be files already deleted elsewhere whose deletion record has expired on the server (revival risk). Continue uploading?",
+  "ui.offline_guard.confirm": "Continue upload",
 };

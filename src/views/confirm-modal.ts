@@ -11,6 +11,8 @@ export class ConfirmModal extends Modal {
     private cancelLabel: string;
 
     private isWarning: boolean;
+    private onCancel?: () => void;
+    private decided: boolean = false;
 
     constructor(
         app: App,
@@ -19,7 +21,8 @@ export class ConfirmModal extends Modal {
         onConfirm: () => void,
         confirmLabel?: string,
         cancelLabel?: string,
-        isWarning: boolean = true
+        isWarning: boolean = true,
+        onCancel?: () => void
     ) {
         super(app);
         this.titleText = title;
@@ -28,6 +31,7 @@ export class ConfirmModal extends Modal {
         this.confirmLabel = confirmLabel || $("ui.button.confirm") || "Confirm";
         this.cancelLabel = cancelLabel || $("ui.button.cancel") || "Cancel";
         this.isWarning = isWarning;
+        this.onCancel = onCancel;
     }
 
     onOpen() {
@@ -54,19 +58,23 @@ export class ConfirmModal extends Modal {
                     btn.setCta();
                 }
                 btn.onClick(() => {
+                    this.decided = true;
                     this.close();
                     this.onConfirm();
                 });
             })
             .addButton((btn) =>
                 btn.setButtonText(this.cancelLabel).onClick(() => {
+                    this.decided = true;
                     this.close();
+                    this.onCancel?.();
                 })
             );
 
         // 绑定键盘回车键确认 / Bind Enter key to confirm
         this.scope.register([], "Enter", (evt) => {
             evt.preventDefault();
+            this.decided = true;
             this.close();
             this.onConfirm();
         });
@@ -75,5 +83,11 @@ export class ConfirmModal extends Modal {
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
+        // 通过 Escape/点击遮罩关闭且未走确认/取消按钮时，视为隐式取消 / Dismissed via Escape or
+        // backdrop click without hitting either button counts as an implicit cancel
+        if (!this.decided) {
+            this.decided = true;
+            this.onCancel?.();
+        }
     }
 }

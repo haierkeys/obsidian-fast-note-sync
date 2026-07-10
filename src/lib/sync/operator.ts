@@ -12,6 +12,38 @@ import * as WSAction from "./websocket_action";
 import type FastSync from "../../main";
 import { $ } from "../../i18n/lang";
 import { SyncType } from "./sync_progress_tracker";
+import { ConfirmModal } from "../../views/confirm-modal";
+
+// C9: 离线超墓碑期保护 — 默认与服务端 soft-delete-retention-time 默认值对应（90 天），
+// 先硬编码常量；服务端墓碑物理清除窗口过后，长期离线设备重连若检测到"本地有服务端无"的
+// 待上传文件，可能是已被服务端物理清除的删除墓碑被误判为本地新增而复活，需用户确认
+// C9: Offline tombstone-retention guard — hardcoded default aligned with the server's
+// soft-delete-retention-time default (90 days). After the server physically purges tombstones,
+// a long-offline device reconnecting may misidentify already-deleted files (server-side purged)
+// as "local-only new files" and revive them; require user confirmation before uploading.
+const OFFLINE_TOMBSTONE_GUARD_MS = 90 * 24 * 60 * 60 * 1000;
+
+function isOfflineTombstoneGuardDue(plugin: FastSync): boolean {
+  const lastSuccess = Number(plugin.localStorageManager.getMetadata("lastSyncSuccessTime"));
+  // 从无成功同步记录（首次使用）不触发 / Never synced successfully before (first use): do not trigger
+  if (!lastSuccess) return false;
+  return Date.now() - lastSuccess > OFFLINE_TOMBSTONE_GUARD_MS;
+}
+
+function confirmOfflineTombstoneUpload(plugin: FastSync, uploadCount: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    new ConfirmModal(
+      plugin.app,
+      $("ui.offline_guard.title"),
+      $("ui.offline_guard.message", { count: String(uploadCount) }),
+      () => resolve(true),
+      $("ui.offline_guard.confirm"),
+      $("ui.button.cancel"),
+      true,
+      () => resolve(false)
+    ).open();
+  });
+}
 
 
 export const startupSync = (plugin: FastSync): void => {
@@ -196,6 +228,11 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
       plugin.localStorageManager.setMetadata("isInitSync", true);
     }
 
+    // C9: 记录每次同步成功完成的时间戳，供离线超墓碑期保护判断本机离线时长
+    // C9: record the timestamp of every successful sync completion, used by the offline
+    // tombstone-retention guard to judge how long this device has been offline
+    plugin.localStorageManager.setMetadata("lastSyncSuccessTime", Date.now());
+
     // 如果开启了云预览，在首次同步后检查所有附件在服务端的状态
     if (plugin.settings.cloudPreviewEnabled) {
       void checkAndUploadAttachments(plugin);
@@ -353,6 +390,25 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
   tasks.needSyncMtime = syncData.needSyncMtimeCount || 0;
   tasks.needDelete = syncData.needDeleteCount || 0;
 
+  // C9: 离线超墓碑期保护 — 本类型即将上传"本地有服务端无"的文件，且本机已长期离线超过墓碑
+  // 保留期，先弹窗确认；取消则本轮跳过该类型同步（上传/修改/删除/时间戳一并推迟到下次），
+  // 其余同步类型（笔记/文件互不影响，文件夹/配置独立同步）不受影响正常继续
+  // C9: Offline tombstone-retention guard — this type is about to upload "local-only" files and
+  // the device has been offline past the tombstone retention window; confirm first. Cancelling
+  // skips this type's sync round entirely (upload/modify/delete/mtime all deferred to next round);
+  // other sync types are unaffected and proceed normally.
+  let offlineGuardSkipped = false;
+  if ((type === "note" || type === "file") && tasks.needUpload > 0 && isOfflineTombstoneGuardDue(plugin)) {
+    const proceed = await confirmOfflineTombstoneUpload(plugin, tasks.needUpload);
+    if (!proceed) {
+      offlineGuardSkipped = true;
+      tasks.needUpload = 0;
+      tasks.needModify = 0;
+      tasks.needSyncMtime = 0;
+      tasks.needDelete = 0;
+    }
+  }
+
   const trueTotal = tasks.needUpload + tasks.needModify + tasks.needSyncMtime + tasks.needDelete;
   const trackerType: SyncType = type === "config" ? "setting" : type;
   plugin.progressTracker.setDownloadTotal(trackerType, trueTotal, plugin.syncState.syncDownChunkNum);
@@ -437,6 +493,18 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
   } else if (type === "folder") {
     await receiveFolderSyncEnd(data, plugin);
     plugin.folderSyncEnd = true;
+  }
+
+  // 原始 End 处理函数会从原始 syncData 无条件重置 needUpload 等统计字段（用于展示进度条），
+  // 离线守护取消后需要再次清零，避免同步小结日志误报"仍有 N 项待上传"
+  // The original End handler unconditionally resets needUpload/etc. stats from raw syncData
+  // (for progress display); re-zero them after an offline-guard cancellation so the sync summary
+  // log doesn't falsely report "N items still pending upload"
+  if (offlineGuardSkipped) {
+    tasks.needUpload = 0;
+    tasks.needModify = 0;
+    tasks.needSyncMtime = 0;
+    tasks.needDelete = 0;
   }
 
   // 4. 针对已就绪的本模块，如果存在服务端待下载任务，且尚未发送过首拉，则立即触发首拉 Ack 信号
