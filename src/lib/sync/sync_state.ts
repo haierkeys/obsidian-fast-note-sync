@@ -80,6 +80,16 @@ export class SyncState {
   /** 用户通过 ribbon 手动触发的待执行同步类型（断开时暂存，重连成功后执行）
    *  Pending sync type triggered manually via ribbon (stored when disconnected, executed after reconnect) */
   pendingSyncType: 'incremental' | 'full' | null = null;
+  /**
+   * C9: 本轮同步中是否有类型被离线超墓碑期保护拦截（用户点击「取消」）。
+   * checkSyncCompletion 需据此判断本轮是否可信地"完成"，避免无条件刷新 lastSyncSuccessTime
+   * 导致离线时长被清零、下一轮保护形同虚设。
+   * C9: whether any type was intercepted by the offline tombstone-retention guard this round
+   * (user clicked "Cancel"). checkSyncCompletion uses this to decide whether the round can be
+   * trusted as genuinely "complete", so it doesn't unconditionally refresh lastSyncSuccessTime and
+   * silently reset the offline duration, defeating the guard on the very next round.
+   */
+  offlineGuardSkippedThisRound = false;
 
   // ─── Per-type sync task statistics ───────────────────────────────────────────
   onCompletedChange?: (type: "note" | "file" | "setting" | "folder") => void;
@@ -224,6 +234,7 @@ export class SyncState {
     this.fileSyncEnd = false;
     this.configSyncEnd = false;
     this.folderSyncEnd = false;
+    this.offlineGuardSkippedThisRound = false;
     this.scannedNoteHashes.clear();
     this.scannedFileHashes.clear();
     this.scannedConfigHashes.clear();

@@ -203,6 +203,13 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
       timestamp: Date.now()
     });
 
+    // C9: 在 resetSyncTasks（会连带重置 offlineGuardSkippedThisRound）之前先取走本轮是否被
+    // 离线超墓碑期保护拦截过的标记，用于下方决定是否可信地刷新 lastSyncSuccessTime
+    // C9: capture whether this round was intercepted by the offline tombstone-retention guard
+    // before resetSyncTasks (which also clears offlineGuardSkippedThisRound), so we can decide
+    // below whether refreshing lastSyncSuccessTime is trustworthy
+    const offlineGuardSkippedThisRound = plugin.syncState.offlineGuardSkippedThisRound;
+
     plugin.syncState.activeSyncContext = null; // 同步完成，清空活跃的上下文 / Sync completed, reset the active context
     plugin.syncTypeCompleteCount = 0;
     plugin.resetSyncTasks();
@@ -228,10 +235,17 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
       plugin.localStorageManager.setMetadata("isInitSync", true);
     }
 
-    // C9: 记录每次同步成功完成的时间戳，供离线超墓碑期保护判断本机离线时长
+    // C9: 记录每次同步成功完成的时间戳，供离线超墓碑期保护判断本机离线时长；
+    // 但若本轮有类型被离线守护拦截（用户点「取消」），说明本轮并未真正处理完那批风险文件，
+    // 不能刷新该时间戳——否则离线时长会被清零，导致下一轮保护形同虚设、风险文件被静默上传
     // C9: record the timestamp of every successful sync completion, used by the offline
-    // tombstone-retention guard to judge how long this device has been offline
-    plugin.localStorageManager.setMetadata("lastSyncSuccessTime", Date.now());
+    // tombstone-retention guard to judge how long this device has been offline. But if any type
+    // was intercepted by the offline guard this round (user clicked "Cancel"), that batch of
+    // risky files was never actually handled — refreshing the timestamp would zero out the
+    // offline duration and silently defeat the guard on the very next round.
+    if (!offlineGuardSkippedThisRound) {
+      plugin.localStorageManager.setMetadata("lastSyncSuccessTime", Date.now());
+    }
 
     // 如果开启了云预览，在首次同步后检查所有附件在服务端的状态
     if (plugin.settings.cloudPreviewEnabled) {
@@ -402,6 +416,7 @@ async function receiveSyncEndWrapper(data: unknown, plugin: FastSync, type: "not
     const proceed = await confirmOfflineTombstoneUpload(plugin, tasks.needUpload);
     if (!proceed) {
       offlineGuardSkipped = true;
+      plugin.syncState.offlineGuardSkippedThisRound = true;
       tasks.needUpload = 0;
       tasks.needModify = 0;
       tasks.needSyncMtime = 0;
