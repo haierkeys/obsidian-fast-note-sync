@@ -660,20 +660,24 @@
 .conflict-resolve-modal .modal-title .title-path {
   font-size: 0.9em;
 }
+
 .conflict-resolve-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
+
 .conflict-resolve-diff-wrap {
   max-height: calc(85vh - 180px);
 }
+
 .conflict-resolve-loading,
 .conflict-resolve-warning {
   padding: 20px;
   text-align: center;
   color: var(--text-muted);
 }
+
 .conflict-resolve-actions {
   display: flex;
   justify-content: flex-end;
@@ -687,6 +691,7 @@
   cursor: not-allowed;
   opacity: 0.6;
 }
+
 .fns-conflict-notice-text {
   cursor: pointer;
 }
@@ -3431,10 +3436,12 @@ body .suggestion-container {
   gap: 8px;
   margin-top: 4px;
 }
+
 .fns-share-expire-label {
   font-size: 0.85em;
   color: var(--text-muted);
 }
+
 .fns-share-expire-select {
   height: 32px;
   border-radius: 6px;
@@ -3443,6 +3450,7 @@ body .suggestion-container {
   font-size: 0.85em;
   padding: 0 8px;
 }
+
 .fns-share-expire-current {
   font-size: 0.85em;
   color: var(--text-muted);
