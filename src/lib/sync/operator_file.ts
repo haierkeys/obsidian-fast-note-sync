@@ -1315,7 +1315,11 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
       await cleanupFileDownloadSession(plugin, session)
       return
     }
-    const chunks: ArrayBuffer[] = []
+    // 逐片读入后立即写入目标缓冲区并释放分片引用，避免 chunks 数组与整份 buffer 同时驻留内存 (2x 峰值)
+    // Write each chunk into the target buffer as it is read, then drop the reference immediately,
+    // instead of accumulating a chunks array alongside the full assembled buffer (avoids the 2x peak).
+    const completeFile = new Uint8Array(session.size)
+    let offset = 0
     for (let i = 0; i < session.totalChunks; i++) {
       let chunk: ArrayBuffer | undefined;
       if (session.tempDir) {
@@ -1331,19 +1335,16 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
         await failFileDownloadSession(plugin, session, `Missing downloaded chunk ${i}`, false)
         return
       }
-      chunks.push(chunk)
-    }
-
-    const totalSize = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0)
-    const completeFile = new Uint8Array(totalSize)
-    let offset = 0
-    for (const chunk of chunks) {
+      if (offset + chunk.byteLength > completeFile.byteLength) {
+        await failFileDownloadSession(plugin, session, `Downloaded file size mismatch: exceeds expected ${session.size}`, false)
+        return
+      }
       completeFile.set(new Uint8Array(chunk), offset)
       offset += chunk.byteLength
     }
 
-    if (completeFile.byteLength !== session.size) {
-      await failFileDownloadSession(plugin, session, `Downloaded file size mismatch: got ${completeFile.byteLength}, expected ${session.size}`, false)
+    if (offset !== session.size) {
+      await failFileDownloadSession(plugin, session, `Downloaded file size mismatch: got ${offset}, expected ${session.size}`, false)
       return
     }
 
