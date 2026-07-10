@@ -219,7 +219,7 @@ export class FileHashManager {
   removeFileHash(path: string): void {
     const deleted = this.hashMap.delete(path);
     if (deleted) {
-      this.saveToStorage();
+      this.scheduleSave();
     }
   }
 
@@ -228,7 +228,7 @@ export class FileHashManager {
     for (const path of paths) {
       changed = this.hashMap.delete(path) || changed;
     }
-    if (changed) this.saveToStorage();
+    if (changed) this.scheduleSave();
   }
 
   /**
@@ -377,7 +377,7 @@ export class FileHashManager {
 
     if (deletedCount > 0) {
       dump(`FileHashManager: 清理了 ${deletedCount} 个已排除文件的哈希`);
-      this.saveToStorage();
+      this.scheduleSave();
     }
   }
 

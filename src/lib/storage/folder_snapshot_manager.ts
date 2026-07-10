@@ -208,7 +208,7 @@ export class FolderSnapshotManager {
      */
     removeFolder(path: string): void {
         if (this.snapshotMap.delete(path)) {
-            this.saveToStorage();
+            this.scheduleSave();
         }
     }
 
@@ -223,7 +223,7 @@ export class FolderSnapshotManager {
             }
         }
         if (changed) {
-            this.saveToStorage();
+            this.scheduleSave();
         }
     }
 

@@ -243,7 +243,7 @@ export class ConfigHashManager {
     removeFileHash(path: string): void {
         const deleted = this.hashMap.delete(path);
         if (deleted) {
-            this.saveToStorage();
+            this.scheduleSave();
         }
     }
 
@@ -252,7 +252,7 @@ export class ConfigHashManager {
         for (const path of paths) {
             changed = this.hashMap.delete(path) || changed;
         }
-        if (changed) this.saveToStorage();
+        if (changed) this.scheduleSave();
     }
 
     /**
@@ -377,7 +377,7 @@ export class ConfigHashManager {
 
         if (deletedCount > 0) {
             dump(`ConfigHashManager: 清理了 ${deletedCount} 个已排除配置的哈希`);
-            this.saveToStorage();
+            this.scheduleSave();
         }
     }
 
