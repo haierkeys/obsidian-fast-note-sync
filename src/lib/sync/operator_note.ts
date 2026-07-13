@@ -646,7 +646,7 @@ export const receiveNoteRenameAck = function (data: { lastTime?: number; path?: 
   } else {
     // 老服务端未下发 path，回退 FIFO（Map 插入顺序取首个）
     // Legacy server omits path, fall back to FIFO (first inserted entry in Map order)
-    const firstKey = plugin.pendingNoteRenames.keys().next().value
+    const firstKey = plugin.pendingNoteRenames.keys().next().value as string | undefined
     if (firstKey !== undefined) {
       pending = plugin.pendingNoteRenames.get(firstKey)
       plugin.pendingNoteRenames.delete(firstKey)

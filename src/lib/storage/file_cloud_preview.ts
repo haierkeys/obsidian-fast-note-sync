@@ -280,7 +280,7 @@ export class FileCloudPreview {
     }
 
     // --- 1. DOM Structure (Matching Obsidian's Internal Structure) ---
-    const loadingContainer = createEl("div"); // The root wrapper we return
+    const loadingContainer = createDiv(); // The root wrapper we return
     loadingContainer.addClass("pdf-preview-wrapper", "fns-pdf-preview-wrapper");
     // Use setCssProps for dynamic height (PDF viewer container)
     // 使用 setCssProps 设置 PDF 预览容器动态高度
@@ -522,7 +522,7 @@ export class FileCloudPreview {
   }
 
   private createGenericPreview(filePath: string, cloudUrl: string): HTMLElement {
-    const container = createEl("div");
+    const container = createDiv();
     container.addClass("file-embed-title");
 
     const fileName = filePath.split("/").pop() || filePath;

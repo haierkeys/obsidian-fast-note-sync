@@ -217,6 +217,10 @@ export class SettingTab extends PluginSettingTab {
     this.plugin = plugin
   }
 
+  getSettingDefinitions() {
+    return []
+  }
+
   hide(): void {
     this.roots.forEach((root) => root.unmount())
     this.roots = []

@@ -309,7 +309,7 @@ export class WebSocketManager {
         // Old server (no negotiation block): all fields stay at sync_state.ts defaults
         // (negotiated=false, window=0) — current stop-and-wait behavior, unchanged.
         if (data.data) {
-          const nego = data.data as Record<string, unknown>;
+          const nego = data.data;
           let negotiated = false;
           if (typeof nego.syncUpChunkNum === "number") {
             this.plugin.syncState.syncUpChunkNum = nego.syncUpChunkNum;

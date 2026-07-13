@@ -22,7 +22,7 @@ export class NoteHistoryModal extends Modal {
         const iconSpan = titleEl.createSpan({ cls: "title-prefix" });
         setIcon(iconSpan, "history");
         iconSpan.createSpan({ text: ` ${$("ui.history.title")}：` });
-        titleEl.createEl("span", { text: this.filePath, cls: "title-path" });
+        titleEl.createSpan({ text: this.filePath, cls: "title-path" });
 
         this.root = createRoot(contentEl);
         this.root.render(
