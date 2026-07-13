@@ -31,3 +31,6 @@ Demo-Library/
 
 # env
 .env
+configHashMap.json
+fileHashMap.json
+folderSnapshot.json
