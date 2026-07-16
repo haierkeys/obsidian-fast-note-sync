@@ -14,6 +14,7 @@ import { AppWithInternal } from "./lib/utils/types";
 import { RuleEditor } from "./views/rule-editor";
 import { $ } from "./i18n/lang";
 import FastSync from "./main";
+import { createVaultNameChangeHandler } from "./lib/settings/vault_name";
 
 
 export interface PluginSettings {
@@ -1315,16 +1316,12 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.api_token_desc"))
 
+    const handleVaultNameChange = createVaultNameChangeHandler(this.plugin)
     new Setting(set).setName($("setting.remote.vault_name")).addText((text) =>
       text
         .setPlaceholder($("setting.remote.vault_name"))
         .setValue(this.plugin.settings.vault)
-        .onChange(async (value) => {
-          this.plugin.wsSettingChange = true
-          this.plugin.settings.vault = value
-          this.plugin.localStorageManager.clearSyncTime()
-          await this.plugin.saveAndReloadServices()
-        }),
+        .onChange(handleVaultNameChange),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.remote.vault_name_desc"))
 
