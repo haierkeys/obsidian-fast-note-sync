@@ -3677,6 +3677,7 @@ export const proto = $root.proto = (() => {
              * @property {number|Long|null} [mtime] NoteModifyOrCreateRequest mtime
              * @property {boolean|null} [createOnly] NoteModifyOrCreateRequest createOnly
              * @property {string|null} [context] NoteModifyOrCreateRequest context
+             * @property {boolean|null} [isConflictResolved] NoteModifyOrCreateRequest isConflictResolved
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -3797,6 +3798,14 @@ export const proto = $root.proto = (() => {
             NoteModifyOrCreateRequest.prototype.context = "";
 
             /**
+             * NoteModifyOrCreateRequest isConflictResolved.
+             * @member {boolean} isConflictResolved
+             * @memberof proto.v1.NoteModifyOrCreateRequest
+             * @instance
+             */
+            NoteModifyOrCreateRequest.prototype.isConflictResolved = false;
+
+            /**
              * Creates a new NoteModifyOrCreateRequest instance using the specified properties.
              * @function create
              * @memberof proto.v1.NoteModifyOrCreateRequest
@@ -3850,6 +3859,8 @@ export const proto = $root.proto = (() => {
                     writer.uint32(/* id 10, wireType 0 =*/80).bool(message.createOnly);
                 if (message.context != null && $Object.hasOwnProperty.call(message, "context") && message.context !== "")
                     writer.uint32(/* id 11, wireType 2 =*/90).string(message.context);
+                if (message.isConflictResolved != null && $Object.hasOwnProperty.call(message, "isConflictResolved") && message.isConflictResolved !== false)
+                    writer.uint32(/* id 12, wireType 0 =*/96).bool(message.isConflictResolved);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -3996,6 +4007,15 @@ export const proto = $root.proto = (() => {
                                 delete message.context;
                             continue;
                         }
+                    case 12: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.bool())
+                                message.isConflictResolved = value;
+                            else
+                                delete message.isConflictResolved;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -4072,6 +4092,9 @@ export const proto = $root.proto = (() => {
                 if (message.context != null && $Object.hasOwnProperty.call(message, "context"))
                     if (!$util.isString(message.context))
                         return "context: string expected";
+                if (message.isConflictResolved != null && $Object.hasOwnProperty.call(message, "isConflictResolved"))
+                    if (typeof message.isConflictResolved !== "boolean")
+                        return "isConflictResolved: boolean expected";
                 return null;
             };
 
@@ -4140,6 +4163,9 @@ export const proto = $root.proto = (() => {
                 if (object.context != null)
                     if (typeof object.context !== "string" || object.context.length)
                         message.context = $String(object.context);
+                if (object.isConflictResolved != null)
+                    if (object.isConflictResolved)
+                        message.isConflictResolved = $Boolean(object.isConflictResolved);
                 return message;
             };
 
@@ -4180,6 +4206,7 @@ export const proto = $root.proto = (() => {
                         object.mtime = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.createOnly = false;
                     object.context = "";
+                    object.isConflictResolved = false;
                 }
                 if (message.vault != null && $Object.hasOwnProperty.call(message, "vault"))
                     object.vault = message.vault;
@@ -4213,6 +4240,8 @@ export const proto = $root.proto = (() => {
                     object.createOnly = message.createOnly;
                 if (message.context != null && $Object.hasOwnProperty.call(message, "context"))
                     object.context = message.context;
+                if (message.isConflictResolved != null && $Object.hasOwnProperty.call(message, "isConflictResolved"))
+                    object.isConflictResolved = message.isConflictResolved;
                 return object;
             };
 
@@ -8154,6 +8183,9 @@ export const proto = $root.proto = (() => {
              * @typedef {Object} proto.v1.NoteSyncNeedPushMessage.$Properties
              * @property {string|null} [path] NoteSyncNeedPushMessage path
              * @property {string|null} [pathHash] NoteSyncNeedPushMessage pathHash
+             * @property {string|null} [serverContent] NoteSyncNeedPushMessage serverContent
+             * @property {string|null} [baseContent] NoteSyncNeedPushMessage baseContent
+             * @property {string|null} [serverHash] NoteSyncNeedPushMessage serverHash
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -8202,6 +8234,30 @@ export const proto = $root.proto = (() => {
             NoteSyncNeedPushMessage.prototype.pathHash = "";
 
             /**
+             * NoteSyncNeedPushMessage serverContent.
+             * @member {string} serverContent
+             * @memberof proto.v1.NoteSyncNeedPushMessage
+             * @instance
+             */
+            NoteSyncNeedPushMessage.prototype.serverContent = "";
+
+            /**
+             * NoteSyncNeedPushMessage baseContent.
+             * @member {string} baseContent
+             * @memberof proto.v1.NoteSyncNeedPushMessage
+             * @instance
+             */
+            NoteSyncNeedPushMessage.prototype.baseContent = "";
+
+            /**
+             * NoteSyncNeedPushMessage serverHash.
+             * @member {string} serverHash
+             * @memberof proto.v1.NoteSyncNeedPushMessage
+             * @instance
+             */
+            NoteSyncNeedPushMessage.prototype.serverHash = "";
+
+            /**
              * Creates a new NoteSyncNeedPushMessage instance using the specified properties.
              * @function create
              * @memberof proto.v1.NoteSyncNeedPushMessage
@@ -8237,6 +8293,12 @@ export const proto = $root.proto = (() => {
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.path);
                 if (message.pathHash != null && $Object.hasOwnProperty.call(message, "pathHash") && message.pathHash !== "")
                     writer.uint32(/* id 2, wireType 2 =*/18).string(message.pathHash);
+                if (message.serverContent != null && $Object.hasOwnProperty.call(message, "serverContent") && message.serverContent !== "")
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.serverContent);
+                if (message.baseContent != null && $Object.hasOwnProperty.call(message, "baseContent") && message.baseContent !== "")
+                    writer.uint32(/* id 4, wireType 2 =*/34).string(message.baseContent);
+                if (message.serverHash != null && $Object.hasOwnProperty.call(message, "serverHash") && message.serverHash !== "")
+                    writer.uint32(/* id 5, wireType 2 =*/42).string(message.serverHash);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -8302,6 +8364,33 @@ export const proto = $root.proto = (() => {
                                 delete message.pathHash;
                             continue;
                         }
+                    case 3: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.serverContent = value;
+                            else
+                                delete message.serverContent;
+                            continue;
+                        }
+                    case 4: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.baseContent = value;
+                            else
+                                delete message.baseContent;
+                            continue;
+                        }
+                    case 5: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.serverHash = value;
+                            else
+                                delete message.serverHash;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -8351,6 +8440,15 @@ export const proto = $root.proto = (() => {
                 if (message.pathHash != null && $Object.hasOwnProperty.call(message, "pathHash"))
                     if (!$util.isString(message.pathHash))
                         return "pathHash: string expected";
+                if (message.serverContent != null && $Object.hasOwnProperty.call(message, "serverContent"))
+                    if (!$util.isString(message.serverContent))
+                        return "serverContent: string expected";
+                if (message.baseContent != null && $Object.hasOwnProperty.call(message, "baseContent"))
+                    if (!$util.isString(message.baseContent))
+                        return "baseContent: string expected";
+                if (message.serverHash != null && $Object.hasOwnProperty.call(message, "serverHash"))
+                    if (!$util.isString(message.serverHash))
+                        return "serverHash: string expected";
                 return null;
             };
 
@@ -8378,6 +8476,15 @@ export const proto = $root.proto = (() => {
                 if (object.pathHash != null)
                     if (typeof object.pathHash !== "string" || object.pathHash.length)
                         message.pathHash = $String(object.pathHash);
+                if (object.serverContent != null)
+                    if (typeof object.serverContent !== "string" || object.serverContent.length)
+                        message.serverContent = $String(object.serverContent);
+                if (object.baseContent != null)
+                    if (typeof object.baseContent !== "string" || object.baseContent.length)
+                        message.baseContent = $String(object.baseContent);
+                if (object.serverHash != null)
+                    if (typeof object.serverHash !== "string" || object.serverHash.length)
+                        message.serverHash = $String(object.serverHash);
                 return message;
             };
 
@@ -8401,11 +8508,20 @@ export const proto = $root.proto = (() => {
                 if (options.defaults) {
                     object.path = "";
                     object.pathHash = "";
+                    object.serverContent = "";
+                    object.baseContent = "";
+                    object.serverHash = "";
                 }
                 if (message.path != null && $Object.hasOwnProperty.call(message, "path"))
                     object.path = message.path;
                 if (message.pathHash != null && $Object.hasOwnProperty.call(message, "pathHash"))
                     object.pathHash = message.pathHash;
+                if (message.serverContent != null && $Object.hasOwnProperty.call(message, "serverContent"))
+                    object.serverContent = message.serverContent;
+                if (message.baseContent != null && $Object.hasOwnProperty.call(message, "baseContent"))
+                    object.baseContent = message.baseContent;
+                if (message.serverHash != null && $Object.hasOwnProperty.call(message, "serverHash"))
+                    object.serverHash = message.serverHash;
                 return object;
             };
 

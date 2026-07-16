@@ -393,4 +393,30 @@ export class LocalStorageManager {
         }
         return false;
     }
+
+    /**
+     * 获取持久化挂起冲突的文件路径集合
+     */
+    getConflictedPaths(): Set<string> {
+        try {
+            const raw = this.read("fns-conflicted-paths");
+            if (!raw) return new Set();
+            const arr = JSON.parse(raw) as string[];
+            return new Set(arr);
+        } catch (e) {
+            dump("[LocalStorageManager] Failed to load conflicted paths:", e);
+            return new Set();
+        }
+    }
+
+    /**
+     * 保存持久化挂起冲突的文件路径集合
+     */
+    setConflictedPaths(paths: Set<string>): void {
+        try {
+            this.write("fns-conflicted-paths", JSON.stringify(Array.from(paths)));
+        } catch (e) {
+            dump("[LocalStorageManager] Failed to save conflicted paths:", e);
+        }
+    }
 }

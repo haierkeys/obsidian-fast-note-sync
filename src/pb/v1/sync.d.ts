@@ -1274,6 +1274,9 @@ export namespace proto {
             /** NoteModifyOrCreateRequest context. */
             context: string;
 
+            /** NoteModifyOrCreateRequest isConflictResolved. */
+            isConflictResolved: boolean;
+
             /**
              * Creates a new NoteModifyOrCreateRequest instance using the specified properties.
              * @param [properties] Properties to set
@@ -1390,6 +1393,9 @@ export namespace proto {
 
                 /** NoteModifyOrCreateRequest context */
                 context?: (string|null);
+
+                /** NoteModifyOrCreateRequest isConflictResolved */
+                isConflictResolved?: (boolean|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -2719,6 +2725,15 @@ export namespace proto {
             /** NoteSyncNeedPushMessage pathHash. */
             pathHash: string;
 
+            /** NoteSyncNeedPushMessage serverContent. */
+            serverContent: string;
+
+            /** NoteSyncNeedPushMessage baseContent. */
+            baseContent: string;
+
+            /** NoteSyncNeedPushMessage serverHash. */
+            serverHash: string;
+
             /**
              * Creates a new NoteSyncNeedPushMessage instance using the specified properties.
              * @param [properties] Properties to set
@@ -2808,6 +2823,15 @@ export namespace proto {
 
                 /** NoteSyncNeedPushMessage pathHash */
                 pathHash?: (string|null);
+
+                /** NoteSyncNeedPushMessage serverContent */
+                serverContent?: (string|null);
+
+                /** NoteSyncNeedPushMessage baseContent */
+                baseContent?: (string|null);
+
+                /** NoteSyncNeedPushMessage serverHash */
+                serverHash?: (string|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

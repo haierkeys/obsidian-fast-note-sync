@@ -1,7 +1,8 @@
-import { moment, Platform } from "obsidian";
+import { moment, Platform, normalizePath } from "obsidian";
+import { ConflictResolveModal } from "../../views/conflict-resolve-modal";
 
 import { handleFileChunkDownload, BINARY_PREFIX_FILE_SYNC, clearUploadQueue, receiveFileUploadSessionNotFound } from "./operator_file";
-import { dump, addRandomParam, showSyncNotice, safeStringify } from "../utils/helpers";
+import { dump, addRandomParam, showSyncNotice, safeStringify, getPluginDir, hashContent } from "../utils/helpers";
 import { enSendDTOToProtobuf, deReceivePacket } from "../../pb/protobuf_mapper";
 import { receiveOperators, startupSync, startupFullSync, settleAllBatchSendSessionsOnClose } from "./operator";
 import { SyncLogManager } from "./sync_log_manager";
@@ -371,7 +372,14 @@ export class WebSocketManager {
     if (data.code <= 0 || data.code >= 300) {
       // 处理冲突相关错误码
       if (data.code === ERROR_SYNC_CONFLICT) {
-        this.handleConflictError(data);
+        void this.handleConflictError(data);
+        const path = data.data?.path || data.data?.Path || (data.data as any)?.Path;
+        if (typeof path === "string") {
+          this.plugin.concurrencyLimiter.releaseSlot(path);
+          const pageIndex = this.plugin.syncState.pendingNotePushPageIndex.get(path);
+          this.plugin.syncState.pendingNotePushPageIndex.delete(path);
+          this.plugin.recordSyncCompleted('note', pageIndex);
+        }
       } else if (data.code === 463 && typeof data.data?.sessionID === "string") {
         receiveFileUploadSessionNotFound(data.data.sessionID, this.plugin);
       } else {
@@ -539,11 +547,81 @@ export class WebSocketManager {
     }
   }
 
-  private handleConflictError(data: StructuredMessageData) {
-    const path = data.data?.Path;
-    if (typeof path === "string") {
-      dump("Conflict detected:", { code: data.code, Path: path, message: data.message });
-      showSyncNotice($("ui.status.conflict", { path: path }), 10000);
+  private async handleConflictError(data: StructuredMessageData) {
+    const path = data.data?.path || data.data?.Path || (data.data as any)?.Path;
+    const serverContent = (data.data as any)?.serverContent || (data.data as any)?.ServerContent;
+    const baseContent = (data.data as any)?.baseContent || (data.data as any)?.BaseContent;
+    const rawHash = (data.data as any)?.serverHash ?? (data.data as any)?.ServerHash;
+    const serverHash = rawHash != null ? String(rawHash) : "";
+
+    dump("[ConflictDebug] handleConflictError triggered. Path:", path, 
+         "serverContent length:", serverContent ? serverContent.length : "undefined/null",
+         "serverHash:", serverHash, 
+         "strategy:", this.plugin.settings.offlineSyncStrategy);
+
+    if (this.plugin.settings.offlineSyncStrategy === "manualMerge" &&
+        typeof path === "string" && typeof serverContent === "string" && serverHash !== "") {
+      
+      const conflictData = {
+        serverContent,
+        baseContent: baseContent || "",
+        serverHash,
+        message: $("ui.log.error_code.530") || "检测到同步冲突，需要手动处理"
+      };
+      
+      SyncLogManager.getInstance().addLog(
+        'error',
+        'NoteManualMergeConflict',
+        JSON.stringify(conflictData),
+        'error',
+        path,
+        this.plugin.settings.vault
+      );
+
+      // 写入 Base 和 Remote 物理冲突文件到 conflict-notes (位于插件目录下，文件名附加路径哈希以防碰撞)
+      try {
+        const adapter = this.plugin.app.vault.adapter;
+        const conflictDir = `${getPluginDir(this.plugin)}/conflict-notes`;
+        if (!(await adapter.exists(conflictDir))) {
+          await this.plugin.app.vault.createFolder(conflictDir);
+        }
+
+        const safeName = path.replace(/\.md$/, "").replace(/[\/\\]/g, "_");
+        const pathHash = hashContent(path);
+        const baseBackupPath = `${conflictDir}/${safeName}_${pathHash}.base.md`;
+        const remoteBackupPath = `${conflictDir}/${safeName}_${pathHash}.remote.md`;
+
+        await adapter.write(baseBackupPath, baseContent || "");
+        await adapter.write(remoteBackupPath, serverContent);
+      } catch (e) {
+        dump("Failed to create conflict-notes backup files:", e);
+      }
+
+      if (ConflictResolveModal.activePaths.has(path)) {
+        return;
+      }
+
+      this.plugin.syncState.conflictedPaths.add(path);
+      this.plugin.localStorageManager.setConflictedPaths(this.plugin.syncState.conflictedPaths);
+
+      const file = this.plugin.app.vault.getFileByPath(normalizePath(path));
+      if (file) {
+        const localContent = await this.plugin.app.vault.read(file);
+        new ConflictResolveModal(
+          this.plugin.app,
+          this.plugin,
+          file,
+          localContent,
+          serverContent,
+          baseContent || "",
+          serverHash
+        ).open();
+      }
+    } else {
+      if (typeof path === "string") {
+        dump("Conflict detected:", { code: data.code, Path: path, message: data.message });
+        showSyncNotice($("ui.status.conflict", { path: path }), 10000);
+      }
     }
   }
 }

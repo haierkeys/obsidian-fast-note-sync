@@ -1806,6 +1806,7 @@ export class SettingTab extends PluginSettingTab {
           .addOption("", $("setting.sync.strategy_default"))
           .addOption("newTimeMerge", $("setting.sync.strategy_new"))
           .addOption("ignoreTimeMerge", $("setting.sync.strategy_force"))
+          .addOption("manualMerge", $("setting.sync.strategy_manual"))
           .setValue(this.plugin.settings.offlineSyncStrategy || "")
           .onChange(async (value) => {
             this.plugin.settings.offlineSyncStrategy = value

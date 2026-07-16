@@ -1,4 +1,5 @@
-import { ItemView, WorkspaceLeaf, moment, setIcon, Platform, MenuItem, Menu, TFile, Notice, FileView } from "obsidian";
+import { ItemView, WorkspaceLeaf, moment, setIcon, Platform, MenuItem, Menu, TFile, Notice, FileView, normalizePath } from "obsidian";
+import { ConflictResolveModal } from "./conflict-resolve-modal";
 import { createRoot, Root } from "react-dom/client";
 import * as React from "react";
 
@@ -284,6 +285,29 @@ const SyncProgressBanner = ({ plugin }: { plugin: FastSync }) => {
 
 const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
     const [logs, setLogs] = React.useState<SyncLog[]>([]);
+
+    const handleConflictLogClick = async (log: SyncLog) => {
+        try {
+            const data = JSON.parse(log.message || '{}');
+            const file = plugin.app.vault.getFileByPath(normalizePath(log.path || ""));
+            if (file) {
+                const localContent = await plugin.app.vault.read(file);
+                new ConflictResolveModal(
+                    plugin.app,
+                    plugin,
+                    file,
+                    localContent,
+                    data.serverContent,
+                    data.baseContent || "",
+                    data.serverHash
+                ).open();
+            } else {
+                new Notice($("ui.log.file_not_found") || "文件未找到");
+            }
+        } catch (e) {
+            console.error("Failed to open ConflictResolveModal from log click:", e);
+        }
+    };
 
     const handlePathClick = async (path: string, category: string) => {
         if (category !== 'note' && category !== 'attachment') {
@@ -698,6 +722,59 @@ const SyncLogComponent = ({ plugin }: { plugin: FastSync }) => {
                         const isCopyable = isDeleteType || isConfigType;
                         const isNoteOrAttachment = ['note', 'attachment'].includes(log.category);
                         const isOpenable = isNoteOrAttachment && !isDeleteType;
+
+                        // 如果是 NoteManualMergeConflict 类型的日志，显示特别样式并支持点击解决
+                        if (log.action === 'NoteManualMergeConflict') {
+                            let data: any = {};
+                            try {
+                                data = JSON.parse(log.message || '{}');
+                            } catch {}
+                            
+                            const displayMessage = data.message || $("ui.log.error_code.530") || "检测到同步冲突，需要手动处理";
+                            
+                            return (
+                                <div key={log.id} className="fns-sync-log-item fns-sync-log-category-note fns-sync-log-status-error fns-sync-log-type-receive">
+                                    <div className="fns-sync-log-item-header">
+                                        <span className="fns-sync-log-time">{safeMoment(log.timestamp).format("HH:mm:ss")}</span>
+                                        <span className="fns-sync-log-action" style={{ color: 'var(--text-error)', fontWeight: 'bold' }}>
+                                            {$("ui.log.action.NoteManualMergeConflict") || "手动合并冲突"}
+                                        </span>
+                                        <span className="fns-sync-log-type-tag">
+                                            <svg viewBox="0 0 24 24" width="10" height="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7" /></svg>
+                                            {$("ui.log.type_receive")}
+                                        </span>
+                                        <div className="fns-sync-log-header-right">
+                                            <span 
+                                                className="fns-sync-log-status-tag status-error clickable" 
+                                                style={{ 
+                                                    background: 'var(--text-error)', 
+                                                    color: 'var(--text-on-accent)',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '10px',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={() => handleConflictLogClick(log)}
+                                            >
+                                                {$("ui.conflict.menu_item") || "解决冲突"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {log.path && (
+                                        <div 
+                                            className="fns-sync-log-path is-clickable"
+                                            onClick={() => handleConflictLogClick(log)}
+                                        >
+                                            <span style={{ wordBreak: 'break-all', flex: 1, fontWeight: 'bold' }}>{log.path}</span>
+                                            <ObsidianIcon icon="external-link" className="fns-path-open-icon" />
+                                        </div>
+                                    )}
+                                    <div className="fns-sync-log-message" style={{ color: 'var(--text-muted)' }}>
+                                        {displayMessage}
+                                    </div>
+                                </div>
+                            );
+                        }
 
                         return (
                             <div key={log.id} className={`fns-sync-log-item fns-sync-log-category-${log.category} fns-sync-log-status-${log.status} fns-sync-log-type-${log.type}`}>

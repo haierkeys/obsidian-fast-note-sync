@@ -20,6 +20,9 @@ export interface SyncTaskStats {
  * 集中管理同步会话的运行时状态，避免在 FastSync 插件类中散落 30+ 个字段。
  */
 export class SyncState {
+  /** 发生冲突且等待手动解决的笔记路径集合，用于在解决前抑制重复上传和弹窗 / Paths with pending conflict resolution */
+  public conflictedPaths: Set<string> = new Set();
+
   // ─── Chunk size settings from server ─────────────────────────────────────────
   /** 上传分片数量 / Upload chunk size from server */
   syncUpChunkNum = 100;

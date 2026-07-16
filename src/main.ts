@@ -630,6 +630,9 @@ export default class FastSync extends Plugin {
 
       // 应用移动端 toast 高度 CSS 变量 / Apply mobile toast top CSS variable on startup
       this.applyMobileToastTop()
+
+      // 从本地存储还原当前处于手动合并冲突锁定状态的文件路径
+      this.syncState.conflictedPaths = this.localStorageManager.getConflictedPaths()
     })
   }
 
