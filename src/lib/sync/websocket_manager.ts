@@ -598,7 +598,9 @@ export class WebSocketManager {
       }
 
       this.plugin.syncState.conflictedPaths.add(path);
+      this.plugin.syncState.newConflictedPathsThisRound.add(path);
       this.plugin.localStorageManager.setConflictedPaths(this.plugin.syncState.conflictedPaths);
+      this.plugin.statusBarManager.updateConflictBadge();
     } else {
       if (typeof path === "string") {
         dump("Conflict detected:", { code: data.code, Path: path, message: data.message });

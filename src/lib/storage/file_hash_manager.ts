@@ -279,12 +279,15 @@ export class FileHashManager {
     this.scheduleSave();
   }
 
+  /**
+   * SyncEnd 兜底补偿写入 (仅更新本地缓存, 绝不更新同步基准表)
+   * SyncEnd fallback cannot prove server confirmed the write; only Ack path may update syncHashMap
+   */
   setFileHashes(entries: Iterable<[string, string]>, getStat?: (path: string) => { mtime?: number; size?: number } | null | undefined): void {
     let changed = false;
     for (const [path, hash] of entries) {
       const stat = getStat?.(path);
       this.hashMap.set(path, { hash, mtime: stat?.mtime || 0, size: stat?.size || 0 });
-      this.syncHashMap.set(path, hash);
       changed = true;
     }
     if (changed) this.saveToStorage();

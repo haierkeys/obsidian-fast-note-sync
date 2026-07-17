@@ -3,6 +3,7 @@
 import { setIcon } from 'obsidian';
 import type FastSync from '../../main';
 import { SyncLogManager } from '../sync/sync_log_manager';
+import { $ } from '../../i18n/lang';
 
 /**
  * Manages the status bar progress indicator.
@@ -18,9 +19,8 @@ export class StatusBarManager {
   private statusBarFill: HTMLElement | null = null;
   private statusBarPct: HTMLElement | null = null;
   private statusBarCheck: HTMLElement | null = null;
-  // 失败项红点 / Failed-item red dot badge
+  // 失败项红点 / Failed-item red dot badge (现在改用只显示未解决的冲突笔记数量)
   private statusBarFailedBadge: HTMLElement | null = null;
-  private unsubscribeFailedCount: (() => void) | null = null;
 
   // Progress protection / 进度值保护，确保不回退
   private lastPct = 0;
@@ -54,28 +54,24 @@ export class StatusBarManager {
     // Create percentage or text node / 创建百分比或文本节点
     this.statusBarPct = this.statusBarItem.createDiv("fast-note-sync-progress-text fns-progress-pct");
 
-    // Create failed-item red dot badge, hidden until there are unread failures.
-    // 创建失败项红点，未读失败数为 0 时隐藏。
+    // Create failed-item red dot badge, hidden until there are unresolved conflicts.
+    // 创建失败项/冲突项红点，冲突数为 0 时隐藏。
     this.statusBarFailedBadge = this.statusBarItem.createSpan("fns-status-bar-failed-badge fns-hidden");
 
-    // Clicking the status bar jumps into the log view filtered to "failed only" and clears the badge.
-    // 点击状态栏跳转到日志视图并自动切到"仅看失败"，同时清除红点。
+    // Clicking the status bar triggers the Conflict List Modal to resolve conflicts quickly.
+    // 点击状态栏图标直接一键弹出未解决的冲突文件列表窗口。
     this.statusBarItem.addEventListener("click", () => {
-      if (SyncLogManager.getInstance().getUnreadFailedCount() > 0) {
-        void this.plugin.activateLogView(true);
+      const count = this.plugin.syncState.conflictedPaths.size;
+      if (count > 0) {
+        void (async () => {
+          const { ConflictListModal } = await import("../../views/conflict-list-modal");
+          new ConflictListModal(this.plugin.app, this.plugin).open();
+        })();
       }
     });
 
-    this.unsubscribeFailedCount = SyncLogManager.getInstance().subscribeUnreadFailedCount((count) => {
-      if (!this.statusBarFailedBadge) return;
-      if (count > 0) {
-        this.statusBarFailedBadge.removeClass("fns-hidden");
-        this.statusBarFailedBadge.setText(count > 99 ? "99+" : String(count));
-      } else {
-        this.statusBarFailedBadge.addClass("fns-hidden");
-        this.statusBarFailedBadge.setText("");
-      }
-    });
+    // Render badge count on init // 初始化时进行一次红点计数更新
+    this.updateConflictBadge();
   }
 
   /**
@@ -83,13 +79,42 @@ export class StatusBarManager {
    * 卸载时移除状态栏。
    */
   unload(): void {
-    if (this.unsubscribeFailedCount) {
-      this.unsubscribeFailedCount();
-      this.unsubscribeFailedCount = null;
-    }
     if (this.statusBarItem) {
       this.statusBarItem.remove();
       this.statusBarItem = null;
+    }
+  }
+
+  /**
+   * Update the conflict number badge based on unresolved conflictedPaths.
+   * 更新状态栏上的未解决冲突数量角标，排重且未解决前绝对不会消失。
+   */
+  updateConflictBadge(): void {
+    if (!this.statusBarFailedBadge) return;
+    const count = this.plugin.syncState.conflictedPaths?.size || 0;
+    if (count > 0) {
+      this.statusBarFailedBadge.removeClass("fns-hidden");
+      this.statusBarFailedBadge.setText(count > 99 ? "99+" : String(count));
+      
+      // Use native HTML title attribute on the badge span itself so it triggers a lightweight hover popup and never covers other icons
+      // 在角标 span 自身上使用标准 title 属性，提供轻量级的原生提示，彻底防范 Obsidian 黑色气泡过大覆盖其它邻近按钮
+      const tooltip = $("ui.conflict.tooltip", { count });
+      this.statusBarFailedBadge.setAttribute("title", tooltip);
+
+      if (this.statusBarItem) {
+        this.statusBarItem.removeClass("fns-hidden");
+        this.statusBarItem.removeAttribute("aria-label");
+      }
+    } else {
+      this.statusBarFailedBadge.addClass("fns-hidden");
+      this.statusBarFailedBadge.setText("");
+      this.statusBarFailedBadge.removeAttribute("title");
+      if (this.statusBarItem) {
+        this.statusBarItem.removeAttribute("aria-label");
+      }
+      if (!this.plugin.syncState.isSyncing) {
+        this.hide();
+      }
     }
   }
 
@@ -207,11 +232,29 @@ export class StatusBarManager {
    * 彻底隐藏状态栏。
    */
   hide(): void {
-    if (this.statusBarItem) {
+    this.lastPct = 0;
+    if (!this.statusBarItem) return;
+
+    const conflictCount = this.plugin.syncState.conflictedPaths?.size || 0;
+    if (conflictCount > 0) {
+      // Keep status bar container visible for the conflict badge, but clear texts and progress metrics
+      // 若仍有冲突，仅清除前置文本（如“同步完成”）和进度指示，保证状态栏容器始终可见，使红点角标常驻
+      if (this.statusBarProgressBar) this.statusBarProgressBar.addClass("fns-hidden");
+      if (this.statusBarCheck) this.statusBarCheck.addClass("fns-hidden");
+      if (this.statusBarPhaseLabel) this.statusBarPhaseLabel.addClass("fns-hidden");
+      if (this.statusBarPct) this.statusBarPct.setText("");
+      this.statusBarItem.removeClass("fns-status-bar-progress");
+
+      // Stripping aria-label completely to ensure Obsidian's large black bubble doesn't hijack and cover adjacent icons
+      // 彻底擦除大容器的 aria-label，防范其大黑色气泡冒出来遮挡旁边其它功能图标
+      this.statusBarItem.removeAttribute("aria-label");
+
+      this.updateConflictBadge();
+    } else {
       this.statusBarItem.addClass("fns-hidden");
       this.statusBarItem.removeClass("fns-status-bar-progress");
+      this.statusBarItem.removeAttribute("aria-label");
     }
-    this.lastPct = 0;
   }
 
   /**

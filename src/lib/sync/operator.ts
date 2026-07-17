@@ -231,13 +231,17 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     }
     plugin.updateStatusBar(completionText);
 
-    // 同步成功完成后，如果在此次同步中捕获到了需要手动合并解决的冲突，则在此时一并弹出冲突文件列表视图
-    if (plugin.syncState.conflictedPaths.size > 0) {
+    // 同步成功完成后，如果在此次同步中捕获到了需要手动合并解决的新冲突，则在此时一并弹出冲突文件列表视图
+    if (plugin.syncState.newConflictedPathsThisRound.size > 0) {
+      plugin.syncState.newConflictedPathsThisRound.clear();
       void (async () => {
         const { ConflictListModal } = await import("../../views/conflict-list-modal");
         new ConflictListModal(plugin.app, plugin).open();
       })();
     }
+
+    // 每次同步结束，均核实并更新一次状态栏冲突角标
+    plugin.statusBarManager.updateConflictBadge();
 
     if (plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
       plugin.localStorageManager.setMetadata("isInitSync", true);
@@ -559,6 +563,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   plugin.isSyncing = true;
 
   // 同步开始前，全局清空上一轮残留的 conflict-notes 物理冲突临时目录中的文件（位于插件目录下，避免 Windows 锁定目录报错）
+  // Before sync: clear any leftover conflict-notes backup files from the previous round
   const adapter = plugin.app.vault.adapter;
   const conflictDir = `${getPluginDir(plugin)}/conflict-notes`;
   try {
@@ -575,6 +580,10 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
   } catch (e) {
     dump("Failed to clear conflict-notes folder:", e);
   }
+
+  // 仅清空本轮捕获的局部新冲突集合，防止上一轮残留的冲突引起本轮再次多余弹出冲突列表。
+  // 我们不再清空全局和持久化的 conflictedPaths 集合，这样在未解决冲突前，角标和状态栏均会一直保留它。
+  plugin.syncState.newConflictedPathsThisRound.clear();
   // 提到 try 外部，使 catch/finally 也能引用本次会话的 context 做归属判断
   // Hoisted outside try so catch/finally can reference this session's context for ownership checks
   let context = "";

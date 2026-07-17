@@ -22,6 +22,8 @@ export interface SyncTaskStats {
 export class SyncState {
   /** 发生冲突且等待手动解决的笔记路径集合，用于在解决前抑制重复上传和弹窗 / Paths with pending conflict resolution */
   public conflictedPaths: Set<string> = new Set();
+  /** 本轮同步中新捕获到的需要手动解决的冲突路径集合，用以在同步结束时判定是否弹出冲突列表框 / New conflicted paths detected in this round */
+  public newConflictedPathsThisRound: Set<string> = new Set();
 
   // ─── Chunk size settings from server ─────────────────────────────────────────
   /** 上传分片数量 / Upload chunk size from server */

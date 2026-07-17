@@ -92,7 +92,7 @@ export class MenuManager {
     this.historyStatusBarItem = this.plugin.addStatusBarItem();
     this.historyStatusBarItem.addClass("mod-clickable");
     setIcon(this.historyStatusBarItem, "history");
-    this.historyStatusBarItem.setAttribute("aria-label", $("ui.history.title"));
+    this.historyStatusBarItem.setAttribute("title", $("ui.history.title"));
     this.historyStatusBarItem.addEventListener("click", () => {
       const activeFile = this.plugin.app.workspace.getActiveFile();
       if (activeFile && activeFile.extension === "md") {
@@ -106,7 +106,7 @@ export class MenuManager {
     this.shareStatusBarItem = this.plugin.addStatusBarItem();
     this.shareStatusBarItem.addClass("mod-clickable");
     setIcon(this.shareStatusBarItem, "share-2");
-    this.shareStatusBarItem.setAttribute("aria-label", $("ui.share.title"));
+    this.shareStatusBarItem.setAttribute("title", $("ui.share.title"));
     this.shareStatusBarItem.addEventListener("click", () => {
       const activeFile = this.plugin.app.workspace.getActiveFile();
       if (activeFile && activeFile.extension === "md") {
@@ -139,7 +139,7 @@ export class MenuManager {
     this.logStatusBarItem = this.plugin.addStatusBarItem();
     this.logStatusBarItem.addClass("mod-clickable");
     setIcon(this.logStatusBarItem, "arrow-down-up");
-    this.logStatusBarItem.setAttribute("aria-label", $("ui.log.view_log"));
+    this.logStatusBarItem.setAttribute("title", $("ui.log.view_log"));
     this.logStatusBarItem.addEventListener("click", () => {
       void this.plugin.activateLogView();
     });
@@ -148,7 +148,7 @@ export class MenuManager {
     this.recycleBinStatusBarItem = this.plugin.addStatusBarItem();
     this.recycleBinStatusBarItem.addClass("mod-clickable");
     setIcon(this.recycleBinStatusBarItem, "archive-x");
-    this.recycleBinStatusBarItem.setAttribute("aria-label", $("ui.recycle_bin.title"));
+    this.recycleBinStatusBarItem.setAttribute("title", $("ui.recycle_bin.title"));
     this.recycleBinStatusBarItem.addEventListener("click", () => {
       void this.plugin.activateRecycleBinView();
     });
@@ -442,10 +442,13 @@ export class MenuManager {
       this.concurrencyStatusBarItem.removeClass("fns-hidden");
       this.concurrencyStatusBarItem.addClass("fns-status-bar-item");
       const limit = this.plugin.settings.maxConcurrentUploads;
-      this.concurrencyStatusBarItem.setAttribute("aria-label", $("setting.sync.concurrency_limit_tip", { count: limit }));
+      this.concurrencyStatusBarItem.setAttribute("title", $("setting.sync.concurrency_limit_tip", { count: limit }));
+      this.concurrencyStatusBarItem.removeAttribute("aria-label");
     } else {
       this.concurrencyStatusBarItem.addClass("fns-hidden");
       this.concurrencyStatusBarItem.removeClass("fns-status-bar-item");
+      this.concurrencyStatusBarItem.removeAttribute("aria-label");
+      this.concurrencyStatusBarItem.removeAttribute("title");
     }
   }
 

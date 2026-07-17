@@ -147,7 +147,10 @@ export class LocalStorageManager {
     }
 
     /**
-     * 清理所有同步记录时间戳
+     * 清理所有同步记录时间戳，同时清除持久化的冲突路径记录
+     * Clear all sync timestamps and persisted conflicted paths.
+     * Must be called together when the user resets the sync cache,
+     * so stale conflict paths don't ghost-resurrect after a fresh sync.
      */
     clearSyncTime(): void {
         this.setMetadata('lastNoteSyncTime', 0);
@@ -155,6 +158,9 @@ export class LocalStorageManager {
         this.setMetadata('lastConfigSyncTime', 0);
         this.setMetadata('lastFolderSyncTime', 0);
         this.setMetadata('isInitSync', false);
+        // 同步清除持久化的冲突路径，避免重启后旧冲突记录在全新同步后误触发冲突列表弹窗
+        // Also clear persisted conflicted paths so stale conflicts don't re-surface after a fresh sync
+        this.setConflictedPaths(new Set());
     }
 
     constructor(plugin: FastSync) {
