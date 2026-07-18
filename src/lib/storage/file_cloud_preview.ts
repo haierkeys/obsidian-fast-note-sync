@@ -576,6 +576,8 @@ export class FileCloudPreview {
       if (type === "other") return null;
     }
 
+    const attachmentFolderPath = String((this.plugin.app.vault as any).getConfig("attachmentFolderPath") || "");
+
     let matchedUrl: string | null = null;
 
     if (cloudPreviewRemoteUrl) {
@@ -621,7 +623,9 @@ export class FileCloudPreview {
         .replace(/{vaultPath}/g, vaultPath)
         .replace(/{subpath}/g, subpath)
         .replace(/{vault}/g, vault)
-        .replace(/{type}/g, type);
+        .replace(/{type}/g, type)
+        .replace(/{notePath}/g, sourcePath)
+        .replace(/{attachmentFolderPath}/g, attachmentFolderPath);
     }
 
     const params = new URLSearchParams({

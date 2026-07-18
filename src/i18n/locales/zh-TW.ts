@@ -145,7 +145,7 @@ export default {
   "setting.cloud.type_limit": "附件雲預覽類型限制",
   "setting.cloud.type_limit_desc": "開啟後，限 圖片/音頻/視頻/PDF 使用雲預覽功能，其他附件正常同步。\n注意：請謹慎關閉，本項可能導致附件關聯插件失效。",
   "setting.cloud.remote_source": "附件雲預覽 - 前後綴映射遠端源",
-  "setting.cloud.remote_source_desc": "該設置項用於為匹配前綴/後綴的附件指定遠端源，支援多行規則。\n格式：<b>前綴名@後綴名#遠端源</b>，\n<b>前綴</b>可以省略，多個<b>後綴名</b>可用 <b>$</b> 分隔，前後綴均不匹配則使用預設 FNS 源，遠端源支援變量替換。\n\n| 變量 | 說明 |\n| --- | --- |\n| {path} | 筆記內的附件路徑 |\n| {vaultPath} | 附件對應倉庫的相對路徑 |\n| {vault} | 倉庫名 |\n| {type} | 附件類型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定義遠端源，確保其支援跨域預覽（CORS）及必要的鑑權（若需要）",
+  "setting.cloud.remote_source_desc": "該設置項用於為匹配前綴/後綴的附件指定遠端源，支援多行規則。\n格式：<b>前綴名@後綴名#遠端源</b>，\n<b>前綴</b>可以省略，多個<b>後綴名</b>可用 <b>$</b> 分隔，前後綴均不匹配則使用預設 FNS 源，遠端源支援變量替換。\n\n| 變量 | 說明 |\n| --- | --- |\n| {path} | 筆記內的附件路徑 |\n| {vaultPath} | 附件對應倉庫的相對路徑 |\n| {notePath} | 包含該附件的筆記路徑 |\n| {attachmentFolderPath} | Obsidian 預設的附件存放資料夾路徑 |\n| {vault} | 倉庫名 |\n| {type} | 附件類型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定義遠端源，確保其支援跨域預覽（CORS）及必要的鑑權（若需要）",
   "setting.cloud.delete_after_upload": "附件雲預覽 - 上傳後刪除",
   "setting.cloud.delete_after_upload_desc": "附件成功上傳後將自動刪除本地檔案以節省空間。\n(本設置需要開啟附件雲預覽)\n注意：請謹慎關閉，本項可能導致附件關聯插件失效。",
 

@@ -145,7 +145,7 @@ export default {
   "setting.cloud.type_limit": "附件云预览类型限制",
   "setting.cloud.type_limit_desc": "开启后，仅限 图片/音频/视频/PDF 使用云预览功能，其他附件正常同步。\n注意：请谨慎关闭，本项可能导致附件关联插件失效。",
   "setting.cloud.remote_source": "附件云预览 - 前后缀映射远端源",
-  "setting.cloud.remote_source_desc": "该设置项用于为匹配前缀/后缀的附件指定远端源，支持多行规则。\n格式：<b>前缀名@后缀名#远端源</b>，\n<b>前缀</b>可以省略，多个<b>后缀名</b>可用 <b>$</b> 分隔，前后缀均不匹配则使用默认FNS源，远端源支持变量替换。\n\n| 变量 | 说明 |\n| --- | --- |\n| {path} | 笔记内的附件路径 |\n| {vaultPath} | 附件对应仓库的相对路径 |\n| {vault} | 仓库名 |\n| {type} | 附件类型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定义远端源，确保其支持跨域预览（CORS）及必要的鉴权（若需要）",
+  "setting.cloud.remote_source_desc": "该设置项用于为匹配前缀/后缀的附件指定远端源，支持多行规则。\n格式：<b>前缀名@后缀名#远端源</b>，\n<b>前缀</b>可以省略，多个<b>后缀名</b>可用 <b>$</b> 分隔，前后缀均不匹配则使用默认FNS源，远端源支持变量替换。\n\n| 变量 | 说明 |\n| --- | --- |\n| {path} | 笔记内的附件路径 |\n| {vaultPath} | 附件对应仓库的相对路径 |\n| {notePath} | 包含该附件的笔记路径 |\n| {attachmentFolderPath} | Obsidian 默认的附件存放文件夹路径 |\n| {vault} | 仓库名 |\n| {type} | 附件类型 (image/video/audio/pdf/other) |\n例如：<b>prefix@.jpg$.png#http://domain.com/{path}</b>\n注意：若使用自定义远端源，确保其支持跨域预览（CORS）及必要的鉴权（若需要）",
   "setting.cloud.delete_after_upload": "附件云预览 - 上传后删除",
   "setting.cloud.delete_after_upload_desc": "附件成功上传后将自动删除本地文件以节省空间。\n(本设置需要开启附件云预览)\n注意：请谨慎关闭，本项可能导致附件关联插件失效。",
 
