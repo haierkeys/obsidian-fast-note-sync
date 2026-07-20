@@ -547,6 +547,8 @@ export default {
   "ui.conflict.menu_item": "解决冲突",
   "ui.conflict.modal_title": "解决笔记冲突",
   "ui.conflict.modal_desc": "本地和远端版本为只读对照，请在最右侧的「解决冲突内容」中编辑出最终内容，然后点击下方「解决冲突」进行保存和提交。",
+  "ui.conflict.apply_line_title": "追加此行到冲突解决",
+  "ui.conflict.applied_line_notice": "已追加此行到冲突解决版本",
   "ui.conflict.tooltip": "发现冲突笔记 ${count} 个",
   "ui.conflict.keep_current": "保留当前",
   "ui.conflict.keep_current_desc": "删除冲突副本，保留当前文件内容",

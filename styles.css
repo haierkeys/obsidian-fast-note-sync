@@ -773,8 +773,10 @@
 }
 .conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line {
   display: flex;
+  align-items: center;
   border-radius: 2px;
   margin-bottom: 1px;
+  position: relative;
 }
 .conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line .line-number {
   width: 40px;
@@ -796,6 +798,38 @@
   min-width: 0;
   padding-left: 2px;
   user-select: text;
+}
+.conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line .line-apply-btn {
+  opacity: 0;
+  visibility: hidden;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  margin-left: 4px;
+  margin-right: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line .line-apply-btn svg {
+  width: 12px;
+  height: 12px;
+}
+.conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line .line-apply-btn:hover {
+  color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+.conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line:hover .line-apply-btn {
+  opacity: 1;
+  visibility: visible;
 }
 .conflict-resolve-diff-wrap .conflict-diff-col .conflict-diff-content .history-detail-line.type-add {
   background-color: rgba(0, 255, 0, 0.06);
@@ -972,6 +1006,17 @@
 .conflict-resolve-modal.is-mobile .conflict-resolve-desc {
   font-size: 11px;
   margin-bottom: 0;
+}
+.conflict-resolve-modal.is-mobile .history-detail-line .line-apply-btn {
+  opacity: 0.7;
+  visibility: visible;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+}
+.conflict-resolve-modal.is-mobile .history-detail-line .line-apply-btn svg {
+  width: 14px;
+  height: 14px;
 }
 .conflict-resolve-modal.is-mobile .conflict-resolve-container {
   gap: 8px;

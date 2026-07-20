@@ -881,8 +881,10 @@
 
       .history-detail-line {
         display: flex;
+        align-items: center;
         border-radius: 2px;
         margin-bottom: 1px;
+        position: relative;
 
         .line-number {
           width: 40px;
@@ -905,6 +907,44 @@
           min-width: 0;
           padding-left: 2px;
           user-select: text;
+        }
+
+        .line-apply-btn {
+          opacity: 0;
+          visibility: hidden;
+          width: 22px;
+          height: 22px;
+          min-width: 22px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          border-radius: 4px;
+          color: var(--text-muted);
+          background: var(--background-primary);
+          border: 1px solid var(--background-modifier-border);
+          margin-left: 4px;
+          margin-right: 4px;
+          transition: all 0.15s ease;
+          flex-shrink: 0;
+
+          svg {
+            width: 12px;
+            height: 12px;
+          }
+
+          &:hover {
+            color: var(--interactive-accent);
+            background: var(--background-modifier-hover);
+            border-color: var(--interactive-accent);
+          }
+        }
+
+        &:hover {
+          .line-apply-btn {
+            opacity: 1;
+            visibility: visible;
+          }
         }
 
         &.type-add {
@@ -1127,6 +1167,21 @@
   .conflict-resolve-desc {
     font-size: 11px;
     margin-bottom: 0;
+  }
+
+  .history-detail-line {
+    .line-apply-btn {
+      opacity: 0.7;
+      visibility: visible;
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
   }
 
   .conflict-resolve-container {

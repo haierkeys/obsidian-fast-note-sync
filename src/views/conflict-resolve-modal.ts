@@ -1,4 +1,4 @@
-import { App, Modal, setIcon, TFile, Platform } from "obsidian";
+import { App, Modal, setIcon, TFile, Platform, Notice } from "obsidian";
 import type FastSync from "../main";
 import { $ } from "../i18n/lang";
 import { hashContent, hashContentAsync, getPluginDir } from "../lib/utils/helpers";
@@ -481,9 +481,51 @@ export class ConflictResolveModal extends Modal {
         cls: "line-content",
         text: line.text
       });
+
+      // Single line apply button for added lines only (hover on desktop, persistent tap icon on mobile)
+      // 仅对新增（add）行渲染单行应用按钮（桌面端 hover 浮现，移动端常驻触控图标）
+      if (line.type === "add") {
+        const applyBtn = lineEl.createDiv({
+          cls: "line-apply-btn",
+          attr: {
+            title: $("ui.conflict.apply_line_title") || "追加此行到冲突解决",
+            "aria-label": $("ui.conflict.apply_line_title") || "追加此行到冲突解决"
+          }
+        });
+        setIcon(applyBtn, "arrow-right");
+        applyBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.applyLineToEditor(line);
+        });
+      }
     });
 
     return content;
+  }
+
+  /**
+   * Appends a single line from diff columns to the end of the corresponding line in the merged content editor.
+   * 将对比栏中的新增行内容追加到最终冲突解决编辑器对应行文字的末尾。
+   */
+  private applyLineToEditor(line: DiffLine): void {
+    if (!this.editorEl) return;
+
+    const lines = this.editorEl.value.split(/\r?\n/);
+    const targetIdx = line.lineNumber !== undefined ? line.lineNumber - 1 : lines.length;
+
+    if (targetIdx >= 0 && targetIdx < lines.length) {
+      lines[targetIdx] = lines[targetIdx] + line.text;
+    } else {
+      lines.push(line.text);
+    }
+
+    this.editorEl.value = lines.join("\n");
+    this.editorEl.dispatchEvent(new Event("input"));
+    this.triggerFlashEffect();
+
+    if (Platform.isMobile) {
+      new Notice($("ui.conflict.applied_line_notice") || "已追加此行到冲突解决版本");
+    }
   }
 
   /**
