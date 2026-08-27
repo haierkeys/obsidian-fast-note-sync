@@ -5,6 +5,7 @@ import { SyncLogManager } from "./sync_log_manager";
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "../utils/types";
 import type FastSync from "../../main";
 import { $ } from "../../i18n/lang";
+import { canUploadConfig } from "./config_sync_policy";
 
 
 /**
@@ -36,7 +37,7 @@ export const cleanupConfigReloadTimer = function (): void {
 }
 
 export const configModify = async function (path: string, plugin: FastSync, eventEnter: boolean = false, content?: string) {
-    if (plugin.settings.configSyncEnabled == false || plugin.settings.readonlySyncEnabled) return
+    if (!canUploadConfig(plugin.settings)) return
     if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
     if (configIsPathExcluded(path, plugin)) return
@@ -118,7 +119,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
 }
 
 export const configDelete = async function (path: string, plugin: FastSync, eventEnter: boolean = false) {
-    if (plugin.settings.configSyncEnabled == false || plugin.settings.readonlySyncEnabled) return
+    if (!canUploadConfig(plugin.settings)) return
     if (!isPathInConfigSyncDirs(path, plugin)) return
     if (eventEnter && plugin.ignoredConfigFiles.has(path)) return
     if (configIsPathExcluded(path, plugin)) return
@@ -261,6 +262,10 @@ export const receiveConfigSyncModify = async function (data: ReceiveMessage, plu
 
 export const receiveConfigUpload = async function (data: ReceivePathMessage, plugin: FastSync) {
     if (plugin.settings.configSyncEnabled == false) return;
+    if (plugin.settings.readonlySyncEnabled || plugin.settings.configReadOnlySyncEnabled) {
+        plugin.recordSyncCompleted('setting', data.pageIndex)
+        return
+    }
 
     if (!isPathInConfigSyncDirs(data.path, plugin)) {
         plugin.recordSyncCompleted('setting', data.pageIndex)

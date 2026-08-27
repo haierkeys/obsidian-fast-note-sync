@@ -8,6 +8,7 @@ import { SyncMode, SnapFile, SnapFolder, SyncEndData, PathHashFile, NoteSyncData
 import { receiveFolderSyncModify, receiveFolderSyncDelete, receiveFolderSyncRename, receiveFolderSyncEnd } from "./operator_folder";
 import { FileCloudPreview } from "../storage/file_cloud_preview";
 import { SyncLogManager } from "./sync_log_manager";
+import { selectConfigSyncUploadItems } from "./config_sync_policy";
 import * as WSAction from "./websocket_action";
 import type FastSync from "../../main";
 import { $ } from "../../i18n/lang";
@@ -1549,6 +1550,12 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
   const shouldSyncConfigs = syncMode === "auto" || syncMode === "config";
 
   const jobs: Promise<void>[] = [];
+  const configUploadItems = selectConfigSyncUploadItems(
+    plugin.settings.readonlySyncEnabled === true || plugin.settings.configReadOnlySyncEnabled === true,
+    configData.configs,
+    plugin.settings.offlineDeleteSyncEnabled ? configData.delConfigs : [],
+    configData.missingConfigs,
+  );
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {
 
@@ -1641,9 +1648,9 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
       "SettingSync",
       "SettingSyncBatchAck",
       configData.context,
-      configData.configs,
-      plugin.settings.offlineDeleteSyncEnabled ? configData.delConfigs : [],
-      configData.missingConfigs,
+      configUploadItems.configs,
+      configUploadItems.delConfigs,
+      configUploadItems.missingConfigs,
       (mainChunk, delChunk, missingChunk, batchIndex, totalBatches) => ({
         vault: plugin.settings.vault,
         lastTime: configData.lastTime,
@@ -1656,7 +1663,7 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
         ...(missingChunk.length > 0 ? { missingSettings: missingChunk } : {}),
       }),
       () => {
-        for (const config of configData.configs) {
+        for (const config of configUploadItems.configs) {
           plugin.pendingConfigModifies.set(config.path, config.contentHash);
         }
         plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies);
@@ -1682,7 +1689,7 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
     // 将已删除配置路径加入 pending set，等待 SettingSyncEnd 确认服务端已处理后再移除
     // Populate pending config delete set; remove from hashManager only after SettingSyncEnd
     if (plugin.settings.offlineDeleteSyncEnabled && plugin.configHashManager && plugin.configHashManager.isReady()) {
-      plugin.pendingDeleteConfigPaths = new Set(configData.delConfigs.map(i => i.path));
+      plugin.pendingDeleteConfigPaths = new Set(configUploadItems.delConfigs.map(i => i.path));
     }
   }
 };
