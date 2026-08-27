@@ -22,6 +22,8 @@ export interface PluginSettings {
   syncEnabled: boolean
   /** 是否开启插件配置项同步 */
   configSyncEnabled: boolean
+  /** 是否仅接收服务端配置，不上传本地配置 */
+  configReadOnlySyncEnabled: boolean
   /** 日志记录级别 ("off", "console", "internal") */
   logEnabled: "off" | "console" | "internal"
   /** API 基础地址 */
@@ -130,6 +132,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   // 是否自动上传
   syncEnabled: true,
   configSyncEnabled: false,
+  configReadOnlySyncEnabled: false,
   logEnabled: "off",
   // API 网关地址
   api: "",
