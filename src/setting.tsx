@@ -1586,10 +1586,24 @@ export class SettingTab extends PluginSettingTab {
         if (value != this.plugin.settings.configSyncEnabled) {
           this.plugin.settings.configSyncEnabled = value
           await this.plugin.saveAndReloadServices("configSyncEnabled")
+          this.refresh()
         }
       }),
     )
     this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.auto_config_desc"))
+
+    new Setting(set)
+      .setName($("setting.sync.config_readonly"))
+      .setClass("fns-setting-item-checkbox")
+      .addToggle((toggle) => toggle
+        .setValue(this.plugin.settings.configReadOnlySyncEnabled === true)
+        .setDisabled(!this.plugin.settings.configSyncEnabled)
+        .onChange(async (value) => {
+          if (value === this.plugin.settings.configReadOnlySyncEnabled) return
+          this.plugin.settings.configReadOnlySyncEnabled = value
+          await this.plugin.saveAndReloadServices()
+        }))
+    this.setDescWithBreaks(set.lastElementChild as HTMLElement, $("setting.sync.config_readonly_desc"))
 
     new Setting(set).setName($("setting.sync.binary_limit")).setClass("fns-setting-item-checkbox").addToggle((toggle) =>
       toggle.setValue(this.plugin.settings.binarySyncLimitEnabled).onChange(async (value) => {

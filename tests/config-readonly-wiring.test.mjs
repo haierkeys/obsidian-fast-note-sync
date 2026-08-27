@@ -17,4 +17,8 @@ assert.match(configSource, /configReadOnlySyncEnabled/);
 assert.match(operatorSource, /selectConfigSyncUploadItems/);
 assert.match(operatorSource, /configUploadItems/);
 
+const settingSource = fs.readFileSync(path.join(root, "src", "setting.tsx"), "utf8");
+assert.match(settingSource, /setting\.sync\.config_readonly/);
+assert.match(settingSource, /setDisabled\(!this\.plugin\.settings\.configSyncEnabled\)/);
+
 console.log("config-readonly-wiring.test.mjs: source wiring present");
