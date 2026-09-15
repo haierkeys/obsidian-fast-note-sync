@@ -294,7 +294,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     let statusText = $("ui.status.syncing");
     if (bufferedAmount > 0) {
       const bufferMB = (bufferedAmount / 1024 / 1024).toFixed(2);
-      statusText = `${$("ui.status.syncing")} (缓冲区: ${bufferMB}MB)`;
+      statusText = `${$("ui.status.syncing")} (${$("ui.status.buffer", { mb: bufferMB })})`;
     }
 
     const detailText = plugin.progressTracker.getDetailText();
@@ -1045,7 +1045,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
             plugin.scannedConfigHashes.set(path, { hash: contentHash, mtime: stat.mtime, size: stat.size });
             // 注意：hashFileAsync 内部已经带了 [Calc] 类型的 dump
           } catch (e) {
-            console.warn(`[FastNoteSync] 哈希配置失败，跳过: ${path}`, e);
+            console.warn(`[FastNoteSync] config hash failed, skipping: ${path}`, e);
             continue;
           }
         } else {
@@ -1062,7 +1062,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
         });
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : String(e);
-        console.warn(`[FastNoteSync] 跳过异常配置文件 ${path}: ${errorMsg}`);
+        console.warn(`[FastNoteSync] skipping invalid config file ${path}: ${errorMsg}`);
         dump(`Error processing config file ${path}:`, e);
       }
     }

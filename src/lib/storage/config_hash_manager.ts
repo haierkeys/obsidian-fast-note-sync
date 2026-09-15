@@ -2,6 +2,7 @@ import { normalizePath } from "obsidian";
 
 import { hashContentAsync, dump, dumpError, configIsPathExcluded, getConfigSyncCustomDirs, showSyncNotice, hashFileAsync, debounce, LocalStateFileMirror } from "../utils/helpers";
 import { configAllPaths } from "../sync/operator_config";
+import { $ } from "../../i18n/lang";
 import type FastSync from "../../main";
 
 
@@ -65,13 +66,13 @@ export class ConfigHashManager {
      * 镜像也没有才真正重建
      */
     async initialize(): Promise<void> {
-        dump("ConfigHashManager: 开始初始化");
+        dump("ConfigHashManager: starting init");
 
         // 尝试从 localStorage 加载
         const loaded = this.loadFromStorage();
 
         if (loaded) {
-            dump(`ConfigHashManager: 从 localStorage 加载成功,共 ${this.hashMap.size} 个配置`);
+            dump(`ConfigHashManager: loaded from localStorage (${this.hashMap.size} configs)`);
             this.isInitialized = true;
             return;
         }
@@ -79,13 +80,13 @@ export class ConfigHashManager {
         // localStorage 未命中：尝试从文件镜像恢复，不弹通知、不重建
         const mirrored = await this.mirror.read();
         if (mirrored && this.parseAndLoad(mirrored)) {
-            dump("ConfigHashManager: 从文件镜像恢复哈希表");
+            dump("ConfigHashManager: restored hash map from file mirror");
             this.saveToStorage();
             this.isInitialized = true;
             return;
         }
 
-        dump("ConfigHashManager: localStorage 与文件镜像均无数据,开始构建配置哈希映射");
+        dump("ConfigHashManager: no data in localStorage or file mirror, building config hash map");
         await this.buildConfigHashMap();
         this.isInitialized = true;
     }
@@ -98,7 +99,7 @@ export class ConfigHashManager {
     }
 
     private async buildConfigHashMap(): Promise<void> {
-        const notice = showSyncNotice("正在初始化配置哈希映射...", 0);
+        const notice = showSyncNotice($("ui.notice.config_hash_init_start"), 0);
 
         try {
             // 获取所有配置文件路径
@@ -113,7 +114,7 @@ export class ConfigHashManager {
             const totalConfigs = allPaths.length;
             let processedConfigs = 0;
 
-            dump(`ConfigHashManager: 开始遍历 ${totalConfigs} 个配置`);
+            dump(`ConfigHashManager: scanning ${totalConfigs} configs`);
 
             // --- PERF: bounded concurrency for cold-build read+hash ---
             // 冷建路径原先完全串行 read+hash，参照 operator.ts 扫描阶段的 6 路有限并发改造
@@ -160,7 +161,7 @@ export class ConfigHashManager {
                                 this.hashMap.set(path, { hash: contentHash, mtime: stat.mtime, size: stat.size });
                             }
                         } catch (error) {
-                            dumpError("读取配置文件出错:", error);
+                            dumpError("Failed to read config file:", error);
                         }
                     }
                 });
@@ -169,7 +170,7 @@ export class ConfigHashManager {
 
                 // 每处理 50 个配置更新一次进度
                 if (processedConfigs % 50 === 0) {
-                    notice.setMessage(`正在初始化配置哈希映射... (${processedConfigs}/${totalConfigs})`);
+                    notice.setMessage($("ui.notice.config_hash_init_progress", { done: processedConfigs, total: totalConfigs }));
                     // 让出主线程,避免阻塞 UI
                     await new Promise(resolve => window.setTimeout(resolve, 0));
                 }
@@ -183,15 +184,15 @@ export class ConfigHashManager {
             // 保存到 localStorage
             this.saveToStorage();
 
-            notice.setMessage(`配置哈希映射初始化完成! 共处理 ${totalConfigs} 个配置`);
+            notice.setMessage($("ui.notice.config_hash_init_done", { total: totalConfigs }));
             window.setTimeout(() => notice.hide(), 3000);
 
-            dump(`ConfigHashManager: 构建完成,共 ${totalConfigs} 个配置`);
+            dump(`ConfigHashManager: build complete, ${totalConfigs} configs`);
         } catch (error) {
             notice.hide();
             const errorMsg = error instanceof Error ? error.message : String(error);
-            showSyncNotice(`配置哈希映射初始化失败: ${errorMsg}`);
-            dump("ConfigHashManager: 构建失败", error);
+            showSyncNotice($("ui.notice.config_hash_init_failed", { msg: errorMsg }));
+            dump("ConfigHashManager: build failed", error);
             throw error;
         }
     }
@@ -297,7 +298,7 @@ export class ConfigHashManager {
                 }
 
                 if (data) {
-                    dump("ConfigHashManager: 发现旧版配置哈希数据，执行迁移");
+                    dump("ConfigHashManager: legacy config hash data found, migrating");
                     this.plugin.app.saveLocalStorage(this.storageKey, data);
                 } else {
                     return false;
@@ -306,7 +307,7 @@ export class ConfigHashManager {
 
             return this.parseAndLoad(data);
         } catch (error) {
-            dump("ConfigHashManager: 从 localStorage 加载失败", error);
+            dump("ConfigHashManager: failed to load from localStorage", error);
             return false;
         }
     }
@@ -334,7 +335,7 @@ export class ConfigHashManager {
 
             return true;
         } catch (error) {
-            dump("ConfigHashManager: 解析哈希表数据失败", error);
+            dump("ConfigHashManager: failed to parse hash map data", error);
             return false;
         }
     }
@@ -348,16 +349,16 @@ export class ConfigHashManager {
             const obj = Object.fromEntries(this.hashMap);
             data = JSON.stringify(obj);
         } catch (error) {
-            dump("ConfigHashManager: 序列化哈希表失败", error);
+            dump("ConfigHashManager: failed to serialize hash map", error);
             return;
         }
 
         try {
             this.plugin.app.saveLocalStorage(this.storageKey, data);
         } catch (error) {
-            dump("ConfigHashManager: 保存到 localStorage 失败", error);
+            dump("ConfigHashManager: failed to save to localStorage", error);
             const errorMsg = error instanceof Error ? error.message : String(error);
-            showSyncNotice(`保存配置哈希映射失败: ${errorMsg}`);
+            showSyncNotice($("ui.notice.config_hash_save_failed", { msg: errorMsg }));
         }
 
         // 即使 localStorage 写入失败 (如配额)，镜像写入也照常进行
@@ -369,7 +370,7 @@ export class ConfigHashManager {
      * 用于命令面板
      */
     async rebuildHashMap(): Promise<void> {
-        dump("ConfigHashManager: 手动重建配置哈希映射");
+        dump("ConfigHashManager: manual config hash map rebuild");
         this.clearAll();
         await this.buildConfigHashMap();
     }
@@ -396,7 +397,7 @@ export class ConfigHashManager {
         }
 
         if (deletedCount > 0) {
-            dump(`ConfigHashManager: 清理了 ${deletedCount} 个已排除配置的哈希`);
+            dump(`ConfigHashManager: cleaned up ${deletedCount} hashes of excluded configs`);
             this.scheduleSave();
         }
     }

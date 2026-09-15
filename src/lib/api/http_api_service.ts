@@ -3,7 +3,7 @@
 import { requestUrl } from "obsidian";
 import { hashContent, addRandomParam, showSyncNotice, dump, dumpError, nativeFetch, isAllowedRedirect } from "../utils/helpers";
 import { CLIENT_TYPE } from "../utils/types";
-import { getLocale } from "../../i18n/lang";
+import { $, getLocale } from "../../i18n/lang";
 import type FastSync from "../../main";
 
 
@@ -405,7 +405,7 @@ export class HttpApiService {
             };
         } catch (e) {
             if (e instanceof Error && e.message.includes('fetch')) {
-                throw new Error("无法连接到服务器，请检查网络连接");
+                throw new Error($("ui.status.no_connection"));
             }
             throw e;
         }
@@ -457,7 +457,7 @@ export class HttpApiService {
             return true;
         } catch (e) {
             dumpError("restoreNoteVersion error:", e);
-            showSyncNotice("恢复版本请求失败");
+            showSyncNotice($("ui.notice.restore_version_failed"));
             return false;
         }
     }
@@ -582,7 +582,7 @@ export class HttpApiService {
             return true;
         } catch (e) {
             dumpError("restoreNote error:", e);
-            showSyncNotice("恢复笔记失败");
+            showSyncNotice($("ui.notice.restore_note_failed"));
             return false;
         }
     }
@@ -612,7 +612,7 @@ export class HttpApiService {
             return true;
         } catch (e) {
             dumpError("restoreFile error:", e);
-            showSyncNotice("恢复文件失败");
+            showSyncNotice($("ui.notice.restore_file_failed"));
             return false;
         }
     }
@@ -641,7 +641,7 @@ export class HttpApiService {
             return true;
         } catch (e) {
             dumpError("deleteFile error:", e);
-            showSyncNotice("删除文件失败");
+            showSyncNotice($("ui.notice.delete_file_failed"));
             return false;
         }
     }
@@ -665,14 +665,14 @@ export class HttpApiService {
 
             if (status !== 200 || !this.isSuccess(json)) {
                 const res = json as ApiResponse<unknown>;
-                const msg = res?.message || (path ? "永久删除失败" : "清空回收站失败");
+                const msg = res?.message || (path ? $("ui.notice.permanent_delete_failed") : $("ui.notice.clear_recycle_bin_failed"));
                 showSyncNotice(msg);
                 return false;
             }
             return true;
         } catch (e) {
             dumpError("clearRecycleBin error:", e);
-            showSyncNotice("请求失败，请检查网络");
+            showSyncNotice($("ui.status.no_connection"));
             return false;
         }
     }
@@ -703,7 +703,7 @@ export class HttpApiService {
             return res.data;
         } catch (e) {
             dumpError("createShare error:", e);
-            showSyncNotice("创建分享失败");
+            showSyncNotice($("ui.notice.create_share_failed"));
             return null;
         }
     }
@@ -760,7 +760,7 @@ export class HttpApiService {
             return true;
         } catch (e) {
             dumpError("updateSharePassword error:", e);
-            showSyncNotice("设置密码失败");
+            showSyncNotice($("ui.notice.set_password_failed"));
             return false;
         }
     }
@@ -794,7 +794,7 @@ export class HttpApiService {
             return res.data || null;
         } catch (e) {
             dumpError("createShortLink error:", e);
-            showSyncNotice("生成短链接失败");
+            showSyncNotice($("ui.notice.generate_short_link_failed"));
             return null;
         }
     }
@@ -823,7 +823,7 @@ export class HttpApiService {
             return true;
         } catch (e) {
             dumpError("cancelShare error:", e);
-            showSyncNotice("取消分享失败");
+            showSyncNotice($("ui.notice.cancel_share_failed"));
             return false;
         }
     }

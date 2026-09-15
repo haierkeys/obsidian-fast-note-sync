@@ -75,7 +75,7 @@ export class FolderSnapshotManager {
         // localStorage 未命中：尝试从文件镜像恢复，不弹通知、不重建
         const mirrored = await this.mirror.read();
         if (mirrored && this.parseAndLoad(mirrored)) {
-            dump("FolderSnapshotManager: 从文件镜像恢复快照");
+            dump("FolderSnapshotManager: restored snapshot from file mirror");
             this.saveToStorage();
             this.isInitialized = true;
             // 镜像恢复的数据同样可能漂移，与 localStorage 命中分支一样安排对账
@@ -167,7 +167,7 @@ export class FolderSnapshotManager {
             }
             this.saveToStorage();
         } catch (error) {
-            dump("FolderSnapshotManager: 构建快照失败", error);
+            dump("FolderSnapshotManager: failed to build snapshot", error);
         }
     }
 
@@ -249,7 +249,7 @@ export class FolderSnapshotManager {
                 }
 
                 if (data) {
-                    dump("FolderSnapshotManager: 发现旧版快照数据，执行迁移");
+                    dump("FolderSnapshotManager: legacy snapshot data found, migrating");
                     this.plugin.app.saveLocalStorage(this.storageKey, data);
                 } else {
                     return false;
@@ -257,7 +257,7 @@ export class FolderSnapshotManager {
             }
             return this.parseAndLoad(data);
         } catch (error) {
-            dump("FolderSnapshotManager: 加载快照失败", error);
+            dump("FolderSnapshotManager: failed to load snapshot", error);
             return false;
         }
     }
@@ -273,7 +273,7 @@ export class FolderSnapshotManager {
             );
             return true;
         } catch (error) {
-            dump("FolderSnapshotManager: 解析快照数据失败", error);
+            dump("FolderSnapshotManager: failed to parse snapshot data", error);
             return false;
         }
     }
@@ -287,14 +287,14 @@ export class FolderSnapshotManager {
             const obj = Object.fromEntries(this.snapshotMap);
             data = JSON.stringify(obj);
         } catch (error) {
-            dump("FolderSnapshotManager: 序列化快照失败", error);
+            dump("FolderSnapshotManager: failed to serialize snapshot", error);
             return;
         }
 
         try {
             this.plugin.app.saveLocalStorage(this.storageKey, data);
         } catch (error) {
-            dump("FolderSnapshotManager: 保存快照失败", error);
+            dump("FolderSnapshotManager: failed to save snapshot", error);
         }
 
         // 即使 localStorage 写入失败，镜像写入也照常进行

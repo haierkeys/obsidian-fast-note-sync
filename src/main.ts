@@ -467,7 +467,7 @@ export default class FastSync extends Plugin {
         }
       });
     } catch (e) {
-      console.warn(`Fast Note Sync: Protocol handler ${ssoAction} registration skipped or already exists. / 协议处理器注册跳过或已存在:`, e);
+      console.warn(`Fast Note Sync: Protocol handler ${ssoAction} registration skipped or already exists:`, e);
     }
 
     // 提前创建 MenuManager 并初始化 ribbon，必须在 onLayoutReady 之前完成，

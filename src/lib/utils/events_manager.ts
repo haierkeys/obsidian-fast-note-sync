@@ -25,7 +25,7 @@ export class EventManager {
   public registerEvents() {
     // 添加哈希表就绪检查
     if (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
-      dump("EventManager: 文件哈希管理器未就绪,跳过事件注册")
+      dump("EventManager: file hash manager not ready, skipping event registration")
       return
     }
 
@@ -144,7 +144,7 @@ export class EventManager {
   private onVisibilityChange = () => {
     if (activeDocument.visibilityState === "hidden") {
       if (this.plugin.settings.autoPauseMinimized) {
-        dump("Obsidian 已最小化，自动暂停同步")
+        dump("Obsidian minimized, auto-pausing sync")
         this.plugin.websocket?.unRegister()
       }
     } else {

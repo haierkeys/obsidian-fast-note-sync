@@ -79,7 +79,7 @@ const ConflictListView = ({ plugin, modal }: { plugin: FastSync, modal: Conflict
                 <div className="fns-ws-clients-stats-group">
                     {conflicts.length > 0 && (
                         <span className="fns-ws-clients-count-badge">
-                            {conflicts.length} 个文件冲突
+                            {$("ui.conflict.list_count", { count: conflicts.length })}
                         </span>
                     )}
                 </div>
@@ -93,7 +93,7 @@ const ConflictListView = ({ plugin, modal }: { plugin: FastSync, modal: Conflict
                                 <LucideIcon icon="check-circle" size={48} />
                             </div>
                             <div className="fns-font-lg">
-                                当前无发生冲突的笔记
+                                {$("ui.conflict.list_empty")}
                             </div>
                         </div>
                     </div>
@@ -136,7 +136,7 @@ const ConflictListView = ({ plugin, modal }: { plugin: FastSync, modal: Conflict
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        去解决冲突
+                                        {$("ui.conflict.menu_item")}
                                     </button>
                                 </div>
                             </div>

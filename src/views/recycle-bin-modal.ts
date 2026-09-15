@@ -444,7 +444,7 @@ export class RecycleBinModal extends Modal {
         }
 
         if (successCount > 0) {
-            showSyncNotice(`成功恢复 ${successCount} 个项目`);
+            showSyncNotice($("ui.notice.recycle_restored", { count: String(successCount) }));
             this.page = 1;
             this.selectedPaths.clear();
             this.selectedPathHashes.clear();

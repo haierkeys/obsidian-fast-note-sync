@@ -721,7 +721,7 @@ export class LocalStateFileMirror {
       if (!exists) return null;
       return await this.plugin.app.vault.adapter.read(this.mirrorPath);
     } catch (error) {
-      dump(`LocalStateFileMirror: 读取镜像文件失败: ${this.mirrorPath}`, error);
+      dump(`LocalStateFileMirror: failed to read mirror file: ${this.mirrorPath}`, error);
       return null;
     }
   }
@@ -753,7 +753,7 @@ export class LocalStateFileMirror {
     const data = this.latestData;
     void this.plugin.app.vault.adapter.write(this.mirrorPath, data)
       .catch((error) => {
-        dump(`LocalStateFileMirror: 写入镜像文件失败: ${this.mirrorPath}`, error);
+        dump(`LocalStateFileMirror: failed to write mirror file: ${this.mirrorPath}`, error);
       })
       .finally(() => {
         this.isWriting = false;

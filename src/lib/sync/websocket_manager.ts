@@ -515,7 +515,7 @@ export class WebSocketManager {
       while (!this.plugin.fileHashManager || !this.plugin.fileHashManager.isReady()) {
         if (Date.now() - startTime > maxWaitTime) {
           dump(`FileHashManager initialization timeout after ${maxWaitTime}ms`);
-          showSyncNotice("文件哈希管理器初始化超时,同步可能不稳定");
+          showSyncNotice($("ui.notice.file_hash_manager_timeout"));
           break;
         }
         await new Promise((resolve) => window.setTimeout(resolve, 100));

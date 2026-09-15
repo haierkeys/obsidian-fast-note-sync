@@ -527,7 +527,7 @@ export class SettingTab extends PluginSettingTab {
     new Setting(set).setName($("setting.debug.update_source")).addDropdown((dropdown) =>
       dropdown
         .addOption("github", "GitHub")
-        .addOption("cnb", "腾讯 cnb")
+        .addOption("cnb", $("setting.remote.option_cnb"))
         .setValue(this.plugin.settings.updateSource || "github")
         .onChange(async (value: "github" | "cnb") => {
           this.plugin.settings.updateSource = value
@@ -788,7 +788,7 @@ export class SettingTab extends PluginSettingTab {
           this.app,
           $("setting.debug.version_install_title") || "指定版本安装",
           $("setting.debug.version_install_desc") || "直接绕开远端服务下载并覆盖安装指定版本的插件。",
-          "例如: 2.0.12",
+          $("setting.debug.version_install_example"),
           (val) => {
             void this.startVersionInstall(val, installButton)
           }
@@ -1050,7 +1050,7 @@ export class SettingTab extends PluginSettingTab {
               throw new Error(`Failed to download ${zipFileName}: ${response.status}`);
             }
 
-            showSyncNotice("下载成功，正在解密与提取文件...");
+            showSyncNotice($("ui.notice.version_download_extract"));
             const arrayBuffer = response.arrayBuffer;
             dump("[fast-note-sync] arrayBuffer loaded. size in bytes:", arrayBuffer.byteLength);
 
@@ -1363,7 +1363,7 @@ export class SettingTab extends PluginSettingTab {
         .setName($("setting.remote.allowed_redirect_domains") || "跳转域名允许清单")
         .addTextArea((text) =>
           text
-            .setPlaceholder("例如: *.example.com\nbackup.myvault.cn")
+            .setPlaceholder($("setting.remote.allowed_redirect_domains_placeholder"))
             .setValue(this.plugin.settings.allowedRedirectDomains || "")
             .onChange(async (value) => {
               this.plugin.settings.allowedRedirectDomains = value
@@ -1397,7 +1397,7 @@ export class SettingTab extends PluginSettingTab {
     )
     this.setDescWithBreaks(
       set.lastElementChild as HTMLElement,
-      $("setting.remote.client_name_desc") + "\n*(隐私提示：若不配置将默认回退为操作系统通用标识，如需自定义建议使用不包含您真实全名或设备隐私特征的代号)*"
+      $("setting.remote.client_name_desc") + $("setting.remote.client_name_privacy_note")
     )
   }
 

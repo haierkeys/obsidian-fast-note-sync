@@ -269,6 +269,6 @@ export class StatusBarManager {
   showFailed(): void {
     if (this.statusBarProgressBar) this.statusBarProgressBar.addClass("fns-hidden");
     if (this.statusBarCheck) this.statusBarCheck.addClass("fns-hidden");
-    if (this.statusBarPct) this.statusBarPct.setText("同步失败");
+    if (this.statusBarPct) this.statusBarPct.setText($("ui.status.failed"));
   }
 }

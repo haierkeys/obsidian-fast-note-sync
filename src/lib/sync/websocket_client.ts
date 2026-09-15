@@ -1,5 +1,6 @@
 import { moment } from "obsidian";
 import { dump, dumpError, isWsUrl, showSyncNotice } from "../utils/helpers";
+import { $ } from "../../i18n/lang";
 
 const safeMoment = moment as unknown as (inp?: unknown) => { format(format: string): string };
 
@@ -340,7 +341,7 @@ export class WebSocketClient {
 
       if (this.timeConnect === 16 && !this.hasNotifiedReconnectFailure) {
         this.hasNotifiedReconnectFailure = true;
-        showSyncNotice("同步连接持续失败，将继续在后台重试");
+        showSyncNotice($("ui.notice.connection_retrying"));
       }
 
       // Delay backoff: first 3 times 1s, then exponential growth up to 30 min

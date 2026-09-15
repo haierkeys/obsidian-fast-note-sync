@@ -22,7 +22,7 @@ export class AboutModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         this.containerEl.addClass("fns-about-modal-container");
-        this.titleEl.setText(this.type === 'plugin' ? "插件版本" : "服务器版本");
+        this.titleEl.setText(this.type === 'plugin' ? $("ui.about.plugin_version") : $("ui.about.server_version"));
 
         this.root = createRoot(contentEl);
         this.root.render(

@@ -72,7 +72,7 @@ export const configModify = async function (path: string, plugin: FastSync, even
                 }
             }
         } catch (error) {
-            dumpError("读取配置文件出错:", error)
+            dumpError("Failed to read config file:", error)
         }
     }
 
@@ -301,7 +301,7 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
             }
         }
     } catch (error) {
-        dumpError("读取配置文件出错:", error);
+        dumpError("Failed to read config file:", error);
         plugin.configSyncTasks.failed++;
         plugin.recordSyncCompleted('setting', data.pageIndex);
         return
@@ -735,12 +735,12 @@ export const configReload = async function (path: string, plugin: FastSync, even
                                     app.customCss.onConfigChange()
                                 }
                             } else {
-                                console.warn(`[Sync] 主题 "${targetTheme}" 本地尚未就绪，暂不切换以防重置为默认`);
+                                console.warn(`[Sync] theme "${targetTheme}" not ready locally, skipping switch to avoid resetting to default`);
                             }
                         }
                     }
                 } catch (e) {
-                    dumpError(`[Sync] 处理 ${p} 失败:`, e);
+                    dumpError(`[Sync] failed to process ${p}:`, e);
                 }
             } else if (p === `${configDir}/community-plugins.json`) {
                 try {

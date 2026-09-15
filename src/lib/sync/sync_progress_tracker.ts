@@ -1,5 +1,6 @@
 // src/lib/sync/sync_progress_tracker.ts
 import { dump } from "../utils/helpers";
+import { $ } from "../../i18n/lang";
 
 export type SyncType = 'note' | 'file' | 'setting' | 'folder';
 export type SyncPhase = 'hash' | 'upload' | 'download' | 'idle';
@@ -553,14 +554,14 @@ export class SyncProgressTracker {
     
     // Custom label mappings / 自定义标签映射
     const labels: Record<SyncType, string> = {
-      note: '笔记',
-      file: '文件',
-      setting: '配置',
-      folder: '文件夹'
+      note: $("ui.status.label_note"),
+      file: $("ui.status.label_file"),
+      setting: $("ui.status.label_setting"),
+      folder: $("ui.status.label_folder")
     };
 
     if (this.hashProgress < 1) {
-      parts.push(`哈希计算: ${Math.round(this.hashProgress * 100)}%`);
+      parts.push($("ui.status.hash_calc", { pct: Math.round(this.hashProgress * 100) }));
     }
 
     for (const type of this.activeTypes) {
@@ -571,9 +572,9 @@ export class SyncProgressTracker {
       if (prog.pageTaskTotal > 0) {
         parts.push(`${label} ${prog.pageTaskCompleted}/${prog.pageTaskTotal}`);
       } else if (prog.downloadPageIndex !== -1) {
-        parts.push(`${label} 页码 ${prog.downloadPageIndex + 1}`);
+        parts.push($("ui.status.page_num", { label, page: prog.downloadPageIndex + 1 }));
       } else if (!prog.uploadComplete) {
-        parts.push(`${label} 发送中`);
+        parts.push($("ui.status.sending", { label }));
       }
     }
 
