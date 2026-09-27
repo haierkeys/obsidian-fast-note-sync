@@ -61,7 +61,7 @@ export const noteModify = async function (file: TAbstractFile, plugin: FastSync,
         plugin.pendingNoteModifies.set(file.path, contentHash)
         plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
       }
-      await plugin.concurrencyLimiter.waitForSlot(file.path)
+      if (!await plugin.concurrencyLimiter.waitForSlot(file.path)) return
       void plugin.websocket.SendMessage("NoteModify", data)
       dump(`Note modify send`, data.path, data.contentHash, data.mtime, data.pathHash)
     } finally {
@@ -98,7 +98,7 @@ export const noteDelete = async function (file: TAbstractFile, plugin: FastSync,
         path: file.path,
         pathHash: hashContent(file.path),
       }
-      await plugin.concurrencyLimiter.waitForSlot(file.path)
+      if (!await plugin.concurrencyLimiter.waitForSlot(file.path)) return
       void plugin.websocket.SendMessage("NoteDelete", data, undefined, () => {
         // 消息真正写入 TCP 缓冲区后加入 pending set，等待 NoteDeleteAck 再删 hash
         // Add to pending set only after message is actually buffered; remove hash only on NoteDeleteAck
@@ -129,7 +129,7 @@ export const noteDeleteByPath = async function (filePath: string, plugin: FastSy
     plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
     plugin.addIgnoredFile(filePath)
     try {
-      await plugin.concurrencyLimiter.waitForSlot(filePath)
+      if (!await plugin.concurrencyLimiter.waitForSlot(filePath)) return
       void plugin.websocket.SendMessage("NoteDelete", {
         vault: plugin.settings.vault,
         path: filePath,
@@ -204,7 +204,7 @@ export const noteRename = async function (file: TAbstractFile, oldfile: string, 
       // 将重命名信息存入 Map（key 为 newPath），等待服务端 NoteRenameAck 按 path 精确匹配后再更新 hashManager
       // Store rename info in Map (keyed by newPath), update hashManager only after server NoteRenameAck matches by path
       plugin.pendingNoteRenames.set(file.path, { oldPath: oldfile, newPath: file.path, contentHash })
-      await plugin.concurrencyLimiter.waitForSlot(file.path, true)
+      if (!await plugin.concurrencyLimiter.waitForSlot(file.path, true)) return
       void plugin.websocket.SendMessage("NoteRename", data)
       dump(`Note rename send`, data.path, data.pathHash)
     } finally {
@@ -235,6 +235,16 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
           // Fail-safe：写盘前检查本地是否有未推送的编辑，避免服务端推送盲覆盖用户刚做的改动
           // Fail-safe: before overwriting, check for unsynced local edits so a server push
           // doesn't blindly clobber changes the user just made
+          const localContentHashNow = await hashContentAsync(await plugin.app.vault.read(file));
+          const remoteContentHashNow = await hashContentAsync(data.content);
+          const contentsMatch = localContentHashNow === remoteContentHashNow;
+          const baseHashNow = plugin.fileHashManager.getPathHash(normalizedPath);
+          // A replay of the unchanged server baseline is not a two-sided edit.
+          if (!contentsMatch && baseHashNow !== null && remoteContentHashNow === baseHashNow) {
+            plugin.pendingNoteModifies.set(normalizedPath, localContentHashNow);
+            plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies);
+            return;
+          }
           const hasPendingLocalEdit = plugin.pendingNoteModifies.has(data.path)
           let hasDivergedSinceLastSync = false
           if (!hasPendingLocalEdit) {
@@ -254,7 +264,7 @@ export const receiveNoteSyncModify = async function (data: ReceiveMessage, plugi
             }
           }
 
-          if (hasPendingLocalEdit || hasDivergedSinceLastSync || plugin.syncState.conflictedPaths.has(normalizedPath)) {
+          if (!contentsMatch && (hasPendingLocalEdit || hasDivergedSinceLastSync || plugin.syncState.conflictedPaths.has(normalizedPath))) {
             dump(`[FastSync] Skip overwrite, local unsynced edit detected: ${normalizedPath}`)
 
             // 如果存在未同步的本地修改或已在冲突列表中，将服务端最新推送的内容写入/更新到远端备份文件 xxx.remote.md
@@ -409,7 +419,10 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
   // Overwrites any stale pending entry left by a previously interrupted noteModify.
   plugin.pendingNoteModifies.set(file.path, contentHash)
   plugin.localStorageManager.savePending('pendingNoteModifies', plugin.pendingNoteModifies)
-  await plugin.concurrencyLimiter.waitForSlot(file.path)
+  if (!await plugin.concurrencyLimiter.waitForSlot(file.path)) {
+    plugin.removeIgnoredFile(file.path)
+    return
+  }
   void plugin.websocket.SendMessage("NoteModify", sendData, undefined, () => {
     plugin.removeIgnoredFile(file.path)
   }, (data as ReceivePathMessage & { context?: string }).context)
@@ -421,8 +434,12 @@ export const receiveNoteUpload = async function (data: ReceivePathMessage, plugi
  */
 export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, plugin: FastSync) {
   if (plugin.settings.syncEnabled == false) return
+  const pushPageIndex = plugin.syncState.pendingNotePushPageIndex.get(data.path);
+  const completionPageIndex = pushPageIndex ?? data.pageIndex;
+  plugin.syncState.pendingNotePushPageIndex.delete(data.path);
+  plugin.concurrencyLimiter.releaseSlot(data.path);
   if (isPathExcluded(data.path, plugin)) {
-    plugin.recordSyncCompleted('note', data.pageIndex)
+    plugin.recordSyncCompleted('note', completionPageIndex)
     return
   }
   dump(`Receive note sync mtime:`, data.path, data.mtime)
@@ -463,7 +480,7 @@ export const receiveNoteSyncMtime = async function (data: ReceiveMtimeMessage, p
     }
     plugin.noteSyncTasks.failed++
   } finally {
-    plugin.recordSyncCompleted('note', data.pageIndex)
+    plugin.recordSyncCompleted('note', completionPageIndex)
   }
 }
 

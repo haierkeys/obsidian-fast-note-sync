@@ -164,6 +164,8 @@ export class WebSocketManager {
         dump("Service authorization");
       },
       onClose: (client, code, reason) => {
+        SyncLogManager.getInstance().addLog('error', 'ConnectionClosed',
+          `WebSocket closed: ${code} ${reason}`, 'error');
         if (this.plugin.isSyncing) {
           this.plugin.isSyncing = false;
           this.plugin.isSyncRequesting = false;
@@ -416,7 +418,12 @@ export class WebSocketManager {
       // Filter based on Context: if there's an active sync context, incoming messages (including Acks) must match
       if (this.plugin.syncState.activeSyncContext) {
         const isControlMsg = msgAction === WSAction.ClientReceiveAuth || msgAction === WSAction.ClientReceiveInfo;
-        if (!isControlMsg && data.context !== this.plugin.syncState.activeSyncContext) {
+        // Older servers omit context on the UpdateMtime response to NoteModify.
+        // Only admit a contextless response for a pending upload in this client.
+        const isPendingMtimeAck = msgAction === WSAction.NoteSyncMtime && !data.context
+          && typeof data.data?.path === 'string'
+          && this.plugin.pendingNoteModifies.has(data.data.path);
+        if (!isControlMsg && !isPendingMtimeAck && data.context !== this.plugin.syncState.activeSyncContext) {
           dump(`[SyncContext] Discard message ${msgAction} due to mismatched context. Expected: ${this.plugin.syncState.activeSyncContext}, Got: ${data.context}`);
           return;
         }

@@ -251,7 +251,7 @@ export const fileModify = async function (file: TAbstractFile, plugin: FastSync,
       plugin.pendingFileDeleteAcks.delete(file.path)
       plugin.pendingUploadHashes.set(file.path, contentHash)
       plugin.localStorageManager.savePending('pendingUploadHashes', plugin.pendingUploadHashes)
-      await plugin.concurrencyLimiter.waitForSlot(file.path)
+      if (!await plugin.concurrencyLimiter.waitForSlot(file.path)) return
       void plugin.websocket.SendMessage("FileUploadCheck", data)
       dump(`File modify check sent`, data.path, data.contentHash)
     } finally {
@@ -301,7 +301,7 @@ export const fileDelete = async function (file: TAbstractFile, plugin: FastSync,
         path: file.path,
         pathHash: hashContent(file.path),
       }
-      await plugin.concurrencyLimiter.waitForSlot(file.path)
+      if (!await plugin.concurrencyLimiter.waitForSlot(file.path)) return
       void plugin.websocket.SendMessage("FileDelete", data, undefined, () => {
         // 消息真正写入 TCP 缓冲区后加入 pending set，等待 FileDeleteAck 再删 hash
         // Add to pending set only after message is actually buffered; remove hash only on FileDeleteAck
@@ -343,7 +343,7 @@ export const fileDeleteByPath = async function (filePath: string, plugin: FastSy
 
     plugin.addIgnoredFile(filePath)
     try {
-      await plugin.concurrencyLimiter.waitForSlot(filePath)
+      if (!await plugin.concurrencyLimiter.waitForSlot(filePath)) return
       void plugin.websocket.SendMessage("FileDelete", {
         vault: plugin.settings.vault,
         path: filePath,
@@ -434,7 +434,7 @@ export const fileRename = async function (file: TAbstractFile, oldfile: string, 
         // 将重命名推入待确认队列，等待服务端 FileRenameAck 后再更新 hashManager
         // Push rename to pending queue; hashManager will be updated after server FileRenameAck
         plugin.pendingFileRenames.push({ oldPath: oldfile, newPath: file.path, contentHash })
-        await plugin.concurrencyLimiter.waitForSlot(file.path, true)
+        if (!await plugin.concurrencyLimiter.waitForSlot(file.path, true)) return
         void plugin.websocket.SendMessage("FileRename", data)
       }
     } finally {
@@ -492,8 +492,8 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
 
   const runUpload = async () => {
     // 标记该路径进入活跃上传状态
+    if (!await plugin.concurrencyLimiter.waitForSlot(data.path, false, 10)) return;
     activeUploadsMap.set(data.path, { cancelled: false });
-    await plugin.concurrencyLimiter.waitForSlot(data.path, false, 10) // 优先级设为 10，优先处理上传
 
     // 断点续传 checkpoint key，提升到 try 外以便 catch 块中也能清除
     // Resume checkpoint key hoisted outside try so the catch block can also remove it
@@ -644,6 +644,7 @@ export const receiveFileUpload = async function (data: FileUploadMessage, plugin
             status: 'pending',
             message: '连接已断开，等待重连后续传'
           });
+          plugin.concurrencyLimiter.releaseSlot(data.path);
           return;
         }
 
@@ -762,7 +763,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
 
   // 等待并发槽位，防止大量并发下载导致内存耗尽
   const slotKey = `download_${data.path}`
-  await plugin.concurrencyLimiter.waitForSlot(slotKey, false, -10) // 优先级设为 -10，延后处理下载
+  if (!await plugin.concurrencyLimiter.waitForSlot(slotKey, false, -10)) return;
 
   try {
     // 下载内存缓冲控制：如果当前内存中待写盘的分块过多，由于下载是异步触发的，此处等待

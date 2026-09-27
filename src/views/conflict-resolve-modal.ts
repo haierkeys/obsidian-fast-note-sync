@@ -396,7 +396,10 @@ export class ConflictResolveModal extends Modal {
           console.error("Failed to clean up conflict-notes files on resolve:", e);
         }
 
-        await this.plugin.concurrencyLimiter.waitForSlot(this.file.path);
+        if (!await this.plugin.concurrencyLimiter.waitForSlot(this.file.path)) {
+          this.close();
+          return;
+        }
         void this.plugin.websocket.SendMessage("NoteModify", data);
 
         this.close();

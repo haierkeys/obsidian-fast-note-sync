@@ -7,7 +7,7 @@ import { dump } from "../utils/helpers";
  */
 export class ConcurrencyLimiter {
     private plugin: FastSync;
-    private queue: { key: string; priority: number; resolve: () => void }[] = [];
+    private queue: { key: string; priority: number; resolve: () => void; cancel: () => void }[] = [];
     private activeKeys: Set<string> = new Set();
     
     // 针对 FIFO 类型的 ACK（如重命名消息），记录其对应的 Key 顺序
@@ -23,16 +23,16 @@ export class ConcurrencyLimiter {
      * @param isFifo 是否是 FIFO 类型的 ACK (ACK 中不带 path)
      * @param priority 优先级（数字越大优先级越高，用于实现先上传后下载等逻辑）
      */
-    public async waitForSlot(key: string, isFifo: boolean = false, priority: number = 0): Promise<void> {
+    public async waitForSlot(key: string, isFifo: boolean = false, priority: number = 0): Promise<boolean> {
         if (!this.plugin.settings.concurrencyControlEnabled) {
-            return;
+            return true;
         }
 
         if (this.activeKeys.size < this.plugin.settings.maxConcurrentUploads) {
             this.activeKeys.add(key);
             if (isFifo) this.fifoKeys.push(key);
             dump(`Concurrency: Slot acquired immediately for ${key} (Priority: ${priority}). Active: ${this.activeKeys.size}`);
-            return;
+            return true;
         }
 
         return new Promise((resolve) => {
@@ -44,8 +44,9 @@ export class ConcurrencyLimiter {
                     this.activeKeys.add(key);
                     if (isFifo) this.fifoKeys.push(key);
                     dump(`Concurrency: Slot acquired from queue for ${key}. Active: ${this.activeKeys.size}`);
-                    resolve();
-                }
+                    resolve(true);
+                },
+                cancel: () => resolve(false)
             });
             // 按照优先级倒序排序（优先级数值越大的越靠前）
             this.queue.sort((a, b) => b.priority - a.priority);
@@ -115,15 +116,14 @@ export class ConcurrencyLimiter {
      */
     public clear(): void {
         dump(`Concurrency: Clearing all ${this.activeKeys.size} active tasks and ${this.queue.length} queued tasks.`);
-        this.activeKeys.clear();
-        this.fifoKeys = [];
-        // 放行所有正在等待的 Promise，避免排队任务永久悬挂（调用方在 withLock 内，
-        // resolve 后任务会因连接已断开而自然失败，走 catch/finally 释放锁）
+        // Settle cancelled waiters without granting slots or starting binary reads.
         const pending = this.queue;
         this.queue = [];
         for (const item of pending) {
-            item.resolve();
+            item.cancel();
         }
+        this.activeKeys.clear();
+        this.fifoKeys = [];
     }
 
 }
