@@ -103,7 +103,16 @@ const formatDownloadError = (e: unknown) => {
 const cleanupFileDownloadSession = async (plugin: FastSync, session: FileDownloadSession, failed = false) => {
   releaseSessionMemory(session)
   plugin.fileDownloadSessions.delete(session.sessionId)
-  if (session.tempDir) await clearTempChunksDir(plugin, session.sessionId)
+  // 清理临时目录失败不能中断记账：否则会话已移除，但失败计数、页完成与名额释放都会丢失
+  // A temp-dir cleanup failure must not abort bookkeeping; otherwise the session is gone but
+  // the failure count, page completion and slot release are all lost
+  if (session.tempDir) {
+    try {
+      await clearTempChunksDir(plugin, session.sessionId)
+    } catch (e) {
+      dumpError(`Temp chunk cleanup failed for session ${session.sessionId}`, e)
+    }
+  }
   if (failed) plugin.fileSyncTasks.failed++
   plugin.recordSyncCompleted('file', session.pageIndex)
 }
@@ -124,6 +133,31 @@ const failFileDownloadSession = async (plugin: FastSync, session: FileDownloadSe
   if (releaseSlot) {
     plugin.concurrencyLimiter.releaseSlot(`download_${session.path}`)
   }
+}
+
+// 下载会话看门狗：服务端下载会话会过期（download-session-timeout），分片不再到达时客户端会话
+// 会永久占住并发名额，并让 checkSyncCompletion 的 fileDownloadSessions.size === 0 永远不成立。
+// 超过闲置期仍无响应/分片的会话按失败处理，释放名额并归账所属页；下一轮同步会重新下载。
+// Download watchdog: when the server-side download session expires and chunks stop arriving, the
+// client session would hold its concurrency slot forever and keep checkSyncCompletion from ever
+// finishing. Fail sessions idle past the limit, releasing the slot and page; the next round retries.
+export const DOWNLOAD_SESSION_IDLE_MS = 120000
+let lastDownloadSweepAt = 0
+export const sweepStalledDownloadSessions = async (plugin: FastSync, idleMs = DOWNLOAD_SESSION_IDLE_MS, now = Date.now()) => {
+  if (now - lastDownloadSweepAt < 10000) return 0
+  lastDownloadSweepAt = now
+  const stalled: Array<[string, FileDownloadSession]> = []
+  for (const [key, session] of plugin.fileDownloadSessions) {
+    if (session.lastActivityAt !== undefined && now - session.lastActivityAt > idleMs) stalled.push([key, session])
+  }
+  for (const [key, session] of stalled) {
+    plugin.fileDownloadSessions.delete(key)
+    // 临时会话 sessionId 为空：用其自身临时目录名清理，绝不能以空 id 删除整个 temp-chunks 目录
+    // Temp sessions have an empty sessionId: clean up by their own temp dir name, never the whole temp-chunks base
+    const sessionId = session.sessionId || session.tempDir?.split("/").pop() || key
+    await failFileDownloadSession(plugin, { ...session, sessionId }, `No download data received for ${Math.round(idleMs / 1000)}s`)
+  }
+  return stalled.length
 }
 
 const storeMemoryChunk = (session: FileDownloadSession, chunkIndex: number, chunkData: ArrayBuffer) => {
@@ -783,6 +817,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
       size: data.size,
       pageIndex: data.pageIndex,
       initialSlotKey: slotKey,
+      lastActivityAt: Date.now(),
       ...createDownloadStorage(plugin, `init_${data.pathHash}`, data.size),
     }
     plugin.fileDownloadSessions.set(tempKey, tempSession)
@@ -973,6 +1008,7 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
       size: data.size,
       pageIndex: tempSession.pageIndex,
       initialSlotKey: tempSession.initialSlotKey,
+      lastActivityAt: Date.now(),
       ...createDownloadStorage(plugin, data.sessionId, data.size),
     }
     plugin.fileDownloadSessions.set(data.sessionId, session)
@@ -988,6 +1024,7 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
       totalChunks: data.totalChunks,
       size: data.size,
       initialSlotKey: `download_${data.path}`,
+      lastActivityAt: Date.now(),
       ...createDownloadStorage(plugin, data.sessionId, data.size),
     }
     plugin.fileDownloadSessions.set(data.sessionId, session)
@@ -1133,6 +1170,7 @@ export const handleFileChunkDownload = async function (buf: ArrayBuffer | Blob, 
     });
     return
   }
+  session.lastActivityAt = Date.now()
 
   try {
     if (chunkIndex >= session.totalChunks) {
