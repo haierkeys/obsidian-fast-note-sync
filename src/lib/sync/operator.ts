@@ -827,7 +827,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
                 await scheduleHashTask(async () => {
                   try {
                     const contentHash = await Promise.race([
-                      hashContentAsync(await plugin.app.vault.read(file)),
+                      plugin.app.vault.read(file).then(content => hashContentAsync(content)),
                       new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error(`Hash timeout`)), 15000))
                     ]);
                     plugin.scannedNoteHashes.set(notePath, { hash: contentHash, mtime: noteMtime, size: noteSize });
