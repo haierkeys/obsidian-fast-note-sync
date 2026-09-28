@@ -263,7 +263,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     // 每次同步结束，均核实并更新一次状态栏冲突角标
     plugin.statusBarManager.updateConflictBadge();
 
-    if (plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
+    if (totalFailed === 0 && plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
       plugin.localStorageManager.setMetadata("isInitSync", true);
     }
 
@@ -275,7 +275,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     // was intercepted by the offline guard this round (user clicked "Cancel"), that batch of
     // risky files was never actually handled — refreshing the timestamp would zero out the
     // offline duration and silently defeat the guard on the very next round.
-    if (!offlineGuardSkippedThisRound) {
+    if (!offlineGuardSkippedThisRound && totalFailed === 0) {
       plugin.localStorageManager.setMetadata("lastSyncSuccessTime", Date.now());
     }
 
@@ -368,7 +368,7 @@ async function handleSyncPage(data: unknown, plugin: FastSync, type: "note" | "f
   dump(`[PageSync] Received page info for ${type}, pageIndex: ${pageMsg.pageIndex}, totalCount: ${pageMsg.totalCount}, isLast: ${pageMsg.isLast}, context: ${pageMsg.context}`);
 
   // 通知进度追踪器
-  plugin.progressTracker.recordPageProgress(type, pageMsg.pageIndex, pageMsg.totalCount, pageMsg.isLast);
+  plugin.progressTracker.recordPageProgress(type, pageMsg.pageIndex, pageMsg.totalCount, pageMsg.isLast, plugin.syncState.negotiated);
 
   // 登记当前下载分页状态 (Register page metadata)
   plugin.syncPageStateMap.set(type, {
