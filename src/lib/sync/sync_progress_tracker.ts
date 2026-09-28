@@ -339,6 +339,17 @@ export class SyncProgressTracker {
     if (this.isForcedComplete) return;
     const highest = this.lastAckedPage.get(type);
     if (highest === undefined) return;
+    // 下一待确认页已收到、只是本地仍在处理（如大附件上传超过 15s）时不能重发 ack：服务端会把
+    // 重复 ack 当作后续页丢失，回退窗口并整批重发，客户端反复收到重复明细。只有该页确实未到达才补发。
+    // If the next page to confirm has already arrived and is still being processed locally (e.g.
+    // large attachment uploads taking longer than 15s), do not resend the ack: the server treats a
+    // repeated ack as lost pages, rewinds its window and resends them all, so the client keeps
+    // receiving duplicate details. Only nudge when that page has genuinely not arrived.
+    const prog = this.progressMap.get(type);
+    if (prog && prog.pages.has(prog.ackWatermark)) {
+      this.scheduleStagnationRecheck(type);
+      return;
+    }
     dump(`[SyncProgressTracker] [Stagnation] 15s with no new detail for type ${type}, resending ack for highest confirmed pageIndex ${highest}`);
     this.onPageComplete?.(type, highest);
     // 继续排下一次检查，连续多次丢包场景下每 15s 补发一次，直到有新明细到达或同步结束
