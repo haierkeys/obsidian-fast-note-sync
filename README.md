@@ -65,6 +65,12 @@ For users in Mainland China, it is recommended to use the Tencent `cnb.cool` mir
     - Provides sync log functionality, making it easy to view detailed information for each synchronization.
 - **Cloud Backup**: Provides cloud backup functionality to protect your note data from being lost.
 
+### Recovery of remotely deleted files
+
+Server-requested deletions move notes, attachments, empty folders, and configuration files to the vault's local `.trash` directory. Existing targets displaced by a remote rename also go to local trash. This applies regardless of Obsidian's system-trash preference. If moving an item to trash fails, the operation reports an error and does not fall back to permanent deletion.
+
+The `.trash` directory is excluded from synchronization, including whitelist rules. Recovery copies remain local to that device; restore them manually with your file manager. This does not change temporary-chunk cleanup or the optional cloud-preview feature that removes local attachments after upload.
+
 ## 🗺️ Roadmap
 
 We are continuously improving, and the following are future development plans:

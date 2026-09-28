@@ -1,7 +1,7 @@
 import { TFolder, normalizePath } from "obsidian";
 
 import { SyncEndData, FolderSyncRenameMessage } from "../utils/types";
-import { hashContent, dump, dumpError, isFolderSyncPathExcluded, waitForFolderEmpty, vaultDelete, checkAndNotifyCaseConflict } from "../utils/helpers";
+import { hashContent, dump, dumpError, isFolderSyncPathExcluded, waitForFolderEmpty, checkAndNotifyCaseConflict } from "../utils/helpers";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../../main";
 
@@ -233,7 +233,7 @@ export const receiveFolderSyncDelete = async function (data: { path: string, las
                     }
                     // 记录待删除路径
                     plugin.lastSyncPathDeleted.add(normalizedPath)
-                    await vaultDelete(plugin.app.vault, folder, true)
+                    await plugin.app.vault.trash(folder, false)
                     plugin.folderSnapshotManager.removeFolder(normalizedPath)
                 } finally {
                     window.setTimeout(() => {
@@ -284,8 +284,8 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
 
                 try {
                     const target = plugin.app.vault.getAbstractFileByPath(normalizedNewPath)
-                    if (target) {
-                        await vaultDelete(plugin.app.vault, target, true)
+                    if (target && target !== folder) {
+                        await plugin.app.vault.trash(target, false)
                     }
 
                     await plugin.app.vault.rename(folder, normalizedNewPath)

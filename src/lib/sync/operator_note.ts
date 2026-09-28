@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, normalizePath } from "obsidian";
 
 import { ReceiveMessage, ReceiveMtimeMessage, ReceivePathMessage, SyncEndData } from "../utils/types";
-import { hashContent, hashContentAsync, dump, dumpError, isPathExcluded, getSafeCtime, vaultDelete, checkAndNotifyCaseConflict, getPluginDir } from "../utils/helpers";
+import { hashContent, hashContentAsync, dump, dumpError, isPathExcluded, getSafeCtime, checkAndNotifyCaseConflict, getPluginDir } from "../utils/helpers";
 import { SyncLogManager } from "./sync_log_manager";
 import type FastSync from "../../main";
 
@@ -487,7 +487,7 @@ export const receiveNoteSyncDelete = async function (data: ReceiveMessage, plugi
         // 记录待删除路径，用于拦截本地删除事件
         plugin.lastSyncPathDeleted.add(normalizedPath)
         try {
-          await vaultDelete(plugin.app.vault, file)
+          await plugin.app.vault.trash(file, false)
           // 服务端推送删除,从哈希表中移除
           plugin.fileHashManager.removeFileHash(normalizedPath)
           plugin.lastSyncMtime.delete(normalizedPath)
@@ -566,8 +566,8 @@ export const receiveNoteSyncRename = async function (data: { path: string, oldPa
         try {
           // 如果目标路径已存在文件，先尝试删除
           const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
-          if (targetFile) {
-            await vaultDelete(plugin.app.vault, targetFile)
+          if (targetFile && targetFile !== file) {
+            await plugin.app.vault.trash(targetFile, false)
           }
 
           await plugin.app.vault.rename(file, normalizedNewPath)

@@ -404,7 +404,7 @@ export const receiveConfigSyncDelete = async function (data: { path: string, las
             // 记录删除路径
             plugin.lastSyncPathDeleted.add(data.path)
             try {
-                await plugin.app.vault.adapter.remove(fullPath)
+                await plugin.app.vault.adapter.trashLocal(fullPath)
             } finally {
                 // 延时 500ms 清理
                 window.setTimeout(() => {
@@ -416,6 +416,10 @@ export const receiveConfigSyncDelete = async function (data: { path: string, las
         dumpError("[receiveConfigSyncDelete] error:", e)
         SyncLogManager.getInstance().addLog('receive', 'ConfigDelete', e instanceof Error ? e.message : String(e), 'error', data.path);
         plugin.configSyncTasks.failed++
+        // Preserve hash/state when moving to trash fails; never fall back to remove.
+        if (data.path) plugin.concurrencyLimiter.releaseSlot(data.path)
+        plugin.recordSyncCompleted('setting', data.pageIndex)
+        return
     }
 
     // 更新 ConfigManager 的文件状态

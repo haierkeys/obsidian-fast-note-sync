@@ -842,7 +842,7 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
       // 记录待删除路径
       plugin.lastSyncPathDeleted.add(normalizedPath)
       try {
-        await vaultDelete(plugin.app.vault, file)
+        await plugin.app.vault.trash(file, false)
         // 服务端推送删除,从哈希表中移除
         plugin.fileHashManager.removeFileHash(normalizedPath)
         plugin.lastSyncMtime.delete(normalizedPath)
@@ -1249,8 +1249,8 @@ export const receiveFileSyncRename = async function (data: { oldPath: string; pa
 
       try {
         const targetFile = plugin.app.vault.getFileByPath(normalizedNewPath)
-        if (targetFile) {
-          await vaultDelete(plugin.app.vault, targetFile)
+        if (targetFile && targetFile !== file) {
+          await plugin.app.vault.trash(targetFile, false)
         }
 
         await plugin.app.vault.rename(file, normalizedNewPath)
