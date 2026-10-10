@@ -1340,7 +1340,10 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     // 逐片读入后立即写入目标缓冲区并释放分片引用，避免 chunks 数组与整份 buffer 同时驻留内存 (2x 峰值)
     // Write each chunk into the target buffer as it is read, then drop the reference immediately,
     // instead of accumulating a chunks array alongside the full assembled buffer (avoids the 2x peak).
-    const completeFile = new Uint8Array(session.size)
+    // let 而非 const：服务端元数据陈旧时会把它替换为按实际字节数截断后的缓冲区（见下方 size mismatch 分支）
+    // let instead of const: replaced with a truncated-to-actual-bytes buffer when the server metadata
+    // is stale (see the size mismatch branch below).
+    let completeFile = new Uint8Array(session.size)
     let offset = 0
     for (let i = 0; i < session.totalChunks; i++) {
       let chunk: ArrayBuffer | undefined;
@@ -1366,8 +1369,41 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
     }
 
     if (offset !== session.size) {
-      await failFileDownloadSession(plugin, session, `Downloaded file size mismatch: got ${offset}, expected ${session.size}`, false)
-      return
+      // 服务端 size 元数据可能陈旧：此时服务端下发的字节就是真实内容，而 session.size /
+      // session.contentHash 仍是旧值（实测两个字段同时陈旧）。若无条件按截断失败，
+      // 客户端会在每一轮完整同步重复同一次下载，pending 永远无法收敛。
+      //
+      // 判据：把已组装的字节与本地已有文件用同一种哈希比较 —— 相等说明不是传输截断，
+      // 而是服务端元数据陈旧，此时接受实际字节；不相等仍走原有失败分支，
+      // 因此真正的传输截断不会被掩盖。
+      //
+      // The server's size metadata can be stale: the bytes it just sent are the real content,
+      // while session.size / session.contentHash still hold the old values (observed together).
+      // Failing unconditionally makes the client retry the same download on every full sync
+      // round, so pending never converges.
+      //
+      // Criterion: hash the assembled bytes and the local existing file with the same function.
+      // Equal means this is not a truncated transfer but stale server metadata, so the actual
+      // bytes are accepted; otherwise the original failure branch runs, so genuine truncation
+      // is still caught.
+      let staleServerMetadata = false
+      try {
+        const localHash = await hashFileAsync(plugin.app, normalizePath(session.path))
+        const receivedHash = await hashArrayBuffer(completeFile.buffer.slice(0, offset))
+        staleServerMetadata = !!localHash && localHash !== "0" && localHash === receivedHash
+      } catch {
+        staleServerMetadata = false
+      }
+      if (!staleServerMetadata) {
+        await failFileDownloadSession(plugin, session, `Downloaded file size mismatch: got ${offset}, expected ${session.size}`, false)
+        return
+      }
+      dump(`Stale server metadata, accepting actual bytes: ${session.path} declared=${session.size} actual=${offset}`)
+      // 缓冲区按实际字节数截断，避免写文件时把声明长度带来的尾部补零一起写进去
+      // Truncate the buffer to the actual byte count so trailing zero-fill implied by the
+      // declared size is never written out.
+      completeFile = new Uint8Array(completeFile.buffer.slice(0, offset))
+      session.size = offset
     }
 
     const normalizedPath = normalizePath(session.path)
