@@ -95,6 +95,74 @@ function commitScannedHashes(scanned: ScannedHashMap, commit: (m: ScannedHashMap
 /**
  * 检查同步是否完成
  */
+// 分页停滞看门狗：服务端分页下载缓存（syncDownloadCacheTTL，10 分钟）只在发页/收 ACK 时续期。
+// 客户端须处理完整页才 ACK，附件页处理超过 TTL 时缓存已被删除，后续页永不到达，本轮永久停滞。
+// 本地没有任何在途工作且计数长时间不动时，结束本轮（不记为成功）并重新发起同步；已完成的项目
+// 下一轮不会再出现，进度逐轮累积。保留待上传的本地编辑（不走 cancelSync）。
+// Paged-sync stall watchdog: the server's paged download cache (syncDownloadCacheTTL, 10 min) is
+// only refreshed on page send/ACK. The client ACKs only after finishing a page, so an attachment
+// page that takes longer than the TTL loses its cache and later pages never arrive. When nothing
+// is in flight locally and no counter moves for a long time, end the round (not as success) and
+// start a new one; completed items do not reappear, so progress accumulates. Pending local edits
+// are kept (cancelSync is not used).
+export const SYNC_STALL_RESTART_MS = 300000;
+const syncStallState: { context?: string; signature: string; lastProgressAt: number } = { signature: "", lastProgressAt: 0 };
+
+export function isSyncStalled(plugin: FastSync, ownerContext: string | undefined, now = Date.now()): boolean {
+  const signature = JSON.stringify([
+    plugin.noteSyncTasks.completed, plugin.fileSyncTasks.completed,
+    plugin.folderSyncTasks.completed, plugin.configSyncTasks.completed,
+    plugin.noteSyncTasks.failed, plugin.fileSyncTasks.failed,
+    plugin.uploadedChunksCount, plugin.downloadedChunksCount,
+    plugin.progressTracker.getOverallPct(),
+  ]);
+  if (syncStallState.context !== ownerContext || syncStallState.signature !== signature) {
+    syncStallState.context = ownerContext;
+    syncStallState.signature = signature;
+    syncStallState.lastProgressAt = now;
+    return false;
+  }
+  const limiter = plugin.concurrencyLimiter as unknown as { activeKeys: { size: number }; queue: unknown[] };
+  const idle = limiter.activeKeys.size === 0 && limiter.queue.length === 0
+    && plugin.fileDownloadSessions.size === 0 && !plugin.isSyncRequesting;
+  return idle && now - syncStallState.lastProgressAt > SYNC_STALL_RESTART_MS;
+}
+
+function restartStalledSync(plugin: FastSync, intervalId?: number): void {
+  if (intervalId) {
+    window.clearInterval(intervalId);
+    if (plugin.syncState.progressCheckIntervalId === intervalId) {
+      plugin.syncState.progressCheckIntervalId = null;
+    }
+  }
+  dump(`Sync stalled without progress for ${SYNC_STALL_RESTART_MS}ms; restarting. Tasks: note=${JSON.stringify(plugin.noteSyncTasks)}, file=${JSON.stringify(plugin.fileSyncTasks)}`);
+  SyncLogManager.getInstance().addOrUpdateLog({
+    id: `stall-${Date.now()}`, type: 'info', action: 'SyncSummary', status: 'error',
+    message: 'Sync stalled waiting for server pages; restarting a new round', timestamp: Date.now()
+  });
+  plugin.syncState.activeSyncContext = null;
+  plugin.syncTypeCompleteCount = 0;
+  plugin.resetSyncTasks();
+  plugin.syncPageStateMap.clear();
+  plugin.syncState.pendingNotePushPageIndex.clear();
+  plugin.syncState.pendingFilePushPageIndex.clear();
+  plugin.syncState.pendingConfigPushPageIndex.clear();
+  plugin.totalFilesToDownload = 0;
+  plugin.downloadedFilesCount = 0;
+  plugin.totalChunksToDownload = 0;
+  plugin.downloadedChunksCount = 0;
+  plugin.totalChunksToUpload = 0;
+  plugin.uploadedChunksCount = 0;
+  plugin.isSyncing = false;
+  plugin.progressTracker.forceComplete();
+  plugin.updateStatusBar("Sync stalled, restarting…");
+  window.setTimeout(() => {
+    if (plugin.websocket.isOpen && !plugin.isSyncing) {
+      void handleSync(plugin, plugin.localStorageManager.getMetadata("isInitSync") as boolean);
+    }
+  }, 5000);
+}
+
 export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncStartTime?: number, ownerContext?: string) {
   // 会话归属守卫：本轮检测所属的 context 已被新会话取代，说明是旧会话的迟到定时器
   // （例如断线重连后旧会话的 BatchAck 超时才姗姗来迟），此时只清理自己的 interval，
@@ -111,41 +179,10 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     }
     return;
   }
-  // 超时保底：调大为 300s 以支持超大库（多批次）的分批同步，防止误判超时终止
-  // Safety timeout: increased to 300s to support large vaults with many batches, preventing false timeout termination
-  const SYNC_TIMEOUT_MS = 300000;
-  if (syncStartTime && Date.now() - syncStartTime > SYNC_TIMEOUT_MS) {
-    if (intervalId) {
-      window.clearInterval(intervalId);
-      if (plugin.syncState.progressCheckIntervalId === intervalId) {
-        plugin.syncState.progressCheckIntervalId = null;
-      }
-    }
-    dump(`Sync completion timeout after ${SYNC_TIMEOUT_MS}ms. Tasks: note=${JSON.stringify(plugin.noteSyncTasks)}, file=${JSON.stringify(plugin.fileSyncTasks)}, folder=${JSON.stringify(plugin.folderSyncTasks)}, config=${JSON.stringify(plugin.configSyncTasks)}`)
-    plugin.syncState.activeSyncContext = null; // 同步超时，清空活跃的上下文 / Sync timeout, reset the active context
-    plugin.syncTypeCompleteCount = 0;
-    plugin.resetSyncTasks();
-    plugin.syncPageStateMap.clear(); // 清空残留的页状态 / Clear stale page state map
-    plugin.totalFilesToDownload = 0;
-    plugin.downloadedFilesCount = 0;
-    plugin.totalChunksToDownload = 0;
-    plugin.downloadedChunksCount = 0;
-    plugin.totalChunksToUpload = 0;
-    plugin.uploadedChunksCount = 0;
-    plugin.progressTracker.forceComplete();
-    // 超时保底不代表真正完成：仍有下载会话未结束时，如实提示"部分未完成"，而非静默上报成功
-    // A safety timeout does not mean genuine completion: if download sessions are still pending,
-    // surface "partially incomplete" instead of silently reporting success
-    if (plugin.fileDownloadSessions.size > 0) {
-      dump(`Sync completion timeout with ${plugin.fileDownloadSessions.size} unfinished file download session(s), reporting partial completion.`);
-      plugin.updateStatusBar($("ui.status.timeout_partial"));
-    } else {
-      plugin.updateStatusBar($("ui.status.completed"));
-    }
-    window.setTimeout(() => plugin.updateStatusBar(""), 10000);
+  if (ownerContext && isSyncStalled(plugin, ownerContext)) {
+    restartStalledSync(plugin, intervalId);
     return;
   }
-
   const ws = plugin.websocket.ws;
   const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
 
