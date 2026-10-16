@@ -95,7 +95,7 @@ function commitScannedHashes(scanned: ScannedHashMap, commit: (m: ScannedHashMap
 /**
  * 检查同步是否完成
  */
-export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncStartTime?: number, ownerContext?: string) {
+export function checkSyncCompletion(plugin: FastSync, intervalId?: number, _syncStartTime?: number, ownerContext?: string) {
   // 会话归属守卫：本轮检测所属的 context 已被新会话取代，说明是旧会话的迟到定时器
   // （例如断线重连后旧会话的 BatchAck 超时才姗姗来迟），此时只清理自己的 interval，
   // 不再触碰任何共享同步状态，避免把新会话的进度/上下文误清掉
@@ -111,41 +111,9 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     }
     return;
   }
-  // 超时保底：调大为 300s 以支持超大库（多批次）的分批同步，防止误判超时终止
-  // Safety timeout: increased to 300s to support large vaults with many batches, preventing false timeout termination
-  const SYNC_TIMEOUT_MS = 300000;
-  if (syncStartTime && Date.now() - syncStartTime > SYNC_TIMEOUT_MS) {
-    if (intervalId) {
-      window.clearInterval(intervalId);
-      if (plugin.syncState.progressCheckIntervalId === intervalId) {
-        plugin.syncState.progressCheckIntervalId = null;
-      }
-    }
-    dump(`Sync completion timeout after ${SYNC_TIMEOUT_MS}ms. Tasks: note=${JSON.stringify(plugin.noteSyncTasks)}, file=${JSON.stringify(plugin.fileSyncTasks)}, folder=${JSON.stringify(plugin.folderSyncTasks)}, config=${JSON.stringify(plugin.configSyncTasks)}`)
-    plugin.syncState.activeSyncContext = null; // 同步超时，清空活跃的上下文 / Sync timeout, reset the active context
-    plugin.syncTypeCompleteCount = 0;
-    plugin.resetSyncTasks();
-    plugin.syncPageStateMap.clear(); // 清空残留的页状态 / Clear stale page state map
-    plugin.totalFilesToDownload = 0;
-    plugin.downloadedFilesCount = 0;
-    plugin.totalChunksToDownload = 0;
-    plugin.downloadedChunksCount = 0;
-    plugin.totalChunksToUpload = 0;
-    plugin.uploadedChunksCount = 0;
-    plugin.progressTracker.forceComplete();
-    // 超时保底不代表真正完成：仍有下载会话未结束时，如实提示"部分未完成"，而非静默上报成功
-    // A safety timeout does not mean genuine completion: if download sessions are still pending,
-    // surface "partially incomplete" instead of silently reporting success
-    if (plugin.fileDownloadSessions.size > 0) {
-      dump(`Sync completion timeout with ${plugin.fileDownloadSessions.size} unfinished file download session(s), reporting partial completion.`);
-      plugin.updateStatusBar($("ui.status.timeout_partial"));
-    } else {
-      plugin.updateStatusBar($("ui.status.completed"));
-    }
-    window.setTimeout(() => plugin.updateStatusBar(""), 10000);
-    return;
-  }
-
+  // Completion is determined by acknowledgements, never total elapsed time.
+  // Large vaults can keep making progress for hours; request and connection
+  // failures retain their own timeout/cleanup paths.
   const ws = plugin.websocket.ws;
   const bufferedAmount = ws && ws.readyState === WebSocket.OPEN ? ws.bufferedAmount : 0;
 
@@ -231,6 +199,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     const offlineGuardSkippedThisRound = plugin.syncState.offlineGuardSkippedThisRound;
 
     plugin.syncState.activeSyncContext = null; // 同步完成，清空活跃的上下文 / Sync completed, reset the active context
+    plugin.isSyncing = false;
     plugin.syncTypeCompleteCount = 0;
     plugin.resetSyncTasks();
     plugin.syncPageStateMap.clear(); // 同步完成，清空残留的页状态 / Sync completed, clear page state map
@@ -300,7 +269,7 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     const detailText = plugin.progressTracker.getDetailText();
     const finalStatusText = detailText ? `${statusText} · ${detailText}` : statusText;
 
-    plugin.updateStatusBar(finalStatusText, overallPercentage, 100);
+    plugin.updateStatusBar(finalStatusText, Math.min(overallPercentage, 99), 100);
   }
 }
 /**
@@ -1189,7 +1158,7 @@ export const handleSync = async function (plugin: FastSync, isLoadLastTime: bool
     // 避免旧会话迟到的 finally 打断已经在跑的新会话
     // Same guard: only reset isSyncing when this invocation still owns the active
     // session (or no session is active), so a stale session cannot interrupt a running new one.
-    if (plugin.syncState.activeSyncContext === context || plugin.syncState.activeSyncContext === null) {
+    if (plugin.syncState.activeSyncContext === null) {
       plugin.isSyncing = false;
     }
   }
@@ -1664,8 +1633,7 @@ export const handleRequestSend = async function (plugin: FastSync, syncMode: Syn
     ));
   }
 
-  // 任一类失败不阻断其他类；失败类由 300s 总兜底（checkSyncCompletion）复位
-  // A failure in any single type does not block the others; a failed type is reset by the 300s overall fallback (checkSyncCompletion)
+  // A failed type must remain incomplete; elapsed time cannot turn it into success.
   await Promise.allSettled(jobs);
 
   if (plugin.settings.syncEnabled && shouldSyncNotes) {

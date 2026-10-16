@@ -79,6 +79,8 @@ export class WebSocketManager {
   public client: WebSocketClient;
   private plugin: FastSync;
   private currentStartHandleId = 0;
+  private receivedFileDetails = new Set<string>();
+  private receivedFileContext: string | null = null;
   // startupDelay 按设置文案（setting.sync.startup_delay_desc）本意是只延迟"首次"检查更新，
   // 用于错开 Obsidian 启动时其他插件并发加载造成的卡顿；不应在每次断线重连时都重复套用。
   // startupDelay is documented as delaying only the "first" update check, to avoid contending
@@ -164,6 +166,8 @@ export class WebSocketManager {
         dump("Service authorization");
       },
       onClose: (client, code, reason) => {
+        SyncLogManager.getInstance().addLog('error', 'ConnectionClosed',
+          `WebSocket closed: ${code} ${reason}`, 'error');
         if (this.plugin.isSyncing) {
           this.plugin.isSyncing = false;
           this.plugin.isSyncRequesting = false;
@@ -174,6 +178,7 @@ export class WebSocketManager {
           // and sending a full round under a dead context.
           this.plugin.syncState.activeSyncContext = null;
         }
+        this.receivedFileDetails.clear();
         clearUploadQueue();
         this.plugin.concurrencyLimiter.clear();
         // 断线：清空所有在途上行批发送窗口会话的重传 timer（设计稿 §3.2 异常路径表）；
@@ -416,7 +421,12 @@ export class WebSocketManager {
       // Filter based on Context: if there's an active sync context, incoming messages (including Acks) must match
       if (this.plugin.syncState.activeSyncContext) {
         const isControlMsg = msgAction === WSAction.ClientReceiveAuth || msgAction === WSAction.ClientReceiveInfo;
-        if (!isControlMsg && data.context !== this.plugin.syncState.activeSyncContext) {
+        // Older servers omit context on the UpdateMtime response to NoteModify.
+        // Only admit a contextless response for a pending upload in this client.
+        const isPendingMtimeAck = msgAction === WSAction.NoteSyncMtime && !data.context
+          && typeof data.data?.path === 'string'
+          && this.plugin.pendingNoteModifies.has(data.data.path);
+        if (!isControlMsg && !isPendingMtimeAck && data.context !== this.plugin.syncState.activeSyncContext) {
           dump(`[SyncContext] Discard message ${msgAction} due to mismatched context. Expected: ${this.plugin.syncState.activeSyncContext}, Got: ${data.context}`);
           return;
         }
@@ -441,7 +451,25 @@ export class WebSocketManager {
           if (pageIndex !== undefined) merged.pageIndex = pageIndex;
           payload = merged;
         }
-        void handler(payload, this.plugin);
+        this.receivedFileDetails ??= new Set<string>();
+        const context = this.plugin.syncState.activeSyncContext;
+        if (this.receivedFileContext !== context) {
+          this.receivedFileDetails.clear();
+          this.receivedFileContext = context;
+        }
+        // Retransmission must not enqueue the same page item again while it is
+        // waiting for a slot or already processed. Non-paged live edits bypass this.
+        const path = (payload as { path?: string })?.path;
+        const detailKey = context && pageIndex !== undefined && typeof path === 'string'
+          && [WSAction.FileSyncUpdate, WSAction.FileUpload, WSAction.FileSyncMtime,
+              WSAction.FileSyncDelete, WSAction.FileSyncRename].includes(msgAction)
+          ? JSON.stringify([context, pageIndex, msgAction, path]) : null;
+        if (detailKey && this.receivedFileDetails.has(detailKey)) return;
+        if (detailKey) this.receivedFileDetails.add(detailKey);
+        void Promise.resolve(handler(payload, this.plugin)).catch(error => {
+          if (detailKey) this.receivedFileDetails.delete(detailKey);
+          dump('Sync handler failed', msgAction, error);
+        });
         this.client.notifyActivity();
       }
     }

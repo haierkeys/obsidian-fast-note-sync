@@ -333,6 +333,7 @@ export default {
   "ui.log.summary.no_changes": "无变更",
 
   // --- ui.log.action ---
+  "ui.log.action.ConnectionClosed": "同步连接已断开",
   "ui.log.action.VaultScanning_full": "笔记库哈希计算进度(全量)",
   "ui.log.action.VaultScanning_incremental": "笔记库哈希计算进度(增量)",
   "ui.log.action.VaultScanningSummary_full": "同步开始(全量) - 哈希计算",

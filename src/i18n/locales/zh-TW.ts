@@ -333,6 +333,7 @@ export default {
   "ui.log.summary.no_changes": "無變更",
 
   // --- ui.log.action ---
+  "ui.log.action.ConnectionClosed": "同步連線已中斷",
   "ui.log.action.VaultScanning_full": "筆記庫雜湊計算進度(全量)",
   "ui.log.action.VaultScanning_incremental": "筆記庫雜湊計算進度(增量)",
   "ui.log.action.VaultScanningSummary_full": "同步開始（全量）- 雜湊計算",

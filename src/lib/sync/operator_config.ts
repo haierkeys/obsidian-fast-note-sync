@@ -111,7 +111,10 @@ export const configModify = async function (path: string, plugin: FastSync, even
     plugin.pendingConfigDeleteAcks.delete(path)
     plugin.pendingConfigModifies.set(path, contentHash)
     plugin.localStorageManager.savePending('pendingConfigModifies', plugin.pendingConfigModifies)
-    await plugin.concurrencyLimiter.waitForSlot(path)
+    if (!await plugin.concurrencyLimiter.waitForSlot(path)) {
+        plugin.removeIgnoredConfigFile(path)
+        return
+    }
     void plugin.websocket.SendMessage("SettingModify", data)
 
     plugin.removeIgnoredConfigFile(path)
@@ -135,7 +138,10 @@ export const configDelete = async function (path: string, plugin: FastSync, even
         path: path,
         pathHash: hashContent(path),
     }
-    await plugin.concurrencyLimiter.waitForSlot(path)
+    if (!await plugin.concurrencyLimiter.waitForSlot(path)) {
+        plugin.removeIgnoredConfigFile(path)
+        return
+    }
     void plugin.websocket.SendMessage("SettingDelete", data, undefined, () => {
         // 消息真正写入 TCP 缓冲区后加入 pending set，等待 SettingDeleteAck 再删 hash
         // Add to pending set only after message is actually buffered; remove hash only on SettingDeleteAck
@@ -334,7 +340,10 @@ export const receiveConfigUpload = async function (data: ReceivePathMessage, plu
     if (data.pageIndex !== undefined) {
         plugin.syncState.pendingConfigPushPageIndex.set(data.path, data.pageIndex)
     }
-    await plugin.concurrencyLimiter.waitForSlot(data.path)
+    if (!await plugin.concurrencyLimiter.waitForSlot(data.path)) {
+        plugin.removeIgnoredConfigFile(data.path)
+        return
+    }
     void plugin.websocket.SendMessage("SettingModify", sendData, undefined, function () {
         plugin.removeIgnoredConfigFile(data.path);
     }, (data as ReceivePathMessage & { context?: string }).context);

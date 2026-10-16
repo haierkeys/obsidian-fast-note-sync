@@ -2,6 +2,7 @@
 
 
 export default {
+    "ui.conflict.diff_skipped": "Large file: line-by-line comparison was skipped. Choose a version above or edit the text directly.",
   "fns.desc": "A plugin for private deployment that enables real-time sync & backup of notes, attachments, and configurations across multiple devices. Supports Mac, Windows, Android, iOS, and more, with multi-language support.",
 
   "setting.tab.general": "General",
@@ -333,6 +334,7 @@ export default {
   "ui.log.summary.no_changes": "No changes",
 
   // --- ui.log.action ---
+  "ui.log.action.ConnectionClosed": "Sync connection closed",
   "ui.log.action.VaultScanning_full": "Vault Hash Calculation Progress (Full)",
   "ui.log.action.VaultScanning_incremental": "Vault Hash Calculation Progress (Incremental)",
   "ui.log.action.VaultScanningSummary_full": "Sync Started (Full) - Hash Calculation",
