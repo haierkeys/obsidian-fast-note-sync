@@ -742,8 +742,8 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     return
   }
 
-  // 如果开启了云预览，且是初始化同步阶段，由于云预览可以按需加载，跳过所有附件下载
-  if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
+  // 按需预览从首次同步起生效，不能依赖首次同步已经成功完成。
+  if (plugin.settings.cloudPreviewEnabled) {
     if (plugin.settings.cloudPreviewTypeRestricted) {
       // 开启了类型限制：仅跳过受限类型 (图片、视频、音频、PDF)
       const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
@@ -765,6 +765,13 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
   await plugin.concurrencyLimiter.waitForSlot(slotKey, false, -10) // 优先级设为 -10，延后处理下载
 
   try {
+    // 等待并发槽位时用户可能开启云预览，旧排队任务也必须遵守当前设置。
+    if (plugin.settings.cloudPreviewEnabled && (!plugin.settings.cloudPreviewTypeRestricted ||
+      FileCloudPreview.isRestrictedType(data.path.substring(data.path.lastIndexOf(".")).toLowerCase()))) {
+      plugin.concurrencyLimiter.releaseSlot(slotKey);
+      plugin.recordSyncCompleted('file', data.pageIndex);
+      return;
+    }
     // 下载内存缓冲控制：如果当前内存中待写盘的分块过多，由于下载是异步触发的，此处等待
     while (currentDownloadBufferBytes > MAX_DOWNLOAD_BUFFER_BYTES) {
       await sleep(200);
