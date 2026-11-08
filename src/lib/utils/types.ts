@@ -90,6 +90,14 @@ export interface FileSyncChunkDownloadMessage {
 }
 
 export interface FileDownloadSession {
+    /** Local state captured when the download was requested; checked before writing. */
+    commitGuard?: {
+        owner: object;
+        epoch: number;
+        file: import("obsidian").TFile | null;
+        mtime?: number;
+        size?: number;
+    };
     path: string;
     contentHash?: string;
     ctime: number;
