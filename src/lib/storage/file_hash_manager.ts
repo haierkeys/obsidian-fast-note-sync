@@ -70,7 +70,26 @@ export class FileHashManager {
   async initialize(): Promise<void> {
     dump("FileHashManager: 开始初始化");
 
-    // 1. 尝试加载本地最新计算哈希缓存表 (hashMap)
+    // 1. 先恢复云端确认同步基准表 (syncHashMap)。
+    // Restore the acknowledged baseline first: restoring the computed cache below may call
+    // saveToStorage(), which also persists syncHashMap. Saving before this step overwrote the
+    // saved baseline (localStorage and syncHashMap.json) with the constructor-empty map, so a
+    // restart after iOS evicted localStorage lost every acknowledgement.
+    let hasRestoredSync = this.loadSyncFromStorage();
+    if (hasRestoredSync) {
+      dump(`FileHashManager: 从 localStorage 加载同步基准成功,共 ${this.syncHashMap.size} 个文件`);
+    }
+    if (!hasRestoredSync || this.syncHashMap.size === 0) {
+      // An empty localStorage baseline must not win over a populated mirror.
+      const mirroredSync = await this.syncMirror.read();
+      if (mirroredSync && this.parseAndLoadSync(mirroredSync) && this.syncHashMap.size > 0) {
+        dump(`FileHashManager: 从文件镜像恢复同步基准成功,共 ${this.syncHashMap.size} 个文件`);
+        this.saveSyncToStorage();
+        hasRestoredSync = true;
+      }
+    }
+
+    // 2. 恢复本地最新计算哈希缓存表 (hashMap)
     const loaded = this.loadFromStorage();
     let hasRestoredMap = false;
 
@@ -89,22 +108,6 @@ export class FileHashManager {
     if (!hasRestoredMap) {
       dump("FileHashManager: localStorage 与文件镜像均无本地缓存,开始构建哈希映射");
       await this.buildFileHashMap();
-    }
-
-    // 2. 尝试加载云端确认同步基准表 (syncHashMap)
-    const loadedSync = this.loadSyncFromStorage();
-    let hasRestoredSync = false;
-
-    if (loadedSync) {
-      dump(`FileHashManager: 从 localStorage 加载同步基准成功,共 ${this.syncHashMap.size} 个文件`);
-      hasRestoredSync = true;
-    } else {
-      const mirroredSync = await this.syncMirror.read();
-      if (mirroredSync && this.parseAndLoadSync(mirroredSync)) {
-        dump("FileHashManager: 从文件镜像恢复同步基准成功");
-        this.saveSyncToStorage();
-        hasRestoredSync = true;
-      }
     }
 
     // 3. 数据平滑迁移：全新用户或旧版插件升级用户 (syncHashMap 尚未创建但 hashMap 已有历史数据)
