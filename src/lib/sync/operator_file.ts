@@ -8,7 +8,10 @@ import { HttpApiService } from "../api/http_api_service";
 import type FastSync from "../../main";
 
 
-// A retained async finalizer must still own the path and its original local state.
+// Download commit guard. A download may only overwrite the local path if, at commit time, it is
+// still the newest request for that path in the current connection and the local file has not
+// changed, been deleted or gained pending local work since the request was sent. Only file
+// stats are captured (after the concurrency slot is held), so no file is read ahead of time.
 const downloadOwners = new WeakMap<FastSync, Map<string, object>>()
 const downloadEpochs = new WeakMap<FastSync, number>()
 
@@ -17,40 +20,36 @@ export function invalidateFileDownloads(plugin: FastSync): void {
   downloadOwners.delete(plugin)
 }
 
-async function captureDownloadGuard(plugin: FastSync, path: string) {
+function captureDownloadGuard(plugin: FastSync, path: string): NonNullable<FileDownloadSession["commitGuard"]> {
   const owners = downloadOwners.get(plugin) || new Map<string, object>()
   downloadOwners.set(plugin, owners)
   const owner = {}
   owners.set(path, owner)
-  const epoch = downloadEpochs.get(plugin) || 0
   const file = plugin.app.vault.getFileByPath(normalizePath(path))
-  const mtime = file?.stat.mtime
-  const size = file?.stat.size
-  const hash = file ? await hashArrayBuffer(await plugin.app.vault.readBinary(file)) : undefined
-  return { owner, epoch, file, mtime, size, hash }
+  return { owner, epoch: downloadEpochs.get(plugin) || 0, file, mtime: file?.stat.mtime, size: file?.stat.size }
 }
 
-async function validateDownloadCommit(plugin: FastSync, session: FileDownloadSession): Promise<void> {
+function releaseDownloadOwner(plugin: FastSync, session: FileDownloadSession): void {
+  const owners = downloadOwners.get(plugin)
+  if (session.commitGuard && owners?.get(session.path) === session.commitGuard.owner) owners.delete(session.path)
+}
+
+function assertDownloadCommittable(plugin: FastSync, session: FileDownloadSession): void {
   const guard = session.commitGuard
+  if (!guard) return
+  if (isPluginUnloading || plugin.settings.syncEnabled === false ||
+    plugin.fileDownloadSessions.get(session.sessionId) !== session ||
+    downloadOwners.get(plugin)?.get(session.path) !== guard.owner ||
+    (downloadEpochs.get(plugin) || 0) !== guard.epoch) {
+    throw new Error("Download superseded by a newer request, cancellation or reconnect")
+  }
+  if (plugin.pendingUploadHashes.has(session.path) || plugin.pendingDeleteFilePaths.has(session.path) ||
+    plugin.pendingFileDeleteAcks.has(session.path)) {
+    throw new Error("Download skipped: local change pending upload or deletion")
+  }
   const current = plugin.app.vault.getFileByPath(normalizePath(session.path))
-  const owns = () => !!guard && !isPluginUnloading && plugin.settings.syncEnabled !== false &&
-    plugin.fileDownloadSessions.get(session.sessionId) === session &&
-    downloadOwners.get(plugin)?.get(session.path) === guard.owner &&
-    (downloadEpochs.get(plugin) || 0) === guard.epoch
-  if (!owns() || plugin.pendingUploadHashes.has(session.path) ||
-    plugin.pendingDeleteFilePaths.has(session.path) || plugin.pendingFileDeleteAcks.has(session.path)) {
-    throw new Error("Download superseded by local work or cancellation")
-  }
-  if (current !== guard!.file || current?.stat.mtime !== guard!.mtime || current?.stat.size !== guard!.size) {
-    throw new Error("Local file changed during download")
-  }
-  if (current) {
-    if (normalizePath(current.path) !== normalizePath(session.path)) throw new Error("Aliased download path")
-    const hash = await hashArrayBuffer(await plugin.app.vault.readBinary(current))
-    if (!owns() || current !== plugin.app.vault.getFileByPath(normalizePath(session.path)) ||
-      current.stat.mtime !== guard!.mtime || current.stat.size !== guard!.size || hash !== guard!.hash ||
-      plugin.pendingUploadHashes.has(session.path) || plugin.pendingDeleteFilePaths.has(session.path) ||
-      plugin.pendingFileDeleteAcks.has(session.path)) throw new Error("Local file changed before download commit")
+  if (current !== guard.file || current?.stat.mtime !== guard.mtime || current?.stat.size !== guard.size) {
+    throw new Error("Download skipped: local file changed during download")
   }
 }
 
@@ -148,6 +147,7 @@ const formatDownloadError = (e: unknown) => {
 // completion detection / page ACK unchanged), so failures aren't surfaced as success in the status bar
 const cleanupFileDownloadSession = async (plugin: FastSync, session: FileDownloadSession, failed = false) => {
   releaseSessionMemory(session)
+  releaseDownloadOwner(plugin, session)
   plugin.fileDownloadSessions.delete(session.sessionId)
   if (session.tempDir) await clearTempChunksDir(plugin, session.sessionId)
   if (failed) plugin.fileSyncTasks.failed++
@@ -806,16 +806,6 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     }
   }
 
-  let commitGuard: FileDownloadSession["commitGuard"]
-  try {
-    commitGuard = await captureDownloadGuard(plugin, data.path)
-  } catch (error) {
-    dumpError(`Cannot snapshot local file before download: ${data.path}`, error)
-    plugin.fileSyncTasks.failed++
-    plugin.recordSyncCompleted('file', data.pageIndex)
-    return
-  }
-
   // 等待并发槽位，防止大量并发下载导致内存耗尽
   const slotKey = `download_${data.path}`
   await plugin.concurrencyLimiter.waitForSlot(slotKey, false, -10) // 优先级设为 -10，延后处理下载
@@ -829,7 +819,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     dump(`Receive file sync update(download): `, data.path)
     const tempKey = `temp_${data.path}`
     const tempSession: FileDownloadSession = {
-      commitGuard,
+      commitGuard: captureDownloadGuard(plugin, data.path),
       path: data.path,
       contentHash: data.contentHash,
       ctime: data.ctime,
@@ -851,7 +841,7 @@ export const receiveFileSyncUpdate = async function (data: ReceiveFileSyncUpdate
     }
     void plugin.websocket.SendMessage("FileChunkDownload", requestData)
     plugin.totalFilesToDownload++
-
+    // lastFileSyncTime advances when the download commits, so a failed download stays eligible.
   } catch (e) {
     plugin.concurrencyLimiter.releaseSlot(slotKey)
     throw e;
@@ -1011,9 +1001,12 @@ export const receiveFileSyncChunkDownload = async function (data: FileSyncChunkD
 
   const tempKey = `temp_${data.path}`
   const tempSession = plugin.fileDownloadSessions.get(tempKey)
-  // Old/unsolicited replies cannot borrow a newer request's local snapshot.
-  if (!tempSession || tempSession.contentHash !== data.contentHash || tempSession.size !== data.size ||
-    tempSession.mtime !== data.mtime || tempSession.ctime !== data.ctime) return
+  // A reply without a pending request (e.g. one sent before a reconnect) must not write to disk.
+  // The reply's metadata describes the server's current version and is used as is.
+  if (!tempSession) {
+    dump(`Ignore unsolicited file chunk download reply: ${data.path}`)
+    return
+  }
   const session: FileDownloadSession = {
     commitGuard: tempSession.commitGuard,
     path: data.path,
@@ -1410,7 +1403,7 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
 
     const normalizedPath = normalizePath(session.path)
     await plugin.lockManager.withLock(normalizedPath, async () => {
-      await validateDownloadCommit(plugin, session)
+      assertDownloadCommittable(plugin, session)
       plugin.addIgnoredFile(normalizedPath)
       try {
         const file = plugin.app.vault.getFileByPath(normalizedPath)
@@ -1430,8 +1423,8 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
               }
             }
           }
-          // Folder creation yields; cancellation or a local create may have won meanwhile.
-          await validateDownloadCommit(plugin, session)
+          // Folder creation yields; a local create or cancellation may have won meanwhile.
+          assertDownloadCommittable(plugin, session)
           await plugin.app.vault.createBinary(normalizedPath, completeFile.buffer, { ...(session.ctime > 0 && { ctime: session.ctime }), ...(session.mtime > 0 && { mtime: session.mtime }) })
         }
       } finally {
@@ -1463,6 +1456,7 @@ const handleFileChunkDownloadComplete = async function (session: FileDownloadSes
 
     plugin.fileDownloadSessions.delete(session.sessionId)
     if (session.tempDir) await clearTempChunksDir(plugin, session.sessionId)
+    releaseDownloadOwner(plugin, session)
     plugin.downloadedFilesCount++
     plugin.progressTracker.recordDownloadComplete('file');
     plugin.recordSyncCompleted('file', session.pageIndex)

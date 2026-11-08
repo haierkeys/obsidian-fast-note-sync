@@ -174,6 +174,7 @@ export class WebSocketManager {
           // and sending a full round under a dead context.
           this.plugin.syncState.activeSyncContext = null;
         }
+        // Downloads requested on the closed connection may no longer commit.
         invalidateFileDownloads(this.plugin);
         clearUploadQueue();
         this.plugin.concurrencyLimiter.clear();
