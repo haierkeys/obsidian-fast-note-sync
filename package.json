@@ -12,6 +12,7 @@
     "lint:css": "stylelint \"src/**/*.scss\"",
     "fix": "eslint --fix src",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "test:path-guard": "node tests/remote-path-guard.test.mjs",
     "test:auth": "node tests/websocket-auth-error.test.mjs",
     "test:mirror": "node tests/file-mirror-restore.test.mjs",
     "test:vault-name": "node tests/vault-name-setting.test.mjs",

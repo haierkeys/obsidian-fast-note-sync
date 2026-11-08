@@ -1,3 +1,4 @@
+import { blockAliasedRemoteMutation } from "./remote_path_guard";
 import { TFolder, normalizePath } from "obsidian";
 
 import { SyncEndData, FolderSyncRenameMessage } from "../utils/types";
@@ -218,6 +219,7 @@ export const receiveFolderSyncDelete = async function (data: { path: string, las
         await plugin.lockManager.withLock(normalizedPath, async () => {
             const folder = plugin.app.vault.getAbstractFileByPath(normalizedPath)
             if (folder instanceof TFolder) {
+                if (blockAliasedRemoteMutation(plugin, folder, data.path, "FolderDelete")) return
                 plugin.addIgnoredFile(normalizedPath)
                 try {
                     // 必须检测并等到 目录里的所有文件数量 为 0 之后再执行
@@ -232,6 +234,7 @@ export const receiveFolderSyncDelete = async function (data: { path: string, las
                         return
                     }
                     // 记录待删除路径
+                    if (blockAliasedRemoteMutation(plugin, folder, data.path, "FolderDelete")) return
                     plugin.lastSyncPathDeleted.add(normalizedPath)
                     await vaultDelete(plugin.app.vault, folder, true)
                     plugin.folderSnapshotManager.removeFolder(normalizedPath)
@@ -276,6 +279,8 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
         await plugin.lockManager.withLock(normalizedNewPath, async () => {
             const folder = plugin.app.vault.getAbstractFileByPath(normalizedOldPath)
             if (folder instanceof TFolder) {
+                if (blockAliasedRemoteMutation(plugin, folder, data.oldPath, "FolderRename")) return
+                if (blockAliasedRemoteMutation(plugin, plugin.app.vault.getAbstractFileByPath(normalizedNewPath), data.path, "FolderRename")) return
                 plugin.addIgnoredFile(normalizedNewPath)
                 plugin.addIgnoredFile(normalizedOldPath)
 
@@ -284,7 +289,7 @@ export const receiveFolderSyncRename = async function (data: FolderSyncRenameMes
 
                 try {
                     const target = plugin.app.vault.getAbstractFileByPath(normalizedNewPath)
-                    if (target) {
+                    if (target && target !== folder) {
                         await vaultDelete(plugin.app.vault, target, true)
                     }
 
