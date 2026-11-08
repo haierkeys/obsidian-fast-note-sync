@@ -263,7 +263,9 @@ export function checkSyncCompletion(plugin: FastSync, intervalId?: number, syncS
     // 每次同步结束，均核实并更新一次状态栏冲突角标
     plugin.statusBarManager.updateConflictBadge();
 
-    if (totalFailed === 0 && plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
+    // isInitSync selects incremental startup and gates cloud preview; it is not a success marker.
+    // Gating it on zero failures made one permanently failing file force a full sync on every start.
+    if (plugin.expectedSyncCount > 0 && !plugin.localStorageManager.getMetadata("isInitSync")) {
       plugin.localStorageManager.setMetadata("isInitSync", true);
     }
 
