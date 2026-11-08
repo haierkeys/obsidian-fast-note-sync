@@ -817,20 +817,8 @@ export const receiveFileSyncDelete = async function (data: ReceivePathMessage, p
     return
   }
 
-  if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
-    if (plugin.settings.cloudPreviewTypeRestricted) {
-      const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
-      if (FileCloudPreview.isRestrictedType(ext)) {
-        dump(`Cloud Preview: Skipping restricted file delete: ${data.path}`);
-        plugin.recordSyncCompleted('file', data.pageIndex);
-        return;
-      }
-    } else {
-      dump(`Cloud Preview: Skipping all file deletes: ${data.path}`);
-      plugin.recordSyncCompleted('file', data.pageIndex);
-      return;
-    }
-  }
+  // Cloud preview only avoids downloading attachments. A server deletion must still remove a
+  // local copy; skipping it left deleted attachments on the device to be uploaded again.
 
   dump(`Receive file delete: `, data.path)
   const normalizedPath = normalizePath(data.path)
@@ -878,20 +866,8 @@ export const receiveFileSyncMtime = async function (data: ReceiveMtimeMessage, p
     return
   }
 
-  if (plugin.localStorageManager.getMetadata("isInitSync") && plugin.settings.cloudPreviewEnabled) {
-    if (plugin.settings.cloudPreviewTypeRestricted) {
-      const ext = data.path.substring(data.path.lastIndexOf(".")).toLowerCase();
-      if (FileCloudPreview.isRestrictedType(ext)) {
-        dump(`Cloud Preview: Skipping restricted file mtime update: ${data.path}`);
-        plugin.recordSyncCompleted('file', data.pageIndex);
-        return;
-      }
-    } else {
-      dump(`Cloud Preview: Skipping all file mtime updates: ${data.path}`);
-      plugin.recordSyncCompleted('file', data.pageIndex);
-      return;
-    }
-  }
+  // Cloud preview does not skip mtime updates: the handler only touches files that already
+  // exist locally, and skipping left their mtime stale so every round re-checked them.
 
   dump(`Receive file sync mtime: `, data.path, data.mtime)
   const normalizedPath = normalizePath(data.path)
