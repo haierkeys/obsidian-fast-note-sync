@@ -14,11 +14,16 @@ export const dump = function (...message) {
   }
 };
 
+// Error objects serialize to "{}" in the internal log; keep their name, message and stack.
+const describeError = (value) =>
+  value instanceof Error ? `${value.name}: ${value.message}${value.stack ? `
+${value.stack}` : ""}` : value;
+
 export const dumpError = function (...message) {
   if (logLevel === "console") {
     console.error(...message);
   } else if (logLevel === "internal") {
-    DebugLogManager.getInstance().addLog("[ERROR]", ...message);
+    DebugLogManager.getInstance().addLog("[ERROR]", ...message.map(describeError));
   }
 };
 
