@@ -48,6 +48,7 @@ interface TypeProgress {
   // Next page index awaiting ack determination (watermark); can only advance past pages that are
   // already fully completed (completedCount>=totalCount)
   ackWatermark: number;
+  requirePageCompletion: boolean;
 }
 
 /**
@@ -153,6 +154,7 @@ export class SyncProgressTracker {
         initialAckSent: false,
         receivedPageIndexes: new Set<number>(),
         pages: new Map(),
+        requirePageCompletion: false,
         ackWatermark: 0
       });
     }
@@ -336,7 +338,7 @@ export class SyncProgressTracker {
 
   private onStagnationTimeout(type: SyncType): void {
     this.stagnationTimers.delete(type);
-    if (this.isForcedComplete) return;
+    if (this.isForcedComplete || this.isTypeFullyDone(type)) return;
     const highest = this.lastAckedPage.get(type);
     if (highest === undefined) return;
     dump(`[SyncProgressTracker] [Stagnation] 15s with no new detail for type ${type}, resending ack for highest confirmed pageIndex ${highest}`);
@@ -362,9 +364,10 @@ export class SyncProgressTracker {
    * Record page control message metadata.
    * 记录分页控制消息元数据。
    */
-  recordPageProgress(type: SyncType, pageIndex: number, totalCount: number, isLast: boolean): void {
+  recordPageProgress(type: SyncType, pageIndex: number, totalCount: number, isLast: boolean, requirePageCompletion = false): void {
     const prog = this.progressMap.get(type);
     if (!prog) return;
+    prog.requirePageCompletion ||= requirePageCompletion;
 
     // 分页幂等：同一 pageIndex 重复到达（重传/乱序）时直接忽略，防止 receivedTaskTotal
     // 盲累加、allPagesReceived 被旧包覆盖，导致完成判定永远达不到，卡在 300s 超时分支
@@ -438,6 +441,11 @@ export class SyncProgressTracker {
     const prog = this.progressMap.get(type);
     if (!prog) return true;
     // 使用实际收到的精准下载任务数加上传任务基数判定完成，防止提早判断导致清空 context
+    // Negotiated paged transfers must complete every bucket; unrelated live
+    // acknowledgements must not compensate for unfinished page items.
+    if (prog.requirePageCompletion) {
+      if (Array.from(prog.pages.values()).some(page => page.completedCount < page.totalCount)) return false;
+    }
     const downloadCompleted = prog.pageTaskCompleted - prog.uploadTasksBase;
     return prog.uploadComplete && prog.allPagesReceived && downloadCompleted >= prog.receivedTaskTotal;
   }
